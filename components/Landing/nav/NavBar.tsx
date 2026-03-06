@@ -17,9 +17,9 @@ export interface NavbarProps {
 
 function getNavLinkClass(scrolled: boolean, active: boolean) {
     if (scrolled) {
-        return active ? 'text-sepia' : 'text-sepia/70 hover:text-sepia'
+        return active ? 'text-black' : 'text-black/70 hover:text-black'
     }
-    return active ? 'text-white font-medium' : 'text-white/70 hover:text-white'
+    return active ? 'text- font-medium' : 'text-whi hover:text-black/50'
 }
 
 const NavLink = ({
@@ -100,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
             className={cn(
                 "fixed top-0 left-0 w-full z-50 flex justify-center",
-                scrolled ? 'bg-white/95 backdrop-blur shadow-lg' : 'bg-black/95 backdrop-blur'
+                scrolled ? 'bg-white/95 backdrop-blur shadow-lg' : 'bg-white backdrop-blur'
             )}
             style={{ pointerEvents: visible ? 'auto' : 'none' }}
         >
@@ -150,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             onClick={() => setIsOpen(!isOpen)}
                             className={cn(
                                 "lg:hidden p-2 rounded-lg transition-colors focus:outline-none",
-                                scrolled ? 'text-sepia hover:bg-sepia/10' : 'text-white hover:bg-white/10'
+                                scrolled ? 'text-sepia hover:bg-sepia/10' : ''
                             )}
                             aria-label="Toggle Menu"
                         >
