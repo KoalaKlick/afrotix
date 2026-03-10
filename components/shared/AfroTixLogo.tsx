@@ -1,5 +1,9 @@
 // components/AfroTixLogoModern.tsx
-export function AfroTixLogo({ className = "bg-red-400 h-auto" }: { readonly className?: string }) {
+import { useId } from 'react'
+
+export function AfroTixLogo({ className = " h-auto" }: { readonly className?: string }) {
+    const filterId = useId()
+
     return (
         <svg
             className={className}
@@ -9,15 +13,13 @@ export function AfroTixLogo({ className = "bg-red-400 h-auto" }: { readonly clas
         >
             <title>AfroTix Logo</title>
             <defs>
-
-
-                <filter id="modernShadow">
+                <filter id={filterId}>
                     <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.3" />
                 </filter>
             </defs>
 
             {/* Main text with custom styling */}
-            <g filter="url(#modernShadow)">
+            <g filter={`url(#${filterId})`}>
                 <text
                     x="300"
                     y="130"

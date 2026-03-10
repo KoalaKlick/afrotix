@@ -23,7 +23,7 @@
   --color-primary-800: #991b1b;
   --color-primary-900: #7f1d1d;
   --color-primary-950: #450a0a;
-  --color-primary: var(--color-primary-600);
+  --color-primary: var(--color-primary-500);
 
   /* Secondary - Pan-African Yellow/Gold */
   --color-secondary-50: #fefce8;
@@ -134,12 +134,7 @@
 }
 
 /* Text selection styles */
-::selection {
-  color: white;
-  /* text-white */
-  background-color: var(--color-primary-600);
-  /* bg-primary-600 */
-}
+
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

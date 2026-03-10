@@ -1,21 +1,18 @@
-import { HeroSection } from '@/components/Landing/sections/HeroSection'
-import { FeaturesSection } from '@/components/Landing/sections/FeaturesSection'
-import { HowItWorksSection } from '@/components/Landing/sections/HowItWorksSection'
-import { TestimonialsSection } from '@/components/Landing/sections/TestimonialsSection'
-import { PricingSection } from '@/components/Landing/sections/PricingSection'
-import { FAQSection } from '@/components/Landing/sections/FAQSection'
-import { FinalCTASection } from '@/components/Landing/sections/FinalCTASection'
-import { EventsSection } from '@/components/Landing/sections/events'
+import React from 'react'
+
+import { ActiveStatsBuffer } from "motion/react"
+import { HeroSection } from '@/components/Landing/sections/RevampHeroSection'
 import { PanAfricanDivider } from '@/components/shared/PanAficDivider'
-
-// Pan-African divider component
-
+import { FeaturesSection } from '@/components/Landing/sections/RevampFeaturesSection'
+import { HowItWorksSection } from '@/components/Landing/sections/RevampWorksSection'
+import { EventsSection } from '@/components/Landing/sections/revamp-events'
+import { FAQSection } from '@/components/Landing/sections/FAQSection'
+import { TestimonialsSection } from '@/components/Landing/sections/TestimonialsSection'
 
 const page = () => {
   return (
     <>
       <HeroSection />
-
       <PanAfricanDivider />
       <FeaturesSection />
       <PanAfricanDivider />
@@ -23,17 +20,11 @@ const page = () => {
       <PanAfricanDivider />
       <EventsSection />
       <PanAfricanDivider />
-      <TestimonialsSection />
-      <PanAfricanDivider />
-      <PricingSection />
-      <PanAfricanDivider />
       <FAQSection />
       <PanAfricanDivider />
-      <FinalCTASection />
-      <PanAfricanDivider />
+      <TestimonialsSection />
+
     </>
-
-
   )
 }
 

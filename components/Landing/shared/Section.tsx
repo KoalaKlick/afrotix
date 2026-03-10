@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 interface SectionProps {
     as?: 'section' | 'div' | 'article' | 'main' | 'header' | 'footer';
-    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl';
+    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl'|'full';
     className?: string;
     contentClassName?: string;
     id?: string;
@@ -18,11 +18,12 @@ const maxWidthClasses: Record<string, string> = {
     '4xl': 'max-w-4xl',
     '6xl': 'max-w-6xl',
     '7xl': 'max-w-7xl',
+    full: 'max-w-full',
 };
 
 export const Section: React.FC<SectionProps> = ({
     as: Component = 'section',
-    maxWidth = '6xl',
+    maxWidth = '7xl',
     className = '',
     contentClassName = '',
     children,

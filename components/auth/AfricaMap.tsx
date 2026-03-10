@@ -46,7 +46,7 @@ const CountryPathComponent = memo(function CountryPathComponent({
                 d={country.d}
                 fill={color}
                 stroke="rgba(255,255,255,0.3)"
-                strokeWidth="1.5"
+                strokeWidth="1"
                 style={{
                     opacity: hasInitiallyRevealed ? 0 : 1,
                     transition: hasInitiallyRevealed ? `opacity 0.6s ease-out ${revealDelay}s` : 'none',
@@ -58,7 +58,7 @@ const CountryPathComponent = memo(function CountryPathComponent({
                 d={country.d}
                 fill={`url(#map-image-${baseImageIdx})`}
                 stroke="rgba(255,255,255,0.2)"
-                strokeWidth="1.5"
+                strokeWidth="1"
                 style={{
                     opacity: hasInitiallyRevealed ? 1 : 0,
                     transition: hasInitiallyRevealed ? `opacity 0.6s ease-out ${revealDelay}s` : 'none',
