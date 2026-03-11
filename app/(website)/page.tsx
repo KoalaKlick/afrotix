@@ -1,6 +1,3 @@
-import React from 'react'
-
-import { ActiveStatsBuffer } from "motion/react"
 import { HeroSection } from '@/components/Landing/sections/RevampHeroSection'
 import { PanAfricanDivider } from '@/components/shared/PanAficDivider'
 import { FeaturesSection } from '@/components/Landing/sections/RevampFeaturesSection'
@@ -8,8 +5,11 @@ import { HowItWorksSection } from '@/components/Landing/sections/RevampWorksSect
 import { EventsSection } from '@/components/Landing/sections/revamp-events'
 import { FAQSection } from '@/components/Landing/sections/FAQSection'
 import { TestimonialsSection } from '@/components/Landing/sections/TestimonialsSection'
+import { getPublicEvents } from '@/lib/dal/event'
 
-const page = () => {
+export default async function LandingPage() {
+  const events = await getPublicEvents({ limit: 7 })
+
   return (
     <>
       <HeroSection />
@@ -18,14 +18,11 @@ const page = () => {
       <PanAfricanDivider />
       <HowItWorksSection />
       <PanAfricanDivider />
-      <EventsSection />
+      <EventsSection items={events} />
       <PanAfricanDivider />
       <FAQSection />
       <PanAfricanDivider />
       <TestimonialsSection />
-
     </>
   )
 }
-
-export default page

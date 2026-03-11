@@ -1,0 +1,88 @@
+"use client";
+
+import { cn } from "@/lib/utils";
+import type { Event } from "@/lib/generated/prisma";
+import { Calendar, MapPin } from "lucide-react";
+import Link from "next/link";
+
+interface PublicEventCardProps {
+    readonly event: Event;
+    readonly className?: string;
+}
+
+export function PublicEventCard({ event, className }: PublicEventCardProps) {
+    // Generate an accent color based on event type
+    const accentColors = {
+        voting: 'text-[#CE1126]',
+        ticketed: 'text-[#FFCD00]',
+        advertisement: 'text-[#009A44]',
+        hybrid: 'text-[#009A44]',
+    };
+
+    const colorClass = accentColors[event.type as keyof typeof accentColors] ?? 'text-[#009A44]';
+
+    return (
+        <div
+            className={cn(
+                "group relative cursor-pointer overflow-hidden rounded-2xl aspect-[4/3]",
+                className
+            )}
+        >
+            {/* Background image */}
+            <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                style={{ backgroundImage: `url(${event.coverImage ?? "/landing/a.webp"})` }}
+            />
+
+            {/* Dark gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-colors group-hover:from-black/80" />
+
+            {/* Side accent (derived from landing page style) */}
+            <svg
+                className={cn("absolute right-0 top-0 h-full w-24 z-10 opacity-80", colorClass)}
+                viewBox="0 0 210 297"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+            >
+                <path
+                    d="M 179.69167,0.37081617 196.23673,146.38046 179.15249,297.0266 l 31.2116,0.35696 V 0.01812264 Z"
+                    fill="currentColor"
+                />
+            </svg>
+
+            {/* Content */}
+            <div className="absolute inset-0 p-5 pr-10 flex flex-col justify-end text-white">
+                <div className="space-y-1 mb-3">
+                    <h3 className="font-black uppercase text-lg leading-tight tracking-tight">
+                        {event.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-white/70 text-xs">
+                        <Calendar className="h-3 w-3" />
+                        {event.startDate ? new Date(event.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Date TBD"}
+                    </div>
+                    {event.venueName && (
+                        <div className="flex items-center gap-2 text-white/70 text-xs">
+                            <MapPin className="h-3 w-3" />
+                            {event.venueName}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                    <span className={cn(
+                        "text-[10px] font-black uppercase px-2 py-1 rounded bg-white/10 backdrop-blur-sm tracking-widest",
+                        colorClass.replace('text-', 'text-') // Keep text color for contrast if needed
+                    )}>
+                        {event.type}
+                    </span>
+                    <Link
+                        href={`/events/${event.slug}`}
+                        className="text-[10px] font-bold uppercase underline underline-offset-4 hover:text-white transition-colors"
+                    >
+                        View Details
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
+}

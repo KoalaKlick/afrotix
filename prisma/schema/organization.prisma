@@ -21,6 +21,7 @@ model Organization {
   creator     Profile?                 @relation("CreatedOrganizations", fields: [createdBy], references: [id])
   members     OrganizationMember[]
   invitations OrganizationInvitation[]
+  requests    MembershipRequest[]
   events      Event[]
   wallets     Wallet[]
 
@@ -70,4 +71,27 @@ model OrganizationInvitation {
   @@index([token], name: "idx_org_invitations_token")
   @@index([status], name: "idx_org_invitations_status")
   @@map("organization_invitations")
+}
+
+model MembershipRequest {
+  id             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  userId         String                  @map("user_id") @db.Uuid
+  message        String?
+  status         MembershipRequestStatus @default(pending)
+  resolvedAt     DateTime?               @map("resolved_at") @db.Timestamptz
+  resolvedBy     String?                 @map("resolved_by") @db.Uuid
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resolver     Profile?     @relation("MembershipRequestResolver", fields: [resolvedBy], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, userId, status])
+  @@index([organizationId], name: "idx_membership_req_organization")
+  @@index([userId], name: "idx_membership_req_user")
+  @@index([status], name: "idx_membership_req_status")
+  @@map("membership_requests")
 }

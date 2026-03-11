@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { getProfileWithPromoterStatus } from '@/lib/dal/profile'
-import { getUserOrganizations, getOrganizationById } from '@/lib/dal/organization'
+import { getUserOrganizations, getOrganizationById, getPendingInvitationsForEmail } from '@/lib/dal/organization'
 import { getActiveOrganizationId } from '@/lib/organization-context'
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -28,30 +28,36 @@ export default async function ProtectedLayout({
         redirect(`/auth/verify?email=${encodeURIComponent(user.email || '')}`)
     }
 
-    // Fetch profile with promoter status for sidebar
-    const profile = await getProfileWithPromoterStatus(user.id)
+    // Parallelize independent data fetches
+    const [profile, organizations, activeOrgId] = await Promise.all([
+        getProfileWithPromoterStatus(user.id),
+        getUserOrganizations(user.id),
+        getActiveOrganizationId(),
+    ]);
 
     // Check if onboarding is complete - if not, don't show sidebar
     if (!profile?.onboardingCompleted) {
         return <>{children}</>
     }
 
-    // Fetch user's organizations
-    const organizations = await getUserOrganizations(user.id)
-
     // Get current path to avoid redirect loop
     const headersList = await headers()
     const pathname = headersList.get('x-pathname') || headersList.get('x-invoke-path') || ''
     const isOnOrgCreation = pathname.includes('/organization/new')
+    const isOnInvitations = pathname.includes('/organization/invitations')
 
-    // User must belong to at least one organization
-    // Redirect to create org if they have none (but not if already on org creation page)
-    if (organizations.length === 0 && !isOnOrgCreation) {
-        redirect('/organization/new?setup=true')
+    // Handle users with no organization
+    if (organizations.length === 0 && !isOnOrgCreation && !isOnInvitations) {
+        // Check for pending invitations
+        const invitations = await getPendingInvitationsForEmail(user.email ?? "");
+
+        if (invitations.length > 0) {
+            redirect('/organization/invitations')
+        } else {
+            redirect('/organization/new?setup=true')
+        }
     }
 
-    // Get active organization from cookie
-    const activeOrgId = await getActiveOrganizationId()
     let activeOrganization = null
 
     // Validate active org exists and user is member
@@ -82,7 +88,6 @@ export default async function ProtectedLayout({
                 }}
                 organizations={organizations}
                 activeOrganization={activeOrganization}
-                isPromoter={profile?.isPromoter ?? false}
             />
             <SidebarInset>
                 {children}

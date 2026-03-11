@@ -21,7 +21,6 @@ export function useAuth() {
         await supabase.auth.signOut()
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (!error && data.user) {
-            router.refresh()
             router.push('/dashboard')
         }
         return { error }

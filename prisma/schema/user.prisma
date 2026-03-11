@@ -19,6 +19,8 @@ model Profile {
   createdOrganizations    Organization[]           @relation("CreatedOrganizations")
   organizationMemberships OrganizationMember[]
   organizationInvitations OrganizationInvitation[] @relation("InviterInvitations")
+  membershipRequests      MembershipRequest[]
+  resolvedRequests        MembershipRequest[]      @relation("MembershipRequestResolver")
   createdEvents           Event[]                  @relation("CreatedEvents")
   votes                   Vote[]
   ticketOrders            TicketOrder[]

@@ -9,6 +9,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { Loader2, CheckCircle } from 'lucide-react'
 import { OTPVerificationIllustration } from "@/components/auth/OTPVerificationIllustration"
 import { EmailVerifiedIllustration } from "@/components/auth/EmailVerifiedIllustration"
@@ -41,11 +42,13 @@ function VerificationContent() {
         })
 
         if (error) {
+            toast.error(error.message)
             setError(error.message)
             setSubmitting(false)
             return
         }
 
+        toast.success('Email verified successfully!')
         setVerified(true)
         setTimeout(() => router.push('/dashboard'), 1500)
     }
@@ -61,10 +64,11 @@ function VerificationContent() {
             if (match) {
                 setCooldown(Number.parseInt(match[1], 10))
             } else {
+                toast.error(error.message)
                 setError(error.message)
             }
         } else {
-            alert('Verification code resent!')
+            toast.success('Verification code resent!')
         }
         setResending(false)
     }

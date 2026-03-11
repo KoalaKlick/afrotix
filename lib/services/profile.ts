@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Profile Service
  * Server-side functions for managing user profiles
@@ -27,7 +28,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     .single();
 
   if (error) {
-    console.error('Error fetching profile:', error);
+    logger.error('Error fetching profile:', error);
     return null;
   }
 

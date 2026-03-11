@@ -7,7 +7,17 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
-import type { Organization, OrganizationMember, OrganizationRole } from "@/lib/generated/prisma";
+import { logger } from "@/lib/logger";
+import type {
+    Organization,
+    OrganizationMember,
+    OrganizationRole,
+    OrganizationInvitation,
+    InvitationStatus,
+    MembershipRequest,
+    MembershipRequestStatus,
+    Event
+} from "@/lib/generated/prisma";
 
 // Types for DAL operations
 export type OrganizationCreateInput = {
@@ -41,7 +51,7 @@ export const getOrganizationById = cache(async (id: string): Promise<Organizatio
             where: { id },
         });
     } catch (error) {
-        console.error("[DAL] Error fetching organization:", error);
+        logger.error("[DAL] Error fetching organization:", error);
         return null;
     }
 });
@@ -55,7 +65,7 @@ export const getOrganizationBySlug = cache(async (slug: string): Promise<Organiz
             where: { slug },
         });
     } catch (error) {
-        console.error("[DAL] Error fetching organization by slug:", error);
+        logger.error("[DAL] Error fetching organization by slug:", error);
         return null;
     }
 });
@@ -74,7 +84,7 @@ export async function isSlugAvailable(slug: string, excludeOrgId?: string): Prom
         if (excludeOrgId && existing.id === excludeOrgId) return true;
         return false;
     } catch (error) {
-        console.error("[DAL] Error checking slug availability:", error);
+        logger.error("[DAL] Error checking slug availability:", error);
         return false;
     }
 }
@@ -105,7 +115,7 @@ export const getUserOrganizations = cache(
                 memberCount: m.organization._count.members,
             }));
         } catch (error) {
-            console.error("[DAL] Error fetching user organizations:", error);
+            logger.error("[DAL] Error fetching user organizations:", error);
             return [];
         }
     }
@@ -129,7 +139,7 @@ export const getUserRoleInOrganization = cache(
 
             return membership?.role ?? null;
         } catch (error) {
-            console.error("[DAL] Error fetching user role:", error);
+            logger.error("[DAL] Error fetching user role:", error);
             return null;
         }
     }
@@ -189,7 +199,7 @@ export async function createOrganization(data: OrganizationCreateInput): Promise
             return org;
         });
     } catch (error) {
-        console.error("[DAL] Error creating organization:", error);
+        logger.error("[DAL] Error creating organization:", error);
         return null;
     }
 }
@@ -207,7 +217,7 @@ export async function updateOrganization(
             data,
         });
     } catch (error) {
-        console.error("[DAL] Error updating organization:", error);
+        logger.error("[DAL] Error updating organization:", error);
         return null;
     }
 }
@@ -222,7 +232,7 @@ export async function deleteOrganization(id: string): Promise<boolean> {
         });
         return true;
     } catch (error) {
-        console.error("[DAL] Error deleting organization:", error);
+        logger.error("[DAL] Error deleting organization:", error);
         return false;
     }
 }
@@ -244,7 +254,7 @@ export async function addOrganizationMember(
             },
         });
     } catch (error) {
-        console.error("[DAL] Error adding organization member:", error);
+        logger.error("[DAL] Error adding organization member:", error);
         return null;
     }
 }
@@ -268,7 +278,7 @@ export async function updateMemberRole(
             data: { role },
         });
     } catch (error) {
-        console.error("[DAL] Error updating member role:", error);
+        logger.error("[DAL] Error updating member role:", error);
         return null;
     }
 }
@@ -291,7 +301,32 @@ export async function removeOrganizationMember(
         });
         return true;
     } catch (error) {
-        console.error("[DAL] Error removing organization member:", error);
+        logger.error("[DAL] Error removing organization member:", error);
+        return false;
+    }
+}
+
+/**
+ * Update member role in organization
+ */
+export async function updateOrganizationMemberRole(
+    organizationId: string,
+    userId: string,
+    role: OrganizationRole
+): Promise<boolean> {
+    try {
+        await prisma.organizationMember.update({
+            where: {
+                organizationId_userId: {
+                    organizationId,
+                    userId,
+                },
+            },
+            data: { role },
+        });
+        return true;
+    } catch (error) {
+        logger.error("[DAL] Error updating organization member role:", error);
         return false;
     }
 }
@@ -338,7 +373,252 @@ export async function getOrganizationMembers(
             totalPages: Math.ceil(total / limit),
         };
     } catch (error) {
-        console.error("[DAL] Error fetching organization members:", error);
+        logger.error("[DAL] Error fetching organization members:", error);
         return { members: [], total: 0, page: 1, totalPages: 0 };
+    }
+}
+
+/**
+ * Get pending invitations for an email
+ */
+export async function getPendingInvitationsForEmail(email: string): Promise<OrganizationInvitation[]> {
+    try {
+        return await prisma.organizationInvitation.findMany({
+            where: {
+                email,
+                status: "pending",
+                OR: [
+                    { expiresAt: null },
+                    { expiresAt: { gt: new Date() } },
+                ],
+            },
+            include: {
+                organization: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        logoUrl: true,
+                    },
+                },
+            },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error fetching pending invitations:", error);
+        return [];
+    }
+}
+
+/**
+ * Get invitation by ID
+ */
+export async function getInvitationById(id: string): Promise<OrganizationInvitation | null> {
+    try {
+        return await prisma.organizationInvitation.findUnique({
+            where: { id },
+            include: {
+                organization: true,
+            },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error fetching invitation by ID:", error);
+        return null;
+    }
+}
+
+/**
+ * Update invitation status
+ */
+export async function updateInvitationStatus(
+    id: string,
+    status: InvitationStatus
+): Promise<OrganizationInvitation | null> {
+    try {
+        return await prisma.organizationInvitation.update({
+            where: { id },
+            data: {
+                status,
+                respondedAt: new Date(),
+            },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error updating invitation status:", error);
+        return null;
+    }
+}
+
+/**
+ * Accept an invitation (transaction)
+ */
+export async function completeInvitationAcceptance(
+    invitationId: string,
+    userId: string,
+    organizationId: string,
+    role: OrganizationRole
+): Promise<boolean> {
+    try {
+        await prisma.$transaction(async (tx) => {
+            // Add member
+            await tx.organizationMember.create({
+                data: {
+                    organizationId,
+                    userId,
+                    role,
+                },
+            });
+
+            // Update invitation
+            await tx.organizationInvitation.update({
+                where: { id: invitationId },
+                data: {
+                    status: "accepted",
+                    respondedAt: new Date(),
+                },
+            });
+        });
+        return true;
+    } catch (error) {
+        logger.error("[DAL] Error completing invitation acceptance:", error);
+        return false;
+    }
+}
+
+/**
+ * Get organization profile with public events
+ */
+export const getOrganizationProfile = cache(async (slug: string) => {
+    try {
+        return await prisma.organization.findUnique({
+            where: { slug },
+            include: {
+                events: {
+                    where: {
+                        status: "published",
+                        isPublic: true,
+                    },
+                    orderBy: { startDate: "asc" },
+                },
+                _count: {
+                    select: { members: true },
+                },
+            },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error fetching organization profile:", error);
+        return null;
+    }
+});
+
+/**
+ * Handle membership requests
+ */
+export async function createMembershipRequest(data: {
+    organizationId: string;
+    userId: string;
+    message?: string;
+}): Promise<MembershipRequest | null> {
+    try {
+        return await prisma.membershipRequest.create({
+            data: {
+                organizationId: data.organizationId,
+                userId: data.userId,
+                message: data.message,
+                status: "pending",
+            },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error creating membership request:", error);
+        return null;
+    }
+}
+
+export async function getMembershipRequest(organizationId: string, userId: string): Promise<MembershipRequest | null> {
+    try {
+        return await prisma.membershipRequest.findUnique({
+            where: {
+                organizationId_userId_status: {
+                    organizationId,
+                    userId,
+                    status: "pending",
+                },
+            },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error fetching membership request:", error);
+        return null;
+    }
+}
+
+/**
+ * Handle membership requests (admin side)
+ */
+export async function getMembershipRequests(organizationId: string): Promise<MembershipRequest[]> {
+    try {
+        return await prisma.membershipRequest.findMany({
+            where: {
+                organizationId,
+                status: "pending",
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error fetching membership requests:", error);
+        return [];
+    }
+}
+
+export async function updateMembershipRequestStatus(
+    requestId: string,
+    status: MembershipRequestStatus,
+    resolvedBy: string
+): Promise<MembershipRequest | null> {
+    try {
+        return await prisma.membershipRequest.update({
+            where: { id: requestId },
+            data: {
+                status,
+                resolvedAt: new Date(),
+                resolvedBy,
+            },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error updating membership request status:", error);
+        return null;
+    }
+}
+
+/**
+ * Create organization invitation
+ */
+export async function createOrganizationInvitation(data: {
+    organizationId: string;
+    inviterId: string;
+    email: string;
+    role: OrganizationRole;
+}): Promise<OrganizationInvitation | null> {
+    try {
+        return await prisma.organizationInvitation.create({
+            data: {
+                organizationId: data.organizationId,
+                inviterId: data.inviterId,
+                email: data.email.toLowerCase(),
+                role: data.role,
+                status: "pending",
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+            },
+        });
+    } catch (error) {
+        logger.error("[DAL] Error creating invitation:", error);
+        return null;
     }
 }

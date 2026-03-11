@@ -2,24 +2,33 @@
 
 import type { EventItem } from "@/lib/const/landing"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
+import type { Event } from "@/lib/generated/prisma"
+
+export type DbEvent = Event & {
+    organization: {
+        slug: string
+        name: string
+    }
+}
 
 interface EventCardProps {
-    readonly item: EventItem
+    readonly item: EventItem | DbEvent
     readonly className?: string
     readonly size?: 'default' | 'large'
 }
 
 // Tailwind text color class per accent — SVG uses currentColor
 const accentTextColors: Record<string, string> = {
-    red:    'text-[#CE1126]',
+    red: 'text-[#CE1126]',
     yellow: 'text-[#FFCD00]',
-    green:  'text-[#009A44]',
+    green: 'text-[#009A44]',
 }
 
 const badgeColors: Record<string, string> = {
-    red:    'text-[#CE1126]',
+    red: 'text-[#CE1126]',
     yellow: 'text-[#FFCD00]',
-    green:  'text-[#009A44]',
+    green: 'text-[#009A44]',
 }
 
 /**
@@ -44,56 +53,81 @@ function SideAccent({ colorClass }: { colorClass: string }) {
     )
 }
 
+function isDbEvent(item: EventItem | DbEvent): item is DbEvent {
+    return typeof item.id === 'string';
+}
+
 export function EventCard({ item, className, size = 'default' }: EventCardProps) {
-    const colorClass = accentTextColors[item.accentColor] ?? 'text-[#009A44]'
+    // Determine if it's a DB event or a static landing item
+    const isDb = isDbEvent(item);
+
+    const title = item.title;
+    const accentColor = !isDb ? (item as EventItem).accentColor : 'green';
+    const colorClass = accentTextColors[accentColor] ?? 'text-[#009A44]';
+
+    const image = isDb ? (item as DbEvent).coverImage : (item as EventItem).image;
+    const subtitle = isDb ? (item as DbEvent).description : (item as EventItem).subtitle;
+    const categoryName = isDb ? (item as DbEvent).type.toUpperCase() : (item as EventItem).category;
+
+    const dateStr = isDb
+        ? (item as DbEvent).startDate
+            ? new Date((item as DbEvent).startDate!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()
+            : 'TBA'
+        : (item as EventItem).date;
+
+    const href = isDb
+        ? `/${(item as DbEvent).organization.slug}/event/${(item as DbEvent).slug}`
+        : `/events/${(item as EventItem).id}`;
 
     return (
-        <div
-            className={cn(
-                "group relative cursor-pointer overflow-hidden rounded-2xl",
-                size === 'large' ? 'aspect-[3/4]' : 'aspect-[4/3]',
-                className
-            )}
-        >
-            {/* Background image */}
+        <Link href={href}>
             <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                style={{ backgroundImage: `url(${item.image})` }}
-            />
-
-            {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent transition-colors group-hover:from-black/75" />
-
-            {/* Side accent */}
-            <SideAccent colorClass={colorClass} />
-
-            {/* Content */}
-            <div className="absolute inset-0 p-4 pr-9 flex flex-col justify-end">
-                <h3 className={cn(
-                    "text-white font-bold leading-tight mb-1",
-                    size === 'large' ? 'text-lg' : 'text-sm'
-                )}>
-                    {item.title}
-                </h3>
-
-                {item.subtitle && (
-                    <p className="text-white/65 text-xs mb-3 line-clamp-2 leading-relaxed">
-                        {item.subtitle}
-                    </p>
+                className={cn(
+                    "group relative cursor-pointer overflow-hidden rounded-2xl h-full",
+                    size === 'large' ? 'aspect-[3/4]' : 'aspect-[4/3]',
+                    className
                 )}
+            >
+                {/* Background image */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                    style={{ backgroundImage: image ? `url(${image})` : undefined }}
+                />
 
-                <div className="flex items-center justify-between gap-2">
-                    <span className={cn(
-                        "text-white text-[10px] font-bold uppercase px-2 py-1 rounded-sm tracking-wide",
-                        badgeColors[item.accentColor] 
+                {/* Dark gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent transition-colors group-hover:from-black/75" />
+
+                {/* Side accent */}
+                <SideAccent colorClass={colorClass} />
+
+                {/* Content */}
+                <div className="absolute inset-0 p-4 pr-9 flex flex-col justify-end">
+                    <h3 className={cn(
+                        "text-white font-bold leading-tight mb-1",
+                        size === 'large' ? 'text-lg' : 'text-sm'
                     )}>
-                        {item.category}
-                    </span>
-                    <span className="text-white/55 text-[10px] shrink-0">
-                        {item.date}
-                    </span>
+                        {title}
+                    </h3>
+
+                    {subtitle && (
+                        <p className="text-white/65 text-xs mb-3 line-clamp-2 leading-relaxed">
+                            {subtitle}
+                        </p>
+                    )}
+
+                    <div className="flex items-center justify-between gap-2">
+                        <span className={cn(
+                            "text-white text-[10px] font-bold uppercase px-2 py-1 rounded-sm tracking-wide",
+                            badgeColors[accentColor]
+                        )}>
+                            {categoryName}
+                        </span>
+                        <span className="text-white/55 text-[10px] shrink-0">
+                            {dateStr}
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Link>
     )
 }

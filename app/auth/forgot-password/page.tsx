@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import {
     Form,
     FormControl,
@@ -76,6 +77,7 @@ function ForgotPasswordContent() {
             setSubmitting(false)
             return
         }
+        toast.success('Verification code sent to your email!')
         setStep('otp-verify')
         setSubmitting(false)
     }
@@ -91,8 +93,11 @@ function ForgotPasswordContent() {
             if (match) {
                 setCooldown(Number.parseInt(match[1], 10))
             } else {
+                toast.error(error.message)
                 otpForm.setError('root', { message: error.message })
             }
+        } else {
+            toast.success('Verification code resent!')
         }
         setResending(false)
     }
@@ -115,10 +120,12 @@ function ForgotPasswordContent() {
         setSubmitting(true)
         const { error } = await verifyOtp(email, data.otp, 'recovery')
         if (error) {
+            toast.error(error.message)
             otpForm.setError('root', { message: error.message })
             setSubmitting(false)
             return
         }
+        toast.success('Code verified successfully!')
         router.push('/auth/reset-password')
     }
 

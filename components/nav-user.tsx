@@ -13,6 +13,7 @@ import {
   LogOut,
   Plus,
   Settings,
+  Wallet,
 } from "lucide-react"
 
 import {
@@ -238,8 +239,8 @@ export function NavUser({
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/wallet">
-                  <CreditCard className="mr-2 size-4" />
-                  Billing
+                  <Wallet className="mr-2 size-4" />
+                  Wallet
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

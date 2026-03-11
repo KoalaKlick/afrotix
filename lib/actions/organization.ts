@@ -1,9 +1,12 @@
+"use server";
+
+import { logger } from '@/lib/logger';
 /**
  * Organization Server Actions
  * Handles organization creation, updates, and management
  */
 
-"use server";
+
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
@@ -20,9 +23,21 @@ import {
     getUserOrganizations,
     getUserRoleInOrganization,
     canManageOrganization,
+    getInvitationById,
+    completeInvitationAcceptance,
+    updateInvitationStatus,
+    createMembershipRequest,
+    getMembershipRequest,
+    getMembershipRequests,
+    updateMembershipRequestStatus,
+    createOrganizationInvitation,
+    updateOrganizationMemberRole,
+    removeOrganizationMember,
+    addOrganizationMember,
 } from "@/lib/dal/organization";
 import { convertToWebP } from "@/lib/image-utils";
 import { setActiveOrganizationId } from "@/lib/organization-context";
+import { OrganizationRole, MembershipRequestStatus } from "@/lib/generated/prisma";
 
 // Action result type
 type ActionResult<T = void> = {
@@ -166,7 +181,7 @@ export async function uploadOrgLogo(
         });
 
     if (uploadError) {
-        console.error("[Action] Logo upload error:", uploadError);
+        logger.error(uploadError, "[Action] Logo upload error:");
         return { success: false, error: "Failed to upload logo" };
     }
 
@@ -331,27 +346,263 @@ export async function generateUniqueSlug(
 export async function switchOrganization(
     organizationId: string
 ): Promise<ActionResult> {
-    console.log("[switchOrganization] Switching to org:", organizationId);
+    logger.info({ data: organizationId }, "[switchOrganization] Switching to org:");
 
     const user = await getCurrentUser();
     if (!user) {
-        console.log("[switchOrganization] Not authenticated");
+        logger.info("[switchOrganization] Not authenticated");
         return { success: false, error: "Not authenticated" };
     }
 
     // Verify user is a member of this organization
     const role = await getUserRoleInOrganization(user.id, organizationId);
-    console.log("[switchOrganization] User role:", role);
+    logger.info({ data: role }, "[switchOrganization] User role:");
     if (!role) {
         return { success: false, error: "You are not a member of this organization" };
     }
 
     // Set active organization in cookie
     await setActiveOrganizationId(organizationId);
-    console.log("[switchOrganization] Cookie set for org:", organizationId);
+    logger.info({ data: organizationId }, "[switchOrganization] Cookie set for org:");
 
     // Revalidate to refresh the layout with new org context
     revalidatePath("/", "layout");
+
+    return { success: true };
+}
+
+/**
+ * Accept organization invitation
+ */
+export async function acceptOrgInvitation(
+    invitationId: string
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+
+    // Get invitation
+    const invitation = await getInvitationById(invitationId);
+    if (!invitation) {
+        return { success: false, error: "Invitation not found" };
+    }
+
+    // Verify invitation is for this user
+    if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
+        return { success: false, error: "This invitation was sent to a different email address" };
+    }
+
+    if (invitation.status !== "pending") {
+        return { success: false, error: `This invitation has already been ${invitation.status}` };
+    }
+
+    // Check expiration if applicable
+    if (invitation.expiresAt && new Date(invitation.expiresAt) < new Date()) {
+        await updateInvitationStatus(invitationId, "expired");
+        return { success: false, error: "This invitation has expired" };
+    }
+
+    // Complete acceptance
+    const success = await completeInvitationAcceptance(
+        invitationId,
+        user.id,
+        invitation.organizationId,
+        invitation.role
+    );
+
+    if (!success) {
+        return { success: false, error: "Failed to accept invitation" };
+    }
+
+    // Set as active organization
+    await setActiveOrganizationId(invitation.organizationId);
+
+    revalidatePath("/dashboard");
+    revalidatePath("/(protected)", "layout");
+
+    return { success: true };
+}
+
+/**
+ * Decline organization invitation
+ */
+export async function declineOrgInvitation(
+    invitationId: string
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+
+    // Get invitation
+    const invitation = await getInvitationById(invitationId);
+    if (!invitation) {
+        return { success: false, error: "Invitation not found" };
+    }
+
+    // Verify invitation is for this user
+    if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
+        return { success: false, error: "This invitation was sent to a different email address" };
+    }
+
+    if (invitation.status !== "pending") {
+        return { success: false, error: `This invitation is already ${invitation.status}` };
+    }
+
+    const updated = await updateInvitationStatus(invitationId, "declined");
+    if (!updated) {
+        return { success: false, error: "Failed to decline invitation" };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/(protected)", "layout");
+    return { success: true };
+}
+
+/**
+ * Request to join an organization
+ */
+export async function requestToJoinOrganization(
+    organizationId: string,
+    message?: string
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+
+    // Check if already a member
+    const role = await getUserRoleInOrganization(user.id, organizationId);
+    if (role) {
+        return { success: false, error: "You are already a member of this organization" };
+    }
+
+    // Check if a request is already pending
+    const existingRequest = await getMembershipRequest(organizationId, user.id);
+    if (existingRequest) {
+        return { success: false, error: "You already have a pending request for this organization" };
+    }
+
+    const request = await createMembershipRequest({
+        organizationId,
+        userId: user.id,
+        message,
+    });
+
+    if (!request) {
+        return { success: false, error: "Failed to submit request" };
+    }
+
+    // Revalidate the organization profile page
+    revalidatePath("/[slug]", "page");
+
+    return { success: true };
+}
+
+/**
+ * Invite a new member
+ */
+export async function inviteMember(
+    organizationId: string,
+    email: string,
+    role: OrganizationRole
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    const canManage = await canManageOrganization(user.id, organizationId);
+    if (!canManage) return { success: false, error: "Insufficient permissions" };
+
+    const invitation = await createOrganizationInvitation({
+        organizationId,
+        inviterId: user.id,
+        email,
+        role,
+    });
+
+    if (!invitation) return { success: false, error: "Failed to create invitation" };
+
+    revalidatePath("/organization/manage");
+    return { success: true };
+}
+
+/**
+ * Update a member's role
+ */
+export async function updateMemberRole(
+    organizationId: string,
+    userId: string,
+    role: OrganizationRole
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    const canManage = await canManageOrganization(user.id, organizationId);
+    if (!canManage) return { success: false, error: "Insufficient permissions" };
+
+    const success = await updateOrganizationMemberRole(organizationId, userId, role);
+    if (!success) return { success: false, error: "Failed to update role" };
+
+    revalidatePath("/organization/manage");
+    return { success: true };
+}
+
+/**
+ * Remove a member from the organization
+ */
+export async function removeMember(
+    organizationId: string,
+    userId: string
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    // Cannot remove yourself (should use leave organization instead)
+    if (user.id === userId) return { success: false, error: "Cannot remove yourself. Use 'Leave Organization' instead." };
+
+    const canManage = await canManageOrganization(user.id, organizationId);
+    if (!canManage) return { success: false, error: "Insufficient permissions" };
+
+    const success = await removeOrganizationMember(organizationId, userId);
+    if (!success) return { success: false, error: "Failed to remove member" };
+
+    revalidatePath("/organization/manage");
+    return { success: true };
+}
+
+/**
+ * Approve or reject a membership request
+ */
+export async function resolveMembershipRequest(
+    requestId: string,
+    organizationId: string,
+    targetUserId: string,
+    action: "approve" | "reject"
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    const canManage = await canManageOrganization(user.id, organizationId);
+    if (!canManage) return { success: false, error: "Insufficient permissions" };
+
+    const status: MembershipRequestStatus = action === "approve" ? "approved" : "rejected";
+
+    if (action === "approve") {
+        const request = await updateMembershipRequestStatus(requestId, status, user.id);
+        if (!request) return { success: false, error: "Failed to update request" };
+
+        const existingRole = await getUserRoleInOrganization(targetUserId, organizationId);
+        if (!existingRole) {
+            await addOrganizationMember(organizationId, targetUserId, "member");
+        }
+    } else {
+        const request = await updateMembershipRequestStatus(requestId, status, user.id);
+        if (!request) return { success: false, error: "Failed to update request" };
+    }
+
+    revalidatePath("/organization/manage");
+    revalidatePath(`/[slug]`, "page");
 
     return { success: true };
 }

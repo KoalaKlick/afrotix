@@ -4,12 +4,12 @@ import { useRef } from "react"
 import { motion, useInView } from "motion/react"
 import Link from "next/link"
 import { eventItems, type EventItem } from "@/lib/const/landing"
-import { EventCard } from "./EventGalleryItem"
+import { EventCard, type DbEvent } from "./EventGalleryItem"
 import { Section } from "../../shared/Section"
 
 interface EventsSectionProps {
     readonly title?: string
-    readonly items?: EventItem[]
+    readonly items?: (EventItem | DbEvent)[]
 }
 
 /*

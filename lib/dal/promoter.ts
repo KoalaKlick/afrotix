@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Promoter Data Access Layer (DAL)
  * Server-side database operations for promoters
@@ -18,7 +19,7 @@ export const getPromoterByReferralCode = cache(
                 where: { referralCode },
             });
         } catch (error) {
-            console.error("[DAL] Error fetching promoter by referral code:", error);
+            logger.error(error, "[DAL] Error fetching promoter by referral code:");
             return null;
         }
     },
@@ -60,7 +61,7 @@ export async function validateReferralCode(referralCode: string): Promise<{
                 : "Valid referral code",
         };
     } catch (error) {
-        console.error("[DAL] Error validating referral code:", error);
+        logger.error(error, "[DAL] Error validating referral code:");
         return { valid: false, message: "Error validating referral code" };
     }
 }
@@ -75,7 +76,7 @@ export const getPromoterByUserId = cache(
                 where: { userId },
             });
         } catch (error) {
-            console.error("[DAL] Error fetching promoter by user ID:", error);
+            logger.error(error, "[DAL] Error fetching promoter by user ID:");
             return null;
         }
     },

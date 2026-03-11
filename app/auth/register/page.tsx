@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import {
     Form,
     FormControl,
@@ -63,12 +64,15 @@ export default function RegisterPage() {
                 // Handle network errors
                 if (error.message === 'Failed to fetch' || error.message.toLowerCase().includes('network')) {
                     form.setError('root', { message: 'Unable to connect. Please check your internet connection and try again.' })
+                    toast.error('Unable to connect. Please check your internet connection.')
                     return
                 }
+                toast.error(error.message)
                 form.setError('root', { message: error.message })
                 return
             }
 
+            toast.success('Account created successfully!')
             router.push(`/auth/verify?email=${encodeURIComponent(data.email)}`)
         } catch (error) {
             console.error(error)

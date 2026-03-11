@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import {
     Form,
     FormControl,
@@ -67,9 +68,12 @@ function LoginForm() {
                 router.push(`/auth/verify?email=${encodeURIComponent(data.email)}`)
                 return
             }
+            toast.error(error.message)
             form.setError('root', { message: error.message })
             return
         }
+
+        toast.success('Welcome back!')
     }
 
     const handleGoogleSignIn = async () => {

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Profile Data Access Layer (DAL)
  * Server-side database operations for user profiles
@@ -39,7 +40,7 @@ export const getProfileById = cache(async (id: string): Promise<Profile | null> 
             where: { id },
         });
     } catch (error) {
-        console.error("[DAL] Error fetching profile:", error);
+        logger.error(error, "[DAL] Error fetching profile:");
         return null;
     }
 });
@@ -65,7 +66,7 @@ export const getProfileWithPromoterStatus = cache(
                 isPromoter: !!profile.promoter,
             };
         } catch (error) {
-            console.error("[DAL] Error fetching profile with promoter status:", error);
+            logger.error(error, "[DAL] Error fetching profile with promoter status:");
             return null;
         }
     }
@@ -80,7 +81,7 @@ export const getProfileByEmail = cache(async (email: string): Promise<Profile | 
             where: { email },
         });
     } catch (error) {
-        console.error("[DAL] Error fetching profile by email:", error);
+        logger.error(error, "[DAL] Error fetching profile by email:");
         return null;
     }
 });
@@ -94,7 +95,7 @@ export const getProfileByUsername = cache(async (username: string): Promise<Prof
             where: { username },
         });
     } catch (error) {
-        console.error("[DAL] Error fetching profile by username:", error);
+        logger.error(error, "[DAL] Error fetching profile by username:");
         return null;
     }
 });
@@ -113,7 +114,7 @@ export async function isUsernameAvailable(username: string, excludeUserId?: stri
         if (excludeUserId && existing.id === excludeUserId) return true;
         return false;
     } catch (error) {
-        console.error("[DAL] Error checking username availability:", error);
+        logger.error(error, "[DAL] Error checking username availability:");
         return false;
     }
 }
@@ -136,7 +137,7 @@ export async function createProfile(data: ProfileCreateInput): Promise<Profile |
             },
         });
     } catch (error) {
-        console.error("[DAL] Error creating profile:", error);
+        logger.error(error, "[DAL] Error creating profile:");
         return null;
     }
 }
@@ -154,7 +155,7 @@ export async function updateProfile(
             data,
         });
     } catch (error) {
-        console.error("[DAL] Error updating profile:", error);
+        logger.error(error, "[DAL] Error updating profile:");
         return null;
     }
 }
@@ -172,7 +173,7 @@ export async function updateOnboardingStep(
             data: { onboardingStep: step },
         });
     } catch (error) {
-        console.error("[DAL] Error updating onboarding step:", error);
+        logger.error(error, "[DAL] Error updating onboarding step:");
         return null;
     }
 }
@@ -198,7 +199,7 @@ export async function completeOnboarding(
             },
         });
     } catch (error) {
-        console.error("[DAL] Error completing onboarding:", error);
+        logger.error(error, "[DAL] Error completing onboarding:");
         return null;
     }
 }
@@ -226,7 +227,7 @@ export async function getOnboardingStatus(id: string): Promise<{
             step: profile.onboardingStep,
         };
     } catch (error) {
-        console.error("[DAL] Error getting onboarding status:", error);
+        logger.error(error, "[DAL] Error getting onboarding status:");
         return null;
     }
 }
@@ -248,7 +249,7 @@ export async function applyReferralCode(
             },
         });
     } catch (error) {
-        console.error("[DAL] Error applying referral code:", error);
+        logger.error(error, "[DAL] Error applying referral code:");
         return null;
     }
 }
@@ -281,7 +282,7 @@ export async function ensureProfile(
             },
         });
     } catch (error) {
-        console.error("[DAL] Error ensuring profile:", error);
+        logger.error(error, "[DAL] Error ensuring profile:");
         return null;
     }
 }
