@@ -45,6 +45,33 @@ export const getProfileById = cache(async (id: string): Promise<Profile | null> 
 });
 
 /**
+ * Get profile with promoter status
+ * Used for sidebar to determine if promoter features should be shown
+ */
+export type ProfileWithPromoterStatus = Profile & { isPromoter: boolean };
+
+export const getProfileWithPromoterStatus = cache(
+    async (id: string): Promise<ProfileWithPromoterStatus | null> => {
+        try {
+            const profile = await prisma.profile.findUnique({
+                where: { id },
+                include: { promoter: { select: { id: true } } },
+            });
+
+            if (!profile) return null;
+
+            return {
+                ...profile,
+                isPromoter: !!profile.promoter,
+            };
+        } catch (error) {
+            console.error("[DAL] Error fetching profile with promoter status:", error);
+            return null;
+        }
+    }
+);
+
+/**
  * Get profile by email
  */
 export const getProfileByEmail = cache(async (email: string): Promise<Profile | null> => {

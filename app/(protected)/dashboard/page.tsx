@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getProfileById } from "@/lib/dal/profile";
 import { DashboardContent } from "./DashboardContent";
 
-export default async function Dashboard() {
+export default async function DashboardPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -13,8 +13,12 @@ export default async function Dashboard() {
     redirect("/auth/login");
   }
 
-  // Fetch profile from database
   const profile = await getProfileById(user.id);
+
+  // Redirect to onboarding if not complete
+  if (!profile?.onboardingCompleted) {
+    redirect("/onboarding");
+  }
 
   return (
     <DashboardContent
