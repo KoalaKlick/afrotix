@@ -8,10 +8,16 @@ export interface InputProps
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-    ({ className, type, icon, ...props }, ref) => {
+    ({ className, type, icon, value, defaultValue, onChange, ...props }, ref) => {
         const [showPassword, setShowPassword] = React.useState(false)
         const isPassword = type === 'password'
         const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
+
+        // If onChange is provided, treat as controlled - use empty string as fallback to prevent
+        // "uncontrolled to controlled" warnings when value starts as undefined
+        const isControlled = onChange !== undefined
+        const inputValue = isControlled ? (value ?? '') : undefined
+        const inputDefaultValue = !isControlled ? defaultValue : undefined
 
         if (icon) {
             return (
@@ -28,6 +34,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         )}
                         ref={ref}
                         {...props}
+                        onChange={onChange}
+                        value={inputValue}
+                        defaultValue={inputDefaultValue}
                     />
                     {isPassword && (
                         <button
@@ -53,6 +62,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         )}
                         ref={ref}
                         {...props}
+                        onChange={onChange}
+                        value={inputValue}
+                        defaultValue={inputDefaultValue}
                     />
                     <button
                         type="button"
@@ -74,6 +86,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 )}
                 ref={ref}
                 {...props}
+                onChange={onChange}
+                value={inputValue}
+                defaultValue={inputDefaultValue}
             />
         )
     }

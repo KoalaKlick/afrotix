@@ -8,9 +8,13 @@ import type {
   Organization,
   OrganizationMember,
   OrganizationRole,
-  OrganizationWithMembers,
   Profile,
-} from '@/types/database';
+} from '@/lib/generated/prisma';
+
+// Custom type for organization with members and their profiles
+type OrganizationWithMembers = Organization & {
+  members: (OrganizationMember & { profile: Profile })[];
+};
 
 /**
  * Create a new organization and add the creator as owner

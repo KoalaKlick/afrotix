@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@/utils/supabase/server';
-import type { Profile } from '@/types/database';
+import type { Profile } from '@/lib/generated/prisma';
 
 /**
  * Get the current user's profile
@@ -165,8 +165,8 @@ export async function setUsername(
 export function getProfileCompletionPercentage(profile: Profile): number {
   const fields = [
     profile.username,
-    profile.full_name,
-    profile.avatar_url,
+    profile.fullName,
+    profile.avatarUrl,
   ];
 
   const filledFields = fields.filter((field) => field !== null && field !== '').length;

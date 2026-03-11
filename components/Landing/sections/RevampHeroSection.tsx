@@ -26,7 +26,7 @@ export function HeroSection() {
     return (
         <section
             id="hero"
-            className="font-poppins    text-black w-full overflow-hidden flex flex-col  h-svh min-h-fit md:max-h-[48rem] "
+            className="font-poppins    text-black w-full overflow-hidden  h-svh min-h-fit md:max-h-[48rem] "
         >
             <div className="max-w-7xl mx-auto  px-6 flex flex-col mt-14 xs:mt-16 sm:mt-16  flex-1 md:mt-0 md:flex-row">
                 <div className="flex-1  flex flex-col">
@@ -97,11 +97,9 @@ export function HeroSection() {
                     </div>
 
                 </div>
-                <div className="relative w-full   md:max-w-2xl  md:my-auto aspect-square max-w- mx-auto lg:mx-0">
-
+                <div className="relative w-full    md:max-w-2xl  md:my-auto aspect-square max-w- mx-auto lg:mx-0">
                     {/* Top-center — largest clip */}
-                    <div className="absolute w-[70%] top-[2%] left-[12%] z-20
-                                            transition-transform duration-500 hover:scale-105 hover:z-30">
+                    <div className="absolute w-[70%] top-[2%] left-[12%] z-20 transition-transform duration-500 hover:scale-105 hover:z-30">
                         <AfricaImageClip
                             src={secondImage}
                             alt="Second image"

@@ -38,6 +38,9 @@ export async function updateSession(request: NextRequest) {
 
     const pathname = request.nextUrl.pathname
 
+    // Add pathname header for server components
+    response.headers.set('x-pathname', pathname)
+
     // Protected routes - redirect to login if not authenticated
     if (pathname.startsWith('/dashboard') && !user) {
         return NextResponse.redirect(new URL('/auth/login', request.url))
