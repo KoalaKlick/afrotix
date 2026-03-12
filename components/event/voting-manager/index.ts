@@ -1,0 +1,1 @@
+export { VotingManager } from "./VotingManager";

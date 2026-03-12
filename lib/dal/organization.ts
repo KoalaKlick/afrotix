@@ -8,6 +8,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
 import { logger } from "@/lib/logger";
+import { isReservedSlug } from "@/lib/validations/organization";
 import type {
     Organization,
     OrganizationMember,
@@ -15,8 +16,7 @@ import type {
     OrganizationInvitation,
     InvitationStatus,
     MembershipRequest,
-    MembershipRequestStatus,
-    Event
+    MembershipRequestStatus
 } from "@/lib/generated/prisma";
 
 // Invitation with organization for display
@@ -90,10 +90,15 @@ export const getOrganizationBySlug = cache(async (slug: string): Promise<Organiz
 });
 
 /**
- * Check if slug is available
+ * Check if slug is available (not used by another org and not reserved)
  */
 export async function isSlugAvailable(slug: string, excludeOrgId?: string): Promise<boolean> {
     try {
+        // Check if slug is reserved for system routes
+        if (isReservedSlug(slug)) {
+            return false;
+        }
+
         const existing = await prisma.organization.findUnique({
             where: { slug },
             select: { id: true },
@@ -546,17 +551,31 @@ export async function completeInvitationAcceptance(
 }
 
 /**
- * Get organization profile with public events
+ * Get organization profile with viewer-visible published events.
+ * Public visitors only see public events; organization members also see private published events.
  */
-export const getOrganizationProfile = cache(async (slug: string) => {
+export const getOrganizationProfile = cache(async (slug: string, viewerUserId?: string) => {
     try {
         return await prisma.organization.findUnique({
             where: { slug },
             include: {
                 events: {
                     where: {
-                        status: "published",
-                        isPublic: true,
+                        status: { notIn: ["draft", "cancelled"] },
+                        ...(viewerUserId
+                            ? {
+                                OR: [
+                                    { isPublic: true },
+                                    {
+                                        organization: {
+                                            members: {
+                                                some: { userId: viewerUserId },
+                                            },
+                                        },
+                                    },
+                                ],
+                            }
+                            : { isPublic: true }),
                     },
                     orderBy: { startDate: "asc" },
                 },

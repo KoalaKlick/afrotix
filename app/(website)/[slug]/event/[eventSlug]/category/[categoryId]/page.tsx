@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
+import { createClient } from "@/utils/supabase/server"
 import { getEventBySlug, getOrganizationBySlug, getVotingCategoryById } from "@/lib/dal"
+import { canUserAccessEvent } from "@/lib/event-status"
+import { getEventImageUrl } from "@/lib/image-url-utils"
+import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import { ArrowLeft, Trophy, Users, Vote } from "lucide-react"
@@ -14,33 +18,41 @@ interface CategoryDetailPageProps {
     }>
 }
 
-export default async function CategoryDetailPage({ params }: CategoryDetailPageProps) {
+export default async function CategoryDetailPage({ params }: Readonly<CategoryDetailPageProps>) {
     const { slug: orgSlug, eventSlug, categoryId } = await params
+    const supabase = await createClient()
 
-    const organization = await getOrganizationBySlug(orgSlug)
+    const [{ data: { user } }, organization] = await Promise.all([
+        supabase.auth.getUser(),
+        getOrganizationBySlug(orgSlug),
+    ])
     if (!organization) notFound()
 
     const event = await getEventBySlug(organization.id, eventSlug)
-    if (!event || !event.isPublic || (event.status !== "published" && event.status !== "ongoing")) notFound()
+    if (!event) notFound()
+
+    const isOrganizationMember = user ? await isUserMemberOf(user.id, organization.id) : false
+    if (!canUserAccessEvent(event, isOrganizationMember)) notFound()
 
     // Only voting/hybrid events have categories
     if (event.type !== "voting" && event.type !== "hybrid") notFound()
 
     const category = await getVotingCategoryById(categoryId)
     if (!category || category.eventId !== event.id) notFound()
+    const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
 
     return (
         <main className="min-h-screen">
             {/* Hero Section */}
             <div className="relative h-[40vh] w-full overflow-hidden">
                 <Image
-                    src={event.coverImage || "/landing/a.webp"}
+                    src={coverImageUrl}
                     alt={event.title}
                     fill
                     className="object-cover"
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/60 to-black/30" />
                 <div className="absolute inset-0 flex items-end pb-8">
                     <div className="max-w-6xl mx-auto px-4 w-full">
                         <Link
@@ -83,15 +95,16 @@ export default async function CategoryDetailPage({ params }: CategoryDetailPageP
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                             {category.votingOptions.map((nominee) => {
                                 const displayImage = (category.showFinalImage && nominee.finalImage) || nominee.imageUrl;
+                                const displayImageUrl = getEventImageUrl(displayImage);
                                 return (
                                     <div
                                         key={nominee.id}
                                         className="group bg-white rounded-3xl overflow-hidden border shadow-sm hover:shadow-xl transition-all duration-300"
                                     >
-                                        <div className="relative aspect-[4/5] bg-gradient-to-br from-[#009A44]/10 to-[#FFCD00]/10">
-                                            {displayImage ? (
+                                        <div className="relative aspect-4/5 bg-linear-to-br from-[#009A44]/10 to-[#FFCD00]/10">
+                                            {displayImageUrl ? (
                                                 <Image
-                                                    src={displayImage}
+                                                    src={displayImageUrl}
                                                     alt={nominee.optionText}
                                                     fill
                                                     className="object-cover group-hover:scale-105 transition-transform duration-500"

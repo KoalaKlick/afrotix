@@ -38,7 +38,6 @@ export const navMain: NavItem[] = [
         title: "Dashboard",
         url: "/dashboard",
         icon: Home,
-        isActive: true,
     },
     {
         title: "Events",

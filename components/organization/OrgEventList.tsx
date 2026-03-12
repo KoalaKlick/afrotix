@@ -6,9 +6,10 @@ import { motion } from "motion/react";
 
 interface OrgEventListProps {
     readonly events: Event[];
+    readonly organizationSlug: string;
 }
 
-export function OrgEventList({ events }: OrgEventListProps) {
+export function OrgEventList({ events, organizationSlug }: OrgEventListProps) {
     if (events.length === 0) {
         return (
             <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed">
@@ -28,7 +29,7 @@ export function OrgEventList({ events }: OrgEventListProps) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: i * 0.1 }}
                 >
-                    <PublicEventCard event={event} />
+                    <PublicEventCard event={event} organizationSlug={organizationSlug} />
                 </motion.div>
             ))}
         </div>

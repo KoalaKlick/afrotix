@@ -2,16 +2,7 @@
 
 import { Settings, Users, UserPlus, Building2, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { PageHeader } from "@/components/shared/page-header";
 import { OrgGeneralSettings } from "@/components/organization/management/OrgGeneralSettings";
 import { OrgMembersSettings } from "@/components/organization/management/OrgMembersSettings";
 import { OrgJoinRequestsSettings } from "@/components/organization/management/OrgJoinRequestsSettings";
@@ -78,29 +69,23 @@ export function OrgManageClient({
 }: OrgManageClientProps) {
     return (
         <>
-            {/* Header */}
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>
+            <PageHeader
+                breadcrumbs={[
+                    { label: "Dashboard", href: "/dashboard" },
+                    {
+                        label: (
+                            <>
                                 <Settings className="inline mr-1.5 h-3.5 w-3.5" />
                                 Manage Organization
-                            </BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-            </header>
+                            </>
+                        ),
+                    },
+                ]}
+            />
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto">
-                <div className="max-w-4xl mx-auto p-6 space-y-6">
+                <div className=" mx-auto p-6 space-y-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                             <Building2 className="h-6 w-6" />

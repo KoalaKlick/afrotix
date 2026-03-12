@@ -181,9 +181,15 @@ CREATE POLICY "org_invitations_delete_admin" ON organization_invitations
 -- EVENTS POLICIES
 -- =====================================================
 
--- Public events visible to all, private events to org members only
+-- Published public events visible to all; published private events visible only to org members
 CREATE POLICY "events_select" ON events
-  FOR SELECT USING (is_public = true OR is_org_member(organization_id));
+  FOR SELECT USING (
+    status NOT IN ('draft', 'cancelled')
+    AND (
+      is_public = true
+      OR is_org_member(organization_id)
+    )
+  );
 
 -- Org members can create events
 CREATE POLICY "events_insert_members" ON events
@@ -201,13 +207,17 @@ CREATE POLICY "events_delete_admin" ON events
 -- VOTING CATEGORIES POLICIES
 -- =====================================================
 
--- Visible based on event visibility
+-- Visible based on published event visibility
 CREATE POLICY "voting_categories_select" ON voting_categories
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM events
       WHERE events.id = voting_categories.event_id
-      AND (events.is_public = true OR is_org_member(events.organization_id))
+      AND events.status NOT IN ('draft', 'cancelled')
+      AND (
+        events.is_public = true
+        OR is_org_member(events.organization_id)
+      )
     )
   );
 
@@ -227,13 +237,17 @@ CREATE POLICY "voting_categories_delete" ON voting_categories
 -- VOTING OPTIONS POLICIES
 -- =====================================================
 
--- Visible based on event visibility
+-- Visible based on published event visibility
 CREATE POLICY "voting_options_select" ON voting_options
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM events
       WHERE events.id = voting_options.event_id
-      AND (events.is_public = true OR is_org_member(events.organization_id))
+      AND events.status NOT IN ('draft', 'cancelled')
+      AND (
+        events.is_public = true
+        OR is_org_member(events.organization_id)
+      )
     )
   );
 

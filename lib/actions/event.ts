@@ -25,8 +25,15 @@ import {
     getEventById,
 } from "@/lib/dal/event";
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
+import { normalizeEventStatus } from "@/lib/event-status";
 import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import type { EventType, EventStatus } from "@/lib/generated/prisma";
+import {
+    STORAGE_BUCKETS,
+    deleteStorageFile,
+    normalizeToPath,
+} from "@/lib/storage-utils";
+import { logger } from "@/lib/logger";
 
 // Action result type
 type ActionResult<T = void> =
@@ -427,7 +434,7 @@ export async function changeEventStatus(
     }
 
     // Validate status
-    const validStatuses = ["draft", "published", "ongoing", "ended", "cancelled"];
+    const validStatuses = ["draft", "published"];
     if (!validStatuses.includes(status)) {
         return { success: false, error: "Invalid status" };
     }
@@ -444,7 +451,7 @@ export async function changeEventStatus(
     }
 
     try {
-        const updated = await updateEventStatus(eventId, status as EventStatus);
+        const updated = await updateEventStatus(eventId, normalizeEventStatus(status));
         if (!updated) {
             return { success: false, error: "Failed to change event status" };
         }
@@ -504,11 +511,14 @@ export async function deleteExistingEvent(eventId: string): Promise<ActionResult
 
 /**
  * Upload event cover image
+ * @param formData - Form data containing the file and optional old image path
+ * @param type - Type of image (cover or banner)
+ * @returns The storage path (not full URL) of the uploaded image
  */
 export async function uploadEventImage(
     formData: FormData,
     type: "cover" | "banner" = "cover"
-): Promise<ActionResult<{ url: string }>> {
+): Promise<ActionResult<{ path: string }>> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -520,6 +530,9 @@ export async function uploadEventImage(
     if (!file) {
         return { success: false, error: "No file provided" };
     }
+
+    // Get old image path/URL if provided (for deletion)
+    const oldImagePathOrUrl = formData.get("oldImagePath") as string | null;
 
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -534,32 +547,39 @@ export async function uploadEventImage(
     }
 
     try {
+        // Delete old image if exists
+        if (oldImagePathOrUrl) {
+            const oldPath = normalizeToPath(oldImagePathOrUrl, STORAGE_BUCKETS.EVENTS);
+            if (oldPath) {
+                const deleteResult = await deleteStorageFile(STORAGE_BUCKETS.EVENTS, oldPath);
+                if (!deleteResult.success) {
+                    logger.warn({ oldPath, error: deleteResult.error }, "Failed to delete old event image, continuing with upload");
+                }
+            }
+        }
+
         // Generate unique filename (expect WebP from client-side conversion)
         const filename = `${type}-${Date.now()}.webp`;
-        const path = `${user.id}/events/${filename}`;
+        const filePath = `${user.id}/events/${filename}`;
 
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage
-            .from("events")
-            .upload(path, file, {
+            .from(STORAGE_BUCKETS.EVENTS)
+            .upload(filePath, file, {
                 cacheControl: "3600",
-                upsert: false,
+                upsert: true,
                 contentType: "image/webp",
             });
 
         if (error) {
-            console.error("[Action] Storage error:", error);
+            logger.error({ error: error.message }, "[Action] Storage error");
             return { success: false, error: "Failed to upload image" };
         }
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-            .from("events")
-            .getPublicUrl(data.path);
-
-        return { success: true, data: { url: publicUrl } };
+        // Return the path (not the full URL)
+        return { success: true, data: { path: data.path } };
     } catch (error) {
-        console.error("[Action] Error uploading image:", error);
+        logger.error({ error }, "[Action] Error uploading image");
         return { success: false, error: "Failed to upload image" };
     }
 }

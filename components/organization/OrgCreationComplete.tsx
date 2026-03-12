@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, ArrowRight, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getOrgImageUrl } from "@/lib/image-url-utils";
 
 interface OrgCreationCompleteProps {
     readonly organization: {
@@ -29,6 +30,7 @@ function getInitials(name: string): string {
 
 export function OrgCreationComplete({ organization }: OrgCreationCompleteProps) {
     const router = useRouter();
+    const logoImageUrl = getOrgImageUrl(organization.logoUrl);
 
     function handleGoToOrganization() {
         router.push("/dashboard");
@@ -62,7 +64,7 @@ export function OrgCreationComplete({ organization }: OrgCreationCompleteProps) 
             <div className="w-full max-w-sm p-4 rounded-xl border bg-card animate-in fade-in-0 slide-in-from-bottom-4 duration-500 delay-300">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-14 w-14 rounded-xl">
-                        <AvatarImage src={organization.logoUrl} alt={organization.name} />
+                        <AvatarImage src={logoImageUrl ?? undefined} alt={organization.name} />
                         <AvatarFallback className="rounded-xl text-lg font-semibold bg-primary/10 text-primary">
                             {getInitials(organization.name)}
                         </AvatarFallback>

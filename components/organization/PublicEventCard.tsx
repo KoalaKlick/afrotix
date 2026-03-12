@@ -2,15 +2,17 @@
 
 import { cn } from "@/lib/utils";
 import type { Event } from "@/lib/generated/prisma";
+import { getEventImageUrl } from "@/lib/image-url-utils";
 import { Calendar, MapPin } from "lucide-react";
 import Link from "next/link";
 
 interface PublicEventCardProps {
     readonly event: Event;
+    readonly organizationSlug: string;
     readonly className?: string;
 }
 
-export function PublicEventCard({ event, className }: PublicEventCardProps) {
+export function PublicEventCard({ event, organizationSlug, className }: PublicEventCardProps) {
     // Generate an accent color based on event type
     const accentColors = {
         voting: 'text-[#CE1126]',
@@ -20,22 +22,25 @@ export function PublicEventCard({ event, className }: PublicEventCardProps) {
     };
 
     const colorClass = accentColors[event.type as keyof typeof accentColors] ?? 'text-[#009A44]';
+    const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp";
+    const eventDetailsHref = `/${organizationSlug}/event/${event.slug}`;
 
     return (
-        <div
+        <Link
+            href={eventDetailsHref}
             className={cn(
-                "group relative cursor-pointer overflow-hidden rounded-2xl aspect-[4/3]",
+                "group relative block cursor-pointer overflow-hidden rounded-2xl aspect-4/3",
                 className
             )}
         >
             {/* Background image */}
             <div
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                style={{ backgroundImage: `url(${event.coverImage ?? "/landing/a.webp"})` }}
+                style={{ backgroundImage: `url(${coverImageUrl})` }}
             />
 
             {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-colors group-hover:from-black/80" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent transition-colors group-hover:from-black/80" />
 
             {/* Side accent (derived from landing page style) */}
             <svg
@@ -75,14 +80,13 @@ export function PublicEventCard({ event, className }: PublicEventCardProps) {
                     )}>
                         {event.type}
                     </span>
-                    <Link
-                        href={`/events/${event.slug}`}
+                    <span
                         className="text-[10px] font-bold uppercase underline underline-offset-4 hover:text-white transition-colors"
                     >
                         View Details
-                    </Link>
+                    </span>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }

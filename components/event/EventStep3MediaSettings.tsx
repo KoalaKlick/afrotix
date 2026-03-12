@@ -5,13 +5,14 @@
 
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, type ChangeEvent, type ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Image as ImageIcon, Upload, X, Eye, EyeOff, Users, CheckCircle } from "lucide-react";
 import { uploadEventImage } from "@/lib/actions/event";
 import { convertToWebP } from "@/lib/image-utils";
+import { getEventImageUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -42,9 +43,14 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
     );
     const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
     const [errors, setErrors] = useState<Record<string, string[]>>({});
+    const isPrivate = !isPublic;
 
     const coverInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
+
+    // Generate display URLs from paths
+    const coverDisplayUrl = getEventImageUrl(coverImage);
+    const bannerDisplayUrl = getEventImageUrl(bannerImage);
 
     async function handleImageUpload(file: File, type: "cover" | "banner") {
         setIsUploading(true);
@@ -62,12 +68,18 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
             const formData = new FormData();
             formData.set("file", optimizedFile);
 
+            // Pass old image path for deletion
+            const oldImagePath = type === "cover" ? coverImage : bannerImage;
+            if (oldImagePath) {
+                formData.set("oldImagePath", oldImagePath);
+            }
+
             const result = await uploadEventImage(formData, type);
             if (result.success) {
                 if (type === "cover") {
-                    setCoverImage(result.data.url);
+                    setCoverImage(result.data.path);
                 } else {
-                    setBannerImage(result.data.url);
+                    setBannerImage(result.data.path);
                 }
             } else {
                 setErrors({ [type]: [result.error] });
@@ -79,14 +91,14 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
         }
     }
 
-    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, type: "cover" | "banner") {
+    function handleFileChange(e: ChangeEvent<HTMLInputElement>, type: "cover" | "banner") {
         const file = e.target.files?.[0];
         if (file) {
             handleImageUpload(file, type);
         }
     }
 
-    function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    function handleSubmit(e: Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]) {
         e.preventDefault();
         setErrors({});
 
@@ -117,10 +129,10 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                     className="hidden"
                 />
 
-                {coverImage ? (
+                {coverImage && coverDisplayUrl ? (
                     <div className="relative rounded-xl overflow-hidden border aspect-video">
                         <Image
-                            src={coverImage}
+                            src={coverDisplayUrl}
                             alt="Cover"
                             fill
                             className="object-cover"
@@ -175,10 +187,10 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                     className="hidden"
                 />
 
-                {bannerImage ? (
+                {bannerImage && bannerDisplayUrl ? (
                     <div className="relative rounded-xl overflow-hidden border h-32">
                         <Image
-                            src={bannerImage}
+                            src={bannerDisplayUrl}
                             alt="Banner"
                             fill
                             className="object-cover"
@@ -251,19 +263,19 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                         onClick={() => setIsPublic(false)}
                         className={cn(
                             "flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all",
-                            !isPublic
+                            isPrivate
                                 ? "border-primary bg-primary/5"
                                 : "border-muted hover:border-muted-foreground/30"
                         )}
                     >
-                        <EyeOff className={cn("size-5", !isPublic ? "text-primary" : "text-muted-foreground")} />
+                        <EyeOff className={cn("size-5", isPrivate ? "text-primary" : "text-muted-foreground")} />
                         <span className="font-medium">Private</span>
                     </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
                     {isPublic
                         ? "Anyone can find and view your event"
-                        : "Only people with the link can view your event"}
+                        : "Only organization members can view this event"}
                 </p>
             </div>
 

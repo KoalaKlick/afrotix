@@ -31,6 +31,12 @@ import {
 } from "@/lib/dal/voting";
 import { getEventById } from "@/lib/dal/event";
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
+import {
+    STORAGE_BUCKETS,
+    deleteStorageFile,
+    normalizeToPath,
+} from "@/lib/storage-utils";
+import { logger } from "@/lib/logger";
 
 // Action result type
 type ActionResult<T = void> =
@@ -368,10 +374,12 @@ export async function reorderOptionsAction(
 
 /**
  * Upload nominee image
+ * @param formData - Form data containing the file and optional old image path
+ * @returns The storage path (not full URL) of the uploaded image
  */
 export async function uploadNomineeImage(
     formData: FormData
-): Promise<ActionResult<{ url: string }>> {
+): Promise<ActionResult<{ path: string }>> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -383,6 +391,9 @@ export async function uploadNomineeImage(
     if (!file) {
         return { success: false, error: "No file provided" };
     }
+
+    // Get old image path/URL if provided (for deletion)
+    const oldImagePathOrUrl = formData.get("oldImagePath") as string | null;
 
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -397,32 +408,39 @@ export async function uploadNomineeImage(
     }
 
     try {
-        // Generate unique filename
-        const ext = file.name.split('.').pop() || 'webp';
-        const filename = `nominee-${Date.now()}.${ext}`;
-        const path = `${user.id}/nominees/${filename}`;
+        // Delete old image if exists
+        if (oldImagePathOrUrl) {
+            const oldPath = normalizeToPath(oldImagePathOrUrl, STORAGE_BUCKETS.EVENTS);
+            if (oldPath) {
+                const deleteResult = await deleteStorageFile(STORAGE_BUCKETS.EVENTS, oldPath);
+                if (!deleteResult.success) {
+                    logger.warn({ oldPath, error: deleteResult.error }, "Failed to delete old nominee image, continuing with upload");
+                }
+            }
+        }
+
+        // Generate unique filename (expect WebP from client-side conversion)
+        const filename = `nominee-${Date.now()}.webp`;
+        const filePath = `${user.id}/nominees/${filename}`;
 
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage
-            .from("events")
-            .upload(path, file, {
+            .from(STORAGE_BUCKETS.EVENTS)
+            .upload(filePath, file, {
                 cacheControl: "3600",
-                upsert: false,
+                upsert: true,
+                contentType: "image/webp",
             });
 
         if (error) {
-            console.error("[Action] Storage error:", error);
+            logger.error({ error: error.message }, "[Action] Storage error");
             return { success: false, error: "Failed to upload image" };
         }
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-            .from("events")
-            .getPublicUrl(data.path);
-
-        return { success: true, data: { url: publicUrl } };
+        // Return the path (not the full URL)
+        return { success: true, data: { path: data.path } };
     } catch (error) {
-        console.error("[Action] Error uploading nominee image:", error);
+        logger.error({ error }, "[Action] Error uploading nominee image");
         return { success: false, error: "Failed to upload image" };
     }
 }

@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import { createClient } from "@/utils/supabase/server"
 import { getEventBySlug, getOrganizationBySlug, getVotingCategories } from "@/lib/dal"
+import { canUserAccessEvent } from "@/lib/event-status"
+import { getEventImageUrl } from "@/lib/image-url-utils"
+import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import Image from "next/image"
@@ -13,14 +17,21 @@ interface EventDetailsPageProps {
     }>
 }
 
-export default async function EventDetailsPage({ params }: EventDetailsPageProps) {
+export default async function EventDetailsPage({ params }: Readonly<EventDetailsPageProps>) {
     const { slug: orgSlug, eventSlug } = await params
+    const supabase = await createClient()
 
-    const organization = await getOrganizationBySlug(orgSlug)
+    const [{ data: { user } }, organization] = await Promise.all([
+        supabase.auth.getUser(),
+        getOrganizationBySlug(orgSlug),
+    ])
     if (!organization) notFound()
 
     const event = await getEventBySlug(organization.id, eventSlug)
-    if (!event || !event.isPublic || (event.status !== "published" && event.status !== "ongoing")) notFound()
+    if (!event) notFound()
+
+    const isOrganizationMember = user ? await isUserMemberOf(user.id, organization.id) : false
+    if (!canUserAccessEvent(event, isOrganizationMember)) notFound()
 
     // Fetch voting categories for voting/hybrid events
     const votingCategories = (event.type === "voting" || event.type === "hybrid")
@@ -38,19 +49,20 @@ export default async function EventDetailsPage({ params }: EventDetailsPageProps
         hour: "2-digit",
         minute: "2-digit",
     }) : ""
+    const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
 
     return (
         <main className="min-h-screen">
             {/* Hero Section */}
             <div className="relative h-[60vh] w-full overflow-hidden">
                 <Image
-                    src={event.coverImage || "/landing/a.webp"}
+                    src={coverImageUrl}
                     alt={event.title}
                     fill
                     className="object-cover"
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                 <div className="absolute inset-0 flex items-end pb-12">
                     <div className="max-w-6xl mx-auto px-4 w-full">
                         <div className="inline-flex items-center bg-[#009A44] text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
@@ -127,15 +139,16 @@ export default async function EventDetailsPage({ params }: EventDetailsPageProps
                                                 <div className="flex -space-x-3">
                                                     {category.votingOptions.slice(0, 5).map((nominee, idx) => {
                                                         const displayImage = (category.showFinalImage && nominee.finalImage) || nominee.imageUrl;
+                                                        const displayImageUrl = getEventImageUrl(displayImage);
                                                         return (
                                                             <div
                                                                 key={nominee.id}
-                                                                className="relative w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-gradient-to-br from-[#009A44]/20 to-[#FFCD00]/20"
+                                                                className="relative w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-linear-to-br from-[#009A44]/20 to-[#FFCD00]/20"
                                                                 style={{ zIndex: 5 - idx }}
                                                             >
-                                                                {displayImage ? (
+                                                                {displayImageUrl ? (
                                                                     <Image
-                                                                        src={displayImage}
+                                                                        src={displayImageUrl}
                                                                         alt={nominee.optionText}
                                                                         fill
                                                                         className="object-cover"

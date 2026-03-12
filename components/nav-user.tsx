@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
@@ -10,7 +11,6 @@ import {
   Building2,
   Check,
   ChevronsUpDown,
-  CreditCard,
   Inbox,
   Loader2,
   LogOut,
@@ -56,6 +56,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import type { OrganizationRole } from "@/lib/generated/prisma"
+import { getOrgImageUrl } from "@/lib/image-url-utils"
 import { createClient } from "@/utils/supabase/client"
 import { switchOrganization, acceptOrgInvitation, declineOrgInvitation } from "@/lib/actions/organization"
 
@@ -106,7 +107,7 @@ export function NavUser({
   organizations = [],
   activeOrganizationId,
   pendingInvitations = [],
-}: {
+}: Readonly<{
   user: {
     name: string
     email: string
@@ -115,7 +116,7 @@ export function NavUser({
   organizations?: Organization[]
   activeOrganizationId?: string | null
   pendingInvitations?: Invitation[]
-}) {
+}>) {
   const { isMobile } = useSidebar()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -144,7 +145,7 @@ export function NavUser({
       if (result.success) {
         console.log("[NavUser] Success! Reloading...")
         // Force a hard refresh to update all server components
-        window.location.reload()
+        globalThis.location.reload()
       } else {
         console.error("[NavUser] Switch failed:", result.error)
       }
@@ -259,7 +260,7 @@ export function NavUser({
                           disabled={isPending}
                         >
                           <Avatar className="size-5 rounded-md">
-                            <AvatarImage src={org.logoUrl ?? undefined} alt={org.name} />
+                            <AvatarImage src={getOrgImageUrl(org.logoUrl) ?? undefined} alt={org.name} />
                             <AvatarFallback className="rounded-md text-[8px] font-semibold">
                               {getInitials(org.name)}
                             </AvatarFallback>
@@ -358,15 +359,21 @@ export function NavUser({
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                   Pending Invitations
                 </h3>
-                {invitations.map((invitation) => (
+                {invitations.map((invitation) => {
+                  const invitationLogoUrl = getOrgImageUrl(invitation.organization.logoUrl)
+
+                  return (
                   <Card key={invitation.id} className="overflow-hidden">
                     <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        {invitation.organization.logoUrl ? (
-                          <img
-                            src={invitation.organization.logoUrl}
+                      <div className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary overflow-hidden">
+                        {invitationLogoUrl ? (
+                          <Image
+                            src={invitationLogoUrl}
                             alt={invitation.organization.name}
-                            className="h-full w-full object-cover rounded-lg"
+                            fill
+                            sizes="48px"
+                            className="object-cover rounded-lg"
+                            unoptimized
                           />
                         ) : (
                           <Building2 className="h-6 w-6" />
@@ -407,7 +414,7 @@ export function NavUser({
                       </Button>
                     </CardFooter>
                   </Card>
-                ))}
+                )})}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">

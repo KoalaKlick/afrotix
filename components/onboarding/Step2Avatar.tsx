@@ -20,6 +20,7 @@ import {
 } from "@/lib/actions/onboarding";
 import { cn } from "@/lib/utils";
 import { convertToWebP, isImageFile, formatFileSize } from "@/lib/image-utils";
+import { getAvatarUrl } from "@/lib/image-url-utils";
 
 interface Step2AvatarProps {
     defaultAvatarUrl?: string;
@@ -33,8 +34,11 @@ export function Step2Avatar({
     onSkip,
 }: Step2AvatarProps) {
     const [isPending, startTransition] = useTransition();
-    const [avatarUrl, setAvatarUrl] = useState(defaultAvatarUrl ?? "");
-    const [previewUrl, setPreviewUrl] = useState(defaultAvatarUrl ?? "");
+    // Store path (not URL) - path is what gets saved to DB
+    const [avatarPath, setAvatarPath] = useState(defaultAvatarUrl ?? "");
+    const [previewUrl, setPreviewUrl] = useState(
+        defaultAvatarUrl ? getAvatarUrl(defaultAvatarUrl) ?? "" : ""
+    );
     const [error, setError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,26 +86,37 @@ export function Step2Avatar({
             // Upload converted WebP to Supabase Storage
             const formData = new FormData();
             formData.append("file", webpFile);
+            // Pass old avatar path for deletion (if exists)
+            if (avatarPath) {
+                formData.append("oldAvatarPath", avatarPath);
+            }
 
             const result = await uploadAvatar(formData);
 
-            if (result.success && result.data?.url) {
-                setAvatarUrl(result.data.url);
+            if (result.success && result.data?.path) {
+                // Store the path (not URL) - this is what gets saved to DB
+                setAvatarPath(result.data.path);
+                // Generate URL for display
+                const displayUrl = getAvatarUrl(result.data.path);
+                if (displayUrl) {
+                    setPreviewUrl(displayUrl);
+                }
             } else {
                 setError(result.error ?? "Failed to upload image");
-                setPreviewUrl(defaultAvatarUrl ?? "");
+                setPreviewUrl(defaultAvatarUrl ? getAvatarUrl(defaultAvatarUrl) ?? "" : "");
             }
         } catch {
             setError("Failed to process image");
-            setPreviewUrl(defaultAvatarUrl ?? "");
+            setPreviewUrl(defaultAvatarUrl ? getAvatarUrl(defaultAvatarUrl) ?? "" : "");
         } finally {
             setIsUploading(false);
         }
     }
 
     async function handleSubmit(formData: FormData) {
-        if (avatarUrl) {
-            formData.set("avatarUrl", avatarUrl);
+        if (avatarPath) {
+            // Save the path (not URL) to the database
+            formData.set("avatarUrl", avatarPath);
         }
 
         startTransition(async () => {
@@ -137,7 +152,7 @@ export function Step2Avatar({
                 <input
                     type="hidden"
                     name="avatarUrl"
-                    value={avatarUrl}
+                    value={avatarPath}
                 />
 
                 {/* Avatar preview */}

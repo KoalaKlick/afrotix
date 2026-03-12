@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/utils/supabase/server';
+import { isReservedSlug } from '@/lib/validations/organization';
 import type {
   Organization,
   OrganizationMember,
@@ -230,9 +231,14 @@ export async function updateMemberRole(
 }
 
 /**
- * Check if a slug is available
+ * Check if a slug is available (not used by another org and not reserved)
  */
 export async function isSlugAvailable(slug: string): Promise<boolean> {
+  // Check if slug is reserved for system routes
+  if (isReservedSlug(slug)) {
+    return false;
+  }
+
   const supabase = await createClient();
 
   const { data, error } = await supabase

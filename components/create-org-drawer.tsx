@@ -33,6 +33,7 @@ import { validateOrgStep1, createNewOrganization, uploadOrgLogo } from "@/lib/ac
 import { generateSlug } from "@/lib/validations/organization";
 import { useDebounce } from "@/hooks/use-debounce";
 import { convertToWebP } from "@/lib/image-utils";
+import { getOrgImageUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
 
 interface CreateOrgDrawerProps {
@@ -75,9 +76,12 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
     >("idle");
 
     // Step 2: Branding
-    const [logoUrl, setLogoUrl] = useState("");
+    const [logoPath, setLogoPath] = useState("");
     const [description, setDescription] = useState("");
     const [isUploading, setIsUploading] = useState(false);
+
+    // Derive display URL from path
+    const logoDisplayUrl = logoPath ? getOrgImageUrl(logoPath) : null;
 
     // Step 3: Customize
     const [primaryColor, setPrimaryColor] = useState("#6366f1");
@@ -94,7 +98,7 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
             setSlug("");
             setIsSlugManuallyEdited(false);
             setSlugStatus("idle");
-            setLogoUrl("");
+            setLogoPath("");
             setDescription("");
             setPrimaryColor("#6366f1");
             setContactEmail("");
@@ -144,7 +148,7 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
         setSlug(value.toLowerCase().replaceAll(/[^a-z0-9-]/g, ""));
         setIsSlugManuallyEdited(true);
     }
-  
+
     async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -178,11 +182,15 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
 
             const formData = new FormData();
             formData.set("file", optimizedFile);
+            // Pass old logo path for deletion (if exists)
+            if (logoPath) {
+                formData.set("oldLogoPath", logoPath);
+            }
 
             const result = await uploadOrgLogo(formData);
 
             if (result.success && result.data) {
-                setLogoUrl(result.data.url);
+                setLogoPath(result.data.path);
             } else {
                 setErrors({ logo: result.error ?? "Upload failed" });
             }
@@ -195,7 +203,7 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
     }
 
     function handleRemoveLogo() {
-        setLogoUrl("");
+        setLogoPath("");
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -246,7 +254,8 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
             formData.set("name", name);
             formData.set("slug", slug);
             if (description) formData.set("description", description);
-            if (logoUrl) formData.set("logoUrl", logoUrl);
+            // Store path (not URL) to database
+            if (logoPath) formData.set("logoUrl", logoPath);
             if (primaryColor) formData.set("primaryColor", primaryColor);
             if (contactEmail) formData.set("contactEmail", contactEmail);
             if (websiteUrl) formData.set("websiteUrl", websiteUrl);
@@ -297,7 +306,7 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
                 </SheetHeader>
 
                 {/* Step Indicator */}
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 px-4 md:px-6 flex items-center justify-between">
                     {steps.map((step, idx) => (
                         <div key={step.number} className="flex items-center">
                             <div
@@ -398,12 +407,12 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
                                     <div className="flex items-center gap-4">
                                         <div className="relative">
                                             <Avatar className="h-20 w-20 rounded-xl">
-                                                <AvatarImage src={logoUrl} alt={name} />
+                                                <AvatarImage src={logoDisplayUrl ?? undefined} alt={name} />
                                                 <AvatarFallback className="rounded-xl text-lg font-semibold bg-primary/10 text-primary">
                                                     {getInitials(name || "ORG")}
                                                 </AvatarFallback>
                                             </Avatar>
-                                            {logoUrl && (
+                                            {logoPath && (
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveLogo}
@@ -437,7 +446,7 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
                                                 ) : (
                                                     <>
                                                         <ImagePlus className="mr-2 h-4 w-4" />
-                                                        {logoUrl ? "Change Logo" : "Upload Logo"}
+                                                        {logoPath ? "Change Logo" : "Upload Logo"}
                                                     </>
                                                 )}
                                             </Button>

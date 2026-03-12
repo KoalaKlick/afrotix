@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { Check, X, Loader2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { acceptOrgInvitation, declineOrgInvitation } from "@/lib/actions/organization";
+import { getOrgImageUrl } from "@/lib/image-url-utils";
 
 interface Invitation {
     id: string;
@@ -76,15 +78,21 @@ export function InvitationsClient({ initialInvitations }: InvitationsClientProps
 
     return (
         <div className="space-y-4">
-            {invitations.map((invitation) => (
+            {invitations.map((invitation) => {
+                const invitationLogoUrl = getOrgImageUrl(invitation.organization.logoUrl);
+
+                return (
                 <Card key={invitation.id} className="overflow-hidden">
                     <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            {invitation.organization.logoUrl ? (
-                                <img
-                                    src={invitation.organization.logoUrl}
+                        <div className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary overflow-hidden">
+                            {invitationLogoUrl ? (
+                                <Image
+                                    src={invitationLogoUrl}
                                     alt={invitation.organization.name}
-                                    className="h-full w-full object-cover rounded-lg"
+                                    fill
+                                    sizes="48px"
+                                    className="object-cover rounded-lg"
+                                    unoptimized
                                 />
                             ) : (
                                 <Building2 className="h-6 w-6" />
@@ -123,7 +131,7 @@ export function InvitationsClient({ initialInvitations }: InvitationsClientProps
                         </Button>
                     </CardFooter>
                 </Card>
-            ))}
+            )})}
         </div>
     );
 }

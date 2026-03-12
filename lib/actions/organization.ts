@@ -38,6 +38,11 @@ import {
 import { convertToWebP } from "@/lib/image-utils";
 import { setActiveOrganizationId } from "@/lib/organization-context";
 import { OrganizationRole, MembershipRequestStatus } from "@/lib/generated/prisma";
+import {
+    STORAGE_BUCKETS,
+    deleteStorageFile,
+    normalizeToPath,
+} from "@/lib/storage-utils";
 
 // Action result type
 type ActionResult<T = void> = {
@@ -138,10 +143,12 @@ export async function validateOrgStep2(
 
 /**
  * Upload organization logo to Supabase Storage
+ * @param formData - Form data containing the file and optional old logo path
+ * @returns The storage path (not full URL) of the uploaded logo
  */
 export async function uploadOrgLogo(
     formData: FormData
-): Promise<ActionResult<{ url: string }>> {
+): Promise<ActionResult<{ path: string }>> {
     const user = await getCurrentUser();
     if (!user) {
         return { success: false, error: "Not authenticated" };
@@ -151,6 +158,9 @@ export async function uploadOrgLogo(
     if (!file || file.size === 0) {
         return { success: false, error: "No file provided" };
     }
+
+    // Get old logo path/URL if provided (for deletion)
+    const oldLogoPathOrUrl = formData.get("oldLogoPath") as string | null;
 
     // Convert to WebP for optimization
     let processedFile: File;
@@ -166,39 +176,47 @@ export async function uploadOrgLogo(
         processedFile = file;
     }
 
-    // Upload to Supabase Storage
     const supabase = await createClient();
+
+    // Delete old logo if exists
+    if (oldLogoPathOrUrl) {
+        const oldPath = normalizeToPath(oldLogoPathOrUrl, STORAGE_BUCKETS.ORGANIZATIONS);
+        if (oldPath) {
+            const deleteResult = await deleteStorageFile(STORAGE_BUCKETS.ORGANIZATIONS, oldPath);
+            if (!deleteResult.success) {
+                logger.warn({ oldPath, error: deleteResult.error }, "Failed to delete old logo, continuing with upload");
+            }
+        }
+    }
 
     // Use user ID as first folder to match RLS policy
     const fileName = `temp-${Date.now()}.webp`;
     const filePath = `${user.id}/logos/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-        .from("organizations")
+        .from(STORAGE_BUCKETS.ORGANIZATIONS)
         .upload(filePath, processedFile, {
             contentType: "image/webp",
             upsert: true,
         });
 
     if (uploadError) {
-        logger.error(uploadError, "[Action] Logo upload error:");
+        logger.error({ error: uploadError.message }, "[Action] Logo upload error");
         return { success: false, error: "Failed to upload logo" };
     }
 
-    // Get public URL
-    const {
-        data: { publicUrl },
-    } = supabase.storage.from("organizations").getPublicUrl(filePath);
-
-    return { success: true, data: { url: publicUrl } };
+    // Return the path (not the full URL)
+    return { success: true, data: { path: filePath } };
 }
 
 /**
  * Upload organization banner to Supabase Storage
+ * @param formData - Form data containing the file and optional old banner path
+ * @returns The storage path (not full URL) of the uploaded banner
  */
 export async function uploadOrgBanner(
     formData: FormData
-): Promise<ActionResult<{ url: string }>> {
+): Promise<ActionResult<{ path: string }>> {
     const user = await getCurrentUser();
     if (!user) {
         return { success: false, error: "Not authenticated" };
@@ -208,6 +226,9 @@ export async function uploadOrgBanner(
     if (!file || file.size === 0) {
         return { success: false, error: "No file provided" };
     }
+
+    // Get old banner path/URL if provided (for deletion)
+    const oldBannerPathOrUrl = formData.get("oldBannerPath") as string | null;
 
     // Convert to WebP for optimization
     let processedFile: File;
@@ -223,31 +244,37 @@ export async function uploadOrgBanner(
         processedFile = file;
     }
 
-    // Upload to Supabase Storage
     const supabase = await createClient();
+
+    // Delete old banner if exists
+    if (oldBannerPathOrUrl) {
+        const oldPath = normalizeToPath(oldBannerPathOrUrl, STORAGE_BUCKETS.ORGANIZATIONS);
+        if (oldPath) {
+            const deleteResult = await deleteStorageFile(STORAGE_BUCKETS.ORGANIZATIONS, oldPath);
+            if (!deleteResult.success) {
+                logger.warn({ oldPath, error: deleteResult.error }, "Failed to delete old banner, continuing with upload");
+            }
+        }
+    }
 
     // Use user ID as first folder to match RLS policy
     const fileName = `banner-${Date.now()}.webp`;
     const filePath = `${user.id}/banners/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-        .from("organizations")
+        .from(STORAGE_BUCKETS.ORGANIZATIONS)
         .upload(filePath, processedFile, {
             contentType: "image/webp",
             upsert: true,
         });
 
     if (uploadError) {
-        logger.error(uploadError, "[Action] Banner upload error:");
+        logger.error({ error: uploadError.message }, "[Action] Banner upload error");
         return { success: false, error: "Failed to upload banner" };
     }
 
-    // Get public URL
-    const {
-        data: { publicUrl },
-    } = supabase.storage.from("organizations").getPublicUrl(filePath);
-
-    return { success: true, data: { url: publicUrl } };
+    // Return the path (not the full URL)
+    return { success: true, data: { path: filePath } };
 }
 
 /**

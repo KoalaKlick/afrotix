@@ -1,23 +1,14 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import { getUserRoleInOrganization, getOrganizationById } from "@/lib/dal/organization";
 import { getEventById } from "@/lib/dal/event";
 import { getVotingCategories } from "@/lib/dal/voting";
+import { normalizeFieldType } from "@/lib/types/voting";
 import { EventDetailClient } from "./EventDetailClient";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { PageHeader } from "@/components/shared/page-header";
 
 interface EventDetailPageProps {
-    params: Promise<{ id: string }>;
+    readonly params: Promise<{ id: string }>;
 }
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
@@ -47,33 +38,17 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
     // Get voting categories for voting/hybrid events
     const votingCategories = (event.type === "voting" || event.type === "hybrid")
-        ? await getVotingCategories(event.id)
+        ? await getVotingCategories(event.id, true)
         : [];
 
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
-                    <SidebarTrigger className="-ml-1" />
-                    <Separator
-                        orientation="vertical"
-                        className="mr-2 data-[orientation=vertical]:h-4"
-                    />
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <BreadcrumbLink href="/my-events">My Events</BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage className="max-w-[200px] truncate">
-                                    {event.title}
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </div>
-            </header>
+            <PageHeader
+                breadcrumbs={[
+                    { label: "My Events", href: "/my-events" },
+                    { label: event.title, className: "max-w-[200px] truncate" },
+                ]}
+            />
 
             <div className="flex flex-1 flex-col p-4 pt-0">
                 <EventDetailClient
@@ -105,6 +80,10 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                     userRole={role}
                     votingCategories={votingCategories.map(cat => ({
                         ...cat,
+                        customFields: cat.customFields?.map(field => ({
+                            ...field,
+                            fieldType: normalizeFieldType(field.fieldType),
+                        })),
                         votingOptions: cat.votingOptions.map(opt => ({
                             ...opt,
                             votesCount: Number(opt.votesCount),

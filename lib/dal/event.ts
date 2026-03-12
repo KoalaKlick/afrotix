@@ -9,6 +9,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
 import type { Event, EventType, EventStatus } from "@/lib/generated/prisma";
+import { normalizeEventStatus } from "@/lib/event-status";
 
 // Types for DAL operations
 export type EventCreateInput = {
@@ -138,7 +139,7 @@ export const getUpcomingEvents = cache(async (
         return await prisma.event.findMany({
             where: {
                 organizationId,
-                status: { in: ["published", "ongoing"] },
+                status: { notIn: ["draft", "cancelled"] },
                 startDate: { gte: new Date() },
             },
             orderBy: { startDate: "asc" },
@@ -165,7 +166,7 @@ export const getPublicEvents = cache(async (options?: {
         return await prisma.event.findMany({
             where: {
                 isPublic: true,
-                status: { in: ["published", "ongoing"] },
+                status: { notIn: ["draft", "cancelled"] },
                 ...(type && { type }),
                 ...(query && {
                     title: {
@@ -293,10 +294,11 @@ export async function updateEvent(id: string, data: EventUpdateInput): Promise<E
  */
 export async function updateEventStatus(id: string, status: EventStatus): Promise<Event | null> {
     try {
-        const updateData: { status: EventStatus; publishedAt?: Date } = { status };
+        const normalizedStatus = normalizeEventStatus(status);
+        const updateData: { status: EventStatus; publishedAt?: Date } = { status: normalizedStatus };
 
         // If publishing, set publishedAt
-        if (status === "published") {
+        if (normalizedStatus === "published") {
             updateData.publishedAt = new Date();
         }
 
@@ -332,23 +334,187 @@ export const getOrganizationEventStats = cache(async (organizationId: string) =>
     try {
         logger.info({ organizationId }, "[DAL] Fetching event stats for organization");
 
-        const [total, published, draft] = await Promise.all([
-            prisma.event.count({ where: { organizationId } }),
-            prisma.event.count({ where: { organizationId, status: "published" } }),
-            prisma.event.count({ where: { organizationId, status: "draft" } }),
-        ]);
+        const now = new Date();
 
-        logger.info({ organizationId, total, published, draft }, "[DAL] Event stats");
-
-        return {
+        // Run all queries in parallel for performance
+        const [
             total,
             published,
             draft,
-            ongoing: 0, // TODO: Implement ongoing count
+            ongoing,
+            ended,
+            cancelled,
+            upcoming,
+            votingCount,
+            ticketedCount,
+            hybridCount,
+            advertisementCount,
+            ticketStats,
+            voteCount,
+            mostAttended,
+            nextUpcoming,
+            recentEnded,
+        ] = await Promise.all([
+            // Basic counts
+            prisma.event.count({ where: { organizationId } }),
+            prisma.event.count({ where: { organizationId, status: { notIn: ["draft", "cancelled"] } } }),
+            prisma.event.count({ where: { organizationId, status: "draft" } }),
+            prisma.event.count({ where: {
+                organizationId,
+                status: { notIn: ["draft", "cancelled"] },
+                startDate: { lte: now },
+                OR: [{ endDate: null }, { endDate: { gte: now } }],
+            } }),
+            prisma.event.count({ where: {
+                organizationId,
+                status: { notIn: ["draft", "cancelled"] },
+                endDate: { lt: now },
+            } }),
+            prisma.event.count({ where: { organizationId, status: "cancelled" } }),
+            // Upcoming: published events with future start date
+            prisma.event.count({
+                where: {
+                    organizationId,
+                    status: { notIn: ["draft", "cancelled"] },
+                    startDate: { gt: now },
+                },
+            }),
+
+            // By type
+            prisma.event.count({ where: { organizationId, type: "voting" } }),
+            prisma.event.count({ where: { organizationId, type: "ticketed" } }),
+            prisma.event.count({ where: { organizationId, type: "hybrid" } }),
+            prisma.event.count({ where: { organizationId, type: "advertisement" } }),
+
+            // Ticket/Revenue aggregation
+            prisma.ticketOrder.aggregate({
+                where: {
+                    event: { organizationId },
+                    status: { in: ["paid", "confirmed"] },
+                },
+                _sum: { total: true },
+                _count: true,
+            }),
+
+            // Total votes across all events
+            prisma.vote.count({
+                where: { event: { organizationId } },
+            }),
+
+            // Most attended event (by ticket count)
+            prisma.event.findFirst({
+                where: { organizationId },
+                orderBy: { tickets: { _count: "desc" } },
+                select: {
+                    id: true,
+                    title: true,
+                    _count: { select: { tickets: true } },
+                },
+            }),
+
+            // Next upcoming event
+            prisma.event.findFirst({
+                where: {
+                    organizationId,
+                    status: { notIn: ["draft", "cancelled"] },
+                    startDate: { gt: now },
+                },
+                orderBy: { startDate: "asc" },
+                select: { id: true, title: true, startDate: true },
+            }),
+
+            // Most recent ended event
+            prisma.event.findFirst({
+                where: {
+                    organizationId,
+                    status: { notIn: ["draft", "cancelled"] },
+                    endDate: { lt: now },
+                },
+                orderBy: { endDate: "desc" },
+                select: { id: true, title: true, endDate: true },
+            }),
+        ]);
+
+        // Get total checked-in attendees
+        const totalAttendees = await prisma.ticket.count({
+            where: {
+                event: { organizationId },
+                checkInStatus: "checked_in",
+            },
+        });
+
+        const upcomingEventHighlight = nextUpcoming?.startDate
+            ? {
+                id: nextUpcoming.id,
+                title: nextUpcoming.title,
+                startDate: nextUpcoming.startDate,
+            }
+            : undefined;
+
+        const recentEventHighlight = recentEnded?.endDate
+            ? {
+                id: recentEnded.id,
+                title: recentEnded.title,
+                endDate: recentEnded.endDate,
+            }
+            : undefined;
+
+        const stats = {
+            // Basic counts
+            total,
+            published,
+            draft,
+            ongoing,
+            ended,
+            cancelled,
+            upcoming,
+
+            // By event type
+            byType: {
+                voting: votingCount,
+                ticketed: ticketedCount,
+                hybrid: hybridCount,
+                advertisement: advertisementCount,
+            },
+
+            // Engagement metrics
+            totalTicketsSold: ticketStats._count,
+            totalRevenue: Number(ticketStats._sum.total ?? 0),
+            totalAttendees,
+            totalVotes: voteCount,
+
+            // Highlights
+            mostAttendedEvent:
+                mostAttended && mostAttended._count.tickets > 0
+                    ? {
+                        id: mostAttended.id,
+                        title: mostAttended.title,
+                        attendees: mostAttended._count.tickets,
+                    }
+                    : undefined,
+            upcomingEvent: upcomingEventHighlight,
+            recentEvent: recentEventHighlight,
         };
+
+        logger.info({ organizationId, total, published, draft, ongoing }, "[DAL] Event stats");
+
+        return stats;
     } catch (error) {
         logger.error(error, "[DAL] Error fetching event stats:");
-        return { total: 0, published: 0, draft: 0, ongoing: 0 };
+        return {
+            total: 0,
+            published: 0,
+            draft: 0,
+            ongoing: 0,
+            ended: 0,
+            cancelled: 0,
+            upcoming: 0,
+            byType: { voting: 0, ticketed: 0, hybrid: 0, advertisement: 0 },
+            totalTicketsSold: 0,
+            totalRevenue: 0,
+            totalAttendees: 0,
+            totalVotes: 0,
+        };
     }
 });
 

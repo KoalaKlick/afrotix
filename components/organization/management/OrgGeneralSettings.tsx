@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { updateExistingOrganization, uploadOrgLogo, uploadOrgBanner } from "@/lib/actions/organization";
 import { convertToWebP } from "@/lib/image-utils";
+import { getOrgImageUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
 
 interface OrgGeneralSettingsProps {
@@ -50,11 +51,15 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
     const [slug, setSlug] = useState(organization.slug);
     const [description, setDescription] = useState(organization.description ?? "");
 
-    // Branding
-    const [logoUrl, setLogoUrl] = useState(organization.logoUrl ?? "");
-    const [bannerUrl, setBannerUrl] = useState(organization.bannerUrl ?? "");
+    // Branding - store paths (not URLs)
+    const [logoPath, setLogoPath] = useState(organization.logoUrl ?? "");
+    const [bannerPath, setBannerPath] = useState(organization.bannerUrl ?? "");
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
     const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+
+    // Derive display URLs from paths
+    const logoDisplayUrl = logoPath ? getOrgImageUrl(logoPath) : null;
+    const bannerDisplayUrl = bannerPath ? getOrgImageUrl(bannerPath) : null;
 
     // Colors
     const [primaryColor, setPrimaryColor] = useState(organization.primaryColor);
@@ -89,10 +94,14 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
             const formData = new FormData();
             formData.set("file", optimizedFile);
+            // Pass old logo path for deletion
+            if (logoPath) {
+                formData.set("oldLogoPath", logoPath);
+            }
 
             const result = await uploadOrgLogo(formData);
             if (result.success && result.data) {
-                setLogoUrl(result.data.url);
+                setLogoPath(result.data.path);
                 toast.success("Logo uploaded!");
             } else {
                 toast.error(result.error ?? "Failed to upload logo");
@@ -129,10 +138,14 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
             const formData = new FormData();
             formData.set("file", optimizedFile);
+            // Pass old banner path for deletion
+            if (bannerPath) {
+                formData.set("oldBannerPath", bannerPath);
+            }
 
             const result = await uploadOrgBanner(formData);
             if (result.success && result.data) {
-                setBannerUrl(result.data.url);
+                setBannerPath(result.data.path);
                 toast.success("Banner uploaded!");
             } else {
                 toast.error(result.error ?? "Failed to upload banner");
@@ -145,14 +158,14 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
     }
 
     function handleRemoveLogo() {
-        setLogoUrl("");
+        setLogoPath("");
         if (logoInputRef.current) {
             logoInputRef.current.value = "";
         }
     }
 
     function handleRemoveBanner() {
-        setBannerUrl("");
+        setBannerPath("");
         if (bannerInputRef.current) {
             bannerInputRef.current.value = "";
         }
@@ -178,8 +191,9 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
             formData.set("name", name);
             formData.set("slug", slug);
             formData.set("description", description);
-            formData.set("logoUrl", logoUrl);
-            formData.set("bannerUrl", bannerUrl);
+            // Save paths (not URLs) to database
+            formData.set("logoUrl", logoPath);
+            formData.set("bannerUrl", bannerPath);
             formData.set("primaryColor", primaryColor);
             formData.set("secondaryColor", secondaryColor);
             formData.set("websiteUrl", websiteUrl);
@@ -218,10 +232,10 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
                 {/* Banner */}
                 <div className="relative h-32 md:h-40 w-full rounded-lg overflow-hidden bg-muted group">
-                    {bannerUrl ? (
+                    {bannerDisplayUrl ? (
                         <>
                             <Image
-                                src={bannerUrl}
+                                src={bannerDisplayUrl}
                                 alt="Organization banner"
                                 fill
                                 className="object-cover"
@@ -252,7 +266,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                             </button>
                         </>
                     ) : (
-                        <button 
+                        <button
                             type="button"
                             className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/80 transition-colors"
                             onClick={() => bannerInputRef.current?.click()}
@@ -274,10 +288,10 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                 {/* Logo - Overlapping */}
                 <div className="absolute -bottom-10 left-4 md:left-6">
                     <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-xl bg-white p-1.5 shadow-lg border group">
-                        {logoUrl ? (
+                        {logoDisplayUrl ? (
                             <>
                                 <Image
-                                    src={logoUrl}
+                                    src={logoDisplayUrl}
                                     alt={name}
                                     fill
                                     className="object-cover rounded-lg"
@@ -305,7 +319,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                                 </button>
                             </>
                         ) : (
-                            <button 
+                            <button
                                 type="button"
                                 className="w-full h-full bg-primary/10 flex items-center justify-center text-primary rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
                                 onClick={() => logoInputRef.current?.click()}

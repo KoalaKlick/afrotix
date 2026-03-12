@@ -17,6 +17,7 @@ import {
 import { uploadOrgLogo, validateOrgStep2 } from "@/lib/actions/organization";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { convertToWebP } from "@/lib/image-utils";
+import { getOrgImageUrl } from "@/lib/image-url-utils";
 
 interface OrgStep2BrandingProps {
     readonly defaultValues?: {
@@ -48,6 +49,9 @@ export function OrgStep2Branding({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [logoUrl, setLogoUrl] = useState(defaultValues?.logoUrl ?? "");
     const [description, setDescription] = useState(defaultValues?.description ?? "");
+
+    // Generate display URL from path
+    const logoDisplayUrl = getOrgImageUrl(logoUrl);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -81,10 +85,15 @@ export function OrgStep2Branding({
             const formData = new FormData();
             formData.set("file", optimizedFile);
 
+            // Pass old logo path for deletion
+            if (logoUrl) {
+                formData.set("oldLogoPath", logoUrl);
+            }
+
             const result = await uploadOrgLogo(formData);
 
             if (result.success && result.data) {
-                setLogoUrl(result.data.url);
+                setLogoUrl(result.data.path);
             } else {
                 setErrors({ logo: result.error ?? "Upload failed" });
             }
@@ -137,7 +146,7 @@ export function OrgStep2Branding({
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <Avatar className="h-20 w-20 rounded-xl">
-                                    <AvatarImage src={logoUrl} alt={orgName} />
+                                    <AvatarImage src={logoDisplayUrl ?? undefined} alt={orgName} />
                                     <AvatarFallback className="rounded-xl text-lg font-semibold bg-primary/10 text-primary">
                                         {getInitials(orgName)}
                                     </AvatarFallback>

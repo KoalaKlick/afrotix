@@ -21,6 +21,12 @@ import {
     ensureProfile,
 } from "@/lib/dal/profile";
 import { validateReferralCode } from "@/lib/dal/promoter";
+import {
+    STORAGE_BUCKETS,
+    deleteStorageFile,
+    normalizeToPath,
+} from "@/lib/storage-utils";
+import { logger } from "@/lib/logger";
 
 // Action result type
 type ActionResult<T = void> = {
@@ -102,10 +108,12 @@ export async function saveOnboardingStep1(
 
 /**
  * Upload avatar to Supabase Storage
+ * @param formData - Form data containing the file and optional old avatar path
+ * @returns The storage path (not full URL) of the uploaded avatar
  */
 export async function uploadAvatar(
     formData: FormData,
-): Promise<ActionResult<{ url: string }>> {
+): Promise<ActionResult<{ path: string }>> {
     const user = await getCurrentUser();
     if (!user) {
         return { success: false, error: "Not authenticated" };
@@ -115,6 +123,9 @@ export async function uploadAvatar(
     if (!file || file.size === 0) {
         return { success: false, error: "No file provided" };
     }
+
+    // Get old avatar path/URL if provided (for deletion)
+    const oldAvatarPathOrUrl = formData.get("oldAvatarPath") as string | null;
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
@@ -128,29 +139,35 @@ export async function uploadAvatar(
 
     const supabase = await createClient();
 
-    // Generate unique filename
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    // Delete old avatar if exists
+    if (oldAvatarPathOrUrl) {
+        const oldPath = normalizeToPath(oldAvatarPathOrUrl, STORAGE_BUCKETS.AVATARS);
+        if (oldPath) {
+            const deleteResult = await deleteStorageFile(STORAGE_BUCKETS.AVATARS, oldPath);
+            if (!deleteResult.success) {
+                logger.warn({ oldPath, error: deleteResult.error }, "Failed to delete old avatar, continuing with upload");
+            }
+        }
+    }
+
+    // Generate unique filename with .webp extension (file should already be converted)
+    const filePath = `${user.id}/${Date.now()}.webp`;
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
-        .from("avatars")
-        .upload(fileName, file, {
+        .from(STORAGE_BUCKETS.AVATARS)
+        .upload(filePath, file, {
             cacheControl: "3600",
             upsert: true,
         });
 
     if (error) {
-        console.error("[Upload] Storage error:", error);
+        logger.error({ error: error.message }, "[Upload] Storage error");
         return { success: false, error: "Failed to upload image" };
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(data.path);
-
-    return { success: true, data: { url: urlData.publicUrl } };
+    // Return the path (not the full URL)
+    return { success: true, data: { path: data.path } };
 }
 
 /**

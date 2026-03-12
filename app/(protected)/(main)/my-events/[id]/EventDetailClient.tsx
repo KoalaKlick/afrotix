@@ -60,10 +60,13 @@ import {
     changeEventStatus,
 } from "@/lib/actions/event";
 import { convertToWebP } from "@/lib/image-utils";
+import { getEventLifecycleStatus, getEventPublicationStatus } from "@/lib/event-status";
+import { getEventImageUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { VotingManager } from "@/components/event";
 import type { OrganizationRole } from "@/lib/generated/prisma";
+import type { CustomField } from "@/lib/types/voting";
 
 interface EventData {
     id: string;
@@ -127,6 +130,7 @@ interface VotingCategory {
     requireApproval: boolean;
     orderIdx: number;
     votingOptions: VotingOption[];
+    customFields?: CustomField[];
 }
 
 interface EventDetailClientProps {
@@ -146,9 +150,9 @@ const typeIcons: Record<string, typeof Ticket> = {
 const statusColors: Record<string, string> = {
     draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
     published: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    upcoming: "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400",
     ongoing: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
     ended: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-    cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
 export function EventDetailClient({ event, organizationSlug, userRole, votingCategories = [] }: EventDetailClientProps) {
@@ -183,10 +187,21 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
 
     const canEdit = userRole === "owner" || userRole === "admin";
     const canDelete = canEdit && event.status === "draft";
-
     const publicEventUrl = organizationSlug
         ? `/${organizationSlug}/event/${event.slug}`
         : null;
+    const publicationStatus = getEventPublicationStatus(formData.status);
+    const lifecycleStatus = getEventLifecycleStatus({
+        status: formData.status,
+        startDate: formData.startDate || null,
+        endDate: formData.endDate || null,
+    });
+    const canViewPublicPage = Boolean(publicEventUrl && formData.isPublic && publicationStatus === "published");
+    const isPrivate = !formData.isPublic;
+
+    // Generate display URLs from paths
+    const coverDisplayUrl = getEventImageUrl(formData.coverImage);
+    const bannerDisplayUrl = getEventImageUrl(formData.bannerImage);
 
     // Save a single field
     async function saveField(fieldName: string, value: unknown) {
@@ -239,14 +254,20 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
             const uploadFormData = new FormData();
             uploadFormData.set("file", optimizedFile);
 
+            // Pass old image path for deletion
+            const oldImagePath = type === "cover" ? formData.coverImage : formData.bannerImage;
+            if (oldImagePath) {
+                uploadFormData.set("oldImagePath", oldImagePath);
+            }
+
             const result = await uploadEventImage(uploadFormData, type);
             if (result.success) {
                 const fieldName = type === "cover" ? "coverImage" : "bannerImage";
-                setFormData(prev => ({ ...prev, [fieldName]: result.data.url }));
+                setFormData(prev => ({ ...prev, [fieldName]: result.data.path }));
 
                 // Save to database directly
                 const saveFormData = new FormData();
-                saveFormData.set(fieldName, result.data.url);
+                saveFormData.set(fieldName, result.data.path);
                 const saveResult = await updateExistingEvent(event.id, saveFormData);
 
                 if (saveResult.success) {
@@ -309,9 +330,9 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
             <div className="bg-card border rounded-xl overflow-hidden">
                 {/* Banner */}
                 <div className="relative h-32 sm:h-48 bg-linear-to-r from-primary/20 to-primary/5">
-                    {formData.bannerImage && (
+                    {formData.bannerImage && bannerDisplayUrl && (
                         <Image
-                            src={formData.bannerImage}
+                            src={bannerDisplayUrl}
                             alt="Banner"
                             fill
                             className="object-cover"
@@ -350,9 +371,9 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                         {/* Cover Image */}
                         <div className="relative shrink-0">
                             <div className="size-24 sm:size-32 overflow-clip p-4  rounded-xl border-4 border-background bg-muted shadow-lg">
-                                {formData.coverImage ? (
+                                {formData.coverImage && coverDisplayUrl ? (
                                     <Image
-                                        src={formData.coverImage}
+                                        src={coverDisplayUrl}
                                         alt={event.title}
                                         fill
                                         className="object-cover rounded-xl"
@@ -392,8 +413,11 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                         {/* Title & Status */}
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                                <Badge className={statusColors[formData.status]}>
-                                    {formData.status}
+                                <Badge className={statusColors[publicationStatus]}>
+                                    {publicationStatus}
+                                </Badge>
+                                <Badge className={statusColors[lifecycleStatus]}>
+                                    {lifecycleStatus}
                                 </Badge>
                                 <Badge variant="outline" className="gap-1">
                                     <TypeIcon className="size-3" />
@@ -436,7 +460,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                 </div>
                             ) : (
                                 <button
-                                type="button"
+                                    type="button"
                                     className={cn(
                                         "text-2xl font-bold truncate",
                                         canEdit && "cursor-pointer hover:text-primary/80"
@@ -468,46 +492,28 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                             {isPending ? (
                                                 <Loader2 className="size-4 animate-spin" />
                                             ) : null}
-                                            <span className="capitalize">{formData.status}</span>
+                                            <span className="capitalize">{publicationStatus}</span>
                                             <ChevronDown className="size-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem
                                             onClick={() => handleStatusChange("draft")}
-                                            className={formData.status === "draft" ? "bg-accent" : ""}
+                                            className={publicationStatus === "draft" ? "bg-accent" : ""}
                                         >
                                             Draft
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             onClick={() => handleStatusChange("published")}
-                                            className={formData.status === "published" ? "bg-accent" : ""}
+                                            className={publicationStatus === "published" ? "bg-accent" : ""}
                                         >
                                             Published
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => handleStatusChange("ongoing")}
-                                            className={formData.status === "ongoing" ? "bg-accent" : ""}
-                                        >
-                                            Ongoing
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => handleStatusChange("ended")}
-                                            className={formData.status === "ended" ? "bg-accent" : ""}
-                                        >
-                                            Ended
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => handleStatusChange("cancelled")}
-                                            className={formData.status === "cancelled" ? "bg-accent" : ""}
-                                        >
-                                            Cancelled
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             )}
 
-                            {publicEventUrl && (
+                            {canViewPublicPage && publicEventUrl && (
                                 <Button variant="outline" size="sm" asChild>
                                     <Link href={publicEventUrl} target="_blank">
                                         <ExternalLink className="size-4 mr-2" />
@@ -993,15 +999,15 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                             onClick={() => setFormData(prev => ({ ...prev, isPublic: false }))}
                                             className={cn(
                                                 "flex-1 flex items-center gap-3 p-4 rounded-xl border-2 transition-all",
-                                                !formData.isPublic
+                                                isPrivate
                                                     ? "border-primary bg-primary/5"
                                                     : "border-muted hover:border-muted-foreground/30"
                                             )}
                                         >
-                                            <EyeOff className={cn("size-5", !formData.isPublic ? "text-primary" : "text-muted-foreground")} />
+                                            <EyeOff className={cn("size-5", isPrivate ? "text-primary" : "text-muted-foreground")} />
                                             <div className="text-left">
                                                 <p className="font-medium">Private</p>
-                                                <p className="text-xs text-muted-foreground">Only accessible via direct link</p>
+                                                <p className="text-xs text-muted-foreground">Only organization members can view this event</p>
                                             </div>
                                         </button>
                                     </div>
@@ -1063,7 +1069,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                         <p className="text-sm text-muted-foreground">
                                             {formData.isPublic
                                                 ? "This event is visible to everyone"
-                                                : "Only accessible via direct link"}
+                                                : "This event is only visible to organization members"}
                                         </p>
                                     </div>
                                 </div>

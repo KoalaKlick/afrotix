@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Building2, Globe, Mail, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { requestToJoinOrganization } from "@/lib/actions/organization";
+import { getOrgImageUrl } from "@/lib/image-url-utils";
 
 interface OrgProfileHeroProps {
     readonly organization: {
@@ -31,6 +33,8 @@ export function OrgProfileHero({
     hasPendingRequest
 }: OrgProfileHeroProps) {
     const [isPending, startTransition] = useTransition();
+    const bannerImageUrl = getOrgImageUrl(organization.bannerUrl);
+    const logoImageUrl = getOrgImageUrl(organization.logoUrl);
 
     const handleJoinRequest = async () => {
         if (!isUserAuthenticated) {
@@ -51,15 +55,18 @@ export function OrgProfileHero({
     return (
         <div className="relative">
             {/* Banner */}
-            <div className="h-48 md:h-64 w-full bg-muted overflow-hidden">
-                {organization.bannerUrl ? (
-                    <img
-                        src={organization.bannerUrl}
+            <div className="relative h-48 md:h-64 w-full bg-muted overflow-hidden">
+                {bannerImageUrl ? (
+                    <Image
+                        src={bannerImageUrl}
                         alt={organization.name}
+                        fill
+                        sizes="100vw"
                         className="w-full h-full object-cover"
+                        unoptimized
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-red-600 via-yellow-400 to-green-600 opacity-20" />
+                    <div className="w-full h-full bg-linear-to-r from-red-600 via-yellow-400 to-green-600 opacity-20" />
                 )}
             </div>
 
@@ -67,12 +74,15 @@ export function OrgProfileHero({
             <div className="max-w-6xl mx-auto px-4 -mt-12 md:-mt-16 relative z-10">
                 <div className="flex flex-col md:flex-row gap-6 items-end md:items-center">
                     {/* Logo */}
-                    <div className="h-24 w-24 md:h-32 md:w-32 rounded-2xl bg-white p-2 shadow-xl border overflow-hidden">
-                        {organization.logoUrl ? (
-                            <img
-                                src={organization.logoUrl}
+                    <div className="relative h-24 w-24 md:h-32 md:w-32 rounded-2xl bg-white p-2 shadow-xl border overflow-hidden">
+                        {logoImageUrl ? (
+                            <Image
+                                src={logoImageUrl}
                                 alt={organization.name}
+                                fill
+                                sizes="128px"
                                 className="w-full h-full object-cover rounded-xl"
+                                unoptimized
                             />
                         ) : (
                             <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary rounded-xl">

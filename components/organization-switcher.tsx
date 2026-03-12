@@ -1,7 +1,6 @@
 "use client"
 
-import * as React from "react"
-import { ChevronsUpDown, Plus, Building2, Loader2 } from "lucide-react"
+import { ChevronsUpDown, Plus } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTransition } from "react"
@@ -24,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { AfroTixLogo } from "@/components/shared/AfroTixLogo"
 import { switchOrganization } from "@/lib/actions/organization"
 import type { OrganizationRole } from "@/lib/generated/prisma"
+import { getOrgImageUrl } from "@/lib/image-url-utils"
 
 export type Organization = {
     id: string
@@ -66,10 +66,10 @@ export function OrganizationSwitcher({
     organizations,
     activeOrganizationId,
     onOrganizationChange,
-}: OrganizationSwitcherProps) {
+}: Readonly<OrganizationSwitcherProps>) {
     const { isMobile } = useSidebar()
     const router = useRouter()
-    const [isPending, startTransition] = useTransition()
+    const [, startTransition] = useTransition()
 
     // Find active organization or default to "Personal" mode
     const activeOrg = activeOrganizationId
@@ -109,7 +109,7 @@ export function OrganizationSwitcher({
                             {activeOrg ? (
                                 <>
                                     <Avatar className="size-8 rounded-lg">
-                                        <AvatarImage src={activeOrg.logoUrl ?? undefined} alt={activeOrg.name} />
+                                        <AvatarImage src={getOrgImageUrl(activeOrg.logoUrl) ?? undefined} alt={activeOrg.name} />
                                         <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
                                             {getInitials(activeOrg.name)}
                                         </AvatarFallback>
@@ -170,7 +170,7 @@ export function OrganizationSwitcher({
                                         className="gap-2 p-2"
                                     >
                                         <Avatar className="size-6 rounded-md">
-                                            <AvatarImage src={org.logoUrl ?? undefined} alt={org.name} />
+                                            <AvatarImage src={getOrgImageUrl(org.logoUrl) ?? undefined} alt={org.name} />
                                             <AvatarFallback className="rounded-md text-[10px] font-semibold">
                                                 {getInitials(org.name)}
                                             </AvatarFallback>

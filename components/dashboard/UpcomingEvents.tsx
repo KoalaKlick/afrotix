@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { getEventImageUrl } from "@/lib/image-url-utils";
 
 function getProgressColor(percentage: number): string {
     if (percentage >= 90) return "bg-red-500";
@@ -79,6 +80,7 @@ export function UpcomingEvents({ events, className }: UpcomingEventsProps) {
                     const soldPercentage = Math.round(
                         (event.ticketsSold / event.ticketCapacity) * 100
                     );
+                    const eventImageUrl = getEventImageUrl(event.imageUrl);
 
                     return (
                         <Link
@@ -88,9 +90,9 @@ export function UpcomingEvents({ events, className }: UpcomingEventsProps) {
                         >
                             {/* Event Image/Placeholder */}
                             <div className="size-14 rounded-lg bg-linear-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0 overflow-hidden">
-                                {event.imageUrl ? (
+                                {eventImageUrl ? (
                                     <Image
-                                        src={event.imageUrl}
+                                        src={eventImageUrl}
                                         alt={event.title}
                                         width={56}
                                         height={56}
