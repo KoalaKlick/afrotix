@@ -36,7 +36,7 @@ export function getColorClass(name: string): string {
   // Generate a simple hash from the name
   let hash = 0
   for (let i = 0; i < name.length; i++) {
-    hash = ((hash << 5) - hash) + name.charCodeAt(i)
+    hash = ((hash << 5) - hash) + (name.codePointAt(i) ?? 0)
     hash = hash & hash // Convert to 32bit integer
   }
   
@@ -73,6 +73,17 @@ export function capitalizeFirstLetter(str: string): string {
 
 export function trimText(text: string, length: number): string {
   return text.length > length ? `${text.slice(0, length)}...` : text
+}
+
+type NumberFormatOptions = {
+  locale?: string
+  style?: Intl.NumberFormatOptions['style']
+  currency?: string
+  unit?: Intl.NumberFormatOptions['unit']
+  unitDisplay?: Intl.NumberFormatOptions['unitDisplay']
+  minimumFractionDigits?: number
+  maximumFractionDigits?: number
+  useGrouping?: Intl.NumberFormatOptions['useGrouping']
 }
 
 export function formatNumber(
