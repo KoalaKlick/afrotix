@@ -3,14 +3,12 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-    OrgCreationProgress,
     OrgStep1BasicInfo,
     OrgStep2Branding,
     OrgStep3Customize,
     OrgCreationComplete,
 } from "@/components/organization";
 import { createNewOrganization } from "@/lib/actions/organization";
-import { TOTAL_ORG_CREATION_STEPS } from "@/lib/validations/organization";
 
 // Form state type
 type OrgFormData = {
@@ -30,7 +28,7 @@ interface OrgCreationClientProps {
 
 export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientProps) {
     const router = useRouter();
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<OrgFormData>>({});
     const [createdOrg, setCreatedOrg] = useState<{
@@ -54,7 +52,7 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
     }
 
     function handleStep2Skip() {
-        setCurrentStep(2);
+        createOrganization(formData as OrgFormData, { redirectToDashboard: true });
     }
 
     // Step 3 success - create organization
@@ -74,7 +72,10 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
     }
 
     // Create the organization
-    async function createOrganization(data: OrgFormData) {
+    async function createOrganization(
+        data: OrgFormData,
+        options?: { redirectToDashboard?: boolean }
+    ) {
         startTransition(async () => {
             const formDataObj = new FormData();
             formDataObj.set("name", data.name);
@@ -89,6 +90,11 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
             const result = await createNewOrganization(formDataObj);
 
             if (result.success && result.data) {
+                if (options?.redirectToDashboard && isInitialSetup) {
+                    router.replace("/dashboard");
+                    return;
+                }
+
                 setCreatedOrg({
                     id: result.data.id,
                     name: data.name,
@@ -112,12 +118,6 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
 
     return (
         <div className="w-full max-w-md mx-auto px-4">
-            {/* Progress Indicator */}
-            <div className="mb-6">
-                <OrgCreationProgress currentStep={currentStep} />
-            </div>
-
-            {/* Step Components */}
             {currentStep === 0 && (
                 <OrgStep1BasicInfo
                     defaultValues={{
@@ -160,11 +160,6 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
                     {error}
                 </div>
             )}
-
-            {/* Step indicator text */}
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-                Step {currentStep + 1} of {TOTAL_ORG_CREATION_STEPS}
-            </p>
         </div>
     );
 }

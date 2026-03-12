@@ -5,14 +5,15 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { ImagePlus, Loader2, X, FileText } from "lucide-react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
     OnboardingCard,
-    OnboardingHeader,
     OnboardingActions,
+    setupPrimaryButtonClassName,
+    setupTextButtonClassName,
 } from "@/components/onboarding/OnboardingCard";
 import { uploadOrgLogo, validateOrgStep2 } from "@/lib/actions/organization";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -132,67 +133,56 @@ export function OrgStep2Branding({
 
     return (
         <OnboardingCard>
-            <OnboardingHeader
-                title="Brand Your Organization"
-                description="Add a logo and description to help people recognize you."
-                icon={<ImagePlus className="h-6 w-6 text-primary" />}
-            />
-
             <form action={handleSubmit}>
                 <div className="space-y-6">
                     {/* Logo Upload */}
                     <div className="space-y-3">
                         <Label>Organization Logo</Label>
-                        <div className="flex items-center gap-4">
-                            <div className="relative">
-                                <Avatar className="h-20 w-20 rounded-xl">
-                                    <AvatarImage src={logoDisplayUrl ?? undefined} alt={orgName} />
-                                    <AvatarFallback className="rounded-xl text-lg font-semibold bg-primary/10 text-primary">
-                                        {getInitials(orgName)}
-                                    </AvatarFallback>
-                                </Avatar>
+                        <div className="space-y-3">
+                            <div className="relative inline-flex">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    aria-label="Choose organization logo"
+                                    className="group relative overflow-hidden rounded-3xl border-2 border-dashed border-muted-foreground/25 bg-muted transition-all duration-200 hover:border-primary/50 disabled:cursor-not-allowed"
+                                >
+                                    <Avatar className="h-24 w-24 rounded-3xl">
+                                        <AvatarImage src={logoDisplayUrl ?? undefined} alt={orgName} />
+                                        <AvatarFallback className="rounded-3xl bg-primary/10 text-lg font-semibold text-primary">
+                                            {getInitials(orgName)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                                        {isUploading ? (
+                                            <Loader2 className="h-6 w-6 animate-spin text-white" />
+                                        ) : (
+                                            <ImagePlus className="h-6 w-6 text-white" />
+                                        )}
+                                    </div>
+                                </button>
                                 {logoUrl && (
                                     <button
                                         type="button"
                                         onClick={handleRemoveLogo}
                                         className="absolute -top-2 -right-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow-sm hover:bg-destructive/90"
+                                        aria-label="Remove organization logo"
                                     >
                                         <X className="h-3 w-3" />
                                     </button>
                                 )}
                             </div>
-                            <div className="flex-1">
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    id="logo-upload"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isUploading}
-                                    className="w-full"
-                                >
-                                    {isUploading ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Uploading...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <ImagePlus className="mr-2 h-4 w-4" />
-                                            {logoUrl ? "Change Logo" : "Upload Logo"}
-                                        </>
-                                    )}
-                                </Button>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    PNG, JPG or WEBP. Max 5MB.
-                                </p>
-                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="hidden"
+                                id="logo-upload"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                PNG, JPG or WEBP. Max 5MB.
+                            </p>
                         </div>
                         {errors.logo && (
                             <p className="text-xs text-destructive">{errors.logo}</p>
@@ -210,7 +200,7 @@ export function OrgStep2Branding({
                             onChange={(e) => setDescription(e.target.value)}
                             rows={3}
                             maxLength={500}
-                            className="resize-none"
+                            className="resize-none bg-neutral-50 shadow-none"
                         />
                         <p className="text-xs text-muted-foreground text-right">
                             {description.length}/500
@@ -226,16 +216,9 @@ export function OrgStep2Branding({
 
                 <OnboardingActions>
                     <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={handleSkip}
-                        disabled={isPending}
-                    >
-                        Skip for now
-                    </Button>
-                    <Button
                         type="submit"
                         disabled={isPending || isUploading}
+                        className={setupPrimaryButtonClassName}
                     >
                         {isPending ? (
                             <>
@@ -245,6 +228,15 @@ export function OrgStep2Branding({
                         ) : (
                             "Continue"
                         )}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={handleSkip}
+                        disabled={isPending}
+                        className={setupTextButtonClassName}
+                    >
+                        Skip for now
                     </Button>
                 </OnboardingActions>
             </form>

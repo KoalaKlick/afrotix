@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { CheckCircle } from 'lucide-react'
 import { EmailVerifiedIllustration } from '@/components/auth/EmailVerifiedIllustration'
 
 export default function EmailConfirmedPage() {
@@ -21,12 +20,12 @@ export default function EmailConfirmedPage() {
             </div>
             <p className="text-sm text-muted-foreground">
                 You can close this tab and return to where you were signing up,
-                or continue to the dashboard from here.
+                or continue to setup from here.
             </p>
             <Button
-                className="w-full rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold" onClick={() => router.push('/dashboard')}
+                className="w-full rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold" onClick={() => router.push('/onboarding')}
             >
-                Continue to Dashboard
+                Continue Setup
             </Button>
         </div>
     )

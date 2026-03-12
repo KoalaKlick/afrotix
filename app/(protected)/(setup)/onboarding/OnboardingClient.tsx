@@ -3,32 +3,24 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-    OnboardingProgress,
     Step1Welcome,
     Step2Avatar,
     Step3Referral,
-    OnboardingComplete,
 } from "@/components/onboarding";
 
 interface OnboardingClientProps {
     readonly initialStep: number;
-    readonly userName: string;
-    readonly totalSteps: number;
 }
 
 export function OnboardingClient({
     initialStep,
-    userName,
-    totalSteps,
 }: OnboardingClientProps) {
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(initialStep);
-    const [isComplete, setIsComplete] = useState(initialStep >= totalSteps);
 
-    // Move to next step
     function handleStep1Success() {
         setCurrentStep(1);
-        router.refresh(); // Refresh to persist in case of page reload
+        router.refresh();
     }
 
     function handleStep2Success() {
@@ -37,8 +29,7 @@ export function OnboardingClient({
     }
 
     function handleStep3Success() {
-        setIsComplete(true);
-        router.refresh();
+        router.replace("/onboarding?completed=1");
     }
 
     function handleStep2Skip() {
@@ -47,23 +38,11 @@ export function OnboardingClient({
     }
 
     function handleStep3Skip() {
-        setIsComplete(true);
-        router.refresh();
-    }
-
-    // Render complete state
-    if (isComplete) {
-        return <OnboardingComplete userName={userName} />;
+        router.replace("/onboarding?completed=1");
     }
 
     return (
         <>
-            {/* Progress Indicator */}
-            <div className="mb-6">
-                <OnboardingProgress currentStep={currentStep} />
-            </div>
-
-            {/* Step Components - each is self-contained */}
             {currentStep === 0 && (
                 <Step1Welcome onSuccess={handleStep1Success} />
             )}
@@ -81,11 +60,6 @@ export function OnboardingClient({
                     onSkip={handleStep3Skip}
                 />
             )}
-
-            {/* Step indicator text */}
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-                Step {currentStep + 1} of {totalSteps}
-            </p>
         </>
     );
 }

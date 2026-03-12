@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { getProfileById } from '@/lib/dal/profile'
+import { getPendingInvitationsForEmail, getUserOrganizations } from '@/lib/dal/organization'
 
 export default async function DashboardLayout({
     children,
@@ -16,12 +17,23 @@ export default async function DashboardLayout({
         redirect('/auth/login')
     }
 
-    // Check onboarding status
-    const profile = await getProfileById(user.id)
+    const [profile, organizations, pendingInvitations] = await Promise.all([
+        getProfileById(user.id),
+        getUserOrganizations(user.id),
+        getPendingInvitationsForEmail(user.email ?? ''),
+    ])
 
     // Profile doesn't exist or onboarding not completed - redirect to onboarding
     if (!profile?.onboardingCompleted) {
         redirect('/onboarding')
+    }
+
+    if (organizations.length === 0) {
+        if (pendingInvitations.length > 0) {
+            redirect('/organization/invitations')
+        }
+
+        redirect('/organization/new?setup=true')
     }
 
     return <>{children}</>

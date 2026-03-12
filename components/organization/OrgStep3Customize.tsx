@@ -5,15 +5,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Palette, Loader2, Mail, Globe } from "lucide-react";
+import { Loader2, Mail, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/onboarding/FormField";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
     OnboardingCard,
-    OnboardingHeader,
     OnboardingActions,
+    setupPrimaryButtonClassName,
+    setupTextButtonClassName,
 } from "@/components/onboarding/OnboardingCard";
 
 interface OrgStep3CustomizeProps {
@@ -33,12 +34,12 @@ interface OrgStep3CustomizeProps {
 }
 
 const PRESET_COLORS = [
-    { name: "Purple", value: "#6366f1" },
-    { name: "Blue", value: "#3b82f6" },
-    { name: "Green", value: "#10b981" },
-    { name: "Orange", value: "#f97316" },
-    { name: "Pink", value: "#ec4899" },
-    { name: "Red", value: "#ef4444" },
+    { name: "Pan-African Red", value: "#dc2626" },
+    { name: "Pan-African Gold", value: "#eab308" },
+    { name: "Pan-African Green", value: "#16a34a" },
+    { name: "Deep Black", value: "#111827" },
+    { name: "Forest", value: "#166534" },
+    { name: "Clay", value: "#b45309" },
 ];
 
 export function OrgStep3Customize({
@@ -51,13 +52,11 @@ export function OrgStep3Customize({
     const [contactEmail, setContactEmail] = useState(defaultValues?.contactEmail ?? "");
     const [websiteUrl, setWebsiteUrl] = useState(defaultValues?.websiteUrl ?? "");
     const [primaryColor, setPrimaryColor] = useState(
-        defaultValues?.primaryColor ?? "#6366f1"
+        defaultValues?.primaryColor ?? "#dc2626"
     );
-    const [secondaryColor, setSecondaryColor] = useState(
-        defaultValues?.secondaryColor ?? "#1e293b"
-    );
+    const secondaryColor = defaultValues?.secondaryColor ?? "#111827";
 
-    async function handleSubmit(formData: FormData) {
+    async function handleSubmit() {
         startTransition(async () => {
             // Validate email if provided
             if (contactEmail && !contactEmail.includes("@")) {
@@ -66,7 +65,7 @@ export function OrgStep3Customize({
             }
 
             // Validate URL if provided
-            if (websiteUrl && !websiteUrl.match(/^https?:\/\/.+/)) {
+            if (websiteUrl && !/^https?:\/\/.+/.exec(websiteUrl)) {
                 setErrors({ websiteUrl: "Please enter a valid URL starting with http:// or https://" });
                 return;
             }
@@ -86,12 +85,6 @@ export function OrgStep3Customize({
 
     return (
         <OnboardingCard>
-            <OnboardingHeader
-                title="Customize Your Organization"
-                description="Add contact info and customize your brand colors."
-                icon={<Palette className="h-6 w-6 text-primary" />}
-            />
-
             <form action={handleSubmit}>
                 <div className="space-y-6">
                     {/* Contact Info */}
@@ -135,8 +128,8 @@ export function OrgStep3Customize({
                                         type="button"
                                         onClick={() => setPrimaryColor(color.value)}
                                         className={`h-8 w-8 rounded-full transition-all ${primaryColor === color.value
-                                                ? "ring-2 ring-offset-2 ring-primary scale-110"
-                                                : "hover:scale-105"
+                                            ? "ring-2 ring-offset-2 ring-red-600 scale-110"
+                                            : "hover:scale-105"
                                             }`}
                                         style={{ backgroundColor: color.value }}
                                         title={color.name}
@@ -149,27 +142,27 @@ export function OrgStep3Customize({
                                     name="primaryColor"
                                     value={primaryColor}
                                     onChange={(e) => setPrimaryColor(e.target.value)}
-                                    className="h-10 w-16 p-1 cursor-pointer"
+                                    className="h-10 w-16 cursor-pointer bg-neutral-50 p-1 shadow-none"
                                 />
                                 <Input
                                     type="text"
                                     value={primaryColor}
                                     onChange={(e) => setPrimaryColor(e.target.value)}
                                     placeholder="#6366f1"
-                                    className="font-mono text-sm"
+                                    className="bg-neutral-50 font-mono text-sm shadow-none"
                                     maxLength={7}
                                 />
                             </div>
                         </div>
 
                         {/* Preview */}
-                        <div className="p-4 rounded-lg border bg-muted/50">
+                        <div className="rounded-2xl border border-red-500/10 bg-neutral-50 p-4 shadow-none">
                             <p className="text-xs text-muted-foreground mb-2">Preview</p>
                             <div className="flex items-center gap-2">
                                 <Button
                                     type="button"
                                     style={{ backgroundColor: primaryColor }}
-                                    className="text-white hover:opacity-90"
+                                    className="rounded-full text-white hover:opacity-90"
                                 >
                                     Get Tickets
                                 </Button>
@@ -191,15 +184,7 @@ export function OrgStep3Customize({
                 )}
 
                 <OnboardingActions>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={handleSkip}
-                        disabled={isPending}
-                    >
-                        Skip for now
-                    </Button>
-                    <Button type="submit" disabled={isPending}>
+                    <Button type="submit" disabled={isPending} className={setupPrimaryButtonClassName}>
                         {isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -208,6 +193,15 @@ export function OrgStep3Customize({
                         ) : (
                             "Create Organization"
                         )}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={handleSkip}
+                        disabled={isPending}
+                        className={setupTextButtonClassName}
+                    >
+                        Skip for now
                     </Button>
                 </OnboardingActions>
             </form>

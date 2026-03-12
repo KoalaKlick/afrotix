@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/onboarding/FormField";
 import {
     OnboardingCard,
-    OnboardingHeader,
     OnboardingActions,
+    setupPrimaryButtonClassName,
 } from "@/components/onboarding/OnboardingCard";
-import { validateOrgStep1, generateUniqueSlug } from "@/lib/actions/organization";
+import { validateOrgStep1 } from "@/lib/actions/organization";
 import { generateSlug } from "@/lib/validations/organization";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -29,7 +29,7 @@ interface OrgStep1BasicInfoProps {
 export function OrgStep1BasicInfo({
     defaultValues,
     onSuccess,
-    isInitialSetup = false,
+    isInitialSetup: _isInitialSetup = false,
 }: OrgStep1BasicInfoProps) {
     const [isPending, startTransition] = useTransition();
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -81,7 +81,7 @@ export function OrgStep1BasicInfo({
     }, [debouncedSlug, name]);
 
     function handleSlugChange(value: string) {
-        setSlug(value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+        setSlug(value.toLowerCase().replaceAll(/[^a-z0-9-]/g, ""));
         setIsSlugManuallyEdited(true);
     }
 
@@ -112,16 +112,6 @@ export function OrgStep1BasicInfo({
 
     return (
         <OnboardingCard>
-            <OnboardingHeader
-                title={isInitialSetup ? "Welcome to AfroTix!" : "Create Your Organization"}
-                description={
-                    isInitialSetup
-                        ? "Let's set up your organization to start hosting and managing events."
-                        : "Set up your organization to start hosting events."
-                }
-                icon={<Building2 className="h-6 w-6 text-primary" />}
-            />
-
             <form action={handleSubmit}>
                 <div className="space-y-4">
                     <FormField
@@ -162,7 +152,7 @@ export function OrgStep1BasicInfo({
                 <OnboardingActions>
                     <Button
                         type="submit"
-                        className="w-full"
+                        className={setupPrimaryButtonClassName}
                         disabled={isPending || slugStatus === "taken" || slugStatus === "checking"}
                     >
                         {isPending ? (

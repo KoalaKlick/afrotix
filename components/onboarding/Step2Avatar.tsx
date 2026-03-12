@@ -6,12 +6,14 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { Camera, Loader2, Upload, User } from "lucide-react";
+import Image from "next/image";
+import { Loader2, Upload, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     OnboardingCard,
-    OnboardingHeader,
     OnboardingActions,
+    setupPrimaryButtonClassName,
+    setupTextButtonClassName,
 } from "./OnboardingCard";
 import {
     saveOnboardingStep2,
@@ -32,7 +34,7 @@ export function Step2Avatar({
     defaultAvatarUrl,
     onSuccess,
     onSkip,
-}: Step2AvatarProps) {
+}: Readonly<Step2AvatarProps>) {
     const [isPending, startTransition] = useTransition();
     // Store path (not URL) - path is what gets saved to DB
     const [avatarPath, setAvatarPath] = useState(defaultAvatarUrl ?? "");
@@ -121,33 +123,29 @@ export function Step2Avatar({
 
         startTransition(async () => {
             const result = await saveOnboardingStep2(formData);
-            if (!result.success) {
-                setError(result.error ?? "Something went wrong");
-            } else {
+            if (result.success) {
                 onSuccess?.();
+                return;
             }
+
+            setError(result.error ?? "Something went wrong");
         });
     }
 
     async function handleSkip() {
         startTransition(async () => {
             const result = await skipOnboardingStep(1);
-            if (!result.success) {
-                setError(result.error ?? "Something went wrong");
-            } else {
+            if (result.success) {
                 onSkip?.();
+                return;
             }
+
+            setError(result.error ?? "Something went wrong");
         });
     }
 
     return (
         <OnboardingCard>
-            <OnboardingHeader
-                title="Add a Profile Picture"
-                description="Help others recognize you with a profile photo"
-                icon={<Camera className="h-6 w-6 text-primary" />}
-            />
-
             <form action={handleSubmit}>
                 <input
                     type="hidden"
@@ -157,21 +155,26 @@ export function Step2Avatar({
 
                 {/* Avatar preview */}
                 <div className="flex flex-col items-center gap-4">
-                    <div
+                    <button
+                        type="button"
                         className={cn(
-                            "relative h-32 w-32 rounded-full overflow-hidden",
+                            "relative h-32 w-32 overflow-hidden rounded-3xl",
                             "bg-muted border-2 border-dashed border-muted-foreground/25",
                             "flex items-center justify-center",
                             "transition-all duration-200",
                             "hover:border-primary/50 cursor-pointer",
                         )}
                         onClick={() => fileInputRef.current?.click()}
+                        aria-label="Choose profile photo"
                     >
                         {previewUrl ? (
-                            <img
+                            <Image
                                 src={previewUrl}
                                 alt="Avatar preview"
-                                className="h-full w-full object-cover"
+                                fill
+                                unoptimized
+                                sizes="128px"
+                                className="object-cover"
                             />
                         ) : (
                             <User className="h-16 w-16 text-muted-foreground/50" />
@@ -190,7 +193,7 @@ export function Step2Avatar({
                                 <Upload className="h-8 w-8 text-white" />
                             )}
                         </div>
-                    </div>
+                    </button>
 
                     <input
                         ref={fileInputRef}
@@ -200,26 +203,6 @@ export function Step2Avatar({
                         onChange={handleFileSelect}
                         disabled={isUploading}
                     />
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                    >
-                        {isUploading ? (
-                            <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Uploading...
-                            </>
-                        ) : (
-                            <>
-                                <Upload className="h-4 w-4" />
-                                Choose Photo
-                            </>
-                        )}
-                    </Button>
                 </div>
 
                 {error && (
@@ -230,7 +213,7 @@ export function Step2Avatar({
                     <Button
                         type="submit"
                         size="lg"
-                        className="w-full"
+                        className={setupPrimaryButtonClassName}
                         disabled={isPending || isUploading}
                     >
                         {isPending ? (
@@ -245,8 +228,7 @@ export function Step2Avatar({
                     <Button
                         type="button"
                         variant="ghost"
-                        size="lg"
-                        className="w-full"
+                        className={setupTextButtonClassName}
                         onClick={handleSkip}
                         disabled={isPending || isUploading}
                     >

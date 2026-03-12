@@ -306,7 +306,7 @@ export async function checkUsernameAvailability(
 }
 
 /**
- * Complete onboarding and redirect to dashboard
+ * Complete onboarding and redirect through the setup router
  */
 export async function finishOnboarding(): Promise<void> {
     const user = await getCurrentUser();
@@ -319,6 +319,7 @@ export async function finishOnboarding(): Promise<void> {
         onboardingStep: TOTAL_ONBOARDING_STEPS,
     });
 
+    revalidatePath("/onboarding");
     revalidatePath("/dashboard");
-    redirect("/dashboard");
+    redirect("/onboarding");
 }

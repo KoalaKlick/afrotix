@@ -17,7 +17,7 @@ interface OrgCreationProgressProps {
 export function OrgCreationProgress({
     currentStep,
     className,
-}: OrgCreationProgressProps) {
+}: Readonly<OrgCreationProgressProps>) {
     return (
         <div className={cn("w-full", className)}>
             {/* Step indicators */}
@@ -33,12 +33,12 @@ export function OrgCreationProgress({
                                 className={cn(
                                     "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all duration-300",
                                     isCompleted &&
-                                    "bg-primary text-primary-foreground",
+                                    "bg-emerald-500 text-white",
                                     isCurrent &&
-                                    "bg-primary/20 text-primary ring-2 ring-primary ring-offset-2",
+                                    "bg-red-500/10 text-red-600 ring-2 ring-yellow-500 ring-offset-2",
                                     !isCompleted &&
                                     !isCurrent &&
-                                    "bg-muted text-muted-foreground",
+                                    "bg-neutral-100 text-muted-foreground",
                                 )}
                             >
                                 {isCompleted ? (
@@ -54,8 +54,8 @@ export function OrgCreationProgress({
                                     className={cn(
                                         "mx-2 h-0.5 w-8 transition-all duration-300",
                                         currentStep > index
-                                            ? "bg-primary"
-                                            : "bg-muted",
+                                            ? "bg-emerald-500"
+                                            : "bg-neutral-200",
                                     )}
                                 />
                             )}

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getProfileById } from "@/lib/dal/profile";
-import { getUserOrganizations, getOrganizationById } from "@/lib/dal/organization";
+import { getPendingInvitationsForEmail, getUserOrganizations, getOrganizationById } from "@/lib/dal/organization";
 import { getActiveOrganizationId } from "@/lib/organization-context";
 import { DashboardContent } from "./DashboardContent";
 
@@ -15,15 +15,24 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
-  const [profile, organizations, activeOrgId] = await Promise.all([
+  const [profile, organizations, activeOrgId, pendingInvitations] = await Promise.all([
     getProfileById(user.id),
     getUserOrganizations(user.id),
     getActiveOrganizationId(),
+    getPendingInvitationsForEmail(user.email ?? ""),
   ]);
 
   // Redirect to onboarding if not complete
   if (!profile?.onboardingCompleted) {
     redirect("/onboarding");
+  }
+
+  if (organizations.length === 0) {
+    if (pendingInvitations.length > 0) {
+      redirect("/organization/invitations");
+    }
+
+    redirect("/organization/new?setup=true");
   }
 
   let activeOrganization = null;
@@ -37,8 +46,7 @@ export default async function DashboardPage() {
     activeOrganization = await getOrganizationById(organizations[0].id);
   }
 
-  // TODO: Fetch real stats from database when events are implemented
-  // For now, use placeholder stats
+  // Placeholder stats until event metrics are wired into the dashboard.
   const stats = {
     totalEvents: 0,
     ticketsSold: 0,

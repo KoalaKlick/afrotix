@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Loader2, CheckCircle } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { OTPVerificationIllustration } from "@/components/auth/OTPVerificationIllustration"
 import { EmailVerifiedIllustration } from "@/components/auth/EmailVerifiedIllustration"
 
@@ -50,7 +50,7 @@ function VerificationContent() {
 
         toast.success('Email verified successfully!')
         setVerified(true)
-        setTimeout(() => router.push('/dashboard'), 1500)
+        setTimeout(() => router.push('/onboarding'), 1500)
     }
 
     const handleResend = async () => {
@@ -94,7 +94,7 @@ function VerificationContent() {
                     <EmailVerifiedIllustration className="size-24 text-green-500" />
                 </div>
                 <h1 className="text-2xl font-semibold tracking-tight">Email Verified!</h1>
-                <p className="text-sm text-muted-foreground">Redirecting to dashboard...</p>
+                <p className="text-sm text-muted-foreground">Redirecting to setup...</p>
                 <Loader2 className="h-6 w-6 animate-spin mx-auto" />
             </div>
         )

@@ -13,6 +13,7 @@ import {
     OnboardingCard,
     OnboardingHeader,
     OnboardingActions,
+    setupPrimaryButtonClassName,
 } from "./OnboardingCard";
 import {
     saveOnboardingStep1,
@@ -93,8 +94,6 @@ export function Step1Welcome({ defaultValues, onSuccess }: Step1WelcomeProps) {
     return (
         <OnboardingCard>
             <OnboardingHeader
-                title="Choose Your Username"
-                description="Pick a unique username that others can find you by."
                 icon={<AtSign className="h-6 w-6 text-primary" />}
             />
 
@@ -104,7 +103,7 @@ export function Step1Welcome({ defaultValues, onSuccess }: Step1WelcomeProps) {
                         label="Username"
                         name="username"
                         type="text"
-                        placeholder="johndoe"
+                        placeholder="koala"
                         value={username}
                         onChange={(e) => setUsername(e.target.value.toLowerCase())}
                         error={errors.username}
@@ -126,7 +125,7 @@ export function Step1Welcome({ defaultValues, onSuccess }: Step1WelcomeProps) {
                     <Button
                         type="submit"
                         size="lg"
-                        className="w-full"
+                        className={setupPrimaryButtonClassName}
                         disabled={isPending || usernameStatus === "taken" || usernameStatus === "checking"}
                     >
                         {isPending ? (

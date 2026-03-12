@@ -6,13 +6,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Gift, Loader2, Check, X } from "lucide-react";
+import { Gift, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormField } from "./FormField";
 import {
     OnboardingCard,
-    OnboardingHeader,
     OnboardingActions,
+    setupPrimaryButtonClassName,
+    setupTextButtonClassName,
 } from "./OnboardingCard";
 import {
     saveOnboardingStep3,
@@ -29,7 +30,7 @@ export function Step3Referral({
     defaultReferralCode,
     onSuccess,
     onSkip,
-}: Step3ReferralProps) {
+}: Readonly<Step3ReferralProps>) {
     const [isPending, startTransition] = useTransition();
     const [referralCode, setReferralCode] = useState(defaultReferralCode ?? "");
     const [error, setError] = useState<string | null>(null);
@@ -41,33 +42,31 @@ export function Step3Referral({
 
         startTransition(async () => {
             const result = await saveOnboardingStep3(formData);
-            if (!result.success) {
-                setError(result.error ?? "Something went wrong");
-            } else {
+            if (result.success) {
                 onSuccess?.();
+                return;
             }
+
+            setError(result.error ?? "Something went wrong");
         });
     }
 
     async function handleSkip() {
         startTransition(async () => {
             const result = await skipOnboardingStep(2);
-            if (!result.success) {
-                setError(result.error ?? "Something went wrong");
-            } else {
+            if (result.success) {
                 onSkip?.();
+                return;
             }
+
+            setError(result.error ?? "Something went wrong");
         });
     }
 
+    const submitLabel = referralCode ? "Apply & Continue" : "Continue";
+
     return (
         <OnboardingCard>
-            <OnboardingHeader
-                title="Got a Referral Code?"
-                description="If someone referred you, enter their code to give them credit"
-                icon={<Gift className="h-6 w-6 text-primary" />}
-            />
-
             <form action={handleSubmit}>
                 <div className="space-y-4">
                     <FormField
@@ -94,37 +93,34 @@ export function Step3Referral({
                     <Button
                         type="submit"
                         size="lg"
-                        className="w-full"
+                        className={setupPrimaryButtonClassName}
                         disabled={isPending}
                     >
                         {isPending ? (
                             <>
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                Completing...
+                                Saving...
                             </>
-                        ) : referralCode ? (
-                            "Apply & Finish"
                         ) : (
-                            "Finish Setup"
+                            submitLabel
                         )}
                     </Button>
                     {referralCode && (
                         <Button
                             type="button"
                             variant="ghost"
-                            size="lg"
-                            className="w-full"
+                            className={setupTextButtonClassName}
                             onClick={handleSkip}
                             disabled={isPending}
                         >
-                            Skip without applying
+                            Continue without applying
                         </Button>
                     )}
                 </OnboardingActions>
             </form>
 
             {/* Benefits info */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+            <div className="mt-6 rounded-2xl bg-red-500/5 p-4 ring-1 ring-yellow-500/30">
                 <h4 className="text-sm font-medium mb-2">Why use a referral code?</h4>
                 <ul className="text-xs text-muted-foreground space-y-1">
                     <li>• Support the person who referred you</li>
