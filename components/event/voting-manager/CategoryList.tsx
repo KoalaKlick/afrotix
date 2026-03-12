@@ -304,7 +304,6 @@ export function CategoryList({
                                                         displayImage={displayImage}
                                                         canEdit={canEdit}
                                                         isPending={isPending}
-                                                        showFinalImage={category.showFinalImage}
                                                         onEdit={() => onEditOption(option, category.id)}
                                                         onDelete={() => handleDeleteOption(option.id)}
                                                         onApprove={() => handleApproveNomination(option.id)}

@@ -119,7 +119,6 @@ import {
     FIELD_TYPES,
     type FieldType,
     type CustomField,
-    type FieldValue,
     type VotingOptionStatus,
     type VotingOption,
     type VotingCategory,
@@ -772,7 +771,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                                 fieldLabel: fieldForm.fieldLabel.trim(),
                                                 placeholder: fieldForm.placeholder.trim() || null,
                                                 isRequired: fieldForm.isRequired,
-                                                options: fieldForm.fieldType === "select" ? fieldForm.options.trim() || null : null,
+                                                options: fieldForm.fieldType === "select" && fieldForm.options.trim()
+                                                    ? fieldForm.options.split(",").map(o => o.trim()).filter(Boolean)
+                                                    : null,
                                             }
                                             : f
                                     ),
@@ -811,7 +812,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                             fieldLabel: fieldForm.fieldLabel.trim(),
                                             placeholder: fieldForm.placeholder.trim() || null,
                                             isRequired: fieldForm.isRequired,
-                                            options: fieldForm.fieldType === "select" ? fieldForm.options.trim() || null : null,
+                                            options: fieldForm.fieldType === "select" && fieldForm.options.trim()
+                                                ? fieldForm.options.split(",").map(o => o.trim()).filter(Boolean)
+                                                : null,
                                             orderIdx: c.customFields?.length ?? 0,
                                         },
                                     ],
@@ -1307,7 +1310,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                                                 displayImage={displayImage}
                                                                 canEdit={canEdit}
                                                                 isPending={isPending}
-                                                                showFinalImage={category.showFinalImage}
                                                                 onEdit={() => openEditOption(option, category.id)}
                                                                 onDelete={() => handleDeleteOption(option.id)}
                                                                 onApprove={() => handleApproveNomination(option.id)}
@@ -1596,9 +1598,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                                             <SelectValue placeholder={field.placeholder ?? "Select..."} />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {field.options.split(",").map((opt) => (
-                                                                <SelectItem key={opt.trim()} value={opt.trim()}>
-                                                                    {opt.trim()}
+                                                            {field.options.map((opt) => (
+                                                                <SelectItem key={opt} value={opt}>
+                                                                    {opt}
                                                                 </SelectItem>
                                                             ))}
                                                         </SelectContent>
@@ -1720,7 +1722,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                                             fieldLabel: field.fieldLabel,
                                                             placeholder: field.placeholder ?? "",
                                                             isRequired: field.isRequired,
-                                                            options: field.options ?? "",
+                                                            options: field.options?.join(", ") ?? "",
                                                         });
                                                     }}
                                                 >
