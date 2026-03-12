@@ -188,6 +188,60 @@ interface VotingManagerProps {
     readonly canEdit: boolean;
 }
 
+// Sortable category item component
+interface SortableCategoryItemProps {
+    readonly category: VotingCategory;
+    readonly canEdit: boolean;
+    readonly children: React.ReactNode;
+    readonly dragHandleSlot: React.ReactNode;
+}
+
+function SortableCategoryItem({ category, canEdit, children, dragHandleSlot }: SortableCategoryItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: category.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1 : 0,
+        position: "relative" as const,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes}>
+            <AccordionItem
+                value={category.id}
+                className="border rounded-lg bg-card"
+            >
+                <AccordionTrigger className="px-4 hover:no-underline">
+                    <div className="flex items-center gap-3 flex-1">
+                        {canEdit && (
+                            <button
+                                type="button"
+                                {...listeners}
+                                className="cursor-grab active:cursor-grabbing touch-none p-1 -m-1 hover:bg-muted rounded"
+                                onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
+                            >
+                                <GripVertical className="size-4 text-muted-foreground" />
+                            </button>
+                        )}
+                        {dragHandleSlot}
+                    </div>
+                </AccordionTrigger>
+                {children}
+            </AccordionItem>
+        </div>
+    );
+}
+
 export function VotingManager({ eventId, categories: initialCategories, canEdit }: VotingManagerProps) {
     const [categories, setCategories] = useState(initialCategories);
     const [isPending, startTransition] = useTransition();
@@ -243,6 +297,43 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
     // Template editor state
     const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
     const [uploadedPhotoForTemplate, setUploadedPhotoForTemplate] = useState<string | null>(null);
+
+    // DnD sensors for category reordering
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    // Handle drag end for category reordering
+    function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            setCategories((items) => {
+                const oldIndex = items.findIndex((item) => item.id === active.id);
+                const newIndex = items.findIndex((item) => item.id === over.id);
+                const newItems = arrayMove(items, oldIndex, newIndex);
+
+                // Persist the new order
+                startTransition(async () => {
+                    const result = await reorderCategories(eventId, newItems.map((c) => c.id));
+                    if (!result.success) {
+                        toast.error("Failed to save category order");
+                        // Revert on error
+                        setCategories(items);
+                    }
+                });
+
+                return newItems;
+            });
+        }
+    }
 
     // Reset category form
     function resetCategoryForm() {
@@ -1057,8 +1148,8 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div
-                                                role="button"
+                                            <button
+                                                type="button"
                                                 tabIndex={0}
                                                 onClick={() => templateInputRef.current?.click()}
                                                 onKeyDown={(e) => e.key === "Enter" && templateInputRef.current?.click()}
@@ -1079,7 +1170,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                                 <p className="text-xs text-muted-foreground mt-1">
                                                     PNG, JPG, or WebP (max 10MB)
                                                 </p>
-                                            </div>
+                                            </button>
                                         )}
                                         <input
                                             ref={templateInputRef}
@@ -1158,51 +1249,55 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
 
             {/* Categories List */}
             {categories.length > 0 && (
-                <Accordion type="multiple" defaultValue={categories.map(c => c.id)} className="space-y-2">
-                    {categories.map((category) => {
-                        const pendingCount = category.votingOptions.filter(o => o.status === "pending").length;
-                        return (
-                            <AccordionItem
-                                key={category.id}
-                                value={category.id}
-                                className="border rounded-lg bg-card"
-                            >
-                                <AccordionTrigger className="px-4 hover:no-underline">
-                                    <div className="flex items-center gap-3 flex-1">
-                                        {canEdit && (
-                                            <GripVertical className="size-4 text-muted-foreground cursor-grab" />
-                                        )}
-                                        <div className="text-left flex-1">
-                                            <div className="font-medium flex items-center gap-2">
-                                                {category.name}
-                                                {category.allowPublicNomination && (
-                                                    <Badge variant="outline" className="text-xs">
-                                                        <Globe className="size-3 mr-1" />
-                                                        Public
-                                                    </Badge>
-                                                )}
-                                                {pendingCount > 0 && (
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {pendingCount} pending
-                                                    </Badge>
-                                                )}
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext
+                        items={categories.map(c => c.id)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <Accordion type="multiple" defaultValue={categories.map(c => c.id)} className="space-y-2">
+                            {categories.map((category) => {
+                                const pendingCount = category.votingOptions.filter(o => o.status === "pending").length;
+                                return (
+                                    <SortableCategoryItem
+                                        key={category.id}
+                                        category={category}
+                                        canEdit={canEdit}
+                                        dragHandleSlot={
+                                            <div className="text-left flex-1">
+                                                <div className="font-medium flex items-center gap-2">
+                                                    {category.name}
+                                                    {category.allowPublicNomination && (
+                                                        <Badge variant="outline" className="text-xs">
+                                                            <Globe className="size-3 mr-1" />
+                                                            Public
+                                                        </Badge>
+                                                    )}
+                                                    {pendingCount > 0 && (
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            {pendingCount} pending
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <div className="text-sm text-muted-foreground">
+                                                    {category.votingOptions.filter(o => o.status === "approved").length} nominees
+                                                    {category.allowMultiple && " • Multiple selection"}
+                                                    {category.customFields && category.customFields.length > 0 && (
+                                                        <span> • {category.customFields.length} custom fields</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {category.votingOptions.filter(o => o.status === "approved").length} nominees
-                                                {category.allowMultiple && " • Multiple selection"}
-                                                {category.customFields && category.customFields.length > 0 && (
-                                                    <span> • {category.customFields.length} custom fields</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent className="px-4 pb-4">
-                                    {category.description && (
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            {category.description}
-                                        </p>
-                                    )}
+                                        }
+                                    >
+                                        <AccordionContent className="px-4 pb-4">
+                                            {category.description && (
+                                                <p className="text-sm text-muted-foreground mb-4">
+                                                    {category.description}
+                                                </p>
+                                            )}
 
                                     {/* Category Actions */}
                                     {canEdit && (
@@ -1399,10 +1494,12 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                         </div>
                                     )}
                                 </AccordionContent>
-                            </AccordionItem>
-                        );
-                    })}
-                </Accordion>
+                                    </SortableCategoryItem>
+                                );
+                            })}
+                        </Accordion>
+                    </SortableContext>
+                </DndContext>
             )}
 
             {/* Option Sheet */}

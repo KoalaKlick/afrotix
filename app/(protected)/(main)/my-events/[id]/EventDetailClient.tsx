@@ -308,7 +308,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
             {/* Header Section */}
             <div className="bg-card border rounded-xl overflow-hidden">
                 {/* Banner */}
-                <div className="relative h-32 sm:h-48 bg-gradient-to-r from-primary/20 to-primary/5">
+                <div className="relative h-32 sm:h-48 bg-linear-to-r from-primary/20 to-primary/5">
                     {formData.bannerImage && (
                         <Image
                             src={formData.bannerImage}
@@ -435,7 +435,8 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                     </Button>
                                 </div>
                             ) : (
-                                <h1
+                                <button
+                                type="button"
                                     className={cn(
                                         "text-2xl font-bold truncate",
                                         canEdit && "cursor-pointer hover:text-primary/80"
@@ -444,7 +445,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                 >
                                     {formData.title}
                                     {canEdit && <Pencil className="inline-block size-4 ml-2 text-muted-foreground" />}
-                                </h1>
+                                </button>
                             )}
 
                             <p className="text-sm text-muted-foreground mt-1">
@@ -802,7 +803,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                         <Button
                                             type="button"
                                             size="sm"
-                                            variant={!formData.isVirtual ? "default" : "outline"}
+                                            variant={formData.isVirtual ? "outline" : "default"}
                                             onClick={() => setFormData(prev => ({ ...prev, isVirtual: false }))}
                                         >
                                             <MapPin className="size-4 mr-2" />
