@@ -52,6 +52,10 @@ export function InvitationsClient({ initialInvitations }: InvitationsClientProps
                 toast.success("Invitation declined.");
                 setInvitations((prev) => prev.filter((inv) => inv.id !== id));
                 setProcessingId(null);
+                // If no more invitations, redirect to create org
+                if (invitations.length <= 1) {
+                    router.push("/organization/new?setup=true");
+                }
                 router.refresh();
             } else {
                 toast.error(result.error ?? "Failed to decline invitation");

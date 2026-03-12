@@ -27,15 +27,26 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 import type { OrganizationRole, Organization } from "@/lib/generated/prisma"
 import { navMain, type OrganizationInfo } from "@/lib/const/navigation"
+
+interface Invitation {
+  id: string;
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl: string | null;
+  };
+  role: string;
+}
 
 export function AppSidebar({
   user,
   organizations = [],
   activeOrganization,
+  pendingInvitations = [],
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user?: {
@@ -45,6 +56,7 @@ export function AppSidebar({
   }
   organizations?: OrganizationInfo[]
   activeOrganization?: Organization | null
+  pendingInvitations?: Invitation[]
 }) {
   const defaultUser = {
     name: "User",
@@ -86,9 +98,9 @@ export function AppSidebar({
           user={sidebarUser}
           organizations={organizations}
           activeOrganizationId={activeOrganization?.id}
+          pendingInvitations={pendingInvitations}
         />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   )
 }

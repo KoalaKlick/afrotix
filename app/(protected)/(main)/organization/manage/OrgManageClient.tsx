@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, Users, UserPlus, Building2 } from "lucide-react";
+import { Settings, Users, UserPlus, Building2, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Breadcrumb,
@@ -15,7 +15,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { OrgGeneralSettings } from "@/components/organization/management/OrgGeneralSettings";
 import { OrgMembersSettings } from "@/components/organization/management/OrgMembersSettings";
 import { OrgJoinRequestsSettings } from "@/components/organization/management/OrgJoinRequestsSettings";
-import type { Organization, OrganizationRole } from "@/lib/generated/prisma";
+import { OrgInvitationsSettings } from "@/components/organization/management/OrgInvitationsSettings";
+import type { Organization, OrganizationRole, InvitationStatus } from "@/lib/generated/prisma";
 
 interface Member {
     id: string;
@@ -44,10 +45,27 @@ interface JoinRequest {
     };
 }
 
+interface SentInvitation {
+    id: string;
+    organizationId: string;
+    email: string;
+    role: OrganizationRole;
+    status: InvitationStatus;
+    expiresAt: Date | null;
+    createdAt: Date;
+    respondedAt: Date | null;
+    inviter: {
+        id: string;
+        fullName: string | null;
+        avatarUrl: string | null;
+    } | null;
+}
+
 interface OrgManageClientProps {
     readonly organization: Organization;
     readonly members: Member[];
     readonly joinRequests: JoinRequest[];
+    readonly invitations: SentInvitation[];
     readonly currentUserId: string;
 }
 
@@ -55,6 +73,7 @@ export function OrgManageClient({
     organization,
     members,
     joinRequests,
+    invitations,
     currentUserId,
 }: OrgManageClientProps) {
     return (
@@ -93,7 +112,7 @@ export function OrgManageClient({
                     </div>
 
                     <Tabs defaultValue="general" className="space-y-6">
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList className="grid w-full grid-cols-4">
                             <TabsTrigger value="general" className="gap-1.5">
                                 <Settings className="h-4 w-4" />
                                 <span className="hidden sm:inline">General</span>
@@ -108,6 +127,15 @@ export function OrgManageClient({
                                 {joinRequests.length > 0 && (
                                     <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
                                         {joinRequests.length}
+                                    </span>
+                                )}
+                            </TabsTrigger>
+                            <TabsTrigger value="invitations" className="gap-1.5 relative">
+                                <Mail className="h-4 w-4" />
+                                <span className="hidden sm:inline">Invitations</span>
+                                {invitations.filter(i => i.status === "pending").length > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-blue-500 text-white text-[10px] font-bold">
+                                        {invitations.filter(i => i.status === "pending").length}
                                     </span>
                                 )}
                             </TabsTrigger>
@@ -129,6 +157,13 @@ export function OrgManageClient({
                             <OrgJoinRequestsSettings
                                 organizationId={organization.id}
                                 requests={joinRequests}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="invitations">
+                            <OrgInvitationsSettings
+                                organizationId={organization.id}
+                                invitations={invitations}
                             />
                         </TabsContent>
                     </Tabs>

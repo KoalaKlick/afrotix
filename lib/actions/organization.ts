@@ -606,3 +606,30 @@ export async function resolveMembershipRequest(
 
     return { success: true };
 }
+
+/**
+ * Cancel/revoke an invitation
+ */
+export async function cancelInvitation(
+    organizationId: string,
+    invitationId: string
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    const canManage = await canManageOrganization(user.id, organizationId);
+    if (!canManage) return { success: false, error: "Insufficient permissions" };
+
+    const { getInvitationById, deleteInvitation } = await import("@/lib/dal/organization");
+
+    const invitation = await getInvitationById(invitationId);
+    if (!invitation || invitation.organizationId !== organizationId) {
+        return { success: false, error: "Invitation not found" };
+    }
+
+    const success = await deleteInvitation(invitationId);
+    if (!success) return { success: false, error: "Failed to cancel invitation" };
+
+    revalidatePath("/organization/manage");
+    return { success: true };
+}

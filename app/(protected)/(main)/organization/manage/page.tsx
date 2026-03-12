@@ -6,6 +6,7 @@ import {
     getUserOrganizations,
     getUserRoleInOrganization,
     getMembershipRequests,
+    getOrganizationInvitations,
 } from "@/lib/dal/organization";
 import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import { OrgManageClient } from "./OrgManageClient";
@@ -22,10 +23,11 @@ export default async function OrganizationManagePage() {
         redirect("/dashboard");
     }
 
-    const [organization, membersData, joinRequests] = await Promise.all([
+    const [organization, membersData, joinRequests, invitations] = await Promise.all([
         getOrganizationById(activeOrgId),
         getOrganizationMembers(activeOrgId),
         getMembershipRequests(activeOrgId),
+        getOrganizationInvitations(activeOrgId),
     ]);
 
     if (!organization) redirect("/dashboard");
@@ -35,6 +37,7 @@ export default async function OrganizationManagePage() {
             organization={organization}
             members={membersData.members as any}
             joinRequests={joinRequests as any}
+            invitations={invitations as any}
             currentUserId={user.id}
         />
     );

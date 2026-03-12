@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { getProfileWithPromoterStatus } from '@/lib/dal/profile'
 import { getUserOrganizations, getOrganizationById, getPendingInvitationsForEmail } from '@/lib/dal/organization'
@@ -29,10 +28,11 @@ export default async function ProtectedLayout({
     }
 
     // Parallelize independent data fetches
-    const [profile, organizations, activeOrgId] = await Promise.all([
+    const [profile, organizations, activeOrgId, pendingInvitations] = await Promise.all([
         getProfileWithPromoterStatus(user.id),
         getUserOrganizations(user.id),
         getActiveOrganizationId(),
+        getPendingInvitationsForEmail(user.email ?? ""),
     ]);
 
     // Check if onboarding is complete - if not, don't show sidebar
@@ -40,18 +40,9 @@ export default async function ProtectedLayout({
         return <>{children}</>
     }
 
-    // Get current path to avoid redirect loop
-    const headersList = await headers()
-    const pathname = headersList.get('x-pathname') || headersList.get('x-invoke-path') || ''
-    const isOnOrgCreation = pathname.includes('/organization/new')
-    const isOnInvitations = pathname.includes('/organization/invitations')
-
-    // Handle users with no organization
-    if (organizations.length === 0 && !isOnOrgCreation && !isOnInvitations) {
-        // Check for pending invitations
-        const invitations = await getPendingInvitationsForEmail(user.email ?? "");
-
-        if (invitations.length > 0) {
+    // Handle users with no organization - redirect to setup flow
+    if (organizations.length === 0) {
+        if (pendingInvitations.length > 0) {
             redirect('/organization/invitations')
         } else {
             redirect('/organization/new?setup=true')
@@ -73,11 +64,6 @@ export default async function ProtectedLayout({
         activeOrganization = await getOrganizationById(organizations[0].id)
     }
 
-    // For org creation page during initial setup, show minimal layout
-    if (isOnOrgCreation && organizations.length === 0) {
-        return <>{children}</>
-    }
-
     return (
         <SidebarProvider>
             <AppSidebar
@@ -88,6 +74,7 @@ export default async function ProtectedLayout({
                 }}
                 organizations={organizations}
                 activeOrganization={activeOrganization}
+                pendingInvitations={pendingInvitations}
             />
             <SidebarInset>
                 {children}

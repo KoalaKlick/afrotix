@@ -29,6 +29,15 @@ export type InvitationWithOrganization = OrganizationInvitation & {
     };
 };
 
+// Invitation sent by organization (with inviter info)
+export type SentInvitation = OrganizationInvitation & {
+    inviter: {
+        id: string;
+        fullName: string | null;
+        avatarUrl: string | null;
+    } | null;
+};
+
 // Types for DAL operations
 export type OrganizationCreateInput = {
     name: string;
@@ -420,6 +429,34 @@ export async function getPendingInvitationsForEmail(email: string): Promise<Invi
 }
 
 /**
+ * Get invitations sent by an organization
+ */
+export async function getOrganizationInvitations(organizationId: string): Promise<SentInvitation[]> {
+    try {
+        return await prisma.organizationInvitation.findMany({
+            where: {
+                organizationId,
+            },
+            include: {
+                inviter: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching organization invitations:");
+        return [];
+    }
+}
+
+/**
  * Get invitation by ID
  */
 export async function getInvitationById(id: string): Promise<OrganizationInvitation | null> {
@@ -454,6 +491,21 @@ export async function updateInvitationStatus(
     } catch (error) {
         logger.error(error, "[DAL] Error updating invitation status:");
         return null;
+    }
+}
+
+/**
+ * Delete an invitation
+ */
+export async function deleteInvitation(id: string): Promise<boolean> {
+    try {
+        await prisma.organizationInvitation.delete({
+            where: { id },
+        });
+        return true;
+    } catch (error) {
+        logger.error(error, "[DAL] Error deleting invitation:");
+        return false;
     }
 }
 

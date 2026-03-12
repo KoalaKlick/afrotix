@@ -114,6 +114,11 @@ export default async function CategoryDetailPage({ params }: CategoryDetailPageP
                                         </div>
                                         <div className="p-5">
                                             <h3 className="font-bold text-lg">{nominee.optionText}</h3>
+                                            {nominee.nomineeCode && (
+                                                <p className="text-xs text-[#009A44] font-mono font-semibold mt-1">
+                                                    {nominee.nomineeCode}
+                                                </p>
+                                            )}
                                             {nominee.description && (
                                                 <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{nominee.description}</p>
                                             )}
