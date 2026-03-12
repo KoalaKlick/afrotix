@@ -194,6 +194,63 @@ export async function uploadOrgLogo(
 }
 
 /**
+ * Upload organization banner to Supabase Storage
+ */
+export async function uploadOrgBanner(
+    formData: FormData
+): Promise<ActionResult<{ url: string }>> {
+    const user = await getCurrentUser();
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+
+    const file = formData.get("file") as File;
+    if (!file || file.size === 0) {
+        return { success: false, error: "No file provided" };
+    }
+
+    // Convert to WebP for optimization
+    let processedFile: File;
+    try {
+        processedFile = await convertToWebP(file, {
+            quality: 0.85,
+            maxWidth: 1920,
+            maxHeight: 600,
+            maxSizeMB: 1,
+        });
+    } catch {
+        // Fall back to original if conversion fails
+        processedFile = file;
+    }
+
+    // Upload to Supabase Storage
+    const supabase = await createClient();
+
+    // Use user ID as first folder to match RLS policy
+    const fileName = `banner-${Date.now()}.webp`;
+    const filePath = `${user.id}/banners/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from("organizations")
+        .upload(filePath, processedFile, {
+            contentType: "image/webp",
+            upsert: true,
+        });
+
+    if (uploadError) {
+        logger.error(uploadError, "[Action] Banner upload error:");
+        return { success: false, error: "Failed to upload banner" };
+    }
+
+    // Get public URL
+    const {
+        data: { publicUrl },
+    } = supabase.storage.from("organizations").getPublicUrl(filePath);
+
+    return { success: true, data: { url: publicUrl } };
+}
+
+/**
  * Create organization (final step)
  */
 export async function createNewOrganization(
