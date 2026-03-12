@@ -48,6 +48,7 @@ import {
   SheetTitle,
   SheetBody,
 } from "@/components/ui/sheet"
+import { CreateOrgDrawer } from "@/components/create-org-drawer"
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -119,6 +120,7 @@ export function NavUser({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [notificationOpen, setNotificationOpen] = useState(false)
+  const [createOrgOpen, setCreateOrgOpen] = useState(false)
   const [invitations, setInvitations] = useState(pendingInvitations)
   const [processingInviteId, setProcessingInviteId] = useState<string | null>(null)
 
@@ -282,11 +284,12 @@ export function NavUser({
                       No organizations yet
                     </div>
                   )}
-                  <DropdownMenuItem asChild>
-                    <Link href="/organization/new" className="gap-2">
-                      <Plus className="size-4" />
-                      Create Organization
-                    </Link>
+                  <DropdownMenuItem
+                    onClick={() => setCreateOrgOpen(true)}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Plus className="size-4" />
+                    Create Organization
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
@@ -420,6 +423,9 @@ export function NavUser({
           </SheetBody>
         </SheetContent>
       </Sheet>
+
+      {/* Create Organization Drawer */}
+      <CreateOrgDrawer open={createOrgOpen} onOpenChange={setCreateOrgOpen} />
     </SidebarMenu>
   )
 }
