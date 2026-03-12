@@ -6,14 +6,7 @@ import { getOrganizationEventStats, getUpcomingEvents } from "@/lib/dal/event";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar, TrendingUp, Ticket, Users, DollarSign, ArrowRight } from "lucide-react";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/dashboard";
 
 export default async function PromoterHubPage() {
@@ -42,22 +35,7 @@ export default async function PromoterHubPage() {
 
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
-                    <SidebarTrigger className="-ml-1" />
-                    <Separator
-                        orientation="vertical"
-                        className="mr-2 data-[orientation=vertical]:h-4"
-                    />
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>Promoter Hub</BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </div>
-            </header>
+            <PageHeader breadcrumbs={[{ label: "Promoter Hub" }]} />
 
             <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
                 {/* Welcome Section */}

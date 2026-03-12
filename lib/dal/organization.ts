@@ -8,6 +8,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
 import { logger } from "@/lib/logger";
+import { isReservedSlug } from "@/lib/validations/organization";
 import type {
     Organization,
     OrganizationMember,
@@ -90,10 +91,15 @@ export const getOrganizationBySlug = cache(async (slug: string): Promise<Organiz
 });
 
 /**
- * Check if slug is available
+ * Check if slug is available (not used by another org and not reserved)
  */
 export async function isSlugAvailable(slug: string, excludeOrgId?: string): Promise<boolean> {
     try {
+        // Check if slug is reserved for system routes
+        if (isReservedSlug(slug)) {
+            return false;
+        }
+
         const existing = await prisma.organization.findUnique({
             where: { slug },
             select: { id: true },

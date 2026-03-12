@@ -297,7 +297,7 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
                 </SheetHeader>
 
                 {/* Step Indicator */}
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 px-4 md:px-6 flex items-center justify-between">
                     {steps.map((step, idx) => (
                         <div key={step.number} className="flex items-center">
                             <div

@@ -5,6 +5,94 @@
 
 import { z } from "zod";
 
+/**
+ * Reserved slugs that cannot be used for organizations
+ * These match existing routes and common system paths
+ */
+export const RESERVED_SLUGS = [
+    // Website routes
+    "contact",
+    "events",
+    "about",
+    "help",
+    "support",
+    "terms",
+    "privacy",
+    "blog",
+    "news",
+    "pricing",
+    "features",
+    "faq",
+
+    // Auth routes
+    "auth",
+    "login",
+    "register",
+    "signup",
+    "signin",
+    "logout",
+    "signout",
+    "callback",
+    "verify",
+    "reset-password",
+    "forgot-password",
+    "confirmed",
+
+    // Protected/app routes
+    "dashboard",
+    "settings",
+    "profile",
+    "account",
+    "organization",
+    "organizations",
+    "org",
+    "my-events",
+    "promoter",
+    "admin",
+    "api",
+
+    // System/common
+    "app",
+    "static",
+    "assets",
+    "public",
+    "www",
+    "mail",
+    "email",
+    "cdn",
+    "img",
+    "images",
+    "js",
+    "css",
+    "fonts",
+    "new",
+    "create",
+    "edit",
+    "delete",
+    "manage",
+    "invite",
+    "invitations",
+    "join",
+    "leave",
+    "search",
+    "explore",
+    "discover",
+    "home",
+    "index",
+    "404",
+    "500",
+    "error",
+] as const;
+
+export type ReservedSlug = (typeof RESERVED_SLUGS)[number];
+
+/**
+ * Check if a slug is reserved
+ */
+export function isReservedSlug(slug: string): boolean {
+    return RESERVED_SLUGS.includes(slug.toLowerCase() as ReservedSlug);
+}
+
 // Organization name validation
 export const organizationNameSchema = z
     .string()
@@ -23,7 +111,10 @@ export const organizationSlugSchema = z
     .regex(
         /^[a-z0-9-]+$/,
         "Slug can only contain lowercase letters, numbers, and hyphens",
-    );
+    )
+    .refine((slug) => !isReservedSlug(slug), {
+        message: "This slug is reserved and cannot be used",
+    });
 
 // Description validation (optional)
 export const organizationDescriptionSchema = z
