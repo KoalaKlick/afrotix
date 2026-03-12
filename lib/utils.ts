@@ -32,14 +32,14 @@ const colorClasses = [
  */
 export function getColorClass(name: string): string {
   if (!name) return 'bg-gray-500 text-white'
-  
+
   // Generate a simple hash from the name
   let hash = 0
   for (let i = 0; i < name.length; i++) {
     hash = ((hash << 5) - hash) + (name.codePointAt(i) ?? 0)
     hash = hash & hash // Convert to 32bit integer
   }
-  
+
   const index = Math.abs(hash) % colorClasses.length
   return colorClasses[index]
 }
