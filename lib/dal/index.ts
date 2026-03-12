@@ -7,3 +7,4 @@ export * from "./profile";
 export * from "./promoter";
 export * from "./organization";
 export * from "./event";
+export * from "./voting";

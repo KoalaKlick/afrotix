@@ -36,7 +36,7 @@ const defaultSetupSteps: SetupStep[] = [
         title: "Create your first event",
         description: "Set up an event and start selling tickets",
         completed: false,
-        href: "/events/create",
+        href: "/my-events/new",
     },
     {
         id: "team",

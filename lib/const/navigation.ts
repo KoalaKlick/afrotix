@@ -42,7 +42,7 @@ export const navMain: NavItem[] = [
     },
     {
         title: "Events",
-        url: "/events",
+        url: "/my-events",
         icon: Calendar,
         items: [
             {
@@ -50,16 +50,16 @@ export const navMain: NavItem[] = [
                 url: "/events",
             },
             {
+                title: "My Events",
+                url: "/my-events",
+            },
+            {
                 title: "My Tickets",
                 url: "/tickets",
             },
             {
                 title: "Create Event",
-                url: "/promoter/events/new",
-            },
-            {
-                title: "Saved",
-                url: "/saved",
+                url: "/my-events/new",
             },
         ],
     },

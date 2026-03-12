@@ -59,7 +59,7 @@ export function UpcomingEvents({ events, className }: UpcomingEventsProps) {
                         Create your first event to get started
                     </p>
                     <Button asChild size="sm">
-                        <Link href="/promoter/events/new">Create Event</Link>
+                        <Link href="/my-events/new">Create Event</Link>
                     </Button>
                 </div>
             </div>
@@ -71,7 +71,7 @@ export function UpcomingEvents({ events, className }: UpcomingEventsProps) {
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold">Upcoming Events</h3>
                 <Button variant="ghost" size="sm" asChild>
-                    <Link href="/events">View All</Link>
+                    <Link href="/my-events">View All</Link>
                 </Button>
             </div>
             <div className="space-y-4">
@@ -83,7 +83,7 @@ export function UpcomingEvents({ events, className }: UpcomingEventsProps) {
                     return (
                         <Link
                             key={event.id}
-                            href={`/events/${event.id}`}
+                            href={`/my-events/${event.id}`}
                             className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors -mx-3"
                         >
                             {/* Event Image/Placeholder */}

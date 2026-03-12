@@ -46,7 +46,7 @@ export function DashboardContent({
             title: "Create your first event",
             description: "Set up a voting or ticketed event to start engaging your audience.",
             icon: Calendar,
-            href: "/promoter/events/new",
+            href: "/my-events/new",
             completed: false, // This would ideally be dynamic
         },
         {

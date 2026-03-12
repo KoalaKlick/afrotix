@@ -30,6 +30,7 @@ model Profile {
   wallets                 Wallet[]
   payments                Payment[]
   approvedPayouts         Payout[]                 @relation("ApprovedPayouts")
+  nominatedOptions        VotingOption[]           @relation("NominatedOptions")
 
   @@index([email], name: "idx_profiles_email")
   @@index([username], name: "idx_profiles_username")

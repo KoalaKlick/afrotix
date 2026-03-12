@@ -69,7 +69,7 @@ export default async function PromoterHubPage() {
                         </p>
                     </div>
                     <Button asChild>
-                        <Link href="/promoter/events/new">
+                        <Link href="/my-events/new">
                             <Plus className="mr-2 size-4" />
                             Create Event
                         </Link>
@@ -107,7 +107,7 @@ export default async function PromoterHubPage() {
                 {/* Quick Actions */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Link
-                        href="/promoter/events/new"
+                        href="/my-events/new"
                         className="bg-primary text-primary-foreground rounded-xl p-6 hover:bg-primary/90 transition-colors"
                     >
                         <Plus className="size-8 mb-3" />
@@ -115,7 +115,7 @@ export default async function PromoterHubPage() {
                         <p className="text-sm opacity-90">Set up a new event</p>
                     </Link>
                     <Link
-                        href="/promoter/events"
+                        href="/my-events"
                         className="bg-card border rounded-xl p-6 hover:bg-muted/50 transition-colors"
                     >
                         <Calendar className="size-8 mb-3 text-primary" />
@@ -145,7 +145,7 @@ export default async function PromoterHubPage() {
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="font-semibold">Upcoming Events</h2>
                         <Button variant="ghost" size="sm" asChild>
-                            <Link href="/promoter/events">
+                            <Link href="/my-events">
                                 View All
                                 <ArrowRight className="ml-2 size-4" />
                             </Link>
@@ -165,7 +165,7 @@ export default async function PromoterHubPage() {
                             {upcomingEvents.map((event) => (
                                 <Link
                                     key={event.id}
-                                    href={`/promoter/events/${event.id}`}
+                                    href={`/my-events/${event.id}`}
                                     className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors -mx-3"
                                 >
                                     <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center">

@@ -19,6 +19,16 @@ import type {
     Event
 } from "@/lib/generated/prisma";
 
+// Invitation with organization for display
+export type InvitationWithOrganization = OrganizationInvitation & {
+    organization: {
+        id: string;
+        name: string;
+        slug: string;
+        logoUrl: string | null;
+    };
+};
+
 // Types for DAL operations
 export type OrganizationCreateInput = {
     name: string;
@@ -381,7 +391,7 @@ export async function getOrganizationMembers(
 /**
  * Get pending invitations for an email
  */
-export async function getPendingInvitationsForEmail(email: string): Promise<OrganizationInvitation[]> {
+export async function getPendingInvitationsForEmail(email: string): Promise<InvitationWithOrganization[]> {
     try {
         return await prisma.organizationInvitation.findMany({
             where: {

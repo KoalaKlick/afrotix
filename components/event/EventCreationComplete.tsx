@@ -52,7 +52,7 @@ export function EventCreationComplete({ event, organizationSlug }: EventCreation
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
                 <Button asChild className="flex-1">
-                    <Link href={`/promoter/events/${event.id}`}>
+                    <Link href={`/my-events/${event.id}`}>
                         <Edit className="mr-2 size-4" />
                         Edit Event
                     </Link>
@@ -68,13 +68,13 @@ export function EventCreationComplete({ event, organizationSlug }: EventCreation
             {/* Secondary Actions */}
             <div className="flex gap-4 mt-6 text-sm">
                 <Link
-                    href="/promoter/events"
+                    href="/events"
                     className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                     View All Events
                 </Link>
                 <Link
-                    href="/promoter/events/new"
+                    href="/events/new"
                     className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                     Create Another

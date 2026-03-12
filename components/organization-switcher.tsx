@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, Building2 } from "lucide-react"
+import { ChevronsUpDown, Plus, Building2, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 
 import {
     DropdownMenu,
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { AfroTixLogo } from "@/components/shared/AfroTixLogo"
+import { switchOrganization } from "@/lib/actions/organization"
 import type { OrganizationRole } from "@/lib/generated/prisma"
 
 export type Organization = {
@@ -67,6 +69,7 @@ export function OrganizationSwitcher({
 }: OrganizationSwitcherProps) {
     const { isMobile } = useSidebar()
     const router = useRouter()
+    const [isPending, startTransition] = useTransition()
 
     // Find active organization or default to "Personal" mode
     const activeOrg = activeOrganizationId
@@ -78,7 +81,14 @@ export function OrganizationSwitcher({
             // Store active org in localStorage for persistence
             localStorage.setItem("activeOrganizationId", org.id)
             onOrganizationChange?.(org.id)
-            router.push(`/promoter/${org.slug}`)
+
+            // Set the server-side cookie via server action
+            startTransition(async () => {
+                const result = await switchOrganization(org.id)
+                if (result.success) {
+                    router.push(`/promoter/${org.slug}`)
+                }
+            })
         } else {
             // Personal mode - no organization
             localStorage.removeItem("activeOrganizationId")

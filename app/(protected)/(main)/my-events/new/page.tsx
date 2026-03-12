@@ -50,7 +50,7 @@ export default async function NewEventPage() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <BreadcrumbLink href="/promoter/events">Events</BreadcrumbLink>
+                                <BreadcrumbLink href="/my-events">My Events</BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>

@@ -25,7 +25,7 @@ import {
     getEventById,
 } from "@/lib/dal/event";
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
-import { getActiveOrganizationId } from "@/lib/organization-context";
+import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import type { EventType, EventStatus } from "@/lib/generated/prisma";
 
 // Action result type
@@ -46,8 +46,8 @@ export async function validateEventStep1(
         return { success: false, error: "Not authenticated" };
     }
 
-    // Get active organization
-    const organizationId = await getActiveOrganizationId();
+    // Get active organization (falls back to first manageable org if no cookie)
+    const organizationId = await getEffectiveOrganizationId(user.id);
     if (!organizationId) {
         return { success: false, error: "No active organization" };
     }
@@ -170,8 +170,8 @@ export async function createNewEvent(
         return { success: false, error: "Not authenticated" };
     }
 
-    // Get active organization
-    const organizationId = await getActiveOrganizationId();
+    // Get active organization (falls back to first manageable org if no cookie)
+    const organizationId = await getEffectiveOrganizationId(user.id);
     if (!organizationId) {
         return { success: false, error: "No active organization" };
     }
@@ -249,7 +249,7 @@ export async function createNewEvent(
         });
 
         // Revalidate paths
-        revalidatePath("/promoter/events");
+        revalidatePath("/my-events");
         revalidatePath("/dashboard");
 
         return {
@@ -326,8 +326,8 @@ export async function updateExistingEvent(
             return { success: false, error: "Failed to update event" };
         }
 
-        revalidatePath(`/promoter/events/${eventId}`);
-        revalidatePath("/promoter/events");
+        revalidatePath(`/my-events/${eventId}`);
+        revalidatePath("/my-events");
 
         return { success: true, data: { id: updated.id } };
     } catch (error) {
@@ -364,9 +364,8 @@ export async function publishEvent(eventId: string): Promise<ActionResult<{ id: 
             return { success: false, error: "Failed to publish event" };
         }
 
-        revalidatePath(`/promoter/events/${eventId}`);
-        revalidatePath("/promoter/events");
-        revalidatePath("/events");
+        revalidatePath(`/my-events/${eventId}`);
+        revalidatePath("/my-events");
 
         return { success: true, data: { id: updated.id } };
     } catch (error) {
@@ -403,13 +402,60 @@ export async function cancelEvent(eventId: string): Promise<ActionResult<{ id: s
             return { success: false, error: "Failed to cancel event" };
         }
 
-        revalidatePath(`/promoter/events/${eventId}`);
-        revalidatePath("/promoter/events");
+        revalidatePath(`/my-events/${eventId}`);
+        revalidatePath("/my-events");
 
         return { success: true, data: { id: updated.id } };
     } catch (error) {
         console.error("[Action] Error cancelling event:", error);
         return { success: false, error: "Failed to cancel event" };
+    }
+}
+
+/**
+ * Change event status to any value
+ */
+export async function changeEventStatus(
+    eventId: string,
+    status: string
+): Promise<ActionResult<{ id: string }>> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+
+    // Validate status
+    const validStatuses = ["draft", "published", "ongoing", "ended", "cancelled"];
+    if (!validStatuses.includes(status)) {
+        return { success: false, error: "Invalid status" };
+    }
+
+    const event = await getEventById(eventId);
+    if (!event) {
+        return { success: false, error: "Event not found" };
+    }
+
+    // Check user has permission (must be owner or admin)
+    const role = await getUserRoleInOrganization(user.id, event.organizationId);
+    if (!role || role === "member") {
+        return { success: false, error: "Not authorized to change event status" };
+    }
+
+    try {
+        const updated = await updateEventStatus(eventId, status as EventStatus);
+        if (!updated) {
+            return { success: false, error: "Failed to change event status" };
+        }
+
+        revalidatePath(`/my-events/${eventId}`);
+        revalidatePath("/my-events");
+
+        return { success: true, data: { id: updated.id } };
+    } catch (error) {
+        console.error("[Action] Error changing event status:", error);
+        return { success: false, error: "Failed to change event status" };
     }
 }
 
@@ -446,7 +492,7 @@ export async function deleteExistingEvent(eventId: string): Promise<ActionResult
             return { success: false, error: "Failed to delete event" };
         }
 
-        revalidatePath("/promoter/events");
+        revalidatePath("/my-events");
         revalidatePath("/dashboard");
 
         return { success: true, data: undefined };

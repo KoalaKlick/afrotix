@@ -105,7 +105,9 @@ export const getOrganizationEvents = cache(async (
     try {
         const { status, type, limit = 50, offset = 0 } = options ?? {};
 
-        return await prisma.event.findMany({
+        logger.info({ organizationId, status, type, limit, offset }, "[DAL] Fetching organization events");
+
+        const events = await prisma.event.findMany({
             where: {
                 organizationId,
                 ...(status && { status }),
@@ -115,6 +117,10 @@ export const getOrganizationEvents = cache(async (
             take: limit,
             skip: offset,
         });
+
+        logger.info({ count: events.length, organizationId }, "[DAL] Found events");
+
+        return events;
     } catch (error) {
         logger.error(error, "[DAL] Error fetching organization events:");
         return [];
@@ -159,7 +165,7 @@ export const getPublicEvents = cache(async (options?: {
         return await prisma.event.findMany({
             where: {
                 isPublic: true,
-                status: "published",
+                status: { in: ["published", "ongoing"] },
                 ...(type && { type }),
                 ...(query && {
                     title: {
@@ -231,7 +237,9 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
         maxAttendees,
     } = data;
 
-    return await prisma.event.create({
+    logger.info({ organizationId, creatorId, title, slug, type, isPublic }, "[DAL] Creating event");
+
+    const event = await prisma.event.create({
         data: {
             organizationId,
             creatorId,
@@ -255,6 +263,10 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
             status: "draft",
         },
     });
+
+    logger.info({ eventId: event.id, organizationId: event.organizationId }, "[DAL] Event created");
+
+    return event;
 }
 
 /**
@@ -318,11 +330,15 @@ export async function deleteEvent(id: string): Promise<boolean> {
  */
 export const getOrganizationEventStats = cache(async (organizationId: string) => {
     try {
+        logger.info({ organizationId }, "[DAL] Fetching event stats for organization");
+
         const [total, published, draft] = await Promise.all([
             prisma.event.count({ where: { organizationId } }),
             prisma.event.count({ where: { organizationId, status: "published" } }),
             prisma.event.count({ where: { organizationId, status: "draft" } }),
         ]);
+
+        logger.info({ organizationId, total, published, draft }, "[DAL] Event stats");
 
         return {
             total,

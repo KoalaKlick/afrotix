@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation"
-import { getEventBySlug, getOrganizationBySlug } from "@/lib/dal"
+import Link from "next/link"
+import { getEventBySlug, getOrganizationBySlug, getVotingCategories } from "@/lib/dal"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import Image from "next/image"
-import { Calendar, MapPin, Clock, Tag } from "lucide-react"
+import { Calendar, MapPin, Clock, Vote, Trophy, Users, ChevronRight } from "lucide-react"
 
 interface EventDetailsPageProps {
     params: Promise<{
@@ -19,7 +20,12 @@ export default async function EventDetailsPage({ params }: EventDetailsPageProps
     if (!organization) notFound()
 
     const event = await getEventBySlug(organization.id, eventSlug)
-    if (!event || !event.isPublic || event.status !== "published") notFound()
+    if (!event || !event.isPublic || (event.status !== "published" && event.status !== "ongoing")) notFound()
+
+    // Fetch voting categories for voting/hybrid events
+    const votingCategories = (event.type === "voting" || event.type === "hybrid")
+        ? await getVotingCategories(event.id)
+        : []
 
     const startDate = event.startDate ? new Date(event.startDate) : null
     const dateStr = startDate ? startDate.toLocaleDateString("en-US", {
@@ -75,47 +81,88 @@ export default async function EventDetailsPage({ params }: EventDetailsPageProps
 
             <PanAfricanDivider />
 
-            {/* Content Section */}
-            <Section className="py-20 bg-white">
-                <div className="max-w-6xl mx-auto px-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                        <div className="lg:col-span-2">
-                            <h2 className="text-2xl font-bold uppercase mb-6 tracking-tight">About this event.</h2>
-                            <div className="prose prose-lg max-w-none text-muted-foreground whitespace-pre-wrap">
-                                {event.description || "No description provided for this event."}
+            {/* Voting Categories Section - Only for voting/hybrid events */}
+            {votingCategories.length > 0 && (
+                <>
+                    <PanAfricanDivider />
+                    <Section className="py-20 bg-[#F8F7F1]">
+                        <div className="max-w-6xl mx-auto px-4">
+                            <div className="flex items-center gap-3 mb-12">
+                                <Vote className="w-8 h-8 text-[#009A44]" />
+                                <h2 className="text-3xl font-bold uppercase tracking-tight">Vote Categories.</h2>
                             </div>
-                        </div>
 
-                        <div className="lg:col-span-1">
-                            <div className="bg-[#F8F7F1] p-8 rounded-3xl border sticky top-24">
-                                <h3 className="text-xl font-bold uppercase mb-6 tracking-tight">Organizer.</h3>
-                                <div className="flex items-center gap-4 mb-8">
-                                    {organization.logoUrl && (
-                                        <div className="relative w-12 h-12 rounded-full overflow-hidden border">
-                                            <Image
-                                                src={organization.logoUrl}
-                                                alt={organization.name}
-                                                fill
-                                                className="object-cover"
-                                            />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {votingCategories.map((category) => (
+                                    <Link
+                                        key={category.id}
+                                        href={`/${orgSlug}/event/${eventSlug}/category/${category.id}`}
+                                        className="group bg-white rounded-2xl overflow-hidden border shadow-sm hover:shadow-xl transition-all duration-300"
+                                    >
+                                        <div className="p-6">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-[#FFCD00]/20 flex items-center justify-center">
+                                                        <Trophy className="w-5 h-5 text-[#FFCD00]" />
+                                                    </div>
+                                                    <h3 className="text-lg font-bold uppercase tracking-tight group-hover:text-[#009A44] transition-colors">
+                                                        {category.name}
+                                                    </h3>
+                                                </div>
+                                                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-[#009A44] group-hover:translate-x-1 transition-all" />
+                                            </div>
+                                            {category.description && (
+                                                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                                                    {category.description}
+                                                </p>
+                                            )}
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <Users className="w-4 h-4" />
+                                                <span>{category.votingOptions.length} {category.votingOptions.length === 1 ? "nominee" : "nominees"}</span>
+                                            </div>
                                         </div>
-                                    )}
-                                    <div>
-                                        <p className="font-bold text-lg leading-tight">{organization.name}</p>
-                                        <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">Sankofa Verified</p>
-                                    </div>
-                                </div>
-                                <button className="w-full bg-black text-white font-bold uppercase py-4 rounded-xl hover:bg-black/90 transition-colors tracking-widest text-xs">
-                                    Book Tickets
-                                </button>
-                                <p className="text-center text-[10px] text-muted-foreground mt-4 uppercase tracking-tighter">
-                                    Powered by Sankofa Event Management System
-                                </p>
+                                        {/* Preview of nominees */}
+                                        {category.votingOptions.length > 0 && (
+                                            <div className="px-6 pb-6">
+                                                <div className="flex -space-x-3">
+                                                    {category.votingOptions.slice(0, 5).map((nominee, idx) => {
+                                                        const displayImage = (category.showFinalImage && nominee.finalImage) || nominee.imageUrl;
+                                                        return (
+                                                            <div
+                                                                key={nominee.id}
+                                                                className="relative w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-gradient-to-br from-[#009A44]/20 to-[#FFCD00]/20"
+                                                                style={{ zIndex: 5 - idx }}
+                                                            >
+                                                                {displayImage ? (
+                                                                    <Image
+                                                                        src={displayImage}
+                                                                        alt={nominee.optionText}
+                                                                        fill
+                                                                        className="object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                                        <Users className="w-4 h-4 text-muted-foreground/50" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    {category.votingOptions.length > 5 && (
+                                                        <div className="relative w-10 h-10 rounded-full border-2 border-white bg-[#009A44] flex items-center justify-center">
+                                                            <span className="text-white text-xs font-bold">+{category.votingOptions.length - 5}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </Link>
+                                ))}
                             </div>
                         </div>
-                    </div>
-                </div>
-            </Section>
+                    </Section>
+                </>
+            )}
         </main>
     )
 }

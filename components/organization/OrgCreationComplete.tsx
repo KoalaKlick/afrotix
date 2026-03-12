@@ -35,7 +35,7 @@ export function OrgCreationComplete({ organization }: OrgCreationCompleteProps) 
     }
 
     function handleCreateEvent() {
-        router.push("/promoter/events/new");
+        router.push("/my-events/new");
     }
 
     return (

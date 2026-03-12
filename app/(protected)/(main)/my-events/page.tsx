@@ -9,10 +9,8 @@ import { Plus, Calendar, MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
 import {
     Breadcrumb,
     BreadcrumbItem,
-    BreadcrumbLink,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -33,7 +31,7 @@ const statusColors: Record<string, string> = {
     cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
-export default async function PromoterEventsPage() {
+export default async function MyEventsPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -69,11 +67,7 @@ export default async function PromoterEventsPage() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <BreadcrumbLink href="/promoter">Promoter Hub</BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>Events</BreadcrumbPage>
+                                <BreadcrumbPage>My Events</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
@@ -90,7 +84,7 @@ export default async function PromoterEventsPage() {
                         </p>
                     </div>
                     <Button asChild>
-                        <Link href="/promoter/events/new">
+                        <Link href="/my-events/new">
                             <Plus className="mr-2 size-4" />
                             Create Event
                         </Link>
@@ -108,7 +102,7 @@ export default async function PromoterEventsPage() {
                             Create your first event to start selling tickets and engaging your audience.
                         </p>
                         <Button asChild size="lg">
-                            <Link href="/promoter/events/new">
+                            <Link href="/my-events/new">
                                 <Plus className="mr-2 size-4" />
                                 Create Your First Event
                             </Link>
@@ -140,7 +134,7 @@ export default async function PromoterEventsPage() {
                                         <div className="flex items-start justify-between gap-2">
                                             <div>
                                                 <Link
-                                                    href={`/promoter/events/${event.id}`}
+                                                    href={`/my-events/${event.id}`}
                                                     className="font-semibold hover:underline line-clamp-1"
                                                 >
                                                     {event.title}
@@ -177,13 +171,13 @@ export default async function PromoterEventsPage() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem asChild>
-                                                <Link href={`/${organization?.slug}/events/${event.slug}`}>
+                                                <Link href={`/${organization?.slug}/event/${event.slug}`}>
                                                     <Eye className="mr-2 size-4" />
-                                                    View
+                                                    View Public Page
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem asChild>
-                                                <Link href={`/promoter/events/${event.id}`}>
+                                                <Link href={`/my-events/${event.id}`}>
                                                     <Edit className="mr-2 size-4" />
                                                     Edit
                                                 </Link>

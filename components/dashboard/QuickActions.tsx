@@ -15,14 +15,14 @@ export function QuickActions() {
             title: "Create Event",
             description: "Set up a new event",
             icon: Plus,
-            href: "/promoter/events/new",
+            href: "/my-events/new",
             variant: "default" as const,
         },
         {
             title: "Manage Events",
             description: "View all your events",
             icon: Calendar,
-            href: "/promoter/events",
+            href: "/my-events",
             variant: "outline" as const,
         },
         {

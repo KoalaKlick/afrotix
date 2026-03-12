@@ -44,6 +44,7 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
     const [type, setType] = useState(initialData?.type ?? "ticketed");
     const [description, setDescription] = useState(initialData?.description ?? "");
     const [errors, setErrors] = useState<Record<string, string[]>>({});
+    const [generalError, setGeneralError] = useState<string | null>(null);
 
     // Auto-generate slug from title
     function handleTitleChange(value: string) {
@@ -60,6 +61,7 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setErrors({});
+        setGeneralError(null);
 
         const formData = new FormData();
         formData.set("title", title);
@@ -78,12 +80,22 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
                 });
             } else {
                 setErrors(result.fieldErrors ?? {});
+                if (result.error && !result.fieldErrors) {
+                    setGeneralError(result.error);
+                }
             }
         });
     }
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* General Error */}
+            {generalError && (
+                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                    {generalError}
+                </div>
+            )}
+
             {/* Event Type Selection */}
             <div className="space-y-3">
                 <Label>Event Type</Label>
