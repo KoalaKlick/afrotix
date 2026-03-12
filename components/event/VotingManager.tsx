@@ -1299,201 +1299,201 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                                 </p>
                                             )}
 
-                                    {/* Category Actions */}
-                                    {canEdit && (
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => openEditCategory(category)}
-                                            >
-                                                <Pencil className="size-4 mr-2" />
-                                                Edit
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => openAddOption(category.id)}
-                                            >
-                                                <Plus className="size-4 mr-2" />
-                                                Add Nominee
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => openFieldsDialog(category)}
-                                            >
-                                                <Settings className="size-4 mr-2" />
-                                                Custom Fields
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="text-destructive">
-                                                        <Trash2 className="size-4 mr-2" />
-                                                        Delete
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Delete Category?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This will delete the category and all its nominees.
-                                                            This action cannot be undone.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            onClick={() => handleDeleteCategory(category.id)}
-                                                            className="bg-destructive text-destructive-foreground"
-                                                        >
-                                                            Delete
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                    )}
-
-                                    {/* Nominees Grid */}
-                                    {category.votingOptions.length === 0 ? (
-                                        <div className="text-center py-8 text-muted-foreground">
-                                            <Users className="size-8 mx-auto mb-2 opacity-50" />
-                                            <p className="text-sm">No nominees yet</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                            {category.votingOptions.map((option) => {
-                                                // Use finalImage if showFinalImage is enabled and it exists, otherwise fall back to imageUrl
-                                                const displayImage = (category.showFinalImage && option.finalImage) || option.imageUrl;
-                                                return (
-                                                    <Card
-                                                        key={option.id}
-                                                        className={cn(
-                                                            "overflow-hidden group",
-                                                            option.status === "pending" && "ring-2 ring-yellow-500/50",
-                                                            option.status === "rejected" && "opacity-50"
-                                                        )}
+                                            {/* Category Actions */}
+                                            {canEdit && (
+                                                <div className="flex flex-wrap gap-2 mb-4">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => openEditCategory(category)}
                                                     >
-                                                        <div className="aspect-square relative bg-muted">
-                                                            {displayImage ? (
-                                                                <Image
-                                                                    src={displayImage}
-                                                                    alt={option.optionText}
-                                                                    fill
-                                                                    className="object-cover"
-                                                                    unoptimized
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                    <Users className="size-8 text-muted-foreground" />
-                                                                </div>
-                                                            )}
-                                                            {/* Status Badge */}
-                                                            {option.status !== "approved" && (
-                                                                <div className="absolute top-2 left-2">
-                                                                    {getStatusBadge(option.status)}
-                                                                </div>
-                                                            )}
-                                                            {/* Public nomination indicator */}
-                                                            {option.isPublicNomination && (
-                                                                <div className="absolute top-2 right-2">
-                                                                    <Badge variant="outline" className="bg-background/80 text-xs">
-                                                                        <Globe className="size-3" />
-                                                                    </Badge>
-                                                                </div>
-                                                            )}
-                                                            {canEdit && (
-                                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                                                    {option.status === "pending" ? (
-                                                                        <>
-                                                                            <Button
-                                                                                size="icon"
-                                                                                variant="secondary"
-                                                                                className="bg-green-500 hover:bg-green-600"
-                                                                                onClick={() => handleApproveNomination(option.id)}
-                                                                                disabled={isPending}
-                                                                            >
-                                                                                <CheckCircle2 className="size-4" />
-                                                                            </Button>
-                                                                            <Button
-                                                                                size="icon"
-                                                                                variant="destructive"
-                                                                                onClick={() => handleRejectNomination(option.id)}
-                                                                                disabled={isPending}
-                                                                            >
-                                                                                <XCircle className="size-4" />
-                                                                            </Button>
-                                                                        </>
+                                                        <Pencil className="size-4 mr-2" />
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => openAddOption(category.id)}
+                                                    >
+                                                        <Plus className="size-4 mr-2" />
+                                                        Add Nominee
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => openFieldsDialog(category)}
+                                                    >
+                                                        <Settings className="size-4 mr-2" />
+                                                        Custom Fields
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="text-destructive">
+                                                                <Trash2 className="size-4 mr-2" />
+                                                                Delete
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Category?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This will delete the category and all its nominees.
+                                                                    This action cannot be undone.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    onClick={() => handleDeleteCategory(category.id)}
+                                                                    className="bg-destructive text-destructive-foreground"
+                                                                >
+                                                                    Delete
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            )}
+
+                                            {/* Nominees Grid */}
+                                            {category.votingOptions.length === 0 ? (
+                                                <div className="text-center py-8 text-muted-foreground">
+                                                    <Users className="size-8 mx-auto mb-2 opacity-50" />
+                                                    <p className="text-sm">No nominees yet</p>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                                    {category.votingOptions.map((option) => {
+                                                        // Use finalImage if showFinalImage is enabled and it exists, otherwise fall back to imageUrl
+                                                        const displayImage = (category.showFinalImage && option.finalImage) || option.imageUrl;
+                                                        return (
+                                                            <Card
+                                                                key={option.id}
+                                                                className={cn(
+                                                                    "overflow-hidden group",
+                                                                    option.status === "pending" && "ring-2 ring-yellow-500/50",
+                                                                    option.status === "rejected" && "opacity-50"
+                                                                )}
+                                                            >
+                                                                <div className="aspect-square relative bg-muted">
+                                                                    {displayImage ? (
+                                                                        <Image
+                                                                            src={displayImage}
+                                                                            alt={option.optionText}
+                                                                            fill
+                                                                            className="object-cover"
+                                                                            unoptimized
+                                                                        />
                                                                     ) : (
-                                                                        <>
-                                                                            <Button
-                                                                                size="icon"
-                                                                                variant="secondary"
-                                                                                onClick={() => openEditOption(option, category.id)}
-                                                                            >
-                                                                                <Pencil className="size-4" />
-                                                                            </Button>
-                                                                            <AlertDialog>
-                                                                                <AlertDialogTrigger asChild>
-                                                                                    <Button size="icon" variant="destructive">
-                                                                                        <Trash2 className="size-4" />
+                                                                        <div className="w-full h-full flex items-center justify-center">
+                                                                            <Users className="size-8 text-muted-foreground" />
+                                                                        </div>
+                                                                    )}
+                                                                    {/* Status Badge */}
+                                                                    {option.status !== "approved" && (
+                                                                        <div className="absolute top-2 left-2">
+                                                                            {getStatusBadge(option.status)}
+                                                                        </div>
+                                                                    )}
+                                                                    {/* Public nomination indicator */}
+                                                                    {option.isPublicNomination && (
+                                                                        <div className="absolute top-2 right-2">
+                                                                            <Badge variant="outline" className="bg-background/80 text-xs">
+                                                                                <Globe className="size-3" />
+                                                                            </Badge>
+                                                                        </div>
+                                                                    )}
+                                                                    {canEdit && (
+                                                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                            {option.status === "pending" ? (
+                                                                                <>
+                                                                                    <Button
+                                                                                        size="icon"
+                                                                                        variant="secondary"
+                                                                                        className="bg-green-500 hover:bg-green-600"
+                                                                                        onClick={() => handleApproveNomination(option.id)}
+                                                                                        disabled={isPending}
+                                                                                    >
+                                                                                        <CheckCircle2 className="size-4" />
                                                                                     </Button>
-                                                                                </AlertDialogTrigger>
-                                                                                <AlertDialogContent>
-                                                                                    <AlertDialogHeader>
-                                                                                        <AlertDialogTitle>Delete Nominee?</AlertDialogTitle>
-                                                                                        <AlertDialogDescription>
-                                                                                            This will remove {option.optionText} from this category.
-                                                                                        </AlertDialogDescription>
-                                                                                    </AlertDialogHeader>
-                                                                                    <AlertDialogFooter>
-                                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                                        <AlertDialogAction
-                                                                                            onClick={() => handleDeleteOption(option.id)}
-                                                                                            className="bg-destructive text-destructive-foreground"
-                                                                                        >
-                                                                                            Delete
-                                                                                        </AlertDialogAction>
-                                                                                    </AlertDialogFooter>
-                                                                                </AlertDialogContent>
-                                                                            </AlertDialog>
-                                                                        </>
+                                                                                    <Button
+                                                                                        size="icon"
+                                                                                        variant="destructive"
+                                                                                        onClick={() => handleRejectNomination(option.id)}
+                                                                                        disabled={isPending}
+                                                                                    >
+                                                                                        <XCircle className="size-4" />
+                                                                                    </Button>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Button
+                                                                                        size="icon"
+                                                                                        variant="secondary"
+                                                                                        onClick={() => openEditOption(option, category.id)}
+                                                                                    >
+                                                                                        <Pencil className="size-4" />
+                                                                                    </Button>
+                                                                                    <AlertDialog>
+                                                                                        <AlertDialogTrigger asChild>
+                                                                                            <Button size="icon" variant="destructive">
+                                                                                                <Trash2 className="size-4" />
+                                                                                            </Button>
+                                                                                        </AlertDialogTrigger>
+                                                                                        <AlertDialogContent>
+                                                                                            <AlertDialogHeader>
+                                                                                                <AlertDialogTitle>Delete Nominee?</AlertDialogTitle>
+                                                                                                <AlertDialogDescription>
+                                                                                                    This will remove {option.optionText} from this category.
+                                                                                                </AlertDialogDescription>
+                                                                                            </AlertDialogHeader>
+                                                                                            <AlertDialogFooter>
+                                                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                                                <AlertDialogAction
+                                                                                                    onClick={() => handleDeleteOption(option.id)}
+                                                                                                    className="bg-destructive text-destructive-foreground"
+                                                                                                >
+                                                                                                    Delete
+                                                                                                </AlertDialogAction>
+                                                                                            </AlertDialogFooter>
+                                                                                        </AlertDialogContent>
+                                                                                    </AlertDialog>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
                                                                     )}
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                        <CardContent className="p-3">
-                                                            <p className="font-medium text-sm truncate">
-                                                                {option.optionText}
-                                                            </p>
-                                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                                {option.nomineeCode && (
-                                                                    <span className="flex items-center gap-1">
-                                                                        <Hash className="size-3" />
-                                                                        {option.nomineeCode}
-                                                                    </span>
-                                                                )}
-                                                                <span>{Number(option.votesCount)} votes</span>
-                                                            </div>
-                                                            {option.email && (
-                                                                <p className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-1">
-                                                                    <Mail className="size-3" />
-                                                                    {option.email}
-                                                                </p>
-                                                            )}
-                                                            {option.isPublicNomination && option.nominatedByName && (
-                                                                <p className="text-xs text-muted-foreground truncate mt-1">
-                                                                    Nominated by: {option.nominatedByName}
-                                                                </p>
-                                                            )}
-                                                        </CardContent>
-                                                    </Card>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </AccordionContent>
+                                                                <CardContent className="p-3">
+                                                                    <p className="font-medium text-sm truncate">
+                                                                        {option.optionText}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                                        {option.nomineeCode && (
+                                                                            <span className="flex items-center gap-1">
+                                                                                <Hash className="size-3" />
+                                                                                {option.nomineeCode}
+                                                                            </span>
+                                                                        )}
+                                                                        <span>{Number(option.votesCount)} votes</span>
+                                                                    </div>
+                                                                    {option.email && (
+                                                                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-1">
+                                                                            <Mail className="size-3" />
+                                                                            {option.email}
+                                                                        </p>
+                                                                    )}
+                                                                    {option.isPublicNomination && option.nominatedByName && (
+                                                                        <p className="text-xs text-muted-foreground truncate mt-1">
+                                                                            Nominated by: {option.nominatedByName}
+                                                                        </p>
+                                                                    )}
+                                                                </CardContent>
+                                                            </Card>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </AccordionContent>
                                     </SortableCategoryItem>
                                 );
                             })}
