@@ -72,7 +72,7 @@ export function DashboardContent({
                 <StatsGrid columns={4}>
                     <StatCard
                         label="Total Events"
-                        value={stats.totalEvents}
+                        value={23433222}
                         iconSrc={statIcons.search}
                     />
                     <StatCard
