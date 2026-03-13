@@ -17,7 +17,7 @@ import {
     Ban,
     type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 
 /**
  * 3D stat icon paths mapped by name
@@ -40,6 +40,7 @@ export const statIcons = {
     ticket: "/stat-icon/ticket-yellow.webp",
     user: "/stat-icon/user-black.webp",
     vote: "/stat-icon/vote-red.webp",
+    draft: "/stat-icon/draft-black.webp",
 } as const;
 
 /**
@@ -57,6 +58,58 @@ export interface StatCardProps {
 }
 
 /**
+ * Derive card gradient from the icon filename's color suffix.
+ * Bottom-right glow matches the icon color.
+ */
+function getIconColorStyles(iconSrc: string): { style: React.CSSProperties; className: string } {
+    const filename = iconSrc.split("/").pop() ?? "";
+    const base = filename.replace(".webp", "");
+    const color = base.split("-").pop();
+
+    const colorGlow: Record<string, string> = {
+        red: "radial-gradient(circle at bottom right,color-mix(in srgb, var(--color-primary-600) 28%, transparent),transparent 50%)",
+        yellow: "radial-gradient(circle at bottom right,color-mix(in srgb, var(--color-secondary-500) 28%, transparent),transparent 50%)",
+        green: "radial-gradient(circle at bottom right,color-mix(in srgb, var(--color-tertiary-600) 28%, transparent),transparent 50%)",
+        black: "radial-gradient(circle at bottom right,rgba(160,160,160,0.18),transparent 50%)",
+    };
+
+    const borderColor: Record<string, string> = {
+        red: "border-primary-900/10",
+        yellow: "border-secondary-900/10",
+        green: "border-tertiary-900/10",
+        black: "border-gray-800/10",
+    };
+
+    const backgroundImage = color && colorGlow[color] ? colorGlow[color] : undefined;
+    const border = color && borderColor[color] ? borderColor[color] : "border-white/10";
+
+    return { style: backgroundImage ? { backgroundImage } : {}, className: border };
+}
+
+/**
+ * Format a number with compact notation for large values (1.2K, 1.5M, etc.)
+ */
+function formatCompact(value: number | string): string {
+    if (typeof value === "string") return value;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+    if (value >= 10_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+    if (value >= 1_000) return value.toLocaleString();
+    return value.toString();
+}
+
+/**
+ * Get text size class based on display string length
+ */
+function getValueSizeClass(display: string): string {
+    const len = display.length;
+    if (len <= 2) return "text-6xl leading-12";
+    if (len <= 4) return "text-5xl leading-11";
+    if (len <= 6) return "text-4xl leading-10";
+    if (len <= 9) return "text-3xl leading-9";
+    return "text-2xl leading-8";
+}
+
+/**
  * Reusable Stat Card Component
  */
 export function StatCard({
@@ -71,38 +124,49 @@ export function StatCard({
 }: StatCardProps) {
     const variantStyles = {
         default: "bg-card",
-        success: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900",
-        warning: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900",
-        danger: "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900",
+        success: "bg-tertiary-50 dark:bg-tertiary-950/20 border-tertiary-200 dark:border-tertiary-900",
+        warning: "bg-secondary-50 dark:bg-secondary-950/20 border-secondary-200 dark:border-secondary-900",
+        danger: "bg-primary-50 dark:bg-primary-950/20 border-primary-200 dark:border-primary-900",
         info: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900",
     };
 
     const iconStyles = {
         default: "text-muted-foreground",
-        success: "text-emerald-600 dark:text-emerald-400",
-        warning: "text-amber-600 dark:text-amber-400",
-        danger: "text-red-600 dark:text-red-400",
+        success: "text-tertiary-600 dark:text-tertiary-400",
+        warning: "text-secondary-600 dark:text-secondary-400",
+        danger: "text-primary-600 dark:text-primary-400",
         info: "text-blue-600 dark:text-blue-400",
     };
 
-    const content = (
-        <Card className={cn("border transition-shadow hover:shadow-md", variantStyles[variant], className)}>
-            <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-                        <p className="text-2xl font-bold">{value}</p>
-                        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+    // Icon color suffix takes priority, then variant
+    const iconColor = iconSrc ? getIconColorStyles(iconSrc) : null;
+    const cardStyle = iconColor ? iconColor.className : variantStyles[variant];
+    const cardInlineStyle = iconColor ? iconColor.style : undefined;
+
+    const content = (() => {
+        const display = typeof value === "number" ? formatCompact(value) : value;
+        const sizeClass = getValueSizeClass(String(display));
+
+        return (
+            <Card className={cn("relative px-4 overflow-hidden border transition-shadow hover:shadow-md", cardStyle, className)} style={{ backgroundColor: 'transparent', ...cardInlineStyle }}>
+                <CardContent className="p-0 !bg-transparent">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium text-muted-foreground">{label}</p>
+                            <p className={cn(sizeClass, "font-bold font-montserrat text-black")}>{display}</p>
+                            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+                        </div>
+                        {iconSrc && (
+                            <NextImage src={iconSrc} alt={label} width={100} height={100} className="h-full select-none w-auto object-cover opacity-20 absolute -bottom-8 -right-8" />
+                        )}
+                        {!iconSrc && Icon && (
+                            <Icon className={cn("size-8 opacity-80", iconStyles[variant])} />
+                        )}
                     </div>
-                    {iconSrc ? (
-                        <NextImage src={iconSrc} alt={label} width={48} height={48} className="size-12 object-contain" />
-                    ) : Icon ? (
-                        <Icon className={cn("size-8 opacity-80", iconStyles[variant])} />
-                    ) : null}
-                </div>
-            </CardContent>
-        </Card>
-    );
+                </CardContent>
+            </Card>
+        );
+    })();
 
     if (href) {
         return (
@@ -197,29 +261,18 @@ interface EventStatsProps {
 }
 
 export function EventStats({ stats, showEngagement = true, showByType = false, className }: EventStatsProps) {
-    // Format currency
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-NG", {
-            style: "currency",
-            currency: "NGN",
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-    };
-
     return (
         <div className={cn("space-y-6", className)}>
             {/* Primary Stats */}
             <StatsGrid columns={4}>
-                <StatCard label="Total Events" value={stats.total} icon={Calendar} />
+                <StatCard label="Total Events" value={stats.total} iconSrc={statIcons.search} />
                 <StatCard
                     label="Published"
                     value={stats.published}
-                    icon={CheckCircle}
-                    variant="success"
+                    iconSrc={statIcons.high}
                 />
-                <StatCard label="Ongoing" value={stats.ongoing} icon={Zap} variant="info" />
-                <StatCard label="Drafts" value={stats.draft} icon={FileText} variant="warning" />
+                <StatCard label="Ongoing" value={stats.ongoing} iconSrc={statIcons.ongoing} />
+                <StatCard label="Drafts" value={stats.draft} iconSrc={statIcons.draft} />
             </StatsGrid>
 
             {/* Engagement Stats */}
@@ -229,15 +282,14 @@ export function EventStats({ stats, showEngagement = true, showByType = false, c
                         <StatCard
                             label="Tickets Sold"
                             value={stats.totalTicketsSold}
-                            icon={Ticket}
+                            iconSrc={statIcons.ticket}
                         />
-                        <StatCard label="Check-ins" value={stats.totalAttendees} icon={Users} />
-                        <StatCard label="Total Votes" value={stats.totalVotes} icon={Vote} />
+                        <StatCard label="Check-ins" value={stats.totalAttendees} iconSrc={statIcons.user} />
+                        <StatCard label="Total Votes" value={stats.totalVotes} iconSrc={statIcons.vote} />
                         <StatCard
                             label="Revenue"
-                            value={formatCurrency(stats.totalRevenue)}
-                            icon={TrendingUp}
-                            variant="success"
+                            value={formatAmount(stats.totalRevenue)}
+                            iconSrc={statIcons.analytics}
                         />
                     </StatsGrid>
                 </StatsSection>
@@ -247,10 +299,10 @@ export function EventStats({ stats, showEngagement = true, showByType = false, c
             {showByType && (
                 <StatsSection title="By Event Type">
                     <StatsGrid columns={4}>
-                        <StatCard label="Voting" value={stats.byType.voting} icon={Vote} />
-                        <StatCard label="Ticketed" value={stats.byType.ticketed} icon={Ticket} />
-                        <StatCard label="Hybrid" value={stats.byType.hybrid} icon={Calendar} />
-                        <StatCard label="Advertisement" value={stats.byType.advertisement} icon={FileText} />
+                        <StatCard label="Voting" value={stats.byType.voting} iconSrc={statIcons.vote} />
+                        <StatCard label="Ticketed" value={stats.byType.ticketed} iconSrc={statIcons.ticketRed} />
+                        <StatCard label="Hybrid" value={stats.byType.hybrid} iconSrc={statIcons.ongoingGreen} />
+                        <StatCard label="Advertisement" value={stats.byType.advertisement} iconSrc={statIcons.plus} />
                     </StatsGrid>
                 </StatsSection>
             )}

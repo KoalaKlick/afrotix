@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getProfileById } from "@/lib/dal/profile";
 import { getPendingInvitationsForEmail, getUserOrganizations, getOrganizationById } from "@/lib/dal/organization";
+import { getOrganizationEventStats } from "@/lib/dal/event";
 import { getActiveOrganizationId } from "@/lib/organization-context";
 import { DashboardContent } from "./DashboardContent";
 
@@ -46,12 +47,16 @@ export default async function DashboardPage() {
     activeOrganization = await getOrganizationById(organizations[0].id);
   }
 
-  // Placeholder stats until event metrics are wired into the dashboard.
+  // Fetch real event stats for the active organization
+  const eventStats = activeOrganization
+    ? await getOrganizationEventStats(activeOrganization.id)
+    : null;
+
   const stats = {
-    totalEvents: 0,
-    ticketsSold: 0,
-    revenue: 0,
-    attendees: 0,
+    totalEvents: eventStats?.total ?? 0,
+    ticketsSold: eventStats?.totalTicketsSold ?? 0,
+    revenue: eventStats?.totalRevenue ?? 0,
+    attendees: eventStats?.totalAttendees ?? 0,
   };
 
   return (

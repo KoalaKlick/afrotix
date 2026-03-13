@@ -76,9 +76,9 @@ export default async function ProtectedLayout({
                 activeOrganization={activeOrganization}
                 pendingInvitations={pendingInvitations}
             />
-            <SidebarInset className="overflow-hidden ">
+            <SidebarInset className="overflow-hidden font-poppins">
                 <div className="relative min-h-screen flex-1">
-                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-red-600 via-yellow-500 to-green-600" />
+                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-secondary-600/30 via-transparent to-green-600/30" />
                     <div className="relative z-10 flex min-h-screen flex-col">
                         {children}
                     </div>

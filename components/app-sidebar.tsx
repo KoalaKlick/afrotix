@@ -110,7 +110,6 @@ export function AppSidebar({
       <div className="relative flex h-full flex-col overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.14),transparent_26%)]" />
         <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_right,rgba(255,248,232,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,248,232,0.08)_1px,transparent_1px)] [background-size:32px_32px]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-red-600 via-yellow-500 to-green-600" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-secondary-600/20 via-black/0 to-tertiary-600/20" />
 
         <SidebarHeader className="relative z-10 border-b border-white/8 px-3 py-4">
