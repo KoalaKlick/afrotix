@@ -1,6 +1,7 @@
 "use client";
 
-import { Calendar, Ticket, DollarSign, Users, User, Wallet } from "lucide-react";
+import { Calendar, User, Wallet } from "lucide-react";
+import { statIcons } from "@/components/event/EventStats";
 import type { Profile, Organization } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import {
@@ -73,28 +74,28 @@ export function DashboardContent({
                         title="Total Events"
                         value={stats.totalEvents.toString()}
                         description="Total events you've created across all organizations."
-                        icon={Calendar}
+                        iconSrc={statIcons.search}
                         trend={stats.totalEvents > 0 ? { value: 0, isPositive: true } : undefined}
                     />
                     <StatsCard
                         title="Tickets Sold"
                         value={stats.ticketsSold.toLocaleString()}
                         description="Total tickets across all events"
-                        icon={Ticket}
+                        iconSrc={statIcons.ticket}
                         trend={stats.ticketsSold > 0 ? { value: 0, isPositive: true } : undefined}
                     />
                     <StatsCard
                         title="Revenue"
                         value={`£${stats.revenue.toLocaleString()}`}
                         description="Total earnings"
-                        icon={DollarSign}
+                        iconSrc={statIcons.cedi}
                         trend={stats.revenue > 0 ? { value: 0, isPositive: true } : undefined}
                     />
                     <StatsCard
                         title="Attendees"
                         value={stats.attendees.toLocaleString()}
                         description="People at your events"
-                        icon={Users}
+                        iconSrc={statIcons.user}
                         trend={stats.attendees > 0 ? { value: 0, isPositive: true } : undefined}
                     />
                 </div>

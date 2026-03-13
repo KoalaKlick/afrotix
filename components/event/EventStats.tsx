@@ -57,6 +57,28 @@ export interface StatCardProps {
 }
 
 /**
+ * Derive card color from the icon filename's color suffix
+ */
+function getIconColorStyles(iconSrc: string): string {
+    const filename = iconSrc.split("/").pop() ?? "";
+    const base = filename.replace(".webp", "");
+    const color = base.split("-").pop();
+
+    switch (color) {
+        case "red":
+            return "bg-red-100 dark:bg-red-950/20 border-red-200 dark:border-red-900";
+        case "yellow":
+            return "bg-amber-100 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900";
+        case "green":
+            return "bg-emerald-100 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900";
+        case "black":
+            return "bg-gray-100 dark:bg-gray-950/20 border-gray-200 dark:border-gray-800";
+        default:
+            return "bg-card";
+    }
+}
+
+/**
  * Reusable Stat Card Component
  */
 export function StatCard({
@@ -85,20 +107,24 @@ export function StatCard({
         info: "text-blue-600 dark:text-blue-400",
     };
 
+    // Icon color suffix takes priority, then variant
+    const cardStyle = iconSrc ? getIconColorStyles(iconSrc) : variantStyles[variant];
+
     const content = (
-        <Card className={cn("border transition-shadow hover:shadow-md", variantStyles[variant], className)}>
-            <CardContent className="p-4">
+        <Card className={cn("border relative px-4 font-montserrat overflow-clip transition-shadow hover:shadow-md", cardStyle, className)}>
+            <CardContent className="p-0">
                 <div className="flex items-center justify-between">
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">{label}</p>
-                        <p className="text-2xl font-bold">{value}</p>
+                        <p className="text-6xl leading-12 font-bold text-white">{value}</p>
                         {description && <p className="text-xs text-muted-foreground">{description}</p>}
                     </div>
-                    {iconSrc ? (
-                        <NextImage src={iconSrc} alt={label} width={48} height={48} className="size-12 object-contain" />
-                    ) : Icon ? (
+                    {iconSrc && (
+                        <NextImage src={iconSrc} alt={label} width={100} height={100} className="h-full w-auto object-cover opacity-20 absolute -bottom-10 -right-10" />
+                    )}
+                    {!iconSrc && Icon && (
                         <Icon className={cn("size-8 opacity-80", iconStyles[variant])} />
-                    ) : null}
+                    )}
                 </div>
             </CardContent>
         </Card>
@@ -211,15 +237,14 @@ export function EventStats({ stats, showEngagement = true, showByType = false, c
         <div className={cn("space-y-6", className)}>
             {/* Primary Stats */}
             <StatsGrid columns={4}>
-                <StatCard label="Total Events" value={stats.total} icon={Calendar} />
+                <StatCard label="Total Events" value={stats.total} iconSrc={statIcons.search} />
                 <StatCard
                     label="Published"
                     value={stats.published}
-                    icon={CheckCircle}
-                    variant="success"
+                    iconSrc={statIcons.high}
                 />
-                <StatCard label="Ongoing" value={stats.ongoing} icon={Zap} variant="info" />
-                <StatCard label="Drafts" value={stats.draft} icon={FileText} variant="warning" />
+                <StatCard label="Ongoing" value={stats.ongoing} iconSrc={statIcons.ongoing} />
+                <StatCard label="Drafts" value={stats.draft} iconSrc={statIcons.end} />
             </StatsGrid>
 
             {/* Engagement Stats */}
@@ -229,15 +254,14 @@ export function EventStats({ stats, showEngagement = true, showByType = false, c
                         <StatCard
                             label="Tickets Sold"
                             value={stats.totalTicketsSold}
-                            icon={Ticket}
+                            iconSrc={statIcons.ticket}
                         />
-                        <StatCard label="Check-ins" value={stats.totalAttendees} icon={Users} />
-                        <StatCard label="Total Votes" value={stats.totalVotes} icon={Vote} />
+                        <StatCard label="Check-ins" value={stats.totalAttendees} iconSrc={statIcons.user} />
+                        <StatCard label="Total Votes" value={stats.totalVotes} iconSrc={statIcons.vote} />
                         <StatCard
                             label="Revenue"
                             value={formatCurrency(stats.totalRevenue)}
-                            icon={TrendingUp}
-                            variant="success"
+                            iconSrc={statIcons.analytics}
                         />
                     </StatsGrid>
                 </StatsSection>
@@ -247,10 +271,10 @@ export function EventStats({ stats, showEngagement = true, showByType = false, c
             {showByType && (
                 <StatsSection title="By Event Type">
                     <StatsGrid columns={4}>
-                        <StatCard label="Voting" value={stats.byType.voting} icon={Vote} />
-                        <StatCard label="Ticketed" value={stats.byType.ticketed} icon={Ticket} />
-                        <StatCard label="Hybrid" value={stats.byType.hybrid} icon={Calendar} />
-                        <StatCard label="Advertisement" value={stats.byType.advertisement} icon={FileText} />
+                        <StatCard label="Voting" value={stats.byType.voting} iconSrc={statIcons.vote} />
+                        <StatCard label="Ticketed" value={stats.byType.ticketed} iconSrc={statIcons.ticketRed} />
+                        <StatCard label="Hybrid" value={stats.byType.hybrid} iconSrc={statIcons.ongoingGreen} />
+                        <StatCard label="Advertisement" value={stats.byType.advertisement} iconSrc={statIcons.plus} />
                     </StatsGrid>
                 </StatsSection>
             )}
