@@ -72,7 +72,7 @@ export function HeroSection() {
                     </div>
 
                     {/* ── Hero text ── */}
-                    <div className="flex-1   flex flex-col justify-center">
+                    <div className="flex-1 mt-16  flex flex-col justify-center">
                         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase leading-[0.93] tracking-tight mb-6">
                             Create,<br />
                             Manage &amp;<br />
