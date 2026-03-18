@@ -4,7 +4,7 @@ import { getProfileById } from "@/lib/dal/profile";
 import { getUserOrganizations, getOrganizationById } from "@/lib/dal/organization";
 import { getOrganizationEventStats } from "@/lib/dal/event";
 import { getActiveOrganizationId } from "@/lib/organization-context";
-import { DashboardContent } from "./DashboardContent";
+import { DashboardContent } from "@/components/dashboard/DashboardContent";
 
 export default async function DashboardPage() {
   // Parent layout guarantees: authenticated, onboarding done, has org

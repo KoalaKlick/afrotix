@@ -10,3 +10,4 @@ export { OrgStep3Customize } from "./OrgStep3Customize";
 export { OrgCreationComplete } from "./OrgCreationComplete";
 export { OrgCreationClient } from "./OrgCreationClient";
 export { InvitationsClient } from "./InvitationsClient";
+export { OrgManageClient } from "./OrgManageClient";

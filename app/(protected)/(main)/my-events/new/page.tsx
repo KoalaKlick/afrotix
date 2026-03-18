@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import { getOrganizationById, getUserRoleInOrganization } from "@/lib/dal/organization";
-import { EventCreationClient } from "./EventCreationClient";
+import { EventCreationClient } from "@/components/event/EventCreationClient";
 import { PageHeader } from "@/components/shared/page-header";
 
 export default async function NewEventPage() {

@@ -8,3 +8,4 @@ export { QuickActions } from "./QuickActions";
 export { RecentActivity, sampleActivities, emptyActivities } from "./RecentActivity";
 export { UpcomingEvents, sampleUpcomingEvents } from "./UpcomingEvents";
 export { WelcomeCard, defaultSetupSteps, type SetupStep } from "./WelcomeCard";
+export { DashboardContent } from "./DashboardContent";

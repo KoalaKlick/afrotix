@@ -9,7 +9,7 @@ import {
     getOrganizationInvitations,
 } from "@/lib/dal/organization";
 import { getEffectiveOrganizationId } from "@/lib/organization-utils";
-import { OrgManageClient } from "./OrgManageClient";
+import { OrgManageClient } from "@/components/organization/OrgManageClient";
 
 export default async function OrganizationManagePage() {
     const supabase = await createClient();

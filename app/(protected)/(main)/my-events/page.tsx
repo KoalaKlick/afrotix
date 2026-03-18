@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
-import { EventsList } from "./EventsList";
+import { EventsList } from "@/components/event/EventsList";
 import { EventStats } from "@/components/event";
 
 export default async function MyEventsPage() {
