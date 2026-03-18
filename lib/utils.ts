@@ -108,7 +108,3 @@ export function formatNumber(
 export function formatAmount(value: number, currency = "GHS") {
   return formatNumber(value, { style: 'currency', currency })
 }
-
-
-
-

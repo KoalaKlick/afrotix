@@ -26,7 +26,7 @@ export default function AuthLayout({
           <div className="flex items-center gap-2">
             {/* <Image height={40} width={40} src="/logo.png" alt="Sankofa Logo" className="bg-black h-20 w-auto" /> */}
             <Link href="/" className="pointer-events-auto">
-              <AfroTixLogo className="w-32 sm:w-38 md:w-40 lg:w-48 h-auto border border-black" />
+              <AfroTixLogo className="w-28 sm:w-32 md:w-36 lg:w-40 h-auto border p-2 border-black" />
             </Link>
           </div>
           <span className="mt-2 text-sm sm:text-base md:text-lg inline-block bg-secondary-50 font-medium text-foreground/80 ">

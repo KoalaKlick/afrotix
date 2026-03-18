@@ -56,7 +56,7 @@ export function InvitationsClient({ initialInvitations }: InvitationsClientProps
                 setProcessingId(null);
                 // If no more invitations, redirect to create org
                 if (invitations.length <= 1) {
-                    router.push("/organization/new?setup=true");
+                    router.push("/organization/new");
                 }
                 router.refresh();
             } else {

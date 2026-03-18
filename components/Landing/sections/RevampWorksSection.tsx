@@ -43,10 +43,10 @@ export function HowItWorksSection() {
                         How It<br />
                         <span className="text-primary-600">Works.</span>
                     </h2>
-                    <div className="w-12 h-1 bg-black mb-6" />
-                    <p className="text-gray-500 max-w-sm">
+                    <div className="w-12 h-1  bg-black mb-6" />
+                    <p className="text-gray-500 cursor-pointer max-w-sm">
                         A streamlined process designed to take your event from concept to reality in record time.
-                        Professional, powerful, and ridiculously easy.
+                        Professional, powerful and ridiculously easy.
                     </p>
                 </div>
 

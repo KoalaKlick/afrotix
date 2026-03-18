@@ -6,17 +6,15 @@ import { EventCreationClient } from "./EventCreationClient";
 import { PageHeader } from "@/components/shared/page-header";
 
 export default async function NewEventPage() {
+    // Parent layout guarantees: authenticated, onboarding done, has org
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-        redirect("/auth/login");
-    }
+    if (!user) redirect("/auth/login");
 
-    // Get active organization
     const organizationId = await getEffectiveOrganizationId(user.id);
     if (!organizationId) {
-        redirect("/organization/new?setup=true");
+        redirect("/dashboard");
     }
 
     // Parallelize permission check and organization fetch for slug

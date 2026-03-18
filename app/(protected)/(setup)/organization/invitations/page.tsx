@@ -8,21 +8,16 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export default async function InvitationsPage() {
+    // Parent layout guarantees user exists and has pending invitations
     const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/auth/login");
 
-    if (!user) {
-        redirect("/auth/login");
-    }
-
-    // Fetch pending invitations for this user's email
     const invitations = await getPendingInvitationsForEmail(user.email ?? "");
 
     // If no invitations, redirect to creation flow
     if (invitations.length === 0) {
-        redirect("/organization/new?setup=true");
+        redirect("/organization/new");
     }
 
     return (

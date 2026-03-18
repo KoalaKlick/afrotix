@@ -10,16 +10,15 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatsCard } from "@/components/dashboard";
 
 export default async function PromoterHubPage() {
+    // Parent layout guarantees: authenticated, onboarding done, has org
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-        redirect("/auth/login");
-    }
+    if (!user) redirect("/auth/login");
 
     const organizationId = await getEffectiveOrganizationId(user.id);
     if (!organizationId) {
-        redirect("/organization/new?setup=true");
+        redirect("/dashboard");
     }
 
     const role = await getUserRoleInOrganization(user.id, organizationId);
