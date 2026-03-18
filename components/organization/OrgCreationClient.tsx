@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
     OrgStep1BasicInfo,
     OrgStep2Branding,
@@ -21,6 +22,7 @@ interface OrgCreationClientProps {
 }
 
 export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientProps) {
+    const router = useRouter();
     const [, startTransition] = useTransition();
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<OrgFormData>>({});
@@ -57,7 +59,8 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
 
             if (result.success && result.data) {
                 setIsRedirecting(true);
-                globalThis.location.href = "/dashboard";
+                router.refresh();
+                router.push("/dashboard");
             } else {
                 setError(result.error ?? "Failed to create organization");
             }
