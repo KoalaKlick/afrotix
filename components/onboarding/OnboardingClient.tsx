@@ -88,7 +88,6 @@ export function OnboardingClient({
 
             if (result.success && result.data) {
                 setIsRedirecting(true);
-                router.refresh();
                 router.push("/dashboard");
             } else {
                 setError(result.error ?? "Failed to create organization");
