@@ -10,20 +10,15 @@ import {
 import {
     OrgStep1BasicInfo,
     OrgStep2Branding,
-    OrgStep3Customize,
-    OrgCreationComplete,
 } from "@/components/organization";
 import { createNewOrganization } from "@/lib/actions/organization";
+import { Loader2 } from "lucide-react";
 
 type OrgFormData = {
     name: string;
     slug: string;
     description?: string;
     logoUrl?: string;
-    contactEmail?: string;
-    websiteUrl?: string;
-    primaryColor?: string;
-    secondaryColor?: string;
 };
 
 interface OnboardingClientProps {
@@ -39,13 +34,8 @@ export function OnboardingClient({
 
     // Org creation state
     const [orgFormData, setOrgFormData] = useState<Partial<OrgFormData>>({});
-    const [createdOrg, setCreatedOrg] = useState<{
-        id: string;
-        name: string;
-        slug: string;
-        logoUrl?: string;
-    } | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     // --- Onboarding step handlers ---
     function handleStep1Success() {
@@ -78,66 +68,40 @@ export function OnboardingClient({
     }
 
     function handleOrgStep2Success(data: { logoUrl?: string; description?: string }) {
-        setOrgFormData((prev) => ({ ...prev, ...data }));
-        setCurrentStep(5);
-    }
-
-    function handleOrgStep2Skip() {
-        createOrganization(orgFormData as OrgFormData, { redirectToDashboard: true });
-    }
-
-    function handleOrgStep3Success(data: {
-        contactEmail?: string;
-        websiteUrl?: string;
-        primaryColor?: string;
-        secondaryColor?: string;
-    }) {
         const finalData = { ...orgFormData, ...data };
         setOrgFormData(finalData);
         createOrganization(finalData as OrgFormData);
     }
 
-    function handleOrgStep3Skip() {
+    function handleOrgStep2Skip() {
         createOrganization(orgFormData as OrgFormData);
     }
 
-    async function createOrganization(
-        data: OrgFormData,
-        options?: { redirectToDashboard?: boolean }
-    ) {
+    async function createOrganization(data: OrgFormData) {
         startTransition(async () => {
             const formDataObj = new FormData();
             formDataObj.set("name", data.name);
             formDataObj.set("slug", data.slug);
             if (data.description) formDataObj.set("description", data.description);
             if (data.logoUrl) formDataObj.set("logoUrl", data.logoUrl);
-            if (data.contactEmail) formDataObj.set("contactEmail", data.contactEmail);
-            if (data.websiteUrl) formDataObj.set("websiteUrl", data.websiteUrl);
-            if (data.primaryColor) formDataObj.set("primaryColor", data.primaryColor);
-            if (data.secondaryColor) formDataObj.set("secondaryColor", data.secondaryColor);
-
             const result = await createNewOrganization(formDataObj);
 
             if (result.success && result.data) {
-                if (options?.redirectToDashboard) {
-                    router.replace("/dashboard");
-                    return;
-                }
-
-                setCreatedOrg({
-                    id: result.data.id,
-                    name: data.name,
-                    slug: result.data.slug,
-                    logoUrl: data.logoUrl,
-                });
+                setIsRedirecting(true);
+                globalThis.location.href = "/dashboard";
             } else {
                 setError(result.error ?? "Failed to create organization");
             }
         });
     }
 
-    if (createdOrg) {
-        return <OrgCreationComplete organization={createdOrg} />;
+    if (isRedirecting) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Setting up your dashboard...</p>
+            </div>
+        );
     }
 
     return (
@@ -182,19 +146,6 @@ export function OnboardingClient({
                     orgName={orgFormData.name ?? "Organization"}
                     onSuccess={handleOrgStep2Success}
                     onSkip={handleOrgStep2Skip}
-                />
-            )}
-
-            {currentStep === 5 && (
-                <OrgStep3Customize
-                    defaultValues={{
-                        contactEmail: orgFormData.contactEmail,
-                        websiteUrl: orgFormData.websiteUrl,
-                        primaryColor: orgFormData.primaryColor,
-                        secondaryColor: orgFormData.secondaryColor,
-                    }}
-                    onSuccess={handleOrgStep3Success}
-                    onSkip={handleOrgStep3Skip}
                 />
             )}
 

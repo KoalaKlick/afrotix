@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Onboarding Server Actions
  * Handles form submissions for the onboarding flow
  */
@@ -102,7 +102,7 @@ export async function saveOnboardingStep1(
         return { success: false, error: "Failed to save profile" };
     }
 
-    revalidatePath("/onboarding");
+    revalidatePath("/setup/onboarding");
     return { success: true };
 }
 
@@ -202,7 +202,7 @@ export async function saveOnboardingStep2(
         return { success: false, error: "Failed to save avatar" };
     }
 
-    revalidatePath("/onboarding");
+    revalidatePath("/setup/onboarding");
     return { success: true };
 }
 
@@ -251,7 +251,7 @@ export async function saveOnboardingStep3(
         return { success: false, error: "Failed to complete onboarding" };
     }
 
-    revalidatePath("/onboarding");
+    revalidatePath("/setup/onboarding");
     revalidatePath("/dashboard");
     return { success: true };
 }
@@ -280,7 +280,7 @@ export async function skipOnboardingStep(
         return { success: false, error: "Failed to skip step" };
     }
 
-    revalidatePath("/onboarding");
+    revalidatePath("/setup/onboarding");
     return { success: true };
 }
 
@@ -319,7 +319,7 @@ export async function finishOnboarding(): Promise<void> {
         onboardingStep: TOTAL_ONBOARDING_STEPS,
     });
 
-    revalidatePath("/onboarding");
+    revalidatePath("/setup/onboarding");
     revalidatePath("/dashboard");
-    redirect("/onboarding");
+    redirect("/setup/onboarding");
 }

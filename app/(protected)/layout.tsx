@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { getProfileWithPromoterStatus } from '@/lib/dal/profile'
 import { getUserOrganizations, getPendingInvitationsForEmail } from '@/lib/dal/organization'
 
-const SETUP_ROUTES = ['/onboarding', '/organization/new', '/organization/invitations']
+const SETUP_ROUTES = ['/setup/onboarding', '/setup/organization/new', '/setup/organization/invitations']
 
 export default async function ProtectedRootLayout({
     children,
@@ -36,16 +36,16 @@ export default async function ProtectedRootLayout({
 
     if (needsOnboarding) {
         // Must complete onboarding first
-        if (!pathname.startsWith('/onboarding')) {
-            redirect('/onboarding')
+        if (!pathname.startsWith('/setup/onboarding')) {
+            redirect('/setup/onboarding')
         }
     } else if (!hasOrganization) {
         // Onboarding done but needs an organization
         if (!isOnSetupRoute) {
             if (pendingInvitations.length > 0) {
-                redirect('/organization/invitations')
+                redirect('/setup/organization/invitations')
             }
-            redirect('/onboarding')
+            redirect('/setup/onboarding')
         }
     } else if (isOnSetupRoute) {
         // Fully set up — shouldn't be on setup routes

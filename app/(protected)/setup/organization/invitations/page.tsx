@@ -17,7 +17,7 @@ export default async function InvitationsPage() {
 
     // If no invitations, redirect to creation flow
     if (invitations.length === 0) {
-        redirect("/organization/new");
+        redirect("/setup/organization/new");
     }
 
     return (
@@ -51,7 +51,7 @@ export default async function InvitationsPage() {
                 </CardHeader>
                 <CardContent>
                     <Button asChild variant="outline" className="w-full">
-                        <Link href="/organization/new">
+                        <Link href="/setup/organization/new">
                             <Plus className="mr-2 h-4 w-4" />
                             Create Organization
                         </Link>

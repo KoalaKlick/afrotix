@@ -21,7 +21,7 @@ export function useAuth() {
         await supabase.auth.signOut()
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (!error && data.user) {
-            router.push('/onboarding')
+            router.push('/setup/onboarding')
         }
         return { error }
     }
