@@ -34,6 +34,7 @@ import {
     inviteMember,
 } from "@/lib/actions/organization";
 import type { OrganizationRole } from "@/lib/generated/prisma";
+import { getAvatarUrl } from "@/lib/image-url-utils";
 import { useState } from "react";
 
 interface Member {
@@ -196,7 +197,7 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
-                                                <AvatarImage src={member.user.avatarUrl ?? undefined} />
+                                                <AvatarImage src={getAvatarUrl(member.user.avatarUrl) ?? undefined} />
                                                 <AvatarFallback className="text-xs">
                                                     {getInitials(member.user.fullName)}
                                                 </AvatarFallback>

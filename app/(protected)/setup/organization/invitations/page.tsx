@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getPendingInvitationsForEmail } from "@/lib/dal/organization";
-import { InvitationsClient } from "./InvitationsClient";
+import { InvitationsClient } from "@/components/organization/InvitationsClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

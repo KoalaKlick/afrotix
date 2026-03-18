@@ -29,7 +29,7 @@ export default function AuthLayout({
               <AfroTixLogo className="w-28 sm:w-32 md:w-36 lg:w-40 h-auto border p-2 border-black" />
             </Link>
           </div>
-          <span className="mt-2 text-sm sm:text-base md:text-lg inline-block bg-secondary-50 font-medium text-foreground/80 ">
+          <span className="mt-2 text-sm inline-block bg-secondary-50 font-medium text-foreground/80 ">
             Discover and book the hottest events across the continent.
           </span>
         </div>

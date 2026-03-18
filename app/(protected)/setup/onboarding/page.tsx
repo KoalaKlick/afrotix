@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getProfileById } from "@/lib/dal/profile";
-import { OnboardingClient } from "./OnboardingClient";
+import { OnboardingClient } from "@/components/onboarding/OnboardingClient";
 
 export default async function OnboardingPage() {
     // Parent layout guarantees user exists and routing is correct

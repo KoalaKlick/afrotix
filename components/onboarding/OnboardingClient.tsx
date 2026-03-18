@@ -12,7 +12,7 @@ import {
     OrgStep2Branding,
 } from "@/components/organization";
 import { createNewOrganization } from "@/lib/actions/organization";
-import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 type OrgFormData = {
     name: string;
@@ -97,9 +97,9 @@ export function OnboardingClient({
 
     if (isRedirecting) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Setting up your dashboard...</p>
+            <div className="flex flex-col items-center justify-center gap-6 py-20">
+                <Image src="/logo.svg" alt="AfroTix" width={120} height={40} className="h-10 w-auto animate-pulse" priority />
+                <p className="text-sm text-muted-foreground animate-pulse">Setting up your dashboard...</p>
             </div>
         );
     }
