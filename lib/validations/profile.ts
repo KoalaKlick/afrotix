@@ -22,8 +22,8 @@ export const fullNameSchema = z
     .max(100, "Name must be at most 100 characters")
     .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, and hyphens");
 
-// Avatar URL validation (optional)
-export const avatarUrlSchema = z.string().url("Invalid URL").optional().or(z.literal(""));
+// Avatar URL/path validation (optional, accepts storage paths or full URLs)
+export const avatarUrlSchema = z.string().optional().or(z.literal(""));
 
 // Step 1: Welcome - Username selection (fullName already collected at registration)
 export const onboardingStep1Schema = z.object({
