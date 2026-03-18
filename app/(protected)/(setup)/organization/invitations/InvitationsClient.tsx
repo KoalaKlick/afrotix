@@ -82,56 +82,57 @@ export function InvitationsClient({ initialInvitations }: InvitationsClientProps
                 const invitationLogoUrl = getOrgImageUrl(invitation.organization.logoUrl);
 
                 return (
-                <Card key={invitation.id} className="overflow-hidden">
-                    <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                        <div className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary overflow-hidden">
-                            {invitationLogoUrl ? (
-                                <Image
-                                    src={invitationLogoUrl}
-                                    alt={invitation.organization.name}
-                                    fill
-                                    sizes="48px"
-                                    className="object-cover rounded-lg"
-                                    unoptimized
-                                />
-                            ) : (
-                                <Building2 className="h-6 w-6" />
-                            )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg truncate">
-                                {invitation.organization.name}
-                            </CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                                Role: <span className="capitalize">{invitation.role}</span>
-                            </p>
-                        </div>
-                    </CardHeader>
-                    <CardFooter className="bg-muted/30 pt-4 flex gap-2">
-                        <Button
-                            className="flex-1"
-                            onClick={() => handleAccept(invitation.id)}
-                            disabled={isPending && processingId === invitation.id}
-                        >
-                            {isPending && processingId === invitation.id ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Check className="mr-2 h-4 w-4" />
-                            )}
-                            Accept
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => handleDecline(invitation.id)}
-                            disabled={isPending && processingId === invitation.id}
-                        >
-                            <X className="mr-2 h-4 w-4" />
-                            Decline
-                        </Button>
-                    </CardFooter>
-                </Card>
-            )})}
+                    <Card key={invitation.id} className="overflow-hidden">
+                        <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                            <div className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary overflow-hidden">
+                                {invitationLogoUrl ? (
+                                    <Image
+                                        src={invitationLogoUrl}
+                                        alt={invitation.organization.name}
+                                        fill
+                                        sizes="48px"
+                                        className="object-cover rounded-lg"
+                                        unoptimized
+                                    />
+                                ) : (
+                                    <Building2 className="h-6 w-6" />
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <CardTitle className="text-lg truncate">
+                                    {invitation.organization.name}
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground">
+                                    Role: <span className="capitalize">{invitation.role}</span>
+                                </p>
+                            </div>
+                        </CardHeader>
+                        <CardFooter className="bg-muted/30 pt-4 flex gap-2">
+                            <Button
+                                className="flex-1"
+                                onClick={() => handleAccept(invitation.id)}
+                                disabled={isPending && processingId === invitation.id}
+                            >
+                                {isPending && processingId === invitation.id ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Check className="mr-2 h-4 w-4" />
+                                )}
+                                Accept
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => handleDecline(invitation.id)}
+                                disabled={isPending && processingId === invitation.id}
+                            >
+                                <X className="mr-2 h-4 w-4" />
+                                Decline
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                )
+            })}
         </div>
     );
 }
