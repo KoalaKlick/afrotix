@@ -22,6 +22,7 @@ import {
 } from "@/lib/actions/organization";
 import type { OrganizationRole } from "@/lib/generated/prisma";
 import { getAvatarUrl } from "@/lib/image-url-utils";
+import { cn } from "@/lib/utils";
 import { OrgDataTable, type Column } from "./OrgDataTable";
 
 interface Member {
@@ -210,35 +211,43 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
                             <div className="space-y-2">
                                 <Label>Role</Label>
                                 <div className="flex gap-2">
-                                    <Button
+                                    <button
                                         type="button"
-                                        size="sm"
-                                        variant={inviteRole === "member" ? "default" : "outline"}
                                         onClick={() => setInviteRole("member")}
+                                        className={cn(
+                                            "rounded-md border px-3 py-1.5 transition-all",
+                                            inviteRole === "member"
+                                                ? "ring-2 ring-primary ring-offset-1"
+                                                : "opacity-50 hover:opacity-80"
+                                        )}
                                     >
-                                        Member
-                                    </Button>
-                                    <Button
+                                        <StatusBadge variant="member" size="sm" />
+                                    </button>
+                                    <button
                                         type="button"
-                                        size="sm"
-                                        variant={inviteRole === "admin" ? "default" : "outline"}
                                         onClick={() => setInviteRole("admin")}
+                                        className={cn(
+                                            "rounded-md border px-3 py-1.5 transition-all",
+                                            inviteRole === "admin"
+                                                ? "ring-2 ring-primary ring-offset-1"
+                                                : "opacity-50 hover:opacity-80"
+                                        )}
                                     >
-                                        Admin
-                                    </Button>
+                                        <StatusBadge variant="admin" size="sm" />
+                                    </button>
                                 </div>
-                            </div>
-                            <Button type="submit" variant="tertiary" className="w-full" disabled={isPending}>
-                                {isPending ? (
-                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
-                                ) : (
-                                    <><Mail className="mr-2 h-4 w-4" /> Send Invitation</>
-                                )}
-                            </Button>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                        </div>
+                        <Button type="submit" variant="tertiary" className="w-full" disabled={isPending}>
+                            {isPending ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
+                            ) : (
+                                <><Mail className="mr-2 h-4 w-4" /> Send Invitation</>
+                            )}
+                        </Button>
+                    </form>
+                </DialogContent>
+                </ Dialog>
             }
         />
-    );
+            );
 }

@@ -2,13 +2,10 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { Mail, X, Clock, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Mail, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-    Avatar,
-    AvatarFallback,
-} from "@/components/ui/avatar";
+import { Avatar } from "@/components/shared/image/avatar";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { cancelInvitation } from "@/lib/actions/organization";
 import type { InvitationStatus, OrganizationRole } from "@/lib/generated/prisma";
 import { OrgDataTable, type Column } from "./OrgDataTable";
@@ -34,10 +31,12 @@ interface OrgInvitationsSettingsProps {
     readonly invitations: SentInvitation[];
 }
 
-const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
-    owner: "default",
-    admin: "secondary",
-    member: "outline",
+const invitationStatusVariant: Record<string, string> = {
+    accepted: "approved",
+    declined: "rejected",
+    expired: "warning",
+    pending: "pending",
+    cancelled: "cancelled",
 };
 
 function getEffectiveStatus(status: InvitationStatus, expiresAt: Date | null): string {
@@ -45,41 +44,6 @@ function getEffectiveStatus(status: InvitationStatus, expiresAt: Date | null): s
         return "expired";
     }
     return status;
-}
-
-function getStatusBadge(status: InvitationStatus, expiresAt: Date | null) {
-    const effective = getEffectiveStatus(status, expiresAt);
-
-    if (effective === "accepted") {
-        return (
-            <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Accepted
-            </Badge>
-        );
-    }
-    if (effective === "declined") {
-        return (
-            <Badge variant="secondary" className="bg-red-100 text-red-700 hover:bg-red-100">
-                <XCircle className="h-3 w-3 mr-1" />
-                Declined
-            </Badge>
-        );
-    }
-    if (effective === "expired") {
-        return (
-            <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-100">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Expired
-            </Badge>
-        );
-    }
-    return (
-        <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-            <Clock className="h-3 w-3 mr-1" />
-            Pending
-        </Badge>
-    );
 }
 
 export function OrgInvitationsSettings({ organizationId, invitations }: OrgInvitationsSettingsProps) {
@@ -105,11 +69,14 @@ export function OrgInvitationsSettings({ organizationId, invitations }: OrgInvit
             header: "Invitee",
             cell: (inv) => (
                 <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                            {inv.email[0].toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
+                    <Avatar
+                        src=""
+                        alt={inv.email}
+                        fullName={inv.email}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-md"
+                    />
                     <div>
                         <p className="font-medium text-sm truncate">{inv.email}</p>
                         {inv.inviter && (
@@ -124,14 +91,15 @@ export function OrgInvitationsSettings({ organizationId, invitations }: OrgInvit
         {
             header: "Role",
             cell: (inv) => (
-                <Badge variant={roleBadgeVariant[inv.role] ?? "outline"}>
-                    {inv.role}
-                </Badge>
+                <StatusBadge variant={inv.role} />
             ),
         },
         {
             header: "Status",
-            cell: (inv) => getStatusBadge(inv.status, inv.expiresAt),
+            cell: (inv) => {
+                const effective = getEffectiveStatus(inv.status, inv.expiresAt);
+                return <StatusBadge variant={invitationStatusVariant[effective] ?? "default"} text={effective.charAt(0).toUpperCase() + effective.slice(1)} />;
+            },
         },
         {
             header: "Date",
