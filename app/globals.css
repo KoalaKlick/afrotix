@@ -198,27 +198,55 @@ html {
   background-color: rgb(22 163 74 / 0.18);
 }
 
-/* Pan-African radial gradient cycle on cards (red → yellow → green) */
-/* 1st, 4th, 7th… — Red top-left, Yellow top-right, Green(0) bottom-left */
-[data-slot="card"]:nth-child(3n + 1) {
+/* Pan-African radial gradient cycle on cards — opt-in via variant="afro" (3 colors) or variant="afro-4" (4 colors) */
+
+/* ── 3-color cycle: red → yellow → green ── */
+[data-variant="afro"]:nth-child(3n + 1) {
   background-image:
     radial-gradient(circle at top left, rgba(220, 38, 38, 0.16), transparent 28%),
     radial-gradient(circle at top right, rgba(234, 179, 8, 0.14), transparent 24%),
     radial-gradient(circle at bottom left, rgba(22, 163, 74, 0), transparent 26%);
 }
 
-/* 2nd, 5th, 8th… — Yellow top-left, Green top-right, Red(0) bottom-left */
-[data-slot="card"]:nth-child(3n + 2) {
+[data-variant="afro"]:nth-child(3n + 2) {
   background-image:
     radial-gradient(circle at top left, rgba(234, 179, 8, 0.16), transparent 28%),
     radial-gradient(circle at top right, rgba(22, 163, 74, 0.14), transparent 24%),
     radial-gradient(circle at bottom left, rgba(220, 38, 38, 0), transparent 26%);
 }
 
-/* 3rd, 6th, 9th… — Green top-left, Red top-right, Green(0) bottom-left */
-[data-slot="card"]:nth-child(3n + 3) {
+[data-variant="afro"]:nth-child(3n + 3) {
   background-image:
     radial-gradient(circle at top left, rgba(22, 163, 74, 0.16), transparent 28%),
     radial-gradient(circle at top right, rgba(220, 38, 38, 0.14), transparent 24%),
     radial-gradient(circle at bottom left, rgba(22, 163, 74, 0), transparent 26%);
+}
+
+/* ── 4-color cycle: red → yellow → green → black ── */
+[data-variant="afro-4"]:nth-child(4n + 1) {
+  background-image:
+    radial-gradient(circle at top left, rgba(220, 38, 38, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(234, 179, 8, 0.14), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(22, 163, 74, 0), transparent 26%);
+}
+
+[data-variant="afro-4"]:nth-child(4n + 2) {
+  background-image:
+    radial-gradient(circle at top left, rgba(234, 179, 8, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(22, 163, 74, 0.14), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(220, 38, 38, 0), transparent 26%);
+}
+
+[data-variant="afro-4"]:nth-child(4n + 3) {
+  background-image:
+    radial-gradient(circle at top left, rgba(22, 163, 74, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(220, 38, 38, 0.14), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(26, 26, 26, 0), transparent 26%);
+}
+
+[data-variant="afro-4"]:nth-child(4n + 4) {
+  background-image:
+    radial-gradient(circle at top left, rgba(26, 26, 26, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(220, 38, 38, 0.14), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(234, 179, 8, 0), transparent 26%);
 }
