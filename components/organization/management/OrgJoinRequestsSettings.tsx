@@ -50,7 +50,7 @@ export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinReq
                     <Clock className="h-5 w-5" />
                     Join Requests
                     {requests.length > 0 && (
-                        <StatusBadge variant="pending" className="ml-1">{requests.length}</StatusBadge>
+                        <StatusBadge variant="pending" className="ml-1" text={String(requests.length)} />
                     )}
                 </CardTitle>
             </CardHeader>
@@ -69,9 +69,11 @@ export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinReq
                                 className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
                             >
                                 <Avatar
-                                    src={getAvatarUrl(req.user.avatarUrl) ?? undefined}
+                                    src={getAvatarUrl(req.user.avatarUrl) ?? ""}
                                     fullName={req.user.fullName ?? undefined}
-                                    size="md"
+                                    width={40}
+                                    height={40}
+                                    alt={req.user.fullName ?? "User avatar"}
                                     className="mt-0.5"
                                 />
                                 <div className="flex-1 min-w-0">
