@@ -5,12 +5,8 @@ import { toast } from "sonner";
 import { Users, Shield, ShieldCheck, UserMinus, Mail, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from "@/components/ui/avatar";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { Avatar } from "@/components/shared/image/avatar";
 import {
     Dialog,
     DialogContent,
@@ -46,22 +42,6 @@ interface OrgMembersSettingsProps {
     readonly members: Member[];
     readonly currentUserId: string;
 }
-
-function getInitials(name: string | null): string {
-    if (!name) return "??";
-    return name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-}
-
-const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
-    owner: "default",
-    admin: "secondary",
-    member: "outline",
-};
 
 export function OrgMembersSettings({ organizationId, members, currentUserId }: OrgMembersSettingsProps) {
     const [isPending, startTransition] = useTransition();
@@ -114,12 +94,14 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
                 const isSelf = member.user.id === currentUserId;
                 return (
                     <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={getAvatarUrl(member.user.avatarUrl) ?? undefined} />
-                            <AvatarFallback className="text-xs">
-                                {getInitials(member.user.fullName)}
-                            </AvatarFallback>
-                        </Avatar>
+                        <Avatar
+                            src={getAvatarUrl(member.user.avatarUrl) ?? ""}
+                            alt={member.user.fullName ?? member.user.username ?? "Member"}
+                            fullName={member.user.fullName}
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-md"
+                        />
                         <div>
                             <p className="font-medium text-sm">
                                 {member.user.fullName ?? member.user.username ?? "Unknown"}
@@ -134,9 +116,7 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
         {
             header: "Role",
             cell: (member) => (
-                <Badge variant={roleBadgeVariant[member.role] ?? "outline"}>
-                    {member.role}
-                </Badge>
+                <StatusBadge variant={member.role} />
             ),
         },
         {
@@ -207,7 +187,7 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
             headerAction={
                 <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
                     <DialogTrigger asChild>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="tertiary">
                             <Plus className="mr-1 h-4 w-4" /> Invite
                         </Button>
                     </DialogTrigger>
@@ -248,7 +228,7 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
                                     </Button>
                                 </div>
                             </div>
-                            <Button type="submit" className="w-full" disabled={isPending}>
+                            <Button type="submit" variant="tertiary" className="w-full" disabled={isPending}>
                                 {isPending ? (
                                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
                                 ) : (

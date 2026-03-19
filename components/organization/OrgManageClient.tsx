@@ -75,8 +75,8 @@ export function OrgManageClient({
                     {
                         label: (
                             <>
-                                <Settings className="inline mr-1.5 h-3.5 w-3.5" />
-                                Manage Organization
+                                <Settings className="inline text-secondary-500 mr-1.5 h-3.5 w-3.5" />
+                                <span>Manage Organization</span>
                             </>
                         ),
                     },
@@ -84,20 +84,20 @@ export function OrgManageClient({
             />
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto">
-                <div className=" mx-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto ">
+                <div className=" mx-auto p-6 pt-0 space-y-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                             <Building2 className="h-6 w-6" />
                             {organization.name}
                         </h1>
-                        <p className="text-muted-foreground mt-1">
+                        <p className=" mt-1 text-sm font-poppins">
                             Manage your organization settings, members, and join requests.
                         </p>
                     </div>
 
                     <Tabs defaultValue="general" className="space-y-6">
-                        <TabsList className="grid w-full grid-cols-4">
+                        <TabsList variant="afro" className="grid w-full grid-cols-4">
                             <TabsTrigger value="general" className="gap-1.5">
                                 <Settings className="h-4 w-4" />
                                 <span className="hidden sm:inline">General</span>
@@ -119,7 +119,7 @@ export function OrgManageClient({
                                 <Mail className="h-4 w-4" />
                                 <span className="hidden sm:inline">Invitations</span>
                                 {invitations.filter(i => i.status === "pending").length > 0 && (
-                                    <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-blue-500 text-white text-[10px] font-bold">
+                                    <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-tertiary-600 text-white text-[10px] font-bold">
                                         {invitations.filter(i => i.status === "pending").length}
                                     </span>
                                 )}

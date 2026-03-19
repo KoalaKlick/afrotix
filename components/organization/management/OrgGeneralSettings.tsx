@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { updateExistingOrganization, uploadOrgLogo, uploadOrgBanner } from "@/lib/actions/organization";
 import { convertToWebP } from "@/lib/image-utils";
 import { getOrgImageUrl } from "@/lib/image-url-utils";
+import { TicketPreview } from "@/components/shared/TicketPreview";
 import { cn } from "@/lib/utils";
 
 interface OrgGeneralSettingsProps {
@@ -268,7 +269,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                     ) : (
                         <button
                             type="button"
-                            className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/80 transition-colors"
+                            className="w-full h-full flex flex-col items-center bg-gray-100! justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/80 transition-colors"
                             onClick={() => bannerInputRef.current?.click()}
                             disabled={isUploadingBanner}
                         >
@@ -287,7 +288,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
                 {/* Logo - Overlapping */}
                 <div className="absolute -bottom-10 left-4 md:left-6">
-                    <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-xl bg-white p-1.5 shadow-lg border group">
+                    <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-xl bg-gray-100 p-1.5 group">
                         {logoDisplayUrl ? (
                             <>
                                 <Image
@@ -321,14 +322,14 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                         ) : (
                             <button
                                 type="button"
-                                className="w-full h-full bg-primary/10 flex items-center justify-center text-primary rounded-lg cursor-pointer hover:bg-primary/20 transition-colors"
+                                className="w-full h-full bg-white flex items-center justify-center text-primary rounded-lg cursor-pointer hover:bg-primary-600/10 transition-colors"
                                 onClick={() => logoInputRef.current?.click()}
                                 disabled={isUploadingLogo}
                             >
                                 {isUploadingLogo ? (
                                     <Loader2 className="h-6 w-6 animate-spin" />
                                 ) : (
-                                    <Building2 className="h-8 w-8 md:h-10 md:w-10" />
+                                    <Building2 className="h-8 text-primary-600 w-8 md:h-10 md:w-10" />
                                 )}
                             </button>
                         )}
@@ -337,7 +338,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
             </div>
 
             {/* Basic Information */}
-            <Card>
+            <Card className=" ">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Building2 className="h-5 w-5" />
@@ -384,104 +385,111 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
             </Card>
 
             {/* Colors */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Palette className="h-5 w-5" />
-                        Brand Colors
-                    </CardTitle>
-                    <CardDescription>
-                        Customize your organization&apos;s color scheme
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+            <Card className="@container">
+                <CardContent className="pt-6 @lg:grid @2xl:grid-cols-[auto_360px] @lg:gap-6">
                     {/* Primary Color */}
-                    <div className="space-y-3">
-                        <Label>Primary Color</Label>
-                        <p className="text-xs text-muted-foreground">
-                            Used for buttons and accents on your event pages
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-2 text-lg font-semibold">
+                            <Palette className="h-5 w-5" />
+                            Brand Colors
+                        </div>
+                        <p className="text-sm text-muted-foreground -mt-4">
+                            Customize your organization&apos;s color scheme
                         </p>
-                        <div className="flex flex-wrap gap-2">
-                            {PRESET_COLORS.map((color) => (
-                                <button
-                                    key={color.value}
-                                    type="button"
-                                    onClick={() => setPrimaryColor(color.value)}
-                                    className={cn(
-                                        "h-8 w-8 rounded-full transition-all",
-                                        primaryColor === color.value
-                                            ? "ring-2 ring-offset-2 ring-primary scale-110"
-                                            : "hover:scale-105"
-                                    )}
-                                    style={{ backgroundColor: color.value }}
-                                    title={color.name}
+
+                        <div className="space-y-3">
+                            <Label>Primary Color</Label>
+                            <p className="text-xs text-muted-foreground">
+                                Used for buttons and accents on your event pages
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {PRESET_COLORS.map((color) => (
+                                    <button
+                                        key={color.value}
+                                        type="button"
+                                        onClick={() => setPrimaryColor(color.value)}
+                                        className={cn(
+                                            "h-8 w-8 rounded-full transition-all",
+                                            primaryColor === color.value
+                                                ? "ring-2 ring-offset-2 ring-primary scale-110"
+                                                : "hover:scale-105"
+                                        )}
+                                        style={{ backgroundColor: color.value }}
+                                        title={color.name}
+                                    />
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Input
+                                    type="color"
+                                    value={primaryColor}
+                                    onChange={(e) => setPrimaryColor(e.target.value)}
+                                    className="h-9 w-14 p-1 cursor-pointer"
                                 />
-                            ))}
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                            <Input
-                                type="color"
-                                value={primaryColor}
-                                onChange={(e) => setPrimaryColor(e.target.value)}
-                                className="h-9 w-14 p-1 cursor-pointer"
-                            />
-                            <Input
-                                type="text"
-                                value={primaryColor}
-                                onChange={(e) => setPrimaryColor(e.target.value)}
-                                placeholder="#6366f1"
-                                className="flex-1 font-mono text-sm"
-                            />
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Secondary Color */}
-                    <div className="space-y-3">
-                        <Label>Secondary Color</Label>
-                        <p className="text-xs text-muted-foreground">
-                            Used for backgrounds and secondary elements
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                            {PRESET_COLORS.map((color) => (
-                                <button
-                                    key={`secondary-${color.value}`}
-                                    type="button"
-                                    onClick={() => setSecondaryColor(color.value)}
-                                    className={cn(
-                                        "h-8 w-8 rounded-full transition-all",
-                                        secondaryColor === color.value
-                                            ? "ring-2 ring-offset-2 ring-primary scale-110"
-                                            : "hover:scale-105"
-                                    )}
-                                    style={{ backgroundColor: color.value }}
-                                    title={color.name}
+                                <Input
+                                    type="text"
+                                    value={primaryColor}
+                                    onChange={(e) => setPrimaryColor(e.target.value)}
+                                    placeholder="#6366f1"
+                                    className="flex-1 font-mono text-sm"
                                 />
-                            ))}
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-2">
-                            <Input
-                                type="color"
-                                value={secondaryColor}
-                                onChange={(e) => setSecondaryColor(e.target.value)}
-                                className="h-9 w-14 p-1 cursor-pointer"
-                            />
-                            <Input
-                                type="text"
-                                value={secondaryColor}
-                                onChange={(e) => setSecondaryColor(e.target.value)}
-                                placeholder="#1e293b"
-                                className="flex-1 font-mono text-sm"
-                            />
+
+                        <Separator />
+
+                        {/* Secondary Color */}
+                        <div className="space-y-3">
+                            <Label>Secondary Color</Label>
+                            <p className="text-xs text-muted-foreground">
+                                Used for backgrounds and secondary elements
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {PRESET_COLORS.map((color) => (
+                                    <button
+                                        key={`secondary-${color.value}`}
+                                        type="button"
+                                        onClick={() => setSecondaryColor(color.value)}
+                                        className={cn(
+                                            "h-8 w-8 rounded-full transition-all",
+                                            secondaryColor === color.value
+                                                ? "ring-2 ring-offset-2 ring-primary scale-110"
+                                                : "hover:scale-105"
+                                        )}
+                                        style={{ backgroundColor: color.value }}
+                                        title={color.name}
+                                    />
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Input
+                                    type="color"
+                                    value={secondaryColor}
+                                    onChange={(e) => setSecondaryColor(e.target.value)}
+                                    className="h-9 w-14 p-1 cursor-pointer"
+                                />
+                                <Input
+                                    type="text"
+                                    value={secondaryColor}
+                                    onChange={(e) => setSecondaryColor(e.target.value)}
+                                    placeholder="#1e293b"
+                                    className="flex-1 font-mono text-sm"
+                                />
+                            </div>
                         </div>
+
                     </div>
 
-                    {/* Color Preview */}
-                    <div className="rounded-lg overflow-hidden border">
-                        <div className="h-12" style={{ backgroundColor: primaryColor }} />
-                        <div className="h-8" style={{ backgroundColor: secondaryColor }} />
+                    <div className="mt-6 @lg:mt-0 flex justify-center @lg:sticky @lg:top-0 @lg:self-start">
+                        <TicketPreview
+                            primaryColor={primaryColor}
+                            secondaryColor={secondaryColor}
+                            logoUrl={logoDisplayUrl}
+                            organizationName={name || undefined}
+                        />
                     </div>
+                    {/* Ticket Preview */}
+
                 </CardContent>
             </Card>
 
@@ -527,7 +535,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
             {/* Save Button */}
             <div className="flex justify-end">
-                <Button type="submit" disabled={isPending} size="lg">
+                <Button type="submit" variant='tertiary' disabled={isPending} size="sm">
                     {isPending ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
