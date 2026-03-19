@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import {
     OrgStep1BasicInfo,
     OrgStep2Branding,
-    OrgStep3Customize,
-    OrgCreationComplete,
 } from "@/components/organization";
 import { createNewOrganization } from "@/lib/actions/organization";
+import Image from "next/image";
 
 // Form state type
 type OrgFormData = {
@@ -16,10 +15,6 @@ type OrgFormData = {
     slug: string;
     description?: string;
     logoUrl?: string;
-    contactEmail?: string;
-    websiteUrl?: string;
-    primaryColor?: string;
-    secondaryColor?: string;
 };
 
 interface OrgCreationClientProps {
@@ -31,13 +26,8 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
     const [, startTransition] = useTransition();
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<OrgFormData>>({});
-    const [createdOrg, setCreatedOrg] = useState<{
-        id: string;
-        name: string;
-        slug: string;
-        logoUrl?: string;
-    } | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     // Step 1 success - save name & slug, move to step 2
     function handleStep1Success(data: { name: string; slug: string }) {
@@ -45,73 +35,44 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
         setCurrentStep(1);
     }
 
-    // Step 2 success - save logo & description, move to step 3
+    // Step 2 success - save logo & description, create org
     function handleStep2Success(data: { logoUrl?: string; description?: string }) {
-        setFormData((prev) => ({ ...prev, ...data }));
-        setCurrentStep(2);
-    }
-
-    function handleStep2Skip() {
-        createOrganization(formData as OrgFormData, { redirectToDashboard: true });
-    }
-
-    // Step 3 success - create organization
-    function handleStep3Success(data: {
-        contactEmail?: string;
-        websiteUrl?: string;
-        primaryColor?: string;
-        secondaryColor?: string;
-    }) {
         const finalData = { ...formData, ...data };
         setFormData(finalData);
         createOrganization(finalData as OrgFormData);
     }
 
-    function handleStep3Skip() {
+    function handleStep2Skip() {
         createOrganization(formData as OrgFormData);
     }
 
     // Create the organization
-    async function createOrganization(
-        data: OrgFormData,
-        options?: { redirectToDashboard?: boolean }
-    ) {
+    async function createOrganization(data: OrgFormData) {
         startTransition(async () => {
             const formDataObj = new FormData();
             formDataObj.set("name", data.name);
             formDataObj.set("slug", data.slug);
             if (data.description) formDataObj.set("description", data.description);
             if (data.logoUrl) formDataObj.set("logoUrl", data.logoUrl);
-            if (data.contactEmail) formDataObj.set("contactEmail", data.contactEmail);
-            if (data.websiteUrl) formDataObj.set("websiteUrl", data.websiteUrl);
-            if (data.primaryColor) formDataObj.set("primaryColor", data.primaryColor);
-            if (data.secondaryColor) formDataObj.set("secondaryColor", data.secondaryColor);
 
             const result = await createNewOrganization(formDataObj);
 
             if (result.success && result.data) {
-                if (options?.redirectToDashboard && isInitialSetup) {
-                    router.replace("/dashboard");
-                    return;
-                }
-
-                setCreatedOrg({
-                    id: result.data.id,
-                    name: data.name,
-                    slug: result.data.slug,
-                    logoUrl: data.logoUrl,
-                });
+                setIsRedirecting(true);
+                router.push("/dashboard");
             } else {
                 setError(result.error ?? "Failed to create organization");
             }
         });
     }
 
-    // Show completion screen
-    if (createdOrg) {
+    if (isRedirecting) {
         return (
             <div className="w-full max-w-md mx-auto px-4">
-                <OrgCreationComplete organization={createdOrg} />
+                <div className="flex flex-col items-center justify-center gap-6 py-20">
+                    <Image src="/logo.svg" alt="AfroTix" width={120} height={40} className="h-10 w-auto animate-pulse" priority />
+                    <p className="text-sm text-muted-foreground animate-pulse">Setting up your dashboard...</p>
+                </div>
             </div>
         );
     }
@@ -138,19 +99,6 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
                     orgName={formData.name ?? "Organization"}
                     onSuccess={handleStep2Success}
                     onSkip={handleStep2Skip}
-                />
-            )}
-
-            {currentStep === 2 && (
-                <OrgStep3Customize
-                    defaultValues={{
-                        contactEmail: formData.contactEmail,
-                        websiteUrl: formData.websiteUrl,
-                        primaryColor: formData.primaryColor,
-                        secondaryColor: formData.secondaryColor,
-                    }}
-                    onSuccess={handleStep3Success}
-                    onSkip={handleStep3Skip}
                 />
             )}
 

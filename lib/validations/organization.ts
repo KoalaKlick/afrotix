@@ -123,7 +123,13 @@ export const organizationDescriptionSchema = z
     .optional()
     .or(z.literal(""));
 
-// URL validation (optional)
+// Storage path validation (for uploaded images stored in Supabase)
+export const storagePathSchema = z
+    .string()
+    .optional()
+    .or(z.literal(""));
+
+// URL validation (for actual URLs like website links)
 export const urlSchema = z
     .string()
     .url("Invalid URL")
@@ -151,7 +157,7 @@ export const createOrgStep1Schema = z.object({
 
 // Step 2: Branding - Logo and description
 export const createOrgStep2Schema = z.object({
-    logoUrl: urlSchema,
+    logoUrl: storagePathSchema,
     description: organizationDescriptionSchema,
 });
 
@@ -163,16 +169,12 @@ export const createOrgStep3Schema = z.object({
     secondaryColor: colorSchema,
 });
 
-// Complete organization creation schema
+// Complete organization creation schema (used during onboarding)
 export const createOrganizationSchema = z.object({
     name: organizationNameSchema,
     slug: organizationSlugSchema,
     description: organizationDescriptionSchema,
-    logoUrl: urlSchema,
-    contactEmail: organizationEmailSchema,
-    websiteUrl: urlSchema,
-    primaryColor: colorSchema,
-    secondaryColor: colorSchema,
+    logoUrl: storagePathSchema,
 });
 
 // Update organization schema
@@ -180,9 +182,9 @@ export const updateOrganizationSchema = z.object({
     name: organizationNameSchema.optional(),
     slug: organizationSlugSchema.optional(),
     description: organizationDescriptionSchema,
-    logoUrl: urlSchema,
-    bannerUrl: urlSchema,
-    faviconUrl: urlSchema,
+    logoUrl: storagePathSchema,
+    bannerUrl: storagePathSchema,
+    faviconUrl: storagePathSchema,
     contactEmail: organizationEmailSchema,
     websiteUrl: urlSchema,
     primaryColor: colorSchema,
@@ -192,7 +194,6 @@ export const updateOrganizationSchema = z.object({
 // Type exports
 export type CreateOrgStep1Data = z.infer<typeof createOrgStep1Schema>;
 export type CreateOrgStep2Data = z.infer<typeof createOrgStep2Schema>;
-export type CreateOrgStep3Data = z.infer<typeof createOrgStep3Schema>;
 export type CreateOrganizationData = z.infer<typeof createOrganizationSchema>;
 export type UpdateOrganizationData = z.infer<typeof updateOrganizationSchema>;
 
@@ -200,7 +201,6 @@ export type UpdateOrganizationData = z.infer<typeof updateOrganizationSchema>;
 export const ORG_CREATION_STEPS = [
     { id: 1, title: "Basic Info", description: "Name your organization" },
     { id: 2, title: "Branding", description: "Add logo and description" },
-    { id: 3, title: "Customize", description: "Contact and colors" },
 ] as const;
 
 export const TOTAL_ORG_CREATION_STEPS = ORG_CREATION_STEPS.length;

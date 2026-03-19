@@ -19,3 +19,6 @@ export {
     type EventStatsData,
     type StatCardProps,
 } from "./EventStats";
+export { EventsList } from "./EventsList";
+export { EventDetailClient } from "./EventDetailClient";
+export { EventCreationClient } from "./EventCreationClient";

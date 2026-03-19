@@ -23,7 +23,7 @@ export default function EmailConfirmedPage() {
                 or continue to setup from here.
             </p>
             <Button
-                className="w-full rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold" onClick={() => router.push('/onboarding')}
+                className="w-full rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold" onClick={() => router.push('/setup/onboarding')}
             >
                 Continue Setup
             </Button>

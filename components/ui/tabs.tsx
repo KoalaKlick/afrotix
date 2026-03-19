@@ -32,6 +32,7 @@ const tabsListVariants = cva(
       variant: {
         default: "bg-muted",
         line: "gap-1 bg-transparent",
+        afro: "bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0),transparent_26%)] border border-[rgba(234,179,8,0.18)] h-11 space-x-1",
       },
     },
     defaultVariants: {
@@ -68,6 +69,8 @@ function TabsTrigger({
         "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent",
         "data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground",
         "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
+        // Afro variant: warm text, active overrides handled via CSS nth-child in globals.css
+        "group-data-[variant=afro]/tabs-list:text-black group-data-[variant=afro]/tabs-list:hover:text-black group-data-[variant=afro]/tabs-list:data-[state=active]:text-black group-data-[variant=afro]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=afro]/tabs-list:data-[state=active]:bg-transparent",
         className
       )}
       {...props}

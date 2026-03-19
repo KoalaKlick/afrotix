@@ -42,7 +42,8 @@ export async function updateSession(request: NextRequest) {
     response.headers.set('x-pathname', pathname)
 
     // Protected routes - redirect to login if not authenticated
-    if (pathname.startsWith('/dashboard') && !user) {
+    const protectedPrefixes = ['/dashboard', '/promoter', '/my-events', '/setup']
+    if (!user && protectedPrefixes.some(prefix => pathname.startsWith(prefix))) {
         return NextResponse.redirect(new URL('/auth/login', request.url))
     }
 

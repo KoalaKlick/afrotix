@@ -13,7 +13,6 @@ import { createClient } from "@/utils/supabase/server";
 import {
     createOrgStep1Schema,
     createOrgStep2Schema,
-    createOrgStep3Schema,
     generateSlug,
 } from "@/lib/validations/organization";
 import {

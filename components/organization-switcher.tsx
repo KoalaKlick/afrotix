@@ -189,7 +189,7 @@ export function OrganizationSwitcher({
 
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild className="gap-2 p-2 cursor-pointer">
-                            <Link href="/organization/new">
+                            <Link href="/setup/organization/new">
                                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                                     <Plus className="size-4" />
                                 </div>

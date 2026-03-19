@@ -50,7 +50,7 @@ function VerificationContent() {
 
         toast.success('Email verified successfully!')
         setVerified(true)
-        setTimeout(() => router.push('/onboarding'), 1500)
+        setTimeout(() => router.push('/setup/onboarding'), 1500)
     }
 
     const handleResend = async () => {

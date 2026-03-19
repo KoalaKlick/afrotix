@@ -94,7 +94,7 @@ html {
   --card-foreground: oklch(0.985 0.002 247.839);
   --popover: oklch(0.21 0.034 264.665);
   --popover-foreground: oklch(0.985 0.002 247.839);
-  --primary: oklch(0.928 0.006 264.531);
+  --primary: var(--primary-500);
   --primary-foreground: oklch(0.21 0.034 264.665);
   --secondary: oklch(0.278 0.033 256.848);
   --secondary-foreground: oklch(0.985 0.002 247.839);
@@ -171,4 +171,54 @@ html {
 
 .animate-marquee:hover {
   animation-play-state: paused;
+}
+
+/* Afro tabs variant: Pan-African color cycle (red → gold → green) */
+[data-variant="afro"]>[data-slot="tabs-trigger"]:nth-child(3n + 1):hover {
+  background-color: rgb(220 38 38 / 0.1);
+}
+
+[data-variant="afro"]>[data-slot="tabs-trigger"]:nth-child(3n + 1)[data-state="active"] {
+  background-color: rgb(220 38 38 / 0.18);
+}
+
+[data-variant="afro"]>[data-slot="tabs-trigger"]:nth-child(3n + 2):hover {
+  background-color: rgb(234 179 8 / 0.12);
+}
+
+[data-variant="afro"]>[data-slot="tabs-trigger"]:nth-child(3n + 2)[data-state="active"] {
+  background-color: rgb(234 179 8 / 0.2);
+}
+
+[data-variant="afro"]>[data-slot="tabs-trigger"]:nth-child(3n + 3):hover {
+  background-color: rgb(22 163 74 / 0.1);
+}
+
+[data-variant="afro"]>[data-slot="tabs-trigger"]:nth-child(3n + 3)[data-state="active"] {
+  background-color: rgb(22 163 74 / 0.18);
+}
+
+/* Pan-African radial gradient cycle on cards (red → yellow → green) */
+/* 1st, 4th, 7th… — Red top-left, Yellow top-right, Green(0) bottom-left */
+[data-slot="card"]:nth-child(3n + 1) {
+  background-image:
+    radial-gradient(circle at top left, rgba(220, 38, 38, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(234, 179, 8, 0.14), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(22, 163, 74, 0), transparent 26%);
+}
+
+/* 2nd, 5th, 8th… — Yellow top-left, Green top-right, Red(0) bottom-left */
+[data-slot="card"]:nth-child(3n + 2) {
+  background-image:
+    radial-gradient(circle at top left, rgba(234, 179, 8, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(22, 163, 74, 0.14), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(220, 38, 38, 0), transparent 26%);
+}
+
+/* 3rd, 6th, 9th… — Green top-left, Red top-right, Green(0) bottom-left */
+[data-slot="card"]:nth-child(3n + 3) {
+  background-image:
+    radial-gradient(circle at top left, rgba(22, 163, 74, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(220, 38, 38, 0.14), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(22, 163, 74, 0), transparent 26%);
 }

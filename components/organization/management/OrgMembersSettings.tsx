@@ -1,25 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { toast } from "sonner";
 import { Users, Shield, ShieldCheck, UserMinus, Mail, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from "@/components/ui/avatar";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { Avatar } from "@/components/shared/image/avatar";
 import {
     Dialog,
     DialogContent,
@@ -34,7 +21,9 @@ import {
     inviteMember,
 } from "@/lib/actions/organization";
 import type { OrganizationRole } from "@/lib/generated/prisma";
-import { useState } from "react";
+import { getAvatarUrl } from "@/lib/image-url-utils";
+import { cn } from "@/lib/utils";
+import { OrgDataTable, type Column } from "./OrgDataTable";
 
 interface Member {
     id: string;
@@ -54,22 +43,6 @@ interface OrgMembersSettingsProps {
     readonly members: Member[];
     readonly currentUserId: string;
 }
-
-function getInitials(name: string | null): string {
-    if (!name) return "??";
-    return name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-}
-
-const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
-    owner: "default",
-    admin: "secondary",
-    member: "outline",
-};
 
 export function OrgMembersSettings({ organizationId, members, currentUserId }: OrgMembersSettingsProps) {
     const [isPending, startTransition] = useTransition();
@@ -115,16 +88,107 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
         });
     };
 
+    const columns: Column<Member>[] = [
+        {
+            header: "Member",
+            cell: (member) => {
+                const isSelf = member.user.id === currentUserId;
+                return (
+                    <div className="flex items-center gap-3">
+                        <Avatar
+                            src={getAvatarUrl(member.user.avatarUrl) ?? ""}
+                            alt={member.user.fullName ?? member.user.username ?? "Member"}
+                            fullName={member.user.fullName}
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-md"
+                        />
+                        <div>
+                            <p className="font-medium text-sm">
+                                {member.user.fullName ?? member.user.username ?? "Unknown"}
+                                {isSelf && <span className="text-muted-foreground ml-1">(You)</span>}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{member.user.email}</p>
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            header: "Role",
+            cell: (member) => (
+                <StatusBadge variant={member.role} />
+            ),
+        },
+        {
+            header: "Joined",
+            cell: (member) => (
+                <span className="text-sm text-muted-foreground">
+                    {new Date(member.joinedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                    })}
+                </span>
+            ),
+        },
+        {
+            header: "Actions",
+            className: "text-right",
+            cell: (member) => {
+                const isOwner = member.role === "owner";
+                const isSelf = member.user.id === currentUserId;
+                if (isOwner || isSelf) return null;
+                return (
+                    <div className="flex items-center justify-end gap-1">
+                        {member.role === "member" ? (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRoleChange(member.user.id, "admin")}
+                                disabled={isPending}
+                                title="Promote to Admin"
+                            >
+                                <ShieldCheck className="h-4 w-4" />
+                            </Button>
+                        ) : (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRoleChange(member.user.id, "member")}
+                                disabled={isPending}
+                                title="Demote to Member"
+                            >
+                                <Shield className="h-4 w-4" />
+                            </Button>
+                        )}
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleRemove(member.user.id, member.user.fullName)}
+                            disabled={isPending}
+                            title="Remove Member"
+                        >
+                            <UserMinus className="h-4 w-4" />
+                        </Button>
+                    </div>
+                );
+            },
+        },
+    ];
+
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Members ({members.length})
-                </CardTitle>
+        <OrgDataTable
+            icon={<Users className="h-5 w-5" />}
+            title={`Members (${members.length})`}
+            columns={columns}
+            data={members}
+            keyExtractor={(m) => m.id}
+            headerAction={
                 <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
                     <DialogTrigger asChild>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="tertiary">
                             <Plus className="mr-1 h-4 w-4" /> Invite
                         </Button>
                     </DialogTrigger>
@@ -144,28 +208,16 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
                                     required
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="flex items-center gap-2">
                                 <Label>Role</Label>
-                                <div className="flex gap-2">
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant={inviteRole === "member" ? "default" : "outline"}
-                                        onClick={() => setInviteRole("member")}
-                                    >
-                                        Member
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant={inviteRole === "admin" ? "default" : "outline"}
-                                        onClick={() => setInviteRole("admin")}
-                                    >
-                                        Admin
-                                    </Button>
-                                </div>
+                                <button type="button" onClick={() => setInviteRole("member")} className={cn("transition-opacity", inviteRole !== "member" && "opacity-40 hover:opacity-70")}>
+                                    <StatusBadge variant="member" size="sm" />
+                                </button>
+                                <button type="button" onClick={() => setInviteRole("admin")} className={cn("transition-opacity", inviteRole !== "admin" && "opacity-40 hover:opacity-70")}>
+                                    <StatusBadge variant="admin" size="sm" />
+                                </button>
                             </div>
-                            <Button type="submit" className="w-full" disabled={isPending}>
+                            <Button type="submit" variant="primary" className="w-full" disabled={isPending}>
                                 {isPending ? (
                                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
                                 ) : (
@@ -174,97 +226,8 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
                             </Button>
                         </form>
                     </DialogContent>
-                </Dialog>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Member</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Joined</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {members.map((member) => {
-                            const isOwner = member.role === "owner";
-                            const isSelf = member.user.id === currentUserId;
-
-                            return (
-                                <TableRow key={member.id}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={member.user.avatarUrl ?? undefined} />
-                                                <AvatarFallback className="text-xs">
-                                                    {getInitials(member.user.fullName)}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="font-medium text-sm">
-                                                    {member.user.fullName ?? member.user.username ?? "Unknown"}
-                                                    {isSelf && <span className="text-muted-foreground ml-1">(You)</span>}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">{member.user.email}</p>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={roleBadgeVariant[member.role] ?? "outline"}>
-                                            {member.role}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-sm text-muted-foreground">
-                                        {new Date(member.joinedAt).toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
-                                        })}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {!isOwner && !isSelf && (
-                                            <div className="flex items-center justify-end gap-1">
-                                                {member.role === "member" ? (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => handleRoleChange(member.user.id, "admin")}
-                                                        disabled={isPending}
-                                                        title="Promote to Admin"
-                                                    >
-                                                        <ShieldCheck className="h-4 w-4" />
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => handleRoleChange(member.user.id, "member")}
-                                                        disabled={isPending}
-                                                        title="Demote to Member"
-                                                    >
-                                                        <Shield className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-destructive hover:text-destructive"
-                                                    onClick={() => handleRemove(member.user.id, member.user.fullName)}
-                                                    disabled={isPending}
-                                                    title="Remove Member"
-                                                >
-                                                    <UserMinus className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                </ Dialog>
+            }
+        />
     );
 }

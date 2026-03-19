@@ -4,7 +4,7 @@ import { getUserRoleInOrganization, getOrganizationById } from "@/lib/dal/organi
 import { getEventById } from "@/lib/dal/event";
 import { getVotingCategories } from "@/lib/dal/voting";
 import { normalizeFieldType } from "@/lib/types/voting";
-import { EventDetailClient } from "./EventDetailClient";
+import { EventDetailClient } from "@/components/event/EventDetailClient";
 import { PageHeader } from "@/components/shared/page-header";
 
 interface EventDetailPageProps {
