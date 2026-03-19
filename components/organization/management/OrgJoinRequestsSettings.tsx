@@ -71,7 +71,9 @@ export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinReq
                                 <Avatar
                                     src={getAvatarUrl(req.user.avatarUrl) ?? ""}
                                     fullName={req.user.fullName ?? undefined}
-                                    size="md"
+                                    width={40}
+                                    height={40}
+                                    alt={req.user.fullName ?? "User avatar"}
                                     className="mt-0.5"
                                 />
                                 <div className="flex-1 min-w-0">
