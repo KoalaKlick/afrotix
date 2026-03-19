@@ -208,46 +208,26 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
                                     required
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="flex items-center gap-2">
                                 <Label>Role</Label>
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setInviteRole("member")}
-                                        className={cn(
-                                            "rounded-md border px-3 py-1.5 transition-all",
-                                            inviteRole === "member"
-                                                ? "ring-2 ring-primary ring-offset-1"
-                                                : "opacity-50 hover:opacity-80"
-                                        )}
-                                    >
-                                        <StatusBadge variant="member" size="sm" />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setInviteRole("admin")}
-                                        className={cn(
-                                            "rounded-md border px-3 py-1.5 transition-all",
-                                            inviteRole === "admin"
-                                                ? "ring-2 ring-primary ring-offset-1"
-                                                : "opacity-50 hover:opacity-80"
-                                        )}
-                                    >
-                                        <StatusBadge variant="admin" size="sm" />
-                                    </button>
-                                </div>
-                        </div>
-                        <Button type="submit" variant="tertiary" className="w-full" disabled={isPending}>
-                            {isPending ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
-                            ) : (
-                                <><Mail className="mr-2 h-4 w-4" /> Send Invitation</>
-                            )}
-                        </Button>
-                    </form>
-                </DialogContent>
+                                <button type="button" onClick={() => setInviteRole("member")} className={cn("transition-opacity", inviteRole !== "member" && "opacity-40 hover:opacity-70")}>
+                                    <StatusBadge variant="member" size="sm" />
+                                </button>
+                                <button type="button" onClick={() => setInviteRole("admin")} className={cn("transition-opacity", inviteRole !== "admin" && "opacity-40 hover:opacity-70")}>
+                                    <StatusBadge variant="admin" size="sm" />
+                                </button>
+                            </div>
+                            <Button type="submit" variant="primary" className="w-full" disabled={isPending}>
+                                {isPending ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
+                                ) : (
+                                    <><Mail className="mr-2 h-4 w-4" /> Send Invitation</>
+                                )}
+                            </Button>
+                        </form>
+                    </DialogContent>
                 </ Dialog>
             }
         />
-            );
+    );
 }
