@@ -295,7 +295,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                                     src={logoDisplayUrl}
                                     alt={name}
                                     fill
-                                    className="object-cover rounded-lg"
+                                    className="object-cover border-white border-2 rounded-lg"
                                 />
                                 {/* Hover overlay */}
                                 <button
