@@ -5,12 +5,8 @@ import { toast } from "sonner";
 import { UserCheck, UserX, Clock, Loader2, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar } from "@/components/shared/image/avatar";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { resolveMembershipRequest } from "@/lib/actions/organization";
 import { getAvatarUrl } from "@/lib/image-url-utils";
 
@@ -31,16 +27,6 @@ interface JoinRequest {
 interface OrgJoinRequestsSettingsProps {
     readonly organizationId: string;
     readonly requests: JoinRequest[];
-}
-
-function getInitials(name: string | null): string {
-    if (!name) return "??";
-    return name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
 }
 
 export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinRequestsSettingsProps) {
@@ -64,7 +50,7 @@ export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinReq
                     <Clock className="h-5 w-5" />
                     Join Requests
                     {requests.length > 0 && (
-                        <Badge variant="secondary" className="ml-1">{requests.length}</Badge>
+                        <StatusBadge variant="pending" className="ml-1">{requests.length}</StatusBadge>
                     )}
                 </CardTitle>
             </CardHeader>
@@ -82,10 +68,12 @@ export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinReq
                                 key={req.id}
                                 className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
                             >
-                                <Avatar className="h-10 w-10 mt-0.5">
-                                    <AvatarImage src={getAvatarUrl(req.user.avatarUrl) ?? undefined} />
-                                    <AvatarFallback>{getInitials(req.user.fullName)}</AvatarFallback>
-                                </Avatar>
+                                <Avatar
+                                    src={getAvatarUrl(req.user.avatarUrl) ?? undefined}
+                                    fullName={req.user.fullName ?? undefined}
+                                    size="md"
+                                    className="mt-0.5"
+                                />
                                 <div className="flex-1 min-w-0">
                                     <p className="font-medium text-sm">
                                         {req.user.fullName ?? "Unknown User"}
