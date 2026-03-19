@@ -69,7 +69,7 @@ export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinReq
                                 className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
                             >
                                 <Avatar
-                                    src={getAvatarUrl(req.user.avatarUrl) ?? undefined}
+                                    src={getAvatarUrl(req.user.avatarUrl) ?? ""}
                                     fullName={req.user.fullName ?? undefined}
                                     size="md"
                                     className="mt-0.5"
