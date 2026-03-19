@@ -50,7 +50,7 @@ export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinReq
                     <Clock className="h-5 w-5" />
                     Join Requests
                     {requests.length > 0 && (
-                        <StatusBadge variant="pending" className="ml-1">{requests.length}</StatusBadge>
+                        <StatusBadge variant="pending" className="ml-1" text={String(requests.length)} />
                     )}
                 </CardTitle>
             </CardHeader>
