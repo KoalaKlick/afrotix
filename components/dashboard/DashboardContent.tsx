@@ -34,34 +34,8 @@ export function DashboardContent({
     stats,
 }: DashboardContentProps) {
     // Setup steps for the welcome card
-    const setupSteps = [
-        {
-            id: "event",
-            title: "Create your first event",
-            description: "Set up a voting or ticketed event to start engaging your audience.",
-            icon: Calendar,
-            href: "/my-events/new",
-            completed: false, // This would ideally be dynamic
-        },
-        {
-            id: "profile",
-            title: "Complete your profile",
-            description: "Add a professional bio and links to your social media profiles.",
-            icon: User,
-            href: "/settings/profile",
-            completed: true,
-        },
-        {
-            id: "wallet",
-            title: "Connect a wallet",
-            description: "Set up your payout details to receive earnings from your events.",
-            icon: Wallet,
-            href: "/settings/billing",
-            completed: false,
-        },
-    ];
+ 
 
-    const isNewUser = stats.totalEvents === 0;
 
     return (
         <>
@@ -72,7 +46,7 @@ export function DashboardContent({
                 <StatsGrid columns={4}>
                     <StatCard
                         label="Total Events"
-                        value={23433222}
+                        value={stats.totalEvents}
                         iconSrc={statIcons.search}
                     />
                     <StatCard

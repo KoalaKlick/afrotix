@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Check, Clock, X, AlertTriangle, Minus, Ban, Play, Calendar } from "lucide-react"
+import { Check, Clock, X, AlertTriangle, Minus, Ban, Play, Calendar, Crown, ShieldCheck, User } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 type StatusVariant =
@@ -27,6 +27,9 @@ type StatusVariant =
     | 'ended'
     | 'published'
     | 'upcoming'
+    | 'owner'
+    | 'admin'
+    | 'member'
 
 interface StatusConfig {
     icon: LucideIcon
@@ -213,6 +216,30 @@ const statusConfigs: Record<StatusVariant, StatusConfig> = {
         borderColor: "",
         bgColor: "",
         defaultText: "Upcoming",
+    },
+    owner: {
+        icon: Crown,
+        iconBgColor: "text-primary-600",
+        textColor: "text-gray-700 dark:text-gray-300",
+        borderColor: "",
+        bgColor: "bg-primary-50",
+        defaultText: "Owner",
+    },
+    admin: {
+        icon: ShieldCheck,
+         iconBgColor: "text-secondary-600",
+        textColor: "text-gray-700 dark:text-gray-300",
+        borderColor: "bg-secondary-50",
+        bgColor: "",
+        defaultText: "Admin",
+    },
+    member: {
+        icon: User,
+        iconBgColor: "text-tertiary-600",
+        textColor: "text-gray-700 dark:text-gray-300",
+        borderColor: "bg-tertiary-50",
+        bgColor: "",
+        defaultText: "Member",
     },
 }
 

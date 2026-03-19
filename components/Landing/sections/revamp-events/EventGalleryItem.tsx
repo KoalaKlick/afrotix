@@ -1,6 +1,7 @@
 "use client"
 
 import type { EventItem } from "@/lib/const/landing"
+import { getEventImageUrl } from "@/lib/image-url-utils"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import type { Event } from "@/lib/generated/prisma"
@@ -65,7 +66,7 @@ export function EventCard({ item, className, size = 'default' }: EventCardProps)
     const accentColor = !isDb ? (item as EventItem).accentColor : 'green';
     const colorClass = accentTextColors[accentColor] ?? 'text-[#009A44]';
 
-    const image = isDb ? (item as DbEvent).coverImage : (item as EventItem).image;
+    const image = isDb ? getEventImageUrl((item as DbEvent).coverImage) : (item as EventItem).image;
     const subtitle = isDb ? (item as DbEvent).description : (item as EventItem).subtitle;
     const categoryName = isDb ? (item as DbEvent).type.toUpperCase() : (item as EventItem).category;
 

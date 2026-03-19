@@ -12,6 +12,7 @@ import {
     AvatarImage,
 } from "@/components/ui/avatar";
 import { resolveMembershipRequest } from "@/lib/actions/organization";
+import { getAvatarUrl } from "@/lib/image-url-utils";
 
 interface JoinRequest {
     id: string;
@@ -82,7 +83,7 @@ export function OrgJoinRequestsSettings({ organizationId, requests }: OrgJoinReq
                                 className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
                             >
                                 <Avatar className="h-10 w-10 mt-0.5">
-                                    <AvatarImage src={req.user.avatarUrl ?? undefined} />
+                                    <AvatarImage src={getAvatarUrl(req.user.avatarUrl) ?? undefined} />
                                     <AvatarFallback>{getInitials(req.user.fullName)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">

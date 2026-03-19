@@ -33,7 +33,13 @@ export const eventTypeSchema = z.enum(["voting", "ticketed", "advertisement", "h
     error: "Please select a valid event type",
 });
 
-// URL validation (optional)
+// Storage path validation (for uploaded images stored in Supabase)
+export const storagePathSchema = z
+    .string()
+    .optional()
+    .or(z.literal(""));
+
+// URL validation (for actual URLs like virtual meeting links)
 export const urlSchema = z
     .string()
     .url("Invalid URL")
@@ -108,8 +114,8 @@ export const createEventStep2Schema = z.object({
 
 // Step 3: Media & Settings
 export const createEventStep3Schema = z.object({
-    coverImage: urlSchema,
-    bannerImage: urlSchema,
+    coverImage: storagePathSchema,
+    bannerImage: storagePathSchema,
     maxAttendees: z.coerce.number().int().min(1).max(100000).optional().nullable(),
     isPublic: z.boolean().default(true),
 });
@@ -129,8 +135,8 @@ export const createEventSchema = z.object({
     venueAddress: venueAddressSchema,
     venueCity: venueCitySchema,
     venueCountry: venueCountrySchema,
-    coverImage: urlSchema,
-    bannerImage: urlSchema,
+    coverImage: storagePathSchema,
+    bannerImage: storagePathSchema,
     maxAttendees: z.coerce.number().int().min(1).max(100000).optional().nullable(),
     isPublic: z.boolean().default(true),
 });

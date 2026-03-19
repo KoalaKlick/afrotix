@@ -57,7 +57,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import type { OrganizationRole } from "@/lib/generated/prisma"
-import { getOrgImageUrl } from "@/lib/image-url-utils"
+import { getAvatarUrl, getOrgImageUrl } from "@/lib/image-url-utils"
 import { createClient } from "@/utils/supabase/client"
 import { switchOrganization, acceptOrgInvitation, declineOrgInvitation } from "@/lib/actions/organization"
 
@@ -201,7 +201,7 @@ export function NavUser({
               className="rounded-md border border-white/8 hover:text-black  hover:bg-black/5 bg-white/5 transition-all duration-200  hover:border-white/12 data-[state=open]:bg-white/10 data-[state=open]:border-white/15"
             >
               <UserAvatar
-                src={user.avatar}
+                src={getAvatarUrl(user.avatar) ?? ""}
                 alt={user.name}
                 fullName={user.name}
                 width={32}
@@ -224,7 +224,7 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <UserAvatar
-                  src={user.avatar}
+                  src={getAvatarUrl(user.avatar) ?? ""}
                   alt={user.name}
                   fullName={user.name}
                   width={32}

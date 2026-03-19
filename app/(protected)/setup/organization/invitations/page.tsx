@@ -1,28 +1,23 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getPendingInvitationsForEmail } from "@/lib/dal/organization";
-import { InvitationsClient } from "./InvitationsClient";
+import { InvitationsClient } from "@/components/organization/InvitationsClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export default async function InvitationsPage() {
+    // Parent layout guarantees user exists and has pending invitations
     const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/auth/login");
 
-    if (!user) {
-        redirect("/auth/login");
-    }
-
-    // Fetch pending invitations for this user's email
     const invitations = await getPendingInvitationsForEmail(user.email ?? "");
 
     // If no invitations, redirect to creation flow
     if (invitations.length === 0) {
-        redirect("/organization/new?setup=true");
+        redirect("/setup/organization/new");
     }
 
     return (
@@ -56,7 +51,7 @@ export default async function InvitationsPage() {
                 </CardHeader>
                 <CardContent>
                     <Button asChild variant="outline" className="w-full">
-                        <Link href="/organization/new">
+                        <Link href="/setup/organization/new">
                             <Plus className="mr-2 h-4 w-4" />
                             Create Organization
                         </Link>

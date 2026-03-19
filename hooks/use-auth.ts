@@ -18,16 +18,14 @@ export function useAuth() {
     }, [supabase.auth])
 
     const signInWithPassword = async ({ email, password }: { email: string, password: string }) => {
-        await supabase.auth.signOut()
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (!error && data.user) {
-            router.push('/onboarding')
+            router.push('/dashboard')
         }
         return { error }
     }
 
     const signUp = async ({ email, password, full_name, phone }: { email: string, password: string, full_name: string, phone: string }) => {
-        await supabase.auth.signOut()
         const { error } = await supabase.auth.signUp({
             email,
             password,
@@ -40,7 +38,6 @@ export function useAuth() {
     }
 
     const signInWithOAuth = async (provider: 'google') => {
-        await supabase.auth.signOut()
         const { error } = await supabase.auth.signInWithOAuth({
             provider,
             options: { redirectTo: buildAuthCallbackUrl() },
