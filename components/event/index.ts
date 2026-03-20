@@ -27,5 +27,5 @@ export { EventSettingsTab } from "./EventSettingsTab";
 export { DeleteEventDialog } from "./DeleteEventDialog";
 export { EventCreationClient } from "./EventCreationClient";
 export { VotingBarChart, type VotingChartCategory } from "./VotingBarChart";
-export { VotingPieChart } from "./VotingPieChart";
+export { VotingTrendChart } from "./VotingTrendChart";
 export { CategoryDetailModal } from "./CategoryDetailModal";

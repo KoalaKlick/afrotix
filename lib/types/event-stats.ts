@@ -93,6 +93,12 @@ export const defaultEventDetailStats: EventDetailStatsData = {
     capacity: null,
 };
 
+// Vote trend data point for time-series charts
+export interface VoteTrendPoint {
+    date: string; // ISO date string e.g. "2026-03-15"
+    votes: number;
+}
+
 // Default empty stats
 export const defaultEventStats: EventStatsData = {
     total: 0,

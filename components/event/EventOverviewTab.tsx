@@ -3,22 +3,24 @@
 import { useState } from "react";
 import { StatCard, StatsGrid, statIcons } from "@/components/event/EventStats";
 import { VotingBarChart } from "./VotingBarChart";
-import { VotingPieChart } from "./VotingPieChart";
+import { VotingTrendChart } from "./VotingTrendChart";
 import { CategoryDetailModal } from "./CategoryDetailModal";
 import type { VotingChartCategory } from "./VotingBarChart";
-import type { EventDetailStatsData } from "@/lib/types/event-stats";
+import type { EventDetailStatsData, VoteTrendPoint } from "@/lib/types/event-stats";
 import { formatAmount } from "@/lib/utils";
 
 interface EventOverviewTabProps {
     readonly eventStats: EventDetailStatsData;
     readonly eventType: string;
     readonly votingCategories: VotingChartCategory[];
+    readonly voteTrend: VoteTrendPoint[];
 }
 
 export function EventOverviewTab({
     eventStats,
     eventType,
     votingCategories,
+    voteTrend,
 }: EventOverviewTabProps) {
     const isVotingType = eventType === "voting" || eventType === "hybrid";
     const [selectedCategory, setSelectedCategory] = useState<VotingChartCategory | null>(null);
@@ -30,7 +32,7 @@ export function EventOverviewTab({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 @container">
             {/* Event Stats */}
             <StatsGrid columns={4}>
                 <StatCard
@@ -65,38 +67,16 @@ export function EventOverviewTab({
                 )}
             </StatsGrid>
 
-            {/* Secondary Stats for voting events */}
-            {isVotingType && (
-                <StatsGrid columns={3}>
-                    <StatCard
-                        label="Categories"
-                        value={eventStats.totalCategories}
-                        iconSrc={statIcons.search}
-                    />
-                    <StatCard
-                        label="Nominees"
-                        value={eventStats.totalNominees}
-                        iconSrc={statIcons.high}
-                    />
-                    <StatCard
-                        label="Orders"
-                        value={eventStats.totalOrders}
-                        iconSrc={statIcons.cedi}
-                    />
-                </StatsGrid>
-            )}
-
             {/* Voting Charts */}
             {isVotingType && votingCategories.length > 0 && (
                 <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 overflow-x-auto @3xl:grid-cols-[auto_500px] gap-4">
                         <VotingBarChart
                             categories={votingCategories}
                             onCategoryClick={handleCategoryClick}
                         />
-                        <VotingPieChart
-                            categories={votingCategories}
-                            onCategoryClick={handleCategoryClick}
+                        <VotingTrendChart
+                            data={voteTrend}
                         />
                     </div>
 

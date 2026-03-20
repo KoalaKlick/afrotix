@@ -3,12 +3,10 @@
 import type { ReactNode } from "react";
 import {
     ResponsiveContainer,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
+    PieChart,
+    Pie,
     Tooltip,
+    Legend,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
 import {
@@ -19,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import {
     ChartContainer,
+    ChartLegendContent,
     type ChartConfig,
 } from "@/components/ui/chart";
 import type { VotingChartCategory } from "./VotingBarChart";
@@ -35,14 +34,15 @@ const BAR_COLORS = [
     "var(--color-sepia-300)",
 ];
 
-function ModalBarTooltip({ active, payload }: TooltipContentProps): ReactNode {
+function ModalPieTooltip({ active, payload }: TooltipContentProps): ReactNode {
     if (!active || !payload?.length) return null;
     const entry = payload[0];
     const fullName = entry?.payload?.fullName as string;
+    const pct = entry?.payload?.pct as string;
     return (
-        <div className="rounded-lg border bg-background px-3 py-2 text-sm shadow-md">
-            <p className="font-semibold">{fullName}</p>
-            <p className="text-muted-foreground">{Number(entry?.value ?? 0).toLocaleString()} votes</p>
+        <div className="rounded-lg border border-primary-900/20 bg-background px-3 py-2 text-sm shadow-md">
+            <p className="font-semibold text-primary-500">{fullName}</p>
+            <p className="text-muted-foreground">{Number(entry?.value ?? 0).toLocaleString()} votes ({pct}%)</p>
         </div>
     );
 }
@@ -69,24 +69,28 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
         fullName: opt.optionText,
         votes: opt.votesCount,
         fill: BAR_COLORS[i % BAR_COLORS.length],
+        pct: totalVotes > 0 ? ((opt.votesCount / totalVotes) * 100).toFixed(1) : "0",
     }));
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg">
+            <DialogContent
+                className="max-w-lg border-primary-900/10 overflow-hidden"
+                style={{ backgroundImage: "radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-primary-600) 28%, transparent), transparent 50%)" }}
+            >
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <Vote className="size-5 text-primary-500" />
+                    <DialogTitle className="flex items-center gap-2 text-primary-500">
+                        <Vote className="size-5" />
                         {category.name}
                     </DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-4">
                     {/* Summary */}
-                    <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+                    <div className="flex items-center justify-between rounded-lg border border-secondary-900/10 px-4 py-3" style={{ backgroundImage: "radial-gradient(circle at top left, color-mix(in srgb, var(--color-secondary-500) 12%, transparent), transparent 60%)" }}>
                         <div className="text-sm text-muted-foreground">
                             Total Votes
-                            <p className="text-lg font-bold text-foreground">{totalVotes.toLocaleString()}</p>
+                            <p className="text-lg font-bold text-primary-500">{totalVotes.toLocaleString()}</p>
                         </div>
                         {leader && totalVotes > 0 && (
                             <div className="text-right text-sm text-muted-foreground">
@@ -99,26 +103,35 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
                         )}
                     </div>
 
-                    {/* Bar Chart */}
-                    <ChartContainer config={chartConfig} className="h-56 w-full">
+                    {/* Pie Chart */}
+                    <ChartContainer config={chartConfig} className="h-56 w-full [&>div]:aspect-auto!">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                                data={data}
-                                layout="vertical"
-                                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
-                                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={90} className="fill-muted-foreground" />
-                                <Tooltip content={ModalBarTooltip} />
-                                <Bar dataKey="votes" radius={[0, 4, 4, 0]} />
-                            </BarChart>
+                            <PieChart>
+                                <Pie
+                                    data={data}
+                                    dataKey="votes"
+                                    nameKey="name"
+                                    cx="35%"
+                                    cy="50%"
+                                    innerRadius="45%"
+                                    outerRadius="80%"
+                                    paddingAngle={2}
+                                    strokeWidth={0}
+                                />
+                                <Tooltip content={ModalPieTooltip} />
+                                <Legend
+                                    layout="vertical"
+                                    align="right"
+                                    verticalAlign="middle"
+                                    content={<ChartLegendContent className="flex-col items-start" />}
+                                />
+                            </PieChart>
                         </ResponsiveContainer>
                     </ChartContainer>
 
                     {/* Rankings Table */}
-                    <div className="rounded-lg border">
-                        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-x-3 px-4 py-2 border-b bg-muted/30 text-xs font-medium text-muted-foreground">
+                    <div className="rounded-lg border border-tertiary-900/10 overflow-hidden">
+                        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-x-3 px-4 py-2 border-b border-tertiary-900/10 text-xs font-medium text-muted-foreground" style={{ backgroundImage: "radial-gradient(circle at top right, color-mix(in srgb, var(--color-tertiary-600) 10%, transparent), transparent 60%)" }}>
                             <span>#</span>
                             <span>Nominee</span>
                             <span className="text-right">Votes</span>

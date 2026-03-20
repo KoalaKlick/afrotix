@@ -51,7 +51,7 @@ import { DeleteEventDialog } from "@/components/event/DeleteEventDialog";
 import type { VotingChartCategory } from "@/components/event/VotingBarChart";
 import type { OrganizationRole } from "@/lib/generated/prisma";
 import type { CustomField } from "@/lib/types/voting";
-import type { EventDetailStatsData } from "@/lib/types/event-stats";
+import type { EventDetailStatsData, VoteTrendPoint } from "@/lib/types/event-stats";
 
 interface EventData {
     id: string;
@@ -124,6 +124,7 @@ interface EventDetailClientProps {
     readonly userRole: OrganizationRole;
     readonly votingCategories?: VotingCategory[];
     readonly eventStats: EventDetailStatsData;
+    readonly voteTrend?: VoteTrendPoint[];
 }
 
 const typeIcons: Record<string, typeof Ticket> = {
@@ -141,7 +142,7 @@ const statusColors: Record<string, string> = {
     ended: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
 };
 
-export function EventDetailClient({ event, organizationSlug, userRole, votingCategories = [], eventStats }: EventDetailClientProps) {
+export function EventDetailClient({ event, organizationSlug, userRole, votingCategories = [], eventStats, voteTrend = [] }: EventDetailClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);
@@ -529,6 +530,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                     <EventOverviewTab
                         eventStats={eventStats}
                         eventType={event.type}
+                        voteTrend={voteTrend}
                         votingCategories={votingCategories.map((cat): VotingChartCategory => ({
                             id: cat.id,
                             name: cat.name,

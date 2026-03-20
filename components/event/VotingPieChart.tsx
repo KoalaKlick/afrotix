@@ -16,6 +16,7 @@ import {
 import { PieChart as PieChartIcon } from "lucide-react";
 import type { VotingChartCategory } from "./VotingBarChart";
 import type { ReactNode } from "react";
+import { Card, CardHeader } from "../ui/card";
 
 const PIE_COLORS = [
     "var(--color-primary-500)",
@@ -70,17 +71,17 @@ export function VotingPieChart({ categories, onCategoryClick }: VotingPieChartPr
     }));
 
     return (
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
+        <Card className="">
+            <CardHeader className="mb-4 flex items-center gap-2">
                 <PieChartIcon className="size-4 text-secondary-500" />
                 <h3 className="font-semibold">Nominees by Category</h3>
-            </div>
+            </CardHeader>
             <ChartContainer config={chartConfig} className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
                             data={data}
-                            cx="30%"
+                            cx="50%"
                             cy="50%"
                             innerRadius={45}
                             outerRadius={75}
@@ -111,6 +112,6 @@ export function VotingPieChart({ categories, onCategoryClick }: VotingPieChartPr
                     Click a slice to view category breakdown
                 </p>
             )}
-        </div>
+        </Card>
     );
 }

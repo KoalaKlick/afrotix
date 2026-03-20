@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRoleInOrganization, getOrganizationById } from "@/lib/dal/organization";
-import { getEventById, getEventDetailStats } from "@/lib/dal/event";
+import { getEventById, getEventDetailStats, getVoteTrend } from "@/lib/dal/event";
 import { getVotingCategories } from "@/lib/dal/voting";
 import { normalizeFieldType } from "@/lib/types/voting";
 import { EventDetailClient } from "@/components/event/EventDetailClient";
@@ -37,11 +37,14 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     const organization = await getOrganizationById(event.organizationId);
 
     // Get voting categories and event stats in parallel
-    const [votingCategories, eventStats] = await Promise.all([
+    const [votingCategories, eventStats, voteTrend] = await Promise.all([
         (event.type === "voting" || event.type === "hybrid")
             ? getVotingCategories(event.id, true)
             : Promise.resolve([]),
         getEventDetailStats(event.id),
+        (event.type === "voting" || event.type === "hybrid")
+            ? getVoteTrend(event.id)
+            : Promise.resolve([]),
     ]);
 
     return (
@@ -82,6 +85,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                     organizationSlug={organization?.slug}
                     userRole={role}
                     eventStats={eventStats}
+                    voteTrend={voteTrend}
                     votingCategories={votingCategories.map(cat => ({
                         ...cat,
                         customFields: cat.customFields?.map(field => ({

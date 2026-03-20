@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/chart";
 import { BarChart3 } from "lucide-react";
 import type { ReactNode } from "react";
+import { Card, CardHeader } from "../ui/card";
 
 export interface VotingChartCategory {
     id: string;
@@ -92,16 +93,16 @@ export function VotingBarChart({ categories, onCategoryClick }: VotingBarChartPr
     });
 
     return (
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
+        <Card className="">
+            <CardHeader className="mb-4 flex items-center gap-2">
                 <BarChart3 className="size-4 text-primary-500" />
                 <h3 className="font-semibold">Votes by Category</h3>
-            </div>
-            <ChartContainer config={chartConfig} className="h-72 w-full">
+            </CardHeader>
+            <ChartContainer config={chartConfig} className="h-72 w-full [&>div]:aspect-auto!">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={data}
-                        margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                        margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
                         onClick={(state) => {
                             if (!onCategoryClick || !state?.activeLabel) return;
                             // Find the category by its truncated label
@@ -121,6 +122,7 @@ export function VotingBarChart({ categories, onCategoryClick }: VotingBarChartPr
                         <YAxis
                             allowDecimals={false}
                             tick={{ fontSize: 12 }}
+                            width={40}
                             className="fill-muted-foreground"
                         />
                         <Tooltip content={BarChartTooltip} />
@@ -144,6 +146,6 @@ export function VotingBarChart({ categories, onCategoryClick }: VotingBarChartPr
                     Click a category to view detailed breakdown
                 </p>
             )}
-        </div>
+        </Card>
     );
 }

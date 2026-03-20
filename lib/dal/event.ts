@@ -698,3 +698,41 @@ export const getEventDetailStats = cache(async (eventId: string) => {
         };
     }
 });
+
+/**
+ * Get vote timestamps for an event (for trend charts)
+ */
+export const getVoteTrend = cache(async (eventId: string): Promise<{ date: string; votes: number }[]> => {
+    try {
+        const votes = await prisma.vote.findMany({
+            where: { eventId },
+            select: { createdAt: true },
+            orderBy: { createdAt: "asc" },
+        });
+
+        // Group votes by date (YYYY-MM-DD)
+        const grouped = new Map<string, number>();
+        for (const vote of votes) {
+            const dateKey = vote.createdAt.toISOString().slice(0, 10);
+            grouped.set(dateKey, (grouped.get(dateKey) ?? 0) + 1);
+        }
+
+        // Fill in missing dates between first and last vote
+        if (grouped.size === 0) return [];
+
+        const sortedDates = [...grouped.keys()].sort();
+        const start = new Date(sortedDates[0]);
+        const end = new Date(sortedDates[sortedDates.length - 1]);
+        const result: { date: string; votes: number }[] = [];
+
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const key = d.toISOString().slice(0, 10);
+            result.push({ date: key, votes: grouped.get(key) ?? 0 });
+        }
+
+        return result;
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching vote trend:");
+        return [];
+    }
+});
