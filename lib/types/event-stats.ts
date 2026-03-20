@@ -68,6 +68,31 @@ export interface EventStatsData {
     };
 }
 
+// Per-event stats for the event detail page
+export interface EventDetailStatsData {
+    ticketsSold: number;
+    revenue: number;
+    checkIns: number;
+    totalVotes: number;
+    totalOrders: number;
+    totalCategories: number;
+    totalNominees: number;
+    ticketTypes: number;
+    capacity: number | null;
+}
+
+export const defaultEventDetailStats: EventDetailStatsData = {
+    ticketsSold: 0,
+    revenue: 0,
+    checkIns: 0,
+    totalVotes: 0,
+    totalOrders: 0,
+    totalCategories: 0,
+    totalNominees: 0,
+    ticketTypes: 0,
+    capacity: null,
+};
+
 // Default empty stats
 export const defaultEventStats: EventStatsData = {
     total: 0,

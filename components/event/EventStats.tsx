@@ -148,7 +148,7 @@ export function StatCard({
         const sizeClass = getValueSizeClass(String(display));
 
         return (
-            <Card className={cn("relative px-4 overflow-hidden border transition-shadow hover:shadow-md", cardStyle, className)} style={{ backgroundColor: 'transparent', ...cardInlineStyle }}>
+            <Card className={cn("relative px-4 group overflow-hidden border transition-shadow ", cardStyle, className)} style={{ backgroundColor: 'transparent', ...cardInlineStyle }}>
                 <CardContent className="p-0 !bg-transparent">
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">
@@ -157,7 +157,7 @@ export function StatCard({
                             {description && <p className="text-xs text-muted-foreground">{description}</p>}
                         </div>
                         {iconSrc && (
-                            <NextImage src={iconSrc} alt={label} width={100} height={100} className="h-full select-none w-auto object-cover opacity-20 absolute -bottom-8 -right-8" />
+                            <NextImage src={iconSrc} alt={label} width={100} height={100} className="h-full group-hover:-bottom-7 duration-300 group-hover:opacity-70 transition-all  select-none w-auto object-cover opacity-20 absolute -bottom-8 -right-8" />
                         )}
                         {!iconSrc && Icon && (
                             <Icon className={cn("size-8 opacity-80", iconStyles[variant])} />

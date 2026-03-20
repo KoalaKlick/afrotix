@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
-import type { Event, EventType, EventStatus } from "@/lib/generated/prisma";
+import type { Event, EventType, EventStatus, OrderStatus, TicketCheckInStatus } from "@/lib/generated/prisma";
 import { normalizeEventStatus } from "@/lib/event-status";
 
 // Types for DAL operations
@@ -362,17 +362,21 @@ export const getOrganizationEventStats = cache(async (organizationId: string) =>
             prisma.event.count({ where: { organizationId } }),
             prisma.event.count({ where: { organizationId, status: { notIn: ["draft", "cancelled"] } } }),
             prisma.event.count({ where: { organizationId, status: "draft" } }),
-            prisma.event.count({ where: {
-                organizationId,
-                status: { notIn: ["draft", "cancelled"] },
-                startDate: { lte: now },
-                OR: [{ endDate: null }, { endDate: { gte: now } }],
-            } }),
-            prisma.event.count({ where: {
-                organizationId,
-                status: { notIn: ["draft", "cancelled"] },
-                endDate: { lt: now },
-            } }),
+            prisma.event.count({
+                where: {
+                    organizationId,
+                    status: { notIn: ["draft", "cancelled"] },
+                    startDate: { lte: now },
+                    OR: [{ endDate: null }, { endDate: { gte: now } }],
+                }
+            }),
+            prisma.event.count({
+                where: {
+                    organizationId,
+                    status: { notIn: ["draft", "cancelled"] },
+                    endDate: { lt: now },
+                }
+            }),
             prisma.event.count({ where: { organizationId, status: "cancelled" } }),
             // Upcoming: published events with future start date
             prisma.event.count({
@@ -535,3 +539,162 @@ export async function generateUniqueEventSlug(organizationId: string, baseSlug: 
 
     return slug;
 }
+
+/**
+ * Get ongoing events for an organization (started but not ended)
+ */
+export const getOngoingEvents = cache(async (organizationId: string): Promise<Event[]> => {
+    try {
+        const now = new Date();
+        return await prisma.event.findMany({
+            where: {
+                organizationId,
+                status: { notIn: ["draft", "cancelled"] },
+                startDate: { lte: now },
+                OR: [{ endDate: null }, { endDate: { gte: now } }],
+            },
+            orderBy: { startDate: "asc" },
+        });
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching ongoing events:");
+        return [];
+    }
+});
+
+/**
+ * Get recent ticket orders for an organization
+ */
+export const getRecentOrders = cache(async (organizationId: string, limit = 10) => {
+    try {
+        return await prisma.ticketOrder.findMany({
+            where: { event: { organizationId } },
+            include: {
+                event: { select: { title: true } },
+            },
+            orderBy: { createdAt: "desc" },
+            take: limit,
+        });
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching recent orders:");
+        return [];
+    }
+});
+
+/**
+ * Get monthly revenue data for the last N months for charts
+ */
+export const getMonthlyRevenue = cache(async (organizationId: string, months = 6) => {
+    try {
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - months + 1);
+        startDate.setDate(1);
+        startDate.setHours(0, 0, 0, 0);
+
+        const orders = await prisma.ticketOrder.findMany({
+            where: {
+                event: { organizationId },
+                status: { in: ["paid", "confirmed"] },
+                createdAt: { gte: startDate },
+            },
+            select: {
+                total: true,
+                createdAt: true,
+            },
+            orderBy: { createdAt: "asc" },
+        });
+
+        // Group by month
+        const monthlyData: Record<string, number> = {};
+        const now = new Date();
+        for (let i = 0; i < months; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+            monthlyData[key] = 0;
+        }
+
+        for (const order of orders) {
+            const d = new Date(order.createdAt);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+            if (key in monthlyData) {
+                monthlyData[key] += Number(order.total);
+            }
+        }
+
+        return Object.entries(monthlyData).map(([month, revenue]) => ({
+            month,
+            revenue,
+        }));
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching monthly revenue:");
+        return [];
+    }
+});
+
+/**
+ * Get stats for a single event (detail page)
+ */
+export const getEventDetailStats = cache(async (eventId: string) => {
+    try {
+        const paidStatuses: OrderStatus[] = ["paid", "confirmed"];
+        const checkedIn: TicketCheckInStatus = "checked_in";
+
+        const [
+            ticketsSold,
+            revenueResult,
+            checkIns,
+            totalVotes,
+            totalOrders,
+            totalCategories,
+            totalNominees,
+            ticketTypes,
+            event,
+        ] = await Promise.all([
+            prisma.ticket.count({
+                where: { eventId, order: { status: { in: paidStatuses } } },
+            }),
+            prisma.ticketOrder.aggregate({
+                where: { eventId, status: { in: paidStatuses } },
+                _sum: { total: true },
+            }),
+            prisma.ticket.count({
+                where: { eventId, checkInStatus: checkedIn },
+            }),
+            prisma.vote.count({ where: { eventId } }),
+            prisma.ticketOrder.count({
+                where: { eventId, status: { in: paidStatuses } },
+            }),
+            prisma.votingCategory.count({ where: { eventId } }),
+            prisma.votingOption.count({ where: { eventId, status: "approved" } }),
+            prisma.ticketType.count({ where: { eventId } }),
+            prisma.event.findUnique({
+                where: { id: eventId },
+                select: { maxAttendees: true },
+            }),
+        ]);
+
+        return {
+            ticketsSold,
+            revenue: Number(revenueResult._sum.total ?? 0),
+            checkIns,
+            totalVotes,
+            totalOrders,
+            totalCategories,
+            totalNominees,
+            ticketTypes,
+            capacity: event?.maxAttendees ?? null,
+        };
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching event detail stats:");
+        return {
+            ticketsSold: 0,
+            revenue: 0,
+            checkIns: 0,
+            totalVotes: 0,
+            totalOrders: 0,
+            totalCategories: 0,
+            totalNominees: 0,
+            ticketTypes: 0,
+            capacity: null,
+        };
+    }
+});

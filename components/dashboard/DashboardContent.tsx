@@ -1,76 +1,78 @@
 "use client";
 
-import { Calendar, User, Wallet } from "lucide-react";
-import { StatCard, StatsGrid, statIcons } from "@/components/event/EventStats";
-import { formatAmount } from "@/lib/utils";
-import type { Profile, Organization } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/shared/page-header";
+import { CustomizableEventStats } from "@/components/event/CustomizableEventStats";
+import type { EventStatsData } from "@/components/event/EventStats";
 import {
-    RecentActivity,
-    UpcomingEvents,
-    WelcomeCard,
-    emptyActivities,
+    OngoingEvents,
+    RevenueChart,
+    EventTypePieChart,
+    RecentOrdersTable,
 } from "@/components/dashboard";
 
+interface OngoingEvent {
+    id: string;
+    title: string;
+    type: string;
+    coverImage: string | null;
+    venueName: string | null;
+    startDate: string | null;
+}
+
+interface RecentOrder {
+    id: string;
+    orderNumber: string;
+    buyerName: string | null;
+    buyerEmail: string;
+    total: number | { toNumber?: () => number };
+    currency: string;
+    status: string;
+    createdAt: Date | string;
+    event: { title: string };
+}
+
 interface DashboardContentProps {
-    readonly user: {
-        id: string;
-        fullName: string | null;
-        email: string | null;
-        avatarUrl: string | null;
+    readonly stats: EventStatsData;
+    readonly profileStats: {
+        organizationCount: number;
+        createdEvents: number;
     };
-    readonly activeOrganization: any; // Type should be more specific based on your Prisma models
-    readonly stats: {
-        totalEvents: number;
-        ticketsSold: number;
-        revenue: number;
-        attendees: number;
-    };
+    readonly ongoingEvents: OngoingEvent[];
+    readonly recentOrders: RecentOrder[];
+    readonly revenueData: { month: string; revenue: number }[];
 }
 
 export function DashboardContent({
-    user,
-    activeOrganization,
     stats,
+    profileStats,
+    ongoingEvents,
+    recentOrders,
+    revenueData,
 }: DashboardContentProps) {
-    // Setup steps for the welcome card
- 
-
-
     return (
         <>
             <PageHeader breadcrumbs={[{ label: "Dashboard" }]} />
 
             <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
-                {/* Stats Grid */}
-                <StatsGrid columns={4}>
-                    <StatCard
-                        label="Total Events"
-                        value={stats.totalEvents}
-                        iconSrc={statIcons.search}
-                    />
-                    <StatCard
-                        label="Tickets Sold"
-                        value={stats.ticketsSold}
-                        iconSrc={statIcons.ticket}
-                    />
-                    <StatCard
-                        label="Revenue"
-                        value={formatAmount(stats.revenue)}
-                        iconSrc={statIcons.cedi}
-                    />
-                    <StatCard
-                        label="Attendees"
-                        value={stats.attendees}
-                        iconSrc={statIcons.user}
-                    />
-                </StatsGrid>
+                {/* Ongoing Events Strip */}
+                <OngoingEvents events={ongoingEvents} />
 
-                {/* Activity and Events Grid */}
+                {/* Customizable Stats */}
+                <CustomizableEventStats
+                    stats={stats}
+                    profileStats={profileStats}
+                    storageKey="sankofa:dashboard-stats"
+                    defaultKeys={["total", "ticketsSold", "revenue", "votes"]}
+                />
+
+                {/* Charts Row */}
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <RecentActivity activities={emptyActivities} />
-                    <UpcomingEvents events={[]} />
+                    <RevenueChart data={revenueData} />
+                    <EventTypePieChart byType={stats.byType} />
                 </div>
+
+                {/* Orders Table */}
+                <RecentOrdersTable orders={recentOrders} />
             </div>
         </>
     );

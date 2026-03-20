@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRoleInOrganization, getOrganizationById } from "@/lib/dal/organization";
-import { getEventById } from "@/lib/dal/event";
+import { getEventById, getEventDetailStats } from "@/lib/dal/event";
 import { getVotingCategories } from "@/lib/dal/voting";
 import { normalizeFieldType } from "@/lib/types/voting";
 import { EventDetailClient } from "@/components/event/EventDetailClient";
@@ -36,10 +36,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     // Get organization for public link
     const organization = await getOrganizationById(event.organizationId);
 
-    // Get voting categories for voting/hybrid events
-    const votingCategories = (event.type === "voting" || event.type === "hybrid")
-        ? await getVotingCategories(event.id, true)
-        : [];
+    // Get voting categories and event stats in parallel
+    const [votingCategories, eventStats] = await Promise.all([
+        (event.type === "voting" || event.type === "hybrid")
+            ? getVotingCategories(event.id, true)
+            : Promise.resolve([]),
+        getEventDetailStats(event.id),
+    ]);
 
     return (
         <>
@@ -78,6 +81,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                     }}
                     organizationSlug={organization?.slug}
                     userRole={role}
+                    eventStats={eventStats}
                     votingCategories={votingCategories.map(cat => ({
                         ...cat,
                         customFields: cat.customFields?.map(field => ({
