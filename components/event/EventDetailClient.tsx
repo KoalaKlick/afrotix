@@ -52,7 +52,6 @@ import type {
 } from "@/lib/types/event-stats";
 import type {
     CustomField,
-    VotingCategory,
     VotingCategory
 } from "@/lib/types/voting";
 import {
@@ -515,7 +514,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                             votingOptions: cat.votingOptions.map(opt => ({
                                 id: opt.id,
                                 optionText: opt.optionText,
-                                votesCount: opt.votesCount,
+                                votesCount: typeof opt.votesCount === "bigint" ? Number(opt.votesCount) : opt.votesCount,
                                 imageUrl: opt.imageUrl,
                                 finalImage: opt.finalImage,
                             })),

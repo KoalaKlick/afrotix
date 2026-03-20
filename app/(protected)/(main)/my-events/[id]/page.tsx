@@ -94,7 +94,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         })),
                         votingOptions: cat.votingOptions.map(opt => ({
                             ...opt,
-                            votesCount: Number(opt.votesCount),
+                            votesCount: BigInt(opt.votesCount),
                         })),
                     }))}
                 />
