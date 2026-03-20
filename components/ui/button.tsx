@@ -17,7 +17,7 @@ const buttonVariants = cva(
         outline:
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-secondary-500 text-white hover:bg-secondary-600/80",
         tertiary:
           "bg-tertiary-700 text-white hover:bg-tertiary/95",
         sepia:
@@ -25,6 +25,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        afro: "bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0),transparent_26%)] border border-[rgba(234,179,8,0.18)] text-foreground hover:bg-accent/10",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

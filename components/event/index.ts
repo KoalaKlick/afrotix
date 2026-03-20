@@ -20,5 +20,12 @@ export {
     type StatCardProps,
 } from "./EventStats";
 export { EventsList } from "./EventsList";
+export { CustomizableEventStats } from "./CustomizableEventStats";
 export { EventDetailClient } from "./EventDetailClient";
+export { EventOverviewTab } from "./EventOverviewTab";
+export { EventSettingsTab } from "./EventSettingsTab";
+export { DeleteEventDialog } from "./DeleteEventDialog";
 export { EventCreationClient } from "./EventCreationClient";
+export { VotingBarChart, type VotingChartCategory } from "./VotingBarChart";
+export { VotingTrendChart } from "./VotingTrendChart";
+export { CategoryDetailModal } from "./CategoryDetailModal";

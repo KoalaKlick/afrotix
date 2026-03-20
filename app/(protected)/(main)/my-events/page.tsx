@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EventsList } from "@/components/event/EventsList";
-import { EventStats } from "@/components/event";
+import { CustomizableEventStats } from "@/components/event";
 
 export default async function MyEventsPage() {
     // Parent layout guarantees: authenticated, onboarding done, has org
@@ -46,7 +46,7 @@ export default async function MyEventsPage() {
                             Manage your events and track performance
                         </p>
                     </div>
-                    <Button asChild>
+                    <Button variant='tertiary' size='sm' asChild>
                         <Link href="/my-events/new">
                             <Plus className="mr-2 size-4" />
                             Create Event
@@ -55,7 +55,7 @@ export default async function MyEventsPage() {
                 </div>
 
                 {/* Stats Overview */}
-                <EventStats stats={stats} showEngagement={true} />
+                <CustomizableEventStats stats={stats} />
 
                 {/* Events List */}
                 {events.length === 0 ? (

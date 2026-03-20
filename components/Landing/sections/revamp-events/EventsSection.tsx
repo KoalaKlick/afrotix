@@ -64,7 +64,7 @@ export function EventsSection({
 
             {/* ── Mobile: 2-column grid ── */}
             <div ref={sectionRef} className="max-w-6xl mx-auto px-4">
-                <div className="grid grid-cols-2 gap-3 md:hidden">
+                <div className="grid grid-cols-2 @max-2xl:grid-cols-1 gap-3 lg:hidden">
                     {visible.map((item, i) => (
                         <motion.div
                             key={`mobile-${item.id}`}
@@ -73,19 +73,19 @@ export function EventsSection({
                             transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
                             whileHover={{ scale: 1.02 }}
                         >
-                            <EventCard item={item} />
+                            <EventCard item={item} index={i} />
                         </motion.div>
                     ))}
                 </div>
 
                 {/* ── Desktop: 3-column staggered grid ── */}
-                <div className="hidden md:flex gap-4 items-start">
+                <div className="hidden lg:flex gap-4 items-start">
 
                     {/* Column 1 — HIGH */}
                     <motion.div className="flex flex-col gap-4 flex-1" {...fadeUp(0)}>
                         {col1.map((item, i) => (
-                            <motion.div key={`c1-${i}`} whileHover={{ scale: 1.03 }} transition={{ duration: 0.22 }}>
-                                <EventCard item={item} />
+                            <motion.div key={`c1-${item.id}`} whileHover={{ scale: 1.03 }} transition={{ duration: 0.22 }}>
+                                <EventCard item={item} index={i} />
                             </motion.div>
                         ))}
                     </motion.div>
@@ -97,8 +97,8 @@ export function EventsSection({
                         {...fadeUp(0.08)}
                     >
                         {col2.map((item, i) => (
-                            <motion.div key={`c2-${i}`} whileHover={{ scale: 1.03 }} transition={{ duration: 0.22 }}>
-                                <EventCard item={item} />
+                            <motion.div key={`c2-${item.id}`} whileHover={{ scale: 1.03 }} transition={{ duration: 0.22 }}>
+                                <EventCard item={item} index={i + 2} />
                             </motion.div>
                         ))}
                     </motion.div>
@@ -106,8 +106,8 @@ export function EventsSection({
                     {/* Column 3 — HIGH */}
                     <motion.div className="flex flex-col gap-4 flex-1" {...fadeUp(0.16)}>
                         {col3.map((item, i) => (
-                            <motion.div key={`c3-${i}`} whileHover={{ scale: 1.03 }} transition={{ duration: 0.22 }}>
-                                <EventCard item={item} />
+                            <motion.div key={`c3-${item.id}`} whileHover={{ scale: 1.03 }} transition={{ duration: 0.22 }}>
+                                <EventCard item={item} index={i + 4} />
                             </motion.div>
                         ))}
                     </motion.div>

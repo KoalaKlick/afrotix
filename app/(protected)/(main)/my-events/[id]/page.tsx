@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getUserRoleInOrganization, getOrganizationById } from "@/lib/dal/organization";
-import { getEventById } from "@/lib/dal/event";
+import { getEventById, getEventDetailStats, getVoteTrend } from "@/lib/dal/event";
 import { getVotingCategories } from "@/lib/dal/voting";
 import { normalizeFieldType } from "@/lib/types/voting";
 import { EventDetailClient } from "@/components/event/EventDetailClient";
@@ -36,10 +36,16 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     // Get organization for public link
     const organization = await getOrganizationById(event.organizationId);
 
-    // Get voting categories for voting/hybrid events
-    const votingCategories = (event.type === "voting" || event.type === "hybrid")
-        ? await getVotingCategories(event.id, true)
-        : [];
+    // Get voting categories and event stats in parallel
+    const [votingCategories, eventStats, voteTrend] = await Promise.all([
+        (event.type === "voting" || event.type === "hybrid")
+            ? getVotingCategories(event.id, true)
+            : Promise.resolve([]),
+        getEventDetailStats(event.id),
+        (event.type === "voting" || event.type === "hybrid")
+            ? getVoteTrend(event.id)
+            : Promise.resolve([]),
+    ]);
 
     return (
         <>
@@ -59,8 +65,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         type: event.type,
                         status: event.status,
                         description: event.description,
-                        startDate: event.startDate?.toISOString(),
-                        endDate: event.endDate?.toISOString(),
+                        startDate: event.startDate?.toISOString() ?? null,
+                        endDate: event.endDate?.toISOString() ?? null,
                         timezone: event.timezone,
                         isVirtual: event.isVirtual,
                         virtualLink: event.virtualLink,
@@ -74,10 +80,12 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         isPublic: event.isPublic,
                         createdAt: event.createdAt.toISOString(),
                         updatedAt: event.updatedAt.toISOString(),
-                        publishedAt: event.publishedAt?.toISOString(),
+                        publishedAt: event.publishedAt?.toISOString() ?? null,
                     }}
                     organizationSlug={organization?.slug}
                     userRole={role}
+                    eventStats={eventStats}
+                    voteTrend={voteTrend}
                     votingCategories={votingCategories.map(cat => ({
                         ...cat,
                         customFields: cat.customFields?.map(field => ({
@@ -86,7 +94,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         })),
                         votingOptions: cat.votingOptions.map(opt => ({
                             ...opt,
-                            votesCount: Number(opt.votesCount),
+                            votesCount: BigInt(opt.votesCount),
                         })),
                     }))}
                 />

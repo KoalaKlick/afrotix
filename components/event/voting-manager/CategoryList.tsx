@@ -190,7 +190,7 @@ export function CategoryList({
                 items={categories.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
             >
-                <Accordion type="multiple" defaultValue={categories.map(c => c.id)} className="space-y-2">
+                <Accordion  type="multiple" defaultValue={categories.map(c => c.id)} className="space-y-2 ">
                     {categories.map((category) => {
                         const pendingCount = category.votingOptions.filter(o => o.status === "pending").length;
                         return (
@@ -224,7 +224,7 @@ export function CategoryList({
                                     </div>
                                 }
                             >
-                                <AccordionContent className="px-4 pb-4">
+                                <AccordionContent className="px-4 pb-4 ">
                                     {category.description && (
                                         <p className="text-sm text-muted-foreground mb-4">
                                             {category.description}
@@ -235,7 +235,7 @@ export function CategoryList({
                                     {canEdit && (
                                         <div className="flex flex-wrap gap-2 mb-4">
                                             <Button
-                                                variant="outline"
+                                                variant="secondary"
                                                 size="sm"
                                                 onClick={() => onEditCategory(category)}
                                             >
@@ -243,7 +243,7 @@ export function CategoryList({
                                                 Edit
                                             </Button>
                                             <Button
-                                                variant="outline"
+                                                variant="tertiary"
                                                 size="sm"
                                                 onClick={() => onAddOption(category.id)}
                                             >
@@ -251,7 +251,6 @@ export function CategoryList({
                                                 Add Nominee
                                             </Button>
                                             <Button
-                                                variant="outline"
                                                 size="sm"
                                                 onClick={() => onOpenFields(category)}
                                             >

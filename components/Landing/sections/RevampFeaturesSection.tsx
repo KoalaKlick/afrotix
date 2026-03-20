@@ -33,14 +33,15 @@ const features = [
     },
        {
         icon: Zap,
-        iconClassName: "bg-yellow-500",
-        className: "hover:bg-yellow-50",
+        iconClassName: "bg-primary-500",
+        className: "hover:bg-primary-50",
         title: 'Multiple Event Types',
         description: 'From webinars to conferences, support all event formats in one unified platform.',
     },
     {
         icon: Shield,
-        iconClassName: "bg",
+        iconClassName: "bg-secondary-500",
+        className: "hover:bg-secondary-50",
         title: 'Secure & Scalable',
         description: 'Enterprise-grade security with unlimited scalability for events of any size.',
     },

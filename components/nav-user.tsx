@@ -358,7 +358,7 @@ export function NavUser({
               Organization invitations and updates
             </SheetDescription>
           </SheetHeader>
-          <SheetBody className="mt-6">
+          <SheetBody className="">
             {invitations.length > 0 ? (
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">

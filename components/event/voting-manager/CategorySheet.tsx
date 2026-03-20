@@ -243,7 +243,7 @@ export function CategorySheet({
             if (!o) resetForm();
         }}>
             {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
-            <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetContent side="right" variant="afro" className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
                     <SheetTitle>
                         {editingCategory ? "Edit Category" : "Add Category"}
@@ -254,7 +254,7 @@ export function CategorySheet({
                 </SheetHeader>
                 <SheetBody>
                     <Tabs defaultValue="basic" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList variant="afro" className="grid w-full grid-cols-3">
                             <TabsTrigger value="basic">Basic</TabsTrigger>
                             <TabsTrigger value="nominations">Nominations</TabsTrigger>
                             <TabsTrigger value="template">Template</TabsTrigger>

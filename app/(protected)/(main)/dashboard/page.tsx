@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { getProfileById } from "@/lib/dal/profile";
+import { getProfileStats } from "@/lib/dal/profile";
 import { getUserOrganizations, getOrganizationById } from "@/lib/dal/organization";
-import { getOrganizationEventStats } from "@/lib/dal/event";
+import { getOrganizationEventStats, getOngoingEvents, getRecentOrders, getMonthlyRevenue } from "@/lib/dal/event";
 import { getActiveOrganizationId } from "@/lib/organization-context";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
+import type { EventStatsData } from "@/components/event/EventStats";
 
 export default async function DashboardPage() {
   // Parent layout guarantees: authenticated, onboarding done, has org
@@ -13,8 +14,7 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/auth/login");
 
-  const [profile, organizations, activeOrgId] = await Promise.all([
-    getProfileById(user.id),
+  const [organizations, activeOrgId] = await Promise.all([
     getUserOrganizations(user.id),
     getActiveOrganizationId(),
   ]);
@@ -30,28 +30,52 @@ export default async function DashboardPage() {
     activeOrganization = await getOrganizationById(organizations[0].id);
   }
 
-  // Fetch real event stats for the active organization
-  const eventStats = activeOrganization
-    ? await getOrganizationEventStats(activeOrganization.id)
-    : null;
+  const orgId = activeOrganization?.id;
 
-  const stats = {
-    totalEvents: eventStats?.total ?? 0,
-    ticketsSold: eventStats?.totalTicketsSold ?? 0,
-    revenue: eventStats?.totalRevenue ?? 0,
-    attendees: eventStats?.totalAttendees ?? 0,
+  // Fetch all dashboard data in parallel
+  const [eventStats, profileStats, ongoingEvents, recentOrders, revenueData] =
+    await Promise.all([
+      orgId ? getOrganizationEventStats(orgId) : null,
+      getProfileStats(user.id),
+      orgId ? getOngoingEvents(orgId) : [],
+      orgId ? getRecentOrders(orgId, 8) : [],
+      orgId ? getMonthlyRevenue(orgId, 6) : [],
+    ]);
+
+  const stats: EventStatsData = eventStats ?? {
+    total: 0, published: 0, draft: 0, ongoing: 0, ended: 0, cancelled: 0, upcoming: 0,
+    byType: { voting: 0, ticketed: 0, hybrid: 0, advertisement: 0 },
+    totalTicketsSold: 0, totalRevenue: 0, totalAttendees: 0, totalVotes: 0,
   };
+
+  const serializedOrders = recentOrders.map((o) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    buyerName: o.buyerName,
+    buyerEmail: o.buyerEmail,
+    total: Number(o.total),
+    currency: o.currency,
+    status: o.status,
+    createdAt: o.createdAt.toISOString(),
+    event: { title: o.event.title },
+  }));
+
+  const serializedOngoing = ongoingEvents.map((e) => ({
+    id: e.id,
+    title: e.title,
+    type: e.type,
+    coverImage: e.coverImage,
+    venueName: e.venueName,
+    startDate: e.startDate?.toISOString() ?? null,
+  }));
 
   return (
     <DashboardContent
-      user={{
-        id: user.id,
-        email: user.email ?? "",
-        fullName: user.user_metadata?.full_name ?? profile?.fullName ?? "",
-        avatarUrl: profile?.avatarUrl ?? "",
-      }}
-      activeOrganization={activeOrganization}
       stats={stats}
+      profileStats={profileStats}
+      ongoingEvents={serializedOngoing}
+      recentOrders={serializedOrders}
+      revenueData={revenueData}
     />
   );
 }
