@@ -14,18 +14,14 @@ import {
   Inbox,
   Loader2,
   LogOut,
-  Plus,
   Settings,
   Wallet,
   X,
 } from "lucide-react"
 
 import {
-  Avatar as UiAvatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
-import { Avatar as UserAvatar } from "@/components/shared/image/avatar"
+  Avatar as UserAvatar
+} from "@/components/shared/image/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -36,9 +32,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -49,26 +42,18 @@ import {
   SheetTitle,
   SheetBody,
 } from "@/components/ui/sheet"
-import { CreateOrgDrawer } from "@/components/create-org-drawer"
+// import { CreateOrgDrawer } from "@/components/create-org-drawer"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import type { OrganizationRole } from "@/lib/generated/prisma"
 import { getAvatarUrl, getOrgImageUrl } from "@/lib/image-url-utils"
 import { createClient } from "@/utils/supabase/client"
-import { switchOrganization, acceptOrgInvitation, declineOrgInvitation } from "@/lib/actions/organization"
+import { acceptOrgInvitation, declineOrgInvitation } from "@/lib/actions/organization"
 
-type Organization = {
-  id: string
-  name: string
-  slug: string
-  logoUrl: string | null
-  role: OrganizationRole
-  memberCount?: number
-}
+
 
 interface Invitation {
   id: string
@@ -81,32 +66,10 @@ interface Invitation {
   role: string
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
-}
 
-function getRoleLabel(role: OrganizationRole): string {
-  switch (role) {
-    case "owner":
-      return "Owner"
-    case "admin":
-      return "Admin"
-    case "member":
-      return "Member"
-    default:
-      return "Member"
-  }
-}
 
 export function NavUser({
   user,
-  organizations = [],
-  activeOrganizationId,
   pendingInvitations = [],
 }: Readonly<{
   user: {
@@ -114,44 +77,16 @@ export function NavUser({
     email: string
     avatar: string
   }
-  organizations?: Organization[]
-  activeOrganizationId?: string | null
   pendingInvitations?: Invitation[]
 }>) {
   const { isMobile } = useSidebar()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [notificationOpen, setNotificationOpen] = useState(false)
-  const [createOrgOpen, setCreateOrgOpen] = useState(false)
   const [invitations, setInvitations] = useState(pendingInvitations)
   const [processingInviteId, setProcessingInviteId] = useState<string | null>(null)
 
-  const activeOrg = activeOrganizationId
-    ? organizations.find((org) => org.id === activeOrganizationId)
-    : null
 
-  const handleOrgSelect = async (org: Organization) => {
-    console.log("[NavUser] handleOrgSelect called for:", org.name, org.id)
-    console.log("[NavUser] Current activeOrganizationId:", activeOrganizationId)
-
-    if (org.id === activeOrganizationId) {
-      console.log("[NavUser] Already active, skipping")
-      return // Already active
-    }
-
-    startTransition(async () => {
-      console.log("[NavUser] Calling switchOrganization...")
-      const result = await switchOrganization(org.id)
-      console.log("[NavUser] switchOrganization result:", result)
-      if (result.success) {
-        console.log("[NavUser] Success! Reloading...")
-        // Force a hard refresh to update all server components
-        globalThis.location.reload()
-      } else {
-        console.error("[NavUser] Switch failed:", result.error)
-      }
-    })
-  }
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -237,70 +172,6 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-
-            {/* Organizations Submenu */}
-            <DropdownMenuGroup>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Building2 className="mr-2 size-4" />
-                  <span>Organizations</span>
-                  {activeOrg && (
-                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-20">
-                      {activeOrg.name}
-                    </span>
-                  )}
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="min-w-52">
-                  {organizations.length > 0 ? (
-                    <>
-                      {organizations.map((org) => (
-                        <DropdownMenuItem
-                          key={org.id}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleOrgSelect(org)
-                          }}
-                          className="gap-2 cursor-pointer"
-                          disabled={isPending}
-                        >
-                          <UiAvatar className="size-5 rounded-md">
-                            <AvatarImage src={getOrgImageUrl(org.logoUrl) ?? undefined} alt={org.name} />
-                            <AvatarFallback className="rounded-md text-[8px] font-semibold">
-                              {getInitials(org.name)}
-                            </AvatarFallback>
-                          </UiAvatar>
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <span className="font-medium truncate">{org.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {getRoleLabel(org.role)}
-                            </span>
-                          </div>
-                          {activeOrganizationId === org.id && (
-                            <span className="text-xs text-primary flex items-center gap-1">
-                              {isPending ? <Loader2 className="size-3 animate-spin" /> : "Active"}
-                            </span>
-                          )}
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                    </>
-                  ) : (
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                      No organizations yet
-                    </div>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => setCreateOrgOpen(true)}
-                    className="gap-2 cursor-pointer"
-                  >
-                    <Plus className="size-4" />
-                    Create Organization
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuGroup>
-
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
@@ -437,8 +308,6 @@ export function NavUser({
         </SheetContent>
       </Sheet>
 
-      {/* Create Organization Drawer */}
-      <CreateOrgDrawer open={createOrgOpen} onOpenChange={setCreateOrgOpen} />
     </SidebarMenu>
   )
 }
