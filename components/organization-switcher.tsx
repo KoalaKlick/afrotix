@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react"
 
 import { ChevronsUpDown, Plus } from "lucide-react"
 import Link from "next/link"
@@ -26,6 +27,7 @@ import { switchOrganization } from "@/lib/actions/organization"
 import type { OrganizationRole } from "@/lib/generated/prisma"
 import { getOrgImageUrl } from "@/lib/image-url-utils"
 import { type OrganizationInfo } from "@/lib/const/navigation"
+import { CreateOrgDrawer } from "./create-org-drawer"
 
 export type Organization = {
     id: string
@@ -71,6 +73,7 @@ export function OrganizationSwitcher({
 }: Readonly<OrganizationSwitcherProps>) {
     const { isMobile } = useSidebar()
     const router = useRouter()
+    const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false)
     const [, startTransition] = useTransition()
 
     // Find active organization or default to "Personal" mode
@@ -113,7 +116,7 @@ export function OrganizationSwitcher({
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="xl"
-                            className="rounded-md border py-3 border-black/10 bg-[radial-gradient(circle_at_top_left,rgba(38,288,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.14),transparent_26%)] hover:bg-black/5 transition-colors outline-none focus:outline-none focus:ring-0 focus-within:outline-none focus-within:ring-0 duration-300 px-3 backdrop-blur-sm data-[state=open]:bg-black/5"
+                            className="rounded-md  py-3 border-black/10 bg-[radial-gradient(circle_at_top_left,rgba(147,30,21,0.26),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.0),transparent_26%)] hover:bg-black/5 transition-colors outline-none focus:outline-none focus:ring-0 focus-within:outline-none focus-within:ring-0 duration-300 px-3 backdrop-blur-sm data-[state=open]:bg-black/5"
                         >
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <AfroTixLogo className="h-6" />
@@ -206,19 +209,24 @@ export function OrganizationSwitcher({
                         )}
 
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild className="gap-2 p-2 cursor-pointer">
-                            <Link href="/setup/organization/new">
-                                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                                    <Plus className="size-4" />
-                                </div>
-                                <div className="font-medium text-muted-foreground">
-                                    Create Organization
-                                </div>
-                            </Link>
+                        <DropdownMenuItem
+                            className="gap-2 p-2 cursor-pointer"
+                            onClick={() => setIsCreateOrgOpen(true)}
+                        >
+                            <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                                <Plus className="size-4" />
+                            </div>
+                            <div className="font-medium text-muted-foreground">
+                                Create Organization
+                            </div>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>
+            <CreateOrgDrawer
+                open={isCreateOrgOpen}
+                onOpenChange={setIsCreateOrgOpen}
+            />
         </SidebarMenu>
     )
 }
