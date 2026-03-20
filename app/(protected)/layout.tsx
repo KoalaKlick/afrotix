@@ -33,8 +33,12 @@ export default async function ProtectedRootLayout({
 
     const needsOnboarding = !profile?.onboardingCompleted
     const hasOrganization = organizations.length > 0
+    const hasUsername = !!profile?.username
 
-    if (needsOnboarding) {
+    // Fallback: If user has an organization and a username, they have effectively completed onboarding
+    const canSkipOnboarding = needsOnboarding && hasOrganization && hasUsername
+
+    if (needsOnboarding && !canSkipOnboarding) {
         // Must complete onboarding first
         if (!pathname.startsWith('/setup/onboarding')) {
             redirect('/setup/onboarding')
