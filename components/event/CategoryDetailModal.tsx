@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import {
     ResponsiveContainer,
     PieChart,
@@ -21,7 +22,8 @@ import {
     type ChartConfig,
 } from "@/components/ui/chart";
 import type { VotingChartCategory } from "./VotingBarChart";
-import { Trophy, Vote } from "lucide-react";
+import { Trophy, Vote, User } from "lucide-react";
+import { getEventImageUrl } from "@/lib/image-url-utils";
 
 const BAR_COLORS = [
     "var(--color-primary-500)",
@@ -130,8 +132,9 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
 
                     {/* Rankings Table */}
                     <div className="rounded-lg border border-tertiary-900/10 overflow-hidden">
-                        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-x-3 px-4 py-2 border-b border-tertiary-900/10 text-xs font-medium text-muted-foreground" style={{ backgroundImage: "radial-gradient(circle at top right, color-mix(in srgb, var(--color-tertiary-600) 10%, transparent), transparent 60%)" }}>
+                        <div className="grid grid-cols-[auto_auto_1fr_auto_auto] gap-x-3 px-4 py-2 border-b border-tertiary-900/10 text-xs font-medium text-muted-foreground" style={{ backgroundImage: "radial-gradient(circle at top right, color-mix(in srgb, var(--color-tertiary-600) 10%, transparent), transparent 60%)" }}>
                             <span>#</span>
+                            <span className="w-8"></span>
                             <span>Nominee</span>
                             <span className="text-right">Votes</span>
                             <span className="text-right">Share</span>
@@ -139,9 +142,25 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
                         <div className="divide-y max-h-60 overflow-y-auto">
                             {sorted.map((opt, i) => {
                                 const pct = totalVotes > 0 ? ((opt.votesCount / totalVotes) * 100).toFixed(1) : "0";
+                                const displayImage = opt.finalImage || opt.imageUrl;
+                                const displayImageUrl = getEventImageUrl(displayImage);
                                 return (
-                                    <div key={opt.id} className="grid grid-cols-[auto_1fr_auto_auto] gap-x-3 px-4 py-2.5 text-sm items-center">
+                                    <div key={opt.id} className="grid grid-cols-[auto_auto_1fr_auto_auto] gap-x-3 px-4 py-2.5 text-sm items-center">
                                         <span className="text-muted-foreground font-medium w-5">{i + 1}</span>
+                                        <div className="size-8 rounded-md overflow-hidden bg-muted flex items-center justify-center border border-primary-900/10">
+                                            {displayImageUrl ? (
+                                                <Image
+                                                    src={displayImageUrl}
+                                                    alt={opt.optionText}
+                                                    width={32}
+                                                    height={32}
+                                                    className="size-full object-cover"
+                                                    unoptimized
+                                                />
+                                            ) : (
+                                                <User className="size-4 text-muted-foreground" />
+                                            )}
+                                        </div>
                                         <span className="truncate">{opt.optionText}</span>
                                         <span className="text-right font-medium tabular-nums">{opt.votesCount.toLocaleString()}</span>
                                         <span className="text-right text-muted-foreground tabular-nums w-14">{pct}%</span>

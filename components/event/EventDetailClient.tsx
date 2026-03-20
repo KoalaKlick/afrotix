@@ -1,9 +1,6 @@
-/**
- * Event Detail Client Component
- * View and edit event details
- */
 
 "use client";
+
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -20,38 +17,56 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+    Loader2,
+    Upload,
     Pencil,
     Check,
     X,
-    Upload,
-    Loader2,
+    ChevronDown,
     ExternalLink,
+    EyeOff,
     Ticket,
     Vote,
     Layers,
     Megaphone,
-    ChevronDown,
-    EyeOff,
     Settings,
+    UploadCloud
 } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
     updateExistingEvent,
     uploadEventImage,
-    changeEventStatus,
+    changeEventStatus
 } from "@/lib/actions/event";
-import { convertToWebP } from "@/lib/image-utils";
-import { getEventLifecycleStatus, getEventPublicationStatus } from "@/lib/event-status";
 import { getEventImageUrl } from "@/lib/image-url-utils";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { VotingManager } from "@/components/event";
-import { EventOverviewTab } from "@/components/event/EventOverviewTab";
-import { EventSettingsTab } from "@/components/event/EventSettingsTab";
-import { DeleteEventDialog } from "@/components/event/DeleteEventDialog";
-import type { VotingChartCategory } from "@/components/event/VotingBarChart";
+import {
+    getEventPublicationStatus,
+    getEventLifecycleStatus
+} from "@/lib/event-status";
+import { convertToWebP } from "@/lib/image-utils";
 import type { OrganizationRole } from "@/lib/generated/prisma";
-import type { CustomField } from "@/lib/types/voting";
-import type { EventDetailStatsData, VoteTrendPoint } from "@/lib/types/event-stats";
+import type {
+    EventDetailStatsData,
+    VoteTrendPoint
+} from "@/lib/types/event-stats";
+import type {
+    CustomField,
+    VotingCategory,
+    VotingOption,
+    VotingOptionStatus,
+    FieldValue
+} from "@/lib/types/voting";
+import {
+    VotingManager,
+    EventOverviewTab,
+    DeleteEventDialog,
+    EventSettingsTab,
+    VotingBarChart,
+    type VotingChartCategory
+} from "@/components/event";
+
+// --- Types ---
 
 interface EventData {
     id: string;
@@ -59,15 +74,15 @@ interface EventData {
     slug: string;
     type: string;
     status: string;
-    description?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
+    description: string | null;
+    startDate: string | null;
+    endDate: string | null;
     timezone: string;
     isVirtual: boolean;
-    virtualLink?: string | null;
-    venueName?: string | null;
-    venueAddress?: string | null;
-    venueCity?: string | null;
+    virtualLink: string | null;
+    venueName: string | null;
+    venueAddress: string | null;
+    venueCity: string | null;
     venueCountry: string;
     coverImage?: string | null;
     bannerImage?: string | null;
@@ -77,6 +92,7 @@ interface EventData {
     updatedAt: string;
     publishedAt?: string | null;
 }
+
 
 type VotingOptionStatus = "pending" | "approved" | "rejected";
 
@@ -168,11 +184,11 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         maxAttendees: event.maxAttendees?.toString() ?? "",
         isPublic: event.isPublic,
     });
-
-    const coverInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
 
     const canEdit = userRole === "owner" || userRole === "admin";
+
     const canDelete = canEdit && event.status === "draft";
     const publicEventUrl = organizationSlug
         ? `/${organizationSlug}/event/${event.slug}`
@@ -538,6 +554,8 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                 id: opt.id,
                                 optionText: opt.optionText,
                                 votesCount: opt.votesCount,
+                                imageUrl: opt.imageUrl,
+                                finalImage: opt.finalImage,
                             })),
                         }))}
                     />
@@ -562,6 +580,10 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                     </TabsContent>
                 )}
 
+
+
+
+
                 {/* Settings Tab */}
                 <TabsContent value="settings" className="space-y-6">
                     <EventSettingsTab
@@ -580,3 +602,5 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         </div>
     );
 }
+
+
