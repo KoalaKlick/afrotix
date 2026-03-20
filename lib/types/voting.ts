@@ -50,7 +50,6 @@ export interface VotingOption {
     email: string | null;
     description: string | null;
     imageUrl: string | null;
-    finalImage: string | null;
     status: VotingOptionStatus;
     isPublicNomination: boolean;
     nominatedByName: string | null;
@@ -65,9 +64,6 @@ export interface VotingCategory {
     description: string | null;
     maxVotesPerUser: number;
     allowMultiple: boolean;
-    templateImage: string | null;
-    templateConfig: unknown;
-    showFinalImage: boolean;
     allowPublicNomination: boolean;
     nominationDeadline: string | Date | null;
     requireApproval: boolean;
@@ -85,8 +81,6 @@ export interface CategoryFormData {
     allowPublicNomination: boolean;
     nominationDeadline: string;
     requireApproval: boolean;
-    templateImage: string;
-    showFinalImage: boolean;
 }
 
 export interface OptionFormData {
@@ -95,7 +89,6 @@ export interface OptionFormData {
     email: string;
     description: string;
     imageUrl: string;
-    finalImage: string;
     fieldValues: { fieldId: string; value: string }[];
 }
 
@@ -117,8 +110,6 @@ export const defaultCategoryForm: CategoryFormData = {
     allowPublicNomination: false,
     nominationDeadline: "",
     requireApproval: true,
-    templateImage: "",
-    showFinalImage: true,
 };
 
 export const defaultOptionForm: OptionFormData = {
@@ -127,7 +118,6 @@ export const defaultOptionForm: OptionFormData = {
     email: "",
     description: "",
     imageUrl: "",
-    finalImage: "",
     fieldValues: [],
 };
 

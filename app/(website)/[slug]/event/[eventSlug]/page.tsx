@@ -138,7 +138,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                             <div className="px-6 pb-6">
                                                 <div className="flex -space-x-3">
                                                     {category.votingOptions.slice(0, 5).map((nominee, idx) => {
-                                                        const displayImage = (category.showFinalImage && nominee.finalImage) || nominee.imageUrl;
+                                                        const displayImage = nominee.imageUrl;
                                                         const displayImageUrl = getEventImageUrl(displayImage);
                                                         return (
                                                             <div

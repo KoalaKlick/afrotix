@@ -24,10 +24,6 @@ export type VotingCategoryCreateInput = {
     orderIdx?: number;
     maxVotesPerUser?: number;
     allowMultiple?: boolean;
-    // Template settings
-    templateImage?: string;
-    templateConfig?: Prisma.InputJsonValue;
-    showFinalImage?: boolean; // Show finalImage (with template) on cards instead of imageUrl
     // Public nomination settings
     allowPublicNomination?: boolean;
     nominationDeadline?: Date;
@@ -44,7 +40,6 @@ export type VotingOptionCreateInput = {
     email?: string;
     description?: string;
     imageUrl?: string;
-    finalImage?: string;
     orderIdx?: number;
     status?: VotingOptionStatus;
     isPublicNomination?: boolean;
@@ -487,14 +482,14 @@ export const getOptionFieldValues = cache(async (optionId: string): Promise<(Vot
  */
 function generateNomineePrefix(nomineeName: string): string {
     const parts = nomineeName.trim().split(/\s+/).filter(p => p.length > 0);
-    
+
     if (parts.length === 0) {
         return "NOM"; // Fallback
     }
-    
+
     // Get initials from each part
     const initials = parts.map(p => p[0].toUpperCase());
-    
+
     if (initials.length >= 3) {
         // Use first 3 initials
         return initials.slice(0, 3).join("");
@@ -516,7 +511,7 @@ function generateNomineePrefix(nomineeName: string): string {
 export async function generateNomineeCode(eventId: string, nomineeName: string): Promise<string> {
     try {
         const prefix = generateNomineePrefix(nomineeName);
-        
+
         // Find existing options with same prefix to determine next number
         const options = await prisma.votingOption.findMany({
             where: {

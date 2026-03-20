@@ -7,7 +7,6 @@ import {
     PieChart,
     Pie,
     Tooltip,
-    Legend,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
 import {
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import {
     ChartContainer,
-    ChartLegendContent,
     type ChartConfig,
 } from "@/components/ui/chart";
 import type { VotingChartCategory } from "./VotingBarChart";
@@ -77,7 +75,7 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="max-w-lg border-primary-900/10 overflow-hidden "
+                className="max-w-lg sm:h-auto  h-screen border-primary-900/10 overflow-hidden"
             >
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-primary-500">
@@ -88,7 +86,7 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
 
                 <div className="space-y-4">
                     {/* Summary */}
-                    <div className="flex items-center justify-between rounded-lg border border-secondary-900/10 px-4 py-3 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.0),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.0),transparent_26%)]" >
+                    <div className="flex items-center justify-between rounded-lg border border-secondary-900/10 px-4 py-3 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.0),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.0),transparent_26%)]">
                         <div className="text-sm text-muted-foreground">
                             Total Votes
                             <p className="text-lg font-bold text-primary-500">{totalVotes.toLocaleString()}</p>
@@ -104,45 +102,58 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
                         )}
                     </div>
 
-                    {/* Pie Chart */}
-                    <ChartContainer config={chartConfig} className="h-56 w-full [&>div]:aspect-auto!">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={data}
-                                    dataKey="votes"
-                                    nameKey="name"
-                                    cx="35%"
-                                    cy="50%"
-                                    innerRadius="45%"
-                                    outerRadius="80%"
-                                    paddingAngle={2}
-                                    strokeWidth={0}
-                                />
-                                <Tooltip content={ModalPieTooltip} />
-                                <Legend
-                                    layout="vertical"
-                                    align="right"
-                                    verticalAlign="middle"
-                                    content={<ChartLegendContent className="flex-col items-start" />}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
+                    {/* Pie Chart + Legend side by side */}
+                    <div className="flex items-center w-full gap-4 overflow-x-auto">
+                        {/* Fixed-size square chart — no overflow, no wasted right space */}
+                        <ChartContainer config={chartConfig} className="h-[200px] w-[200px] shrink-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={data}
+                                        dataKey="votes"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius="50%"
+                                        outerRadius="100%"
+                                        paddingAngle={2}
+                                        strokeWidth={0}
+                                    />
+                                    <Tooltip content={ModalPieTooltip} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+
+                        {/* Legend grows to fill the remaining horizontal space */}
+                        <ul className="flex flex-col gap-1.5 flex-1 min-w-0">
+                            {data.map((d) => (
+                                <li key={d.fullName} className="flex items-center gap-2 min-w-0">
+                                    <span
+                                        className="size-2.5 rounded-sm shrink-0"
+                                        style={{ backgroundColor: d.fill }}
+                                    />
+                                    <span className="truncate text-xs text-muted-foreground">{d.name}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
 
                     {/* Rankings Table */}
                     <div className="rounded-lg border border-tertiary-900/10 overflow-hidden">
-                        <div className="grid grid-cols-[auto_auto_1fr_auto_auto] gap-x-3 px-4 py-2 border-b border-tertiary-900/10 text-xs font-medium text-muted-foreground" style={{ backgroundImage: "radial-gradient(circle at top right, color-mix(in srgb, var(--color-tertiary-600) 10%, transparent), transparent 60%)" }}>
+                        <div
+                            className="grid grid-cols-[auto_auto_1fr_auto_auto] gap-x-3 px-4 py-2 border-b border-tertiary-900/10 text-xs font-medium text-muted-foreground"
+                            style={{ backgroundImage: "radial-gradient(circle at top right, color-mix(in srgb, var(--color-tertiary-600) 10%, transparent), transparent 60%)" }}
+                        >
                             <span>#</span>
                             <span className="w-8"></span>
                             <span>Nominee</span>
                             <span className="text-right">Votes</span>
                             <span className="text-right">Share</span>
                         </div>
-                        <div className="divide-y max-h-60 overflow-y-auto">
+                        <div className="divide-y max-h-60 overflow-y-auto overflow-x-auto">
                             {sorted.map((opt, i) => {
                                 const pct = totalVotes > 0 ? ((opt.votesCount / totalVotes) * 100).toFixed(1) : "0";
-                                const displayImage = opt.finalImage || opt.imageUrl;
+                                const displayImage = opt.imageUrl;
                                 const displayImageUrl = getEventImageUrl(displayImage);
                                 return (
                                     <div key={opt.id} className="grid grid-cols-[auto_auto_1fr_auto_auto] gap-x-3 px-4 py-2.5 text-sm items-center">

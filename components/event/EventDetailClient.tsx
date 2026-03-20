@@ -276,7 +276,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
     const TypeIcon = typeIcons[event.type] ?? Ticket;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 @container">
             {/* Header Section */}
             <div className="bg-card border rounded-xl overflow-hidden">
                 {/* Banner */}
@@ -516,7 +516,6 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                 optionText: opt.optionText,
                                 votesCount: typeof opt.votesCount === "bigint" ? Number(opt.votesCount) : opt.votesCount,
                                 imageUrl: opt.imageUrl,
-                                finalImage: opt.finalImage,
                             })),
                         }))}
                     />

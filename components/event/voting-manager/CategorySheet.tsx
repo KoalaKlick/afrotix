@@ -50,8 +50,6 @@ export interface CategoryFormData {
     allowPublicNomination: boolean;
     nominationDeadline: string;
     requireApproval: boolean;
-    templateImage: string;
-    showFinalImage: boolean;
 }
 
 interface CategorySheetProps {
@@ -83,12 +81,8 @@ export function CategorySheet({
         allowPublicNomination: false,
         nominationDeadline: "",
         requireApproval: true,
-        templateImage: "",
-        showFinalImage: true,
     });
     const [isPending, startTransition] = useTransition();
-    const [isUploadingTemplate, setIsUploadingTemplate] = useState(false);
-    const templateInputRef = useRef<HTMLInputElement>(null);
 
     const resetForm = useCallback(() => {
         setForm({
@@ -99,15 +93,11 @@ export function CategorySheet({
             allowPublicNomination: false,
             nominationDeadline: "",
             requireApproval: true,
-            templateImage: "",
-            showFinalImage: true,
         });
     }, []);
 
     useEffect(() => {
-        if (!open) {
-            return;
-        }
+        if (!open) return;
 
         if (editingCategory) {
             setForm({
@@ -120,41 +110,12 @@ export function CategorySheet({
                     ? new Date(editingCategory.nominationDeadline).toISOString().slice(0, 16)
                     : "",
                 requireApproval: editingCategory.requireApproval,
-                templateImage: editingCategory.templateImage ?? "",
-                showFinalImage: editingCategory.showFinalImage,
             });
             return;
         }
 
         resetForm();
     }, [editingCategory, open, resetForm]);
-
-    async function handleTemplateImageUpload(file: File) {
-        setIsUploadingTemplate(true);
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 1,
-                maxWidth: 1200,
-                maxHeight: 1200,
-                maxSizeMB: 5,
-            });
-
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-
-            const result = await uploadTemplateImage(formData);
-            if (result.success) {
-                setForm(prev => ({ ...prev, templateImage: result.data.url }));
-                toast.success("Template uploaded");
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to upload template");
-        } finally {
-            setIsUploadingTemplate(false);
-        }
-    }
 
     function handleSave() {
         if (!form.name.trim()) {
@@ -172,8 +133,6 @@ export function CategorySheet({
                     allowPublicNomination: form.allowPublicNomination,
                     nominationDeadline: form.nominationDeadline || undefined,
                     requireApproval: form.requireApproval,
-                    templateImage: form.templateImage || undefined,
-                    showFinalImage: form.showFinalImage,
                 });
 
                 if (result.success) {
@@ -186,8 +145,6 @@ export function CategorySheet({
                         allowPublicNomination: form.allowPublicNomination,
                         nominationDeadline: form.nominationDeadline || null,
                         requireApproval: form.requireApproval,
-                        templateImage: form.templateImage || null,
-                        showFinalImage: form.showFinalImage,
                     });
                     toast.success("Category updated");
                     onOpenChange(false);
@@ -207,8 +164,6 @@ export function CategorySheet({
                 allowPublicNomination: form.allowPublicNomination,
                 nominationDeadline: form.nominationDeadline || undefined,
                 requireApproval: form.requireApproval,
-                templateImage: form.templateImage || undefined,
-                showFinalImage: form.showFinalImage,
             });
 
             if (result.success) {
@@ -218,9 +173,6 @@ export function CategorySheet({
                     description: form.description || null,
                     maxVotesPerUser: form.maxVotesPerUser,
                     allowMultiple: form.allowMultiple,
-                    templateImage: form.templateImage || null,
-                    templateConfig: null,
-                    showFinalImage: form.showFinalImage,
                     allowPublicNomination: form.allowPublicNomination,
                     nominationDeadline: form.nominationDeadline || null,
                     requireApproval: form.requireApproval,
@@ -254,10 +206,9 @@ export function CategorySheet({
                 </SheetHeader>
                 <SheetBody>
                     <Tabs defaultValue="basic" className="w-full">
-                        <TabsList variant="afro" className="grid w-full grid-cols-3">
+                        <TabsList variant="afro" className="grid w-full grid-cols-2">
                             <TabsTrigger value="basic">Basic</TabsTrigger>
                             <TabsTrigger value="nominations">Nominations</TabsTrigger>
-                            <TabsTrigger value="template">Template</TabsTrigger>
                         </TabsList>
 
                         {/* Basic Tab */}
@@ -366,108 +317,6 @@ export function CategorySheet({
                                             checked={form.requireApproval}
                                             onCheckedChange={(checked) =>
                                                 setForm(prev => ({ ...prev, requireApproval: checked }))
-                                            }
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </TabsContent>
-
-                        {/* Template Tab */}
-                        <TabsContent value="template" className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label>Nominee Photo Template</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Upload a template image for positioning nominee photos
-                                </p>
-                            </div>
-                            {form.templateImage ? (
-                                <div className="space-y-3">
-                                    <div className="relative aspect-video rounded-lg border overflow-hidden bg-muted">
-                                        <Image
-                                            src={form.templateImage}
-                                            alt="Template"
-                                            fill
-                                            className="object-contain"
-                                        />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => templateInputRef.current?.click()}
-                                            disabled={isUploadingTemplate}
-                                        >
-                                            {isUploadingTemplate ? (
-                                                <Loader2 className="size-4 mr-2 animate-spin" />
-                                            ) : (
-                                                <Upload className="size-4 mr-2" />
-                                            )}
-                                            Replace
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setForm(prev => ({ ...prev, templateImage: "" }))}
-                                        >
-                                            <Trash2 className="size-4 mr-2" />
-                                            Remove
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <button
-                                    type="button"
-                                    tabIndex={0}
-                                    onClick={() => templateInputRef.current?.click()}
-                                    onKeyDown={(e) => e.key === "Enter" && templateInputRef.current?.click()}
-                                    className={cn(
-                                        "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-                                        "hover:border-primary hover:bg-muted/50",
-                                        isUploadingTemplate && "pointer-events-none opacity-50"
-                                    )}
-                                >
-                                    {isUploadingTemplate ? (
-                                        <Loader2 className="size-8 mx-auto mb-2 animate-spin text-muted-foreground" />
-                                    ) : (
-                                        <ImageIcon className="size-8 mx-auto mb-2 text-muted-foreground" />
-                                    )}
-                                    <p className="text-sm text-muted-foreground">
-                                        {isUploadingTemplate ? "Uploading..." : "Click to upload template image"}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        PNG, JPG, or WebP (max 10MB)
-                                    </p>
-                                </button>
-                            )}
-                            <input
-                                ref={templateInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                className="hidden"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleTemplateImageUpload(file);
-                                    e.target.value = "";
-                                }}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                When a template is set, nominees can position their photo on it during upload.
-                            </p>
-                            {form.templateImage && (
-                                <>
-                                    <Separator className="my-4" />
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-0.5">
-                                            <Label>Show Template Image on Cards</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Display the combined template image instead of the original photo
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            checked={form.showFinalImage}
-                                            onCheckedChange={(checked) =>
-                                                setForm(prev => ({ ...prev, showFinalImage: checked }))
                                             }
                                         />
                                     </div>
