@@ -30,7 +30,7 @@ import {
     Layers,
     Megaphone,
     Settings,
-    
+
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -93,7 +93,7 @@ interface EventData {
 
 type VotingOptionStatus = "pending" | "approved" | "rejected";
 
-    
+
 
 
 interface EventDetailClientProps {
