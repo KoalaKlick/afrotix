@@ -546,7 +546,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                 {/* Voting Tab */}
                 {(event.type === "voting" || event.type === "hybrid") && (
                     <TabsContent value="voting" className="space-y-4">
-                        <div className="bg-card border rounded-xl p-6">
+                        <div className="">
                             <VotingManager
                                 eventId={event.id}
                                 categories={votingCategories.map(cat => ({

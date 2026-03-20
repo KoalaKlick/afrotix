@@ -313,7 +313,7 @@ export function OptionSheet({
                     resetForm(category);
                 }
             }}>
-                <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+                <SheetContent side="right" variant="afro" className="w-full sm:max-w-xl overflow-y-auto">
                 <SheetHeader>
                     <SheetTitle>
                         {editingOption ? "Edit Nominee" : "Add Nominee"}

@@ -75,8 +75,7 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="max-w-lg border-primary-900/10 overflow-hidden"
-                style={{ backgroundImage: "radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-primary-600) 28%, transparent), transparent 50%)" }}
+                className="max-w-lg border-primary-900/10 overflow-hidden "
             >
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-primary-500">
@@ -87,7 +86,7 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
 
                 <div className="space-y-4">
                     {/* Summary */}
-                    <div className="flex items-center justify-between rounded-lg border border-secondary-900/10 px-4 py-3" style={{ backgroundImage: "radial-gradient(circle at top left, color-mix(in srgb, var(--color-secondary-500) 12%, transparent), transparent 60%)" }}>
+                    <div className="flex items-center justify-between rounded-lg border border-secondary-900/10 px-4 py-3 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.0),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.0),transparent_26%)]" >
                         <div className="text-sm text-muted-foreground">
                             Total Votes
                             <p className="text-lg font-bold text-primary-500">{totalVotes.toLocaleString()}</p>

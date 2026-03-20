@@ -35,10 +35,11 @@ export function SortableCategoryItem({ category, canEdit, children, dragHandleSl
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes}>
+        <div   data-variant="afro" 
+                className=" rounded-lg shadow-xs" ref={setNodeRef} style={style} {...attributes}>
             <AccordionItem
-                value={category.id}
-                className="border rounded-lg bg-card"
+           value={category.id}
+                
             >
                 <div className="flex items-center gap-3 px-4">
                     {canEdit && (
