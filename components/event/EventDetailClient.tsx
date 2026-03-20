@@ -30,7 +30,7 @@ import {
     Layers,
     Megaphone,
     Settings,
-    UploadCloud
+    
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -53,16 +53,13 @@ import type {
 import type {
     CustomField,
     VotingCategory,
-    VotingOption,
-    VotingOptionStatus,
-    FieldValue
+    VotingCategory
 } from "@/lib/types/voting";
 import {
     VotingManager,
     EventOverviewTab,
     DeleteEventDialog,
     EventSettingsTab,
-    VotingBarChart,
     type VotingChartCategory
 } from "@/components/event";
 
@@ -96,43 +93,8 @@ interface EventData {
 
 type VotingOptionStatus = "pending" | "approved" | "rejected";
 
-interface FieldValue {
-    fieldId: string;
-    value: string;
-}
+    
 
-interface VotingOption {
-    id: string;
-    optionText: string;
-    nomineeCode: string | null;
-    email: string | null;
-    description: string | null;
-    imageUrl: string | null;
-    finalImage: string | null;
-    status: VotingOptionStatus;
-    isPublicNomination: boolean;
-    nominatedByName: string | null;
-    votesCount: number;
-    orderIdx: number;
-    fieldValues?: FieldValue[];
-}
-
-interface VotingCategory {
-    id: string;
-    name: string;
-    description: string | null;
-    maxVotesPerUser: number;
-    allowMultiple: boolean;
-    templateImage: string | null;
-    templateConfig: unknown;
-    showFinalImage: boolean;
-    allowPublicNomination: boolean;
-    nominationDeadline: string | Date | null;
-    requireApproval: boolean;
-    orderIdx: number;
-    votingOptions: VotingOption[];
-    customFields?: CustomField[];
-}
 
 interface EventDetailClientProps {
     readonly event: EventData;
