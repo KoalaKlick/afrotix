@@ -65,8 +65,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         type: event.type,
                         status: event.status,
                         description: event.description,
-                        startDate: event.startDate?.toISOString(),
-                        endDate: event.endDate?.toISOString(),
+                        startDate: event.startDate?.toISOString() ?? null,
+                        endDate: event.endDate?.toISOString() ?? null,
                         timezone: event.timezone,
                         isVirtual: event.isVirtual,
                         virtualLink: event.virtualLink,
@@ -80,7 +80,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         isPublic: event.isPublic,
                         createdAt: event.createdAt.toISOString(),
                         updatedAt: event.updatedAt.toISOString(),
-                        publishedAt: event.publishedAt?.toISOString(),
+                        publishedAt: event.publishedAt?.toISOString() ?? null,
                     }}
                     organizationSlug={organization?.slug}
                     userRole={role}
