@@ -113,7 +113,6 @@ import { convertToWebP } from "@/lib/image-utils";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { TemplateEditor, type TemplateConfig } from "@/components/shared/template-editor";
 import { NomineeCard } from "./NomineeCard";
 import {
     FIELD_TYPES,
@@ -200,8 +199,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         allowPublicNomination: false,
         nominationDeadline: "",
         requireApproval: true,
-        templateImage: "",
-        showFinalImage: true,
     });
 
     // Custom fields dialog state
@@ -227,23 +224,12 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         email: "",
         description: "",
         imageUrl: "",
-        finalImage: "",
         fieldValues: [] as { fieldId: string; value: string }[],
     });
     const [isUploadingImage, setIsUploadingImage] = useState(false);
-    const [isUploadingTemplate, setIsUploadingTemplate] = useState(false);
-    const [isUploadingTemplatePhoto, setIsUploadingTemplatePhoto] = useState(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
-    const templateInputRef = useRef<HTMLInputElement>(null);
-    const templatePhotoInputRef = useRef<HTMLInputElement>(null);
 
-    // Template editor state
-    const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
-    const [uploadedPhotoForTemplate, setUploadedPhotoForTemplate] = useState<string | null>(null);
-
-    // Generate display URLs from paths
     const optionFormImageDisplayUrl = getEventImageUrl(optionForm.imageUrl);
-    const optionFormFinalImageDisplayUrl = getEventImageUrl(optionForm.finalImage);
 
     // DnD sensors for category reordering
     const sensors = useSensors(
@@ -291,8 +277,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
             allowPublicNomination: false,
             nominationDeadline: "",
             requireApproval: true,
-            templateImage: "",
-            showFinalImage: true,
         });
         setEditingCategory(null);
     }
@@ -318,7 +302,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
             email: "",
             description: "",
             imageUrl: "",
-            finalImage: "",
             fieldValues: [],
         });
         setEditingOption(null);
@@ -338,8 +321,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                 ? new Date(category.nominationDeadline).toISOString().slice(0, 16)
                 : "",
             requireApproval: category.requireApproval,
-            templateImage: category.templateImage ?? "",
-            showFinalImage: category.showFinalImage,
         });
         setCategoryDialogOpen(true);
     }
@@ -376,7 +357,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
             email: option.email ?? "",
             description: option.description ?? "",
             imageUrl: option.imageUrl ?? "",
-            finalImage: option.finalImage ?? "",
             fieldValues: category?.customFields?.map(f => ({
                 fieldId: f.id,
                 value: option.fieldValues?.find(v => v.fieldId === f.id)?.value ?? "",
@@ -402,8 +382,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     allowPublicNomination: categoryForm.allowPublicNomination,
                     nominationDeadline: categoryForm.nominationDeadline || undefined,
                     requireApproval: categoryForm.requireApproval,
-                    templateImage: categoryForm.templateImage || undefined,
-                    showFinalImage: categoryForm.showFinalImage,
                 });
 
                 if (result.success) {
@@ -419,8 +397,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                     allowPublicNomination: categoryForm.allowPublicNomination,
                                     nominationDeadline: categoryForm.nominationDeadline || null,
                                     requireApproval: categoryForm.requireApproval,
-                                    templateImage: categoryForm.templateImage || null,
-                                    showFinalImage: categoryForm.showFinalImage,
                                 }
                                 : c
                         )
@@ -440,8 +416,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     allowPublicNomination: categoryForm.allowPublicNomination,
                     nominationDeadline: categoryForm.nominationDeadline || undefined,
                     requireApproval: categoryForm.requireApproval,
-                    templateImage: categoryForm.templateImage || undefined,
-                    showFinalImage: categoryForm.showFinalImage,
                 });
 
                 if (result.success) {
@@ -453,9 +427,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                             description: categoryForm.description || null,
                             maxVotesPerUser: categoryForm.maxVotesPerUser,
                             allowMultiple: categoryForm.allowMultiple,
-                            templateImage: categoryForm.templateImage || null,
+                            templateImage: null,
                             templateConfig: null,
-                            showFinalImage: categoryForm.showFinalImage,
+                            showFinalImage: true,
                             allowPublicNomination: categoryForm.allowPublicNomination,
                             nominationDeadline: categoryForm.nominationDeadline || null,
                             requireApproval: categoryForm.requireApproval,
@@ -485,34 +459,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                 toast.error(result.error);
             }
         });
-    }
-
-    // Handle template image upload
-    async function handleTemplateImageUpload(file: File) {
-        setIsUploadingTemplate(true);
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.9,
-                maxWidth: 1200,
-                maxHeight: 1200,
-                maxSizeMB: 5,
-            });
-
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-
-            const result = await uploadTemplateImage(formData);
-            if (result.success) {
-                setCategoryForm(prev => ({ ...prev, templateImage: result.data.url }));
-                toast.success("Template uploaded");
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to upload template");
-        } finally {
-            setIsUploadingTemplate(false);
-        }
     }
 
     // Handle image upload
@@ -549,79 +495,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         }
     }
 
-    // Handle template editor save - stores result in finalImage (separate from original imageUrl)
-    async function handleTemplateEditorSave(finalImageDataUrl: string, _config: TemplateConfig) {
-        setIsUploadingImage(true);
-        try {
-            // Convert data URL to blob
-            const response = await fetch(finalImageDataUrl);
-            const blob = await response.blob();
-            const file = new File([blob], "template-image.webp", { type: "image/webp" });
-
-            // Upload the final image
-            const formData = new FormData();
-            formData.set("file", file);
-
-            // Pass old final image path for deletion
-            if (optionForm.finalImage) {
-                formData.set("oldImagePath", optionForm.finalImage);
-            }
-
-            const result = await uploadNomineeImage(formData);
-            if (result.success) {
-                setOptionForm(prev => ({
-                    ...prev,
-                    finalImage: result.data.path, // Store template image path separately from original
-                }));
-                toast.success("Template applied successfully");
-                setTemplateEditorOpen(false);
-                // Revoke object URL if it was a blob URL
-                if (uploadedPhotoForTemplate?.startsWith("blob:")) {
-                    URL.revokeObjectURL(uploadedPhotoForTemplate);
-                }
-                setUploadedPhotoForTemplate(null);
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to save templated image");
-        } finally {
-            setIsUploadingImage(false);
-        }
-    }
-
-    // Open template editor using the main imageUrl
-    function handleApplyTemplateWithMainPhoto() {
-        if (!optionForm.imageUrl || !optionFormImageDisplayUrl) {
-            toast.error("No nominee photo available. Upload a photo or use 'Upload for Template'.");
-            return;
-        }
-        setUploadedPhotoForTemplate(optionFormImageDisplayUrl);
-        setTemplateEditorOpen(true);
-    }
-
-    // Handle uploading a photo specifically for the template (doesn't affect imageUrl)
-    async function handleTemplatePhotoUpload(file: File) {
-        setIsUploadingTemplatePhoto(true);
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: 1200,
-                maxHeight: 1200,
-                maxSizeMB: 2,
-            });
-
-            // Create a temporary URL for the template editor
-            const tempUrl = URL.createObjectURL(optimizedFile);
-            setUploadedPhotoForTemplate(tempUrl);
-            setTemplateEditorOpen(true);
-        } catch {
-            toast.error("Failed to process image");
-        } finally {
-            setIsUploadingTemplatePhoto(false);
-        }
-    }
-
     // Handle option save
     function handleSaveOption() {
         if (!optionForm.optionText.trim()) {
@@ -637,7 +510,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     email: optionForm.email || undefined,
                     description: optionForm.description || undefined,
                     imageUrl: optionForm.imageUrl || undefined,
-                    finalImage: optionForm.finalImage || undefined,
                     fieldValues: optionForm.fieldValues.filter(f => f.value.trim()),
                 });
 
@@ -654,7 +526,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                         email: optionForm.email || null,
                                         description: optionForm.description || null,
                                         imageUrl: optionForm.imageUrl || null,
-                                        finalImage: optionForm.finalImage || null,
                                         fieldValues: optionForm.fieldValues,
                                     }
                                     : o
@@ -675,7 +546,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     email: optionForm.email || undefined,
                     description: optionForm.description || undefined,
                     imageUrl: optionForm.imageUrl || undefined,
-                    finalImage: optionForm.finalImage || undefined,
                     fieldValues: optionForm.fieldValues.filter(f => f.value.trim()),
                 });
 
@@ -694,7 +564,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                             email: optionForm.email || null,
                                             description: optionForm.description || null,
                                             imageUrl: optionForm.imageUrl || null,
-                                            finalImage: optionForm.finalImage || null,
                                             status: "approved" as VotingOptionStatus,
                                             isPublicNomination: false,
                                             nominatedByName: null,
@@ -929,10 +798,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                             </SheetHeader>
                             <SheetBody>
                                 <Tabs defaultValue="basic" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-3">
+                                    <TabsList className="grid w-full grid-cols-2">
                                         <TabsTrigger value="basic">Basic</TabsTrigger>
                                         <TabsTrigger value="nominations">Nominations</TabsTrigger>
-                                        <TabsTrigger value="template">Template</TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="basic" className="space-y-4 py-4">
                                         <div className="space-y-2">
@@ -1037,106 +905,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                                         checked={categoryForm.requireApproval}
                                                         onCheckedChange={(checked) =>
                                                             setCategoryForm(prev => ({ ...prev, requireApproval: checked }))
-                                                        }
-                                                    />
-                                                </div>
-                                            </>
-                                        )}
-                                    </TabsContent>
-                                    <TabsContent value="template" className="space-y-4 py-4">
-                                        <div className="space-y-2">
-                                            <Label>Nominee Photo Template</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Upload a template image for positioning nominee photos
-                                            </p>
-                                        </div>
-                                        {categoryForm.templateImage ? (
-                                            <div className="space-y-3">
-                                                <div className="relative aspect-video rounded-lg border overflow-hidden bg-muted">
-                                                    <Image
-                                                        src={categoryForm.templateImage}
-                                                        alt="Template"
-                                                        fill
-                                                        className="object-contain"
-                                                    />
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => templateInputRef.current?.click()}
-                                                        disabled={isUploadingTemplate}
-                                                    >
-                                                        {isUploadingTemplate ? (
-                                                            <Loader2 className="size-4 mr-2 animate-spin" />
-                                                        ) : (
-                                                            <Upload className="size-4 mr-2" />
-                                                        )}
-                                                        Replace
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => setCategoryForm(prev => ({ ...prev, templateImage: "" }))}
-                                                    >
-                                                        <Trash2 className="size-4 mr-2" />
-                                                        Remove
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                tabIndex={0}
-                                                onClick={() => templateInputRef.current?.click()}
-                                                onKeyDown={(e) => e.key === "Enter" && templateInputRef.current?.click()}
-                                                className={cn(
-                                                    "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-                                                    "hover:border-primary hover:bg-muted/50",
-                                                    isUploadingTemplate && "pointer-events-none opacity-50"
-                                                )}
-                                            >
-                                                {isUploadingTemplate ? (
-                                                    <Loader2 className="size-8 mx-auto mb-2 animate-spin text-muted-foreground" />
-                                                ) : (
-                                                    <ImageIcon className="size-8 mx-auto mb-2 text-muted-foreground" />
-                                                )}
-                                                <p className="text-sm text-muted-foreground">
-                                                    {isUploadingTemplate ? "Uploading..." : "Click to upload template image"}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    PNG, JPG, or WebP (max 10MB)
-                                                </p>
-                                            </button>
-                                        )}
-                                        <input
-                                            ref={templateInputRef}
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/webp"
-                                            className="hidden"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) handleTemplateImageUpload(file);
-                                                e.target.value = "";
-                                            }}
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            When a template is set, nominees can position their photo on it during upload.
-                                        </p>
-                                        {categoryForm.templateImage && (
-                                            <>
-                                                <Separator className="my-4" />
-                                                <div className="flex items-center justify-between">
-                                                    <div className="space-y-0.5">
-                                                        <Label>Show Template Image on Cards</Label>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Display the combined template image instead of the original photo
-                                                        </p>
-                                                    </div>
-                                                    <Switch
-                                                        checked={categoryForm.showFinalImage}
-                                                        onCheckedChange={(checked) =>
-                                                            setCategoryForm(prev => ({ ...prev, showFinalImage: checked }))
                                                         }
                                                     />
                                                 </div>
@@ -1301,8 +1069,8 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                             ) : (
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                                                     {category.votingOptions.map((option) => {
-                                                        // Use finalImage if showFinalImage is enabled and it exists, otherwise fall back to imageUrl
-                                                        const displayImage = (category.showFinalImage && option.finalImage) || option.imageUrl;
+                                                        // Use imageUrl for display
+                                                        const displayImage = option.imageUrl;
                                                         return (
                                                             <NomineeCard
                                                                 key={option.id}
@@ -1401,91 +1169,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                 </div>
                             </div>
                         </div>
-
-                        {/* Template Image Section - Only show if category has template */}
-                        {currentCategory?.templateImage && (
-                            <div className="space-y-2">
-                                <Label className="flex items-center gap-2">
-                                    <Layers className="size-4" />
-                                    Template Image
-                                </Label>
-                                <div className="flex items-start gap-4">
-                                    <div className="size-24 rounded-lg border bg-muted overflow-hidden relative shrink-0">
-                                        {optionForm.finalImage && optionFormFinalImageDisplayUrl ? (
-                                            <Image
-                                                src={optionFormFinalImageDisplayUrl}
-                                                alt="Template preview"
-                                                fill
-                                                className="object-cover"
-                                                unoptimized
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <Layers className="size-8 text-muted-foreground" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 space-y-2">
-                                        <div className="flex flex-wrap gap-2">
-                                            {optionForm.imageUrl && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={handleApplyTemplateWithMainPhoto}
-                                                    disabled={isUploadingImage || isUploadingTemplatePhoto}
-                                                >
-                                                    {isUploadingImage ? (
-                                                        <Loader2 className="size-4 mr-2 animate-spin" />
-                                                    ) : (
-                                                        <Layers className="size-4 mr-2" />
-                                                    )}
-                                                    Use Nominee Photo
-                                                </Button>
-                                            )}
-                                            <input
-                                                ref={templatePhotoInputRef}
-                                                type="file"
-                                                accept="image/jpeg,image/png,image/webp"
-                                                className="hidden"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) handleTemplatePhotoUpload(file);
-                                                    e.target.value = "";
-                                                }}
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => templatePhotoInputRef.current?.click()}
-                                                disabled={isUploadingImage || isUploadingTemplatePhoto}
-                                            >
-                                                {isUploadingTemplatePhoto ? (
-                                                    <Loader2 className="size-4 mr-2 animate-spin" />
-                                                ) : (
-                                                    <Upload className="size-4 mr-2" />
-                                                )}
-                                                Upload for Template
-                                            </Button>
-                                        </div>
-                                        {optionForm.finalImage && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setOptionForm(prev => ({ ...prev, finalImage: "" }))}
-                                            >
-                                                Remove Template
-                                            </Button>
-                                        )}
-                                        <p className="text-xs text-muted-foreground">
-                                            Create a template image using the nominee photo or upload a different one
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         <div className="space-y-2">
                             <Label htmlFor="option-name">Name *</Label>
@@ -1873,26 +1556,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                 </SheetContent>
             </Sheet>
 
-            {/* Template Editor Dialog */}
-            {currentCategory?.templateImage && uploadedPhotoForTemplate && (
-                <TemplateEditor
-                    open={templateEditorOpen}
-                    onOpenChange={(open) => {
-                        setTemplateEditorOpen(open);
-                        if (!open) {
-                            // Revoke object URL if it was a blob URL
-                            if (uploadedPhotoForTemplate.startsWith("blob:")) {
-                                URL.revokeObjectURL(uploadedPhotoForTemplate);
-                            }
-                            setUploadedPhotoForTemplate(null);
-                        }
-                    }}
-                    templateImage={currentCategory.templateImage}
-                    photoImage={uploadedPhotoForTemplate}
-                    onSave={handleTemplateEditorSave}
-                    isLoading={isUploadingImage}
-                />
-            )}
         </div>
     );
 }

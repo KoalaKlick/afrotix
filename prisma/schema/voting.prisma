@@ -10,11 +10,6 @@ model VotingCategory {
   maxVotesPerUser Int     @default(1) @map("max_votes_per_user")
   allowMultiple   Boolean @default(false) @map("allow_multiple")
 
-  // Template settings
-  templateImage  String?  @map("template_image") // Background template image URL
-  templateConfig Json?    @map("template_config") // JSON with position/size settings for nominee photo overlay
-  showFinalImage Boolean  @default(true) @map("show_final_image") // Show finalImage (with template) on cards instead of imageUrl
-
   // Public nomination settings
   allowPublicNomination Boolean   @default(false) @map("allow_public_nomination")
   nominationDeadline    DateTime? @map("nomination_deadline") @db.Timestamptz
@@ -65,7 +60,6 @@ model VotingOption {
   email       String? // Nominee's email
   description String?
   imageUrl    String? @map("image_url") // Original nominee photo
-  finalImage  String? @map("final_image") // Combined image with template
 
   // Status and ordering
   orderIdx   Int                @default(0) @map("order_idx")

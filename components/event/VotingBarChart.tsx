@@ -26,7 +26,6 @@ export interface VotingChartCategory {
         optionText: string;
         votesCount: number;
         imageUrl?: string | null;
-        finalImage?: string | null;
     }[];
 }
 

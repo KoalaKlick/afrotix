@@ -3,8 +3,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { getProfileWithPromoterStatus } from '@/lib/dal/profile'
 import { getUserOrganizations, getPendingInvitationsForEmail } from '@/lib/dal/organization'
-
-const SETUP_ROUTES = ['/setup/onboarding', '/setup/organization/new', '/setup/organization/invitations']
+import { getOnboardingRedirect } from '@/lib/services/onboarding'
 
 export default async function ProtectedRootLayout({
     children,
@@ -23,7 +22,6 @@ export default async function ProtectedRootLayout({
     }
 
     const pathname = (await headers()).get('x-pathname') ?? ''
-    const isOnSetupRoute = SETUP_ROUTES.some(r => pathname.startsWith(r))
 
     const [profile, organizations, pendingInvitations] = await Promise.all([
         getProfileWithPromoterStatus(user.id),
@@ -31,25 +29,20 @@ export default async function ProtectedRootLayout({
         getPendingInvitationsForEmail(user.email ?? ''),
     ])
 
-    const needsOnboarding = !profile?.onboardingCompleted
-    const hasOrganization = organizations.length > 0
+    const redirectPath = getOnboardingRedirect({
+        user: {
+            id: user.id,
+            email: user.email,
+            email_confirmed_at: user.email_confirmed_at,
+        },
+        profile,
+        organizations,
+        pendingInvitations,
+        pathname,
+    })
 
-    if (needsOnboarding) {
-        // Must complete onboarding first
-        if (!pathname.startsWith('/setup/onboarding')) {
-            redirect('/setup/onboarding')
-        }
-    } else if (!hasOrganization) {
-        // Onboarding done but needs an organization
-        if (!isOnSetupRoute) {
-            if (pendingInvitations.length > 0) {
-                redirect('/setup/organization/invitations')
-            }
-            redirect('/setup/onboarding')
-        }
-    } else if (isOnSetupRoute) {
-        // Fully set up — shouldn't be on setup routes
-        redirect('/dashboard')
+    if (redirectPath && pathname !== redirectPath) {
+        redirect(redirectPath)
     }
 
     return <>{children}</>

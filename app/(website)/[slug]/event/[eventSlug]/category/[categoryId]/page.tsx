@@ -94,7 +94,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                     {category.votingOptions.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                             {category.votingOptions.map((nominee) => {
-                                const displayImage = (category.showFinalImage && nominee.finalImage) || nominee.imageUrl;
+                                const displayImage = nominee.imageUrl;
                                 const displayImageUrl = getEventImageUrl(displayImage);
                                 return (
                                     <div

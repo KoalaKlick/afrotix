@@ -104,9 +104,6 @@ export async function createCategory(
         description: data.description?.trim(),
         maxVotesPerUser: data.maxVotesPerUser ?? 1,
         allowMultiple: data.allowMultiple ?? false,
-        templateImage: data.templateImage,
-        templateConfig: data.templateConfig as Prisma.InputJsonValue | undefined,
-        showFinalImage: data.showFinalImage ?? true,
         allowPublicNomination: data.allowPublicNomination ?? false,
         nominationDeadline: data.nominationDeadline ? new Date(data.nominationDeadline) : undefined,
         requireApproval: data.requireApproval ?? true,
@@ -130,9 +127,6 @@ export async function updateCategory(
         description?: string;
         maxVotesPerUser?: number;
         allowMultiple?: boolean;
-        templateImage?: string;
-        templateConfig?: Record<string, unknown>;
-        showFinalImage?: boolean;
         allowPublicNomination?: boolean;
         nominationDeadline?: string | null;
         requireApproval?: boolean;
@@ -157,9 +151,6 @@ export async function updateCategory(
         ...(data.description !== undefined && { description: data.description?.trim() || undefined }),
         ...(data.maxVotesPerUser !== undefined && { maxVotesPerUser: data.maxVotesPerUser }),
         ...(data.allowMultiple !== undefined && { allowMultiple: data.allowMultiple }),
-        ...(data.templateImage !== undefined && { templateImage: data.templateImage || undefined }),
-        ...(data.templateConfig !== undefined && { templateConfig: data.templateConfig as Prisma.InputJsonValue | undefined }),
-        ...(data.showFinalImage !== undefined && { showFinalImage: data.showFinalImage }),
         ...(data.allowPublicNomination !== undefined && { allowPublicNomination: data.allowPublicNomination }),
         ...(data.nominationDeadline !== undefined && {
             nominationDeadline: data.nominationDeadline ? new Date(data.nominationDeadline) : undefined
@@ -235,7 +226,6 @@ export async function createOption(
         email?: string;
         description?: string;
         imageUrl?: string;
-        finalImage?: string;
         fieldValues?: { fieldId: string; value: string }[];
     }
 ): Promise<ActionResult<{ id: string; nomineeCode: string }>> {
@@ -259,7 +249,6 @@ export async function createOption(
         email: data.email?.trim(),
         description: data.description?.trim(),
         imageUrl: data.imageUrl,
-        finalImage: data.finalImage,
     });
 
     if (!option) {
@@ -286,7 +275,6 @@ export async function updateOption(
         email?: string;
         description?: string;
         imageUrl?: string;
-        finalImage?: string;
         categoryId?: string;
         fieldValues?: { fieldId: string; value: string }[];
     }
@@ -311,7 +299,6 @@ export async function updateOption(
         ...(data.email !== undefined && { email: data.email?.trim() || undefined }),
         ...(data.description !== undefined && { description: data.description?.trim() || undefined }),
         ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl || undefined }),
-        ...(data.finalImage !== undefined && { finalImage: data.finalImage || undefined }),
         ...(data.categoryId !== undefined && { categoryId: data.categoryId || undefined }),
     });
 

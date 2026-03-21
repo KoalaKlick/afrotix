@@ -190,7 +190,7 @@ export function CategoryList({
                 items={categories.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
             >
-                <Accordion  type="multiple" defaultValue={categories.map(c => c.id)} className="space-y-2 ">
+                <Accordion type="multiple" defaultValue={categories.map(c => c.id)} className="space-y-2 ">
                     {categories.map((category) => {
                         const pendingCount = category.votingOptions.filter(o => o.status === "pending").length;
                         return (
@@ -295,7 +295,7 @@ export function CategoryList({
                                     ) : (
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                                             {category.votingOptions.map((option) => {
-                                                const displayImage = (category.showFinalImage && option.finalImage) || option.imageUrl;
+                                                const displayImage = option.imageUrl;
                                                 return (
                                                     <NomineeCard
                                                         key={option.id}

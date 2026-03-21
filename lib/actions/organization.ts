@@ -42,6 +42,8 @@ import {
     deleteStorageFile,
     normalizeToPath,
 } from "@/lib/storage-utils";
+import { updateProfile } from "@/lib/dal/profile";
+import { TOTAL_ONBOARDING_STEPS } from "@/lib/validations/profile";
 
 // Action result type
 type ActionResult<T = void> = {
@@ -330,6 +332,12 @@ export async function createNewOrganization(
     // Set as active organization
     await setActiveOrganizationId(org.id);
 
+    // Mark onboarding as complete (if not already)
+    await updateProfile(user.id, {
+        onboardingCompleted: true,
+        onboardingStep: TOTAL_ONBOARDING_STEPS,
+    });
+
     revalidatePath("/dashboard");
     revalidatePath("/promoter");
 
@@ -500,6 +508,12 @@ export async function acceptOrgInvitation(
 
     // Set as active organization
     await setActiveOrganizationId(invitation.organizationId);
+
+    // Mark onboarding as complete (if not already)
+    await updateProfile(user.id, {
+        onboardingCompleted: true,
+        onboardingStep: TOTAL_ONBOARDING_STEPS,
+    });
 
     revalidatePath("/dashboard");
     revalidatePath("/(protected)", "layout");
