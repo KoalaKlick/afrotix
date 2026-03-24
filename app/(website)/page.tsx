@@ -12,7 +12,7 @@ export default async function LandingPage() {
 
   return (
     <>
-    <pre>{JSON.stringify(events, null, 2)}</pre>
+    {/* <pre>{JSON.stringify(events, null, 2)}</pre> */}
       <HeroSection />
       <PanAfricanDivider />
       <FeaturesSection />
