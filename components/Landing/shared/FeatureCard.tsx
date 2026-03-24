@@ -18,9 +18,9 @@ export function FeatureCard({
     className
 }: FeatureCardProps) {
     return (
-        <Card  variant='afro-4' className={cn( "shadow-sm pt-4 relative backdrop-blur-md group gap-2 bg-amber-50/10 border-0 hover:shadow-sm    transition-shadow", className)}>
+        <Card  variant='afro-4' className={cn( "shadow-sm pt-4 backdrop-blur-md group gap-2 bg-amber-50/10 border-0 hover:shadow-sm    transition-shadow", className)}>
             <CardHeader className=''>
-                <div className=""><Icon className={cn("size-12  absolute -top-1 -left-1 group-hover:scale-105 transition-all rounded-full text-white p-2", iconClassName)} /></div>
+                <div className=""><Icon className={cn("size-12  group-hover:scale-105 transition-all rounded-full text-white p-2", iconClassName)} /></div>
                 
                 <CardTitle>{title}</CardTitle>
             </CardHeader>
