@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Vote } from "lucide-react";
+import { toast } from "sonner";
+import { approveNominationAction, rejectNominationAction } from "@/lib/actions/voting";
 import type {
     CustomField,
     VotingCategory,
@@ -12,6 +15,7 @@ import { CategorySheet } from "./CategorySheet";
 import { OptionSheet } from "./OptionSheet";
 import { CustomFieldsSheet } from "./CustomFieldsSheet";
 import { CategoryList } from "./CategoryList";
+import { NominationRequestsSheet } from "./NominationRequestsSheet";
 import {
     addCategory,
     addFieldToCategory,
@@ -20,6 +24,7 @@ import {
     replaceCategory,
     replaceFieldInCategory,
     replaceOptionInCategories,
+    updateOptionStatusInCategories,
 } from "./state-updaters";
 
 interface VotingManagerProps {
@@ -30,6 +35,8 @@ interface VotingManagerProps {
 
 export function VotingManager({ eventId, categories: initialCategories, canEdit }: VotingManagerProps) {
     const [categories, setCategories] = useState(initialCategories);
+    const [isPending, startTransition] = useTransition();
+    const [requestsSheetOpen, setRequestsSheetOpen] = useState(false);
     const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<VotingCategory | null>(null);
     const [optionDialogOpen, setOptionDialogOpen] = useState(false);
@@ -104,6 +111,30 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         setCategories(prev => removeFieldFromCategory(prev, categoryId, fieldId));
     }
 
+    function handleApproveNomination(optionId: string) {
+        startTransition(async () => {
+            const result = await approveNominationAction(optionId);
+            if (result.success) {
+                setCategories(prev => updateOptionStatusInCategories(prev, optionId, "approved"));
+                toast.success("Nomination approved");
+            } else {
+                toast.error(result.error);
+            }
+        });
+    }
+
+    function handleRejectNomination(optionId: string) {
+        startTransition(async () => {
+            const result = await rejectNominationAction(optionId);
+            if (result.success) {
+                setCategories(prev => updateOptionStatusInCategories(prev, optionId, "rejected"));
+                toast.success("Nomination rejected");
+            } else {
+                toast.error(result.error);
+            }
+        });
+    }
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -117,21 +148,52 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     </p>
                 </div>
                 {canEdit && (
-                    <CategorySheet
-                        eventId={eventId}
-                        open={categoryDialogOpen}
-                        onOpenChange={setCategoryDialogOpen}
-                        editingCategory={editingCategory}
-                        nextOrderIndex={categories.length}
-                        onCategoryCreated={handleCategoryCreated}
-                        onCategoryUpdated={handleCategoryUpdated}
-                        trigger={
-                            <Button variant="tertiary" size="sm" onClick={() => setEditingCategory(null)}>
-                                <Plus className="size-4 mr-2" />
-                                Add Category
-                            </Button>
-                        }
-                    />
+                    <div className="flex items-center gap-2">
+                        {(() => {
+                            const pendingCount = categories.reduce((sum, cat) =>
+                                sum + cat.votingOptions.filter(o => o.status === "pending").length, 0);
+
+
+                            return (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="relative mr-2"
+                                    onClick={() => setRequestsSheetOpen(true)}
+                                >
+
+                                 Public Requests
+                                    {pendingCount > 0 &&
+                                        <>
+                                            <span className="absolute -top-1 -right-1 flex size-3">
+                                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75"></span>
+                                                <span className="relative inline-flex size-3 rounded-full bg-destructive"></span>
+                                            </span>
+                                            <Badge variant="secondary" className="ml-2 bg-destructive/10 text-destructive hover:bg-destructive/20">
+                                                {pendingCount}
+                                            </Badge>
+                                        </>}
+                                </Button>
+                            );
+
+                            return null;
+                        })()}
+                        <CategorySheet
+                            eventId={eventId}
+                            open={categoryDialogOpen}
+                            onOpenChange={setCategoryDialogOpen}
+                            editingCategory={editingCategory}
+                            nextOrderIndex={categories.length}
+                            onCategoryCreated={handleCategoryCreated}
+                            onCategoryUpdated={handleCategoryUpdated}
+                            trigger={
+                                <Button variant="tertiary" size="sm" onClick={() => setEditingCategory(null)}>
+                                    <Plus className="size-4 mr-2" />
+                                    Add Category
+                                </Button>
+                            }
+                        />
+                    </div>
                 )}
             </div>
 
@@ -176,6 +238,15 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                 onFieldCreated={handleFieldCreated}
                 onFieldUpdated={handleFieldUpdated}
                 onFieldDeleted={handleFieldDeleted}
+            />
+
+            <NominationRequestsSheet
+                open={requestsSheetOpen}
+                onOpenChange={setRequestsSheetOpen}
+                categories={categories}
+                onApprove={handleApproveNomination}
+                onReject={handleRejectNomination}
+                isPending={isPending}
             />
         </div>
     );

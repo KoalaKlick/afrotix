@@ -9,6 +9,7 @@ import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import { ArrowLeft, Trophy, Users, Vote } from "lucide-react"
+import { PublicNominationModal } from "@/components/event/PublicNominationModal"
 
 interface CategoryDetailPageProps {
     params: Promise<{
@@ -37,9 +38,13 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
     // Only voting/hybrid events have categories
     if (event.type !== "voting" && event.type !== "hybrid") notFound()
 
-    const category = await getVotingCategoryById(categoryId)
+    const category = await getVotingCategoryById(categoryId, true)
     if (!category || category.eventId !== event.id) notFound()
     const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
+
+    // Check if nominations are currently open
+    const isNominationOpen = category.allowPublicNomination && 
+        (!category.nominationDeadline || category.nominationDeadline > new Date())
 
     return (
         <main className="min-h-screen">
@@ -71,6 +76,11 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                         </h1>
                         {category.description && (
                             <p className="text-white/70 mt-3 max-w-2xl">{category.description}</p>
+                        )}
+                        {isNominationOpen && (
+                            <div className="mt-4">
+                                <PublicNominationModal eventId={event.id} category={category} />
+                            </div>
                         )}
                     </div>
                 </div>

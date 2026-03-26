@@ -76,13 +76,13 @@ export type VotingOptionWithFieldValues = VotingOption & {
 /**
  * Get all voting categories for an event
  */
-export const getVotingCategories = cache(async (eventId: string, includeCustomFields = false): Promise<VotingCategoryWithOptions[]> => {
+export const getVotingCategories = cache(async (eventId: string, includeCustomFields = false, includePending = false): Promise<VotingCategoryWithOptions[]> => {
     try {
         return await prisma.votingCategory.findMany({
             where: { eventId },
             include: {
                 votingOptions: {
-                    where: { status: "approved" },
+                    where: includePending ? { status: { in: ["approved", "pending"] } } : { status: "approved" },
                     orderBy: { orderIdx: "asc" },
                 },
                 ...(includeCustomFields && {
@@ -102,13 +102,13 @@ export const getVotingCategories = cache(async (eventId: string, includeCustomFi
 /**
  * Get a single voting category by ID
  */
-export const getVotingCategoryById = cache(async (id: string, includeCustomFields = false): Promise<VotingCategoryWithOptions | null> => {
+export const getVotingCategoryById = cache(async (id: string, includeCustomFields = false, includePending = false): Promise<VotingCategoryWithOptions | null> => {
     try {
         return await prisma.votingCategory.findUnique({
             where: { id },
             include: {
                 votingOptions: {
-                    where: { status: "approved" },
+                    where: includePending ? { status: { in: ["approved", "pending"] } } : { status: "approved" },
                     orderBy: { orderIdx: "asc" },
                 },
                 ...(includeCustomFields && {
@@ -620,15 +620,23 @@ export async function submitPublicNomination(data: {
     try {
         const { fieldValues, ...optionData } = data;
 
+        // Fetch category to check requireApproval
+        const category = await prisma.votingCategory.findUnique({
+            where: { id: data.categoryId },
+            select: { requireApproval: true }
+        });
+
+        const status = category?.requireApproval === false ? "approved" : "pending";
+
         // Generate nominee code from name
         const nomineeCode = await generateNomineeCode(data.eventId, data.optionText);
 
-        // Create the option with pending status
+        // Create the option with proper status
         const option = await prisma.votingOption.create({
             data: {
                 ...optionData,
                 nomineeCode,
-                status: "pending",
+                status,
                 isPublicNomination: true,
             },
         });

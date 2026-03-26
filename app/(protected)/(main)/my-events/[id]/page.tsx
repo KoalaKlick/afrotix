@@ -39,7 +39,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     // Get voting categories and event stats in parallel
     const [votingCategories, eventStats, voteTrend] = await Promise.all([
         (event.type === "voting" || event.type === "hybrid")
-            ? getVotingCategories(event.id, true)
+            ? getVotingCategories(event.id, true, true)
             : Promise.resolve([]),
         getEventDetailStats(event.id),
         (event.type === "voting" || event.type === "hybrid")

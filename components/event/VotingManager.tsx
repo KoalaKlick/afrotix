@@ -113,6 +113,7 @@ import { NomineeCard } from "./NomineeCard";
 import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
 import { CategorySheet } from "./voting-manager/CategorySheet";
 import { OptionSheet } from "./voting-manager/OptionSheet";
+import { NominationRequestsSheet } from "./voting-manager/NominationRequestsSheet";
 import {
     FIELD_TYPES,
     type FieldType,
@@ -196,6 +197,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         initialCategories[0]?.id
     );
     const [isPending, startTransition] = useTransition();
+
+    // Pending requests sheet state
+    const [requestsSheetOpen, setRequestsSheetOpen] = useState(false);
 
     // Category dialog state
     const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -525,6 +529,31 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     </p>
                 </div>
                     <div className="flex items-center gap-2">
+                        {canEdit && (() => {
+                            const pendingCount = categories.reduce((sum, cat) => 
+                                sum + cat.votingOptions.filter(o => o.status === "pending").length, 0);
+                            
+                            if (pendingCount > 0) {
+                                return (
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="relative mr-2"
+                                        onClick={() => setRequestsSheetOpen(true)}
+                                    >
+                                        <span className="absolute -top-1 -right-1 flex size-3">
+                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75"></span>
+                                            <span className="relative inline-flex size-3 rounded-full bg-destructive"></span>
+                                        </span>
+                                        Requests
+                                        <Badge variant="secondary" className="ml-2 bg-destructive/10 text-destructive hover:bg-destructive/20">
+                                            {pendingCount}
+                                        </Badge>
+                                    </Button>
+                                );
+                            }
+                            return null;
+                        })()}
                         <Button
                             size="sm"
                             onClick={() => {
@@ -772,7 +801,14 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
-
+            <NominationRequestsSheet
+                open={requestsSheetOpen}
+                onOpenChange={setRequestsSheetOpen}
+                categories={categories}
+                onApprove={handleApproveNomination}
+                onReject={handleRejectNomination}
+                isPending={isPending}
+            />
         </div>
     );
 }
