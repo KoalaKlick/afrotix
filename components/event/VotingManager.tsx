@@ -895,7 +895,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
     const currentCategory = optionCategoryId ? categories.find(c => c.id === optionCategoryId) : null;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 @container">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
