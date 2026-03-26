@@ -24,19 +24,8 @@ import { createCategory, updateCategory } from "@/lib/actions/voting";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { getCategoryTemplateImageUrl } from "@/lib/image-url-utils";
 import { ImageDropzone } from "@/components/shared/ImageDropzone";
-import type { VotingCategory } from "@/lib/types/voting";
-
-export interface CategoryFormData {
-    name: string;
-    description: string;
-    maxVotesPerUser: number;
-    allowMultiple: boolean;
-    allowPublicNomination: boolean;
-    nominationDeadline: string;
-    requireApproval: boolean;
-    /** Storage path (not full URL) — mirrors what the DB stores. */
-    templateImage?: string | null;
-}
+import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
+import type { VotingCategory, CategoryFormData } from "@/lib/types/voting";
 
 interface CategorySheetProps {
     readonly eventId: string;
@@ -58,6 +47,8 @@ const EMPTY_FORM: CategoryFormData = {
     nominationDeadline: "",
     requireApproval: false,
     templateImage: null,
+    templateConfig: null,
+    showFinalImage: true,
 };
 
 export function CategorySheet({
@@ -72,13 +63,22 @@ export function CategorySheet({
 }: CategorySheetProps) {
     const [isPending, startTransition] = useTransition();
     const [form, setForm] = useState<CategoryFormData>(EMPTY_FORM);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
     const { isUploading, upload } = useImageUpload({
         bucket: "events",
         folder: "templates",
         convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
     });
 
-    const resetForm = useCallback(() => setForm(EMPTY_FORM), []);
+    const resetForm = useCallback(() => {
+        setForm(EMPTY_FORM);
+        setPendingFile(null);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+    }, [previewUrl]);
 
     useEffect(() => {
         if (open && editingCategory) {
@@ -88,14 +88,46 @@ export function CategorySheet({
                 maxVotesPerUser: editingCategory.maxVotesPerUser,
                 allowMultiple: editingCategory.allowMultiple,
                 allowPublicNomination: editingCategory.allowPublicNomination,
-                nominationDeadline: editingCategory.nominationDeadline ?? "",
+                nominationDeadline: editingCategory.nominationDeadline
+                    ? (typeof editingCategory.nominationDeadline === 'string'
+                        ? editingCategory.nominationDeadline.slice(0, 16)
+                        : editingCategory.nominationDeadline.toISOString().slice(0, 16))
+                    : "",
                 requireApproval: editingCategory.requireApproval,
                 templateImage: editingCategory.templateImage ?? null,
+                templateConfig: editingCategory.templateConfig ?? null,
+                showFinalImage: editingCategory.showFinalImage ?? true,
             });
         } else if (!open) {
             resetForm();
         }
     }, [open, editingCategory, resetForm]);
+
+    const initialDeadline = editingCategory?.nominationDeadline
+        ? (typeof editingCategory.nominationDeadline === 'string'
+            ? editingCategory.nominationDeadline.slice(0, 16)
+            : editingCategory.nominationDeadline.toISOString().slice(0, 16))
+        : "";
+
+    const isDirty =
+        form.name !== (editingCategory?.name ?? "") ||
+        form.description !== (editingCategory?.description ?? "") ||
+        form.maxVotesPerUser !== (editingCategory?.maxVotesPerUser ?? 1) ||
+        form.allowMultiple !== (editingCategory?.allowMultiple ?? false) ||
+        form.allowPublicNomination !== (editingCategory?.allowPublicNomination ?? false) ||
+        form.requireApproval !== (editingCategory?.requireApproval ?? false) ||
+        form.showFinalImage !== (editingCategory?.showFinalImage ?? true) ||
+        form.nominationDeadline !== initialDeadline ||
+        pendingFile !== null;
+
+    const handleCloseAttempt = (newOpen: boolean) => {
+        if (!newOpen && isDirty) {
+            setShowDiscardDialog(true);
+        } else {
+            onOpenChange(newOpen);
+            if (!newOpen) resetForm();
+        }
+    };
 
     const handleSave = () => {
         if (!form.name.trim()) {
@@ -104,6 +136,22 @@ export function CategorySheet({
         }
 
         startTransition(async () => {
+            // Determine the final image URL:
+            // 1. If we have a NEW file to upload, we'll set it after uploading.
+            // 2. If no new file AND no existing image path, it means image was removed -> null.
+            // 3. If no new file but we HAVE an existing image path, it stays as is.
+            let finalImageUrl: string | null | undefined = form.templateImage || (pendingFile ? undefined : null);
+
+            // Step 1: Upload pending file if it exists
+            if (pendingFile) {
+                const uploadedPath = await upload(pendingFile);
+                if (!uploadedPath) {
+                    toast.error("Failed to upload image");
+                    return;
+                }
+                finalImageUrl = uploadedPath;
+            }
+
             const payload = {
                 name: form.name,
                 description: form.description || undefined,
@@ -112,7 +160,9 @@ export function CategorySheet({
                 allowPublicNomination: form.allowPublicNomination,
                 nominationDeadline: form.nominationDeadline || undefined,
                 requireApproval: form.requireApproval,
-                templateImage: form.templateImage || undefined,
+                templateImage: finalImageUrl,
+                templateConfig: form.templateConfig || undefined,
+                showFinalImage: form.showFinalImage,
             };
 
             if (editingCategory) {
@@ -125,7 +175,7 @@ export function CategorySheet({
                         ...payload,
                         description: form.description || null,
                         nominationDeadline: form.nominationDeadline || null,
-                        templateImage: form.templateImage || null,
+                        templateImage: finalImageUrl || null,
                     });
                     toast.success("Category updated");
                     onOpenChange(false);
@@ -142,7 +192,7 @@ export function CategorySheet({
                     ...payload,
                     description: form.description || null,
                     nominationDeadline: form.nominationDeadline || null,
-                    templateImage: form.templateImage || null,
+                    templateImage: finalImageUrl || null,
                     orderIdx: nextOrderIndex,
                     votingOptions: [],
                     customFields: [],
@@ -159,17 +209,18 @@ export function CategorySheet({
     // `url` = full public URL for display only
     const templateDisplayUrl = getCategoryTemplateImageUrl(form.templateImage);
     const initialFiles =
-        form.templateImage && templateDisplayUrl
-            ? [{ id: form.templateImage, url: templateDisplayUrl, name: "Template image" }]
+        (previewUrl || (form.templateImage && templateDisplayUrl))
+            ? [{ 
+                id: pendingFile ? "pending" : (form.templateImage || "initial"), 
+                url: previewUrl || templateDisplayUrl || "", 
+                name: pendingFile ? pendingFile.name : "Template image" 
+            }]
             : [];
 
     return (
         <Sheet
             open={open}
-            onOpenChange={(o) => {
-                onOpenChange(o);
-                if (!o) resetForm();
-            }}
+            onOpenChange={handleCloseAttempt}
         >
             {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
 
@@ -196,19 +247,21 @@ export function CategorySheet({
                                     uploadLabel="Upload template image"
                                     uploadSubLabel="Click or drag and drop to upload"
                                     initialFiles={initialFiles}
-                                    onRemoveInitialFile={() =>
-                                        setForm((prev) => ({ ...prev, templateImage: null }))
-                                    }
+                                    onRemoveInitialFile={() => {
+                                        setForm((prev) => ({ ...prev, templateImage: null }));
+                                        setPendingFile(null);
+                                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                                        setPreviewUrl(null);
+                                    }}
                                     getDisplayUrl={getCategoryTemplateImageUrl}
                                     onDropFile={async (file) => {
-                                        const path = await upload(file, form.templateImage);
-                                        if (!path) {
-                                            return { status: "error", error: "Upload failed" };
-                                        }
-                                        console.log("Upload successful:", path);
-                                        setForm((prev) => ({ ...prev, templateImage: path }));
-                                        console.log("Updated form state with templateImage:", form.templateImage);
-                                        return { status: "success", result: path };
+                                        // Store file locally and create preview
+                                        setPendingFile(file);
+                                        const url = URL.createObjectURL(file);
+                                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                                        setPreviewUrl(url);
+
+                                        return { status: "success", result: "pending" };
                                     }}
                                 />
                             </div>
@@ -349,6 +402,16 @@ export function CategorySheet({
                         {editingCategory ? "Save Changes" : "Add Category"}
                     </Button>
                 </SheetFooter>
+
+                <ConfirmDiscardDialog
+                    open={showDiscardDialog}
+                    onOpenChange={setShowDiscardDialog}
+                    onConfirm={() => {
+                        setShowDiscardDialog(false);
+                        onOpenChange(false);
+                        resetForm();
+                    }}
+                />
             </SheetContent>
         </Sheet>
     );

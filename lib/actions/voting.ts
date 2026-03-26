@@ -31,6 +31,7 @@ import {
 } from "@/lib/dal/voting";
 import { getEventById } from "@/lib/dal/event";
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
+import { deleteStorageFile, STORAGE_BUCKETS } from "@/lib/storage-utils";
 
 // Action result type
 type ActionResult<T = void> =
@@ -75,7 +76,7 @@ export async function createCategory(
         description?: string;
         maxVotesPerUser?: number;
         allowMultiple?: boolean;
-        templateImage?: string;
+        templateImage?: string | null;
         templateConfig?: Record<string, unknown>;
         showFinalImage?: boolean;
         allowPublicNomination?: boolean;
@@ -101,6 +102,9 @@ export async function createCategory(
         allowPublicNomination: data.allowPublicNomination ?? false,
         nominationDeadline: data.nominationDeadline ? new Date(data.nominationDeadline) : undefined,
         requireApproval: data.requireApproval ?? true,
+        templateImage: data.templateImage,
+        templateConfig: data.templateConfig,
+        showFinalImage: data.showFinalImage,
     });
 
     if (!category) {
@@ -125,7 +129,9 @@ export async function updateCategory(
         allowPublicNomination?: boolean;
         nominationDeadline?: string | null;
         requireApproval?: boolean;
-        templateImage?: string;
+        templateImage?: string | null;
+        templateConfig?: Record<string, unknown>;
+        showFinalImage?: boolean;
     }
 ): Promise<ActionResult<{ id: string }>> {
     const category = await getVotingCategoryById(categoryId);
@@ -153,10 +159,17 @@ export async function updateCategory(
         }),
         ...(data.requireApproval !== undefined && { requireApproval: data.requireApproval }),
         ...(data.templateImage !== undefined && { templateImage: data.templateImage }),
+        ...(data.templateConfig !== undefined && { templateConfig: data.templateConfig }),
+        ...(data.showFinalImage !== undefined && { showFinalImage: data.showFinalImage }),
     });
 
     if (!updated) {
         return { success: false, error: "Failed to update category" };
+    }
+
+    // Cleanup old template image if it changed
+    if (data.templateImage !== undefined && category.templateImage && category.templateImage !== data.templateImage) {
+        await deleteStorageFile(STORAGE_BUCKETS.EVENTS, category.templateImage);
     }
 
     revalidatePath(`/my-events/${category.eventId}`);
@@ -180,6 +193,11 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
     const deleted = await deleteVotingCategory(categoryId);
     if (!deleted) {
         return { success: false, error: "Failed to delete category" };
+    }
+
+    // Cleanup storage
+    if (category.templateImage) {
+        await deleteStorageFile(STORAGE_BUCKETS.EVENTS, category.templateImage);
     }
 
     revalidatePath(`/my-events/${category.eventId}`);
@@ -222,7 +240,7 @@ export async function createOption(
         nomineeCode?: string;
         email?: string;
         description?: string;
-        imageUrl?: string;
+        imageUrl?: string | null;
         fieldValues?: { fieldId: string; value: string }[];
     }
 ): Promise<ActionResult<{ id: string; nomineeCode: string }>> {
@@ -271,7 +289,7 @@ export async function updateOption(
         nomineeCode?: string;
         email?: string;
         description?: string;
-        imageUrl?: string;
+        imageUrl?: string | null;
         categoryId?: string;
         fieldValues?: { fieldId: string; value: string }[];
     }
@@ -295,12 +313,17 @@ export async function updateOption(
         ...(data.nomineeCode !== undefined && { nomineeCode: data.nomineeCode?.trim() || undefined }),
         ...(data.email !== undefined && { email: data.email?.trim() || undefined }),
         ...(data.description !== undefined && { description: data.description?.trim() || undefined }),
-        ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl || undefined }),
+        ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
         ...(data.categoryId !== undefined && { categoryId: data.categoryId || undefined }),
     });
 
     if (!updated) {
         return { success: false, error: "Failed to update nominee" };
+    }
+
+    // Cleanup old image if it changed
+    if (data.imageUrl !== undefined && option.imageUrl && option.imageUrl !== data.imageUrl) {
+        await deleteStorageFile(STORAGE_BUCKETS.EVENTS, option.imageUrl);
     }
 
     // Update custom field values if provided
@@ -329,6 +352,11 @@ export async function deleteOption(optionId: string): Promise<ActionResult> {
     const deleted = await deleteVotingOption(optionId);
     if (!deleted) {
         return { success: false, error: "Failed to delete option" };
+    }
+
+    // Cleanup storage
+    if (option.imageUrl) {
+        await deleteStorageFile(STORAGE_BUCKETS.EVENTS, option.imageUrl);
     }
 
     revalidatePath(`/my-events/${option.eventId}`);

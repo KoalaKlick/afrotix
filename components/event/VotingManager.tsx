@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useMemo } from "react";
 import Image from "next/image";
 import {
     DndContext,
@@ -112,6 +112,7 @@ import { getEventImageUrl } from "@/lib/image-url-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { NomineeCard } from "./NomineeCard";
+import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
 import {
     FIELD_TYPES,
     type FieldType,
@@ -198,6 +199,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         nominationDeadline: "",
         requireApproval: true,
     });
+    const [showCategoryDiscardDialog, setShowCategoryDiscardDialog] = useState(false);
 
     // Custom fields dialog state
     const [fieldsDialogOpen, setFieldsDialogOpen] = useState(false);
@@ -224,6 +226,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         imageUrl: "",
         fieldValues: [] as { fieldId: string; value: string }[],
     });
+    const [pendingOptionFile, setPendingOptionFile] = useState<File | null>(null);
+    const [optionPreviewUrl, setOptionPreviewUrl] = useState<string | null>(null);
+    const [showOptionDiscardDialog, setShowOptionDiscardDialog] = useState(false);
 
     const { isUploading: isUploadingImage, upload: uploadNominee } = useImageUpload({
         bucket: "events",
@@ -232,7 +237,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
     });
     const imageInputRef = useRef<HTMLInputElement>(null);
 
-    const optionFormImageDisplayUrl = getEventImageUrl(optionForm.imageUrl);
+    const optionFormImageDisplayUrl = optionPreviewUrl || getEventImageUrl(optionForm.imageUrl);
 
     // DnD sensors for category reordering
     const sensors = useSensors(
@@ -245,6 +250,99 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    const isCategoryDirty = useMemo(() => {
+        if (!editingCategory) {
+            return (
+                categoryForm.name !== "" ||
+                categoryForm.description !== "" ||
+                categoryForm.maxVotesPerUser !== 1 ||
+                categoryForm.allowMultiple !== false ||
+                categoryForm.allowPublicNomination !== false ||
+                categoryForm.nominationDeadline !== ""
+            );
+        }
+        const initialForm = {
+            name: editingCategory.name,
+            description: editingCategory.description ?? "",
+            maxVotesPerUser: editingCategory.maxVotesPerUser,
+            allowMultiple: editingCategory.allowMultiple,
+            allowPublicNomination: editingCategory.allowPublicNomination,
+            nominationDeadline: editingCategory.nominationDeadline
+                ? new Date(editingCategory.nominationDeadline).toISOString().slice(0, 16)
+                : "",
+            requireApproval: editingCategory.requireApproval,
+        };
+        return (
+            categoryForm.name !== initialForm.name ||
+            categoryForm.description !== initialForm.description ||
+            categoryForm.maxVotesPerUser !== initialForm.maxVotesPerUser ||
+            categoryForm.allowMultiple !== initialForm.allowMultiple ||
+            categoryForm.allowPublicNomination !== initialForm.allowPublicNomination ||
+            categoryForm.nominationDeadline !== initialForm.nominationDeadline ||
+            categoryForm.requireApproval !== initialForm.requireApproval
+        );
+    }, [categoryForm, editingCategory]);
+
+    const isOptionDirty = useMemo(() => {
+        const currentCategory = categories.find((c) => c.id === optionCategoryId);
+        if (!editingOption) {
+            return (
+                optionForm.optionText !== "" ||
+                optionForm.nomineeCode !== "" ||
+                optionForm.email !== "" ||
+                optionForm.description !== "" ||
+                optionForm.imageUrl !== "" ||
+                optionForm.fieldValues.some((f) => f.value !== "") ||
+                pendingOptionFile !== null
+            );
+        }
+
+        const initialForm = {
+            optionText: editingOption.optionText,
+            nomineeCode: editingOption.nomineeCode ?? "",
+            email: editingOption.email ?? "",
+            description: editingOption.description ?? "",
+            imageUrl: editingOption.imageUrl ?? "",
+            fieldValues:
+                currentCategory?.customFields?.map((f) => ({
+                    fieldId: f.id,
+                    value: editingOption.fieldValues?.find((v) => v.fieldId === f.id)?.value ?? "",
+                })) ?? [],
+        };
+
+        return (
+            optionForm.optionText !== initialForm.optionText ||
+            optionForm.nomineeCode !== initialForm.nomineeCode ||
+            optionForm.email !== initialForm.email ||
+            optionForm.description !== initialForm.description ||
+            optionForm.imageUrl !== initialForm.imageUrl ||
+            JSON.stringify(optionForm.fieldValues) !== JSON.stringify(initialForm.fieldValues) ||
+            pendingOptionFile !== null
+        );
+    }, [optionForm, editingOption, pendingOptionFile, categories, optionCategoryId]);
+
+    const handleCategoryCloseAttempt = (open: boolean) => {
+        if (!open && isCategoryDirty) {
+            setShowCategoryDiscardDialog(true);
+        } else {
+            setCategoryDialogOpen(open);
+            if (!open) resetCategoryForm();
+        }
+    };
+
+    const handleOptionCloseAttempt = (open: boolean) => {
+        if (!open && isOptionDirty) {
+            setShowOptionDiscardDialog(true);
+        } else {
+            setOptionDialogOpen(open);
+            if (!open) {
+                resetOptionForm();
+                setPendingOptionFile(null);
+                setOptionPreviewUrl(null);
+            }
+        }
+    };
 
     // Handle drag end for category reordering
     function handleDragEnd(event: DragEndEvent) {
@@ -466,11 +564,11 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
 
     // Handle image upload
     async function handleImageUpload(file: File) {
-        const path = await uploadNominee(file, optionForm.imageUrl || null);
-        if (path) {
-            setOptionForm(prev => ({ ...prev, imageUrl: path }));
-            toast.success("Image uploaded");
-        }
+        setPendingOptionFile(file);
+        const url = URL.createObjectURL(file);
+        if (optionPreviewUrl) URL.revokeObjectURL(optionPreviewUrl);
+        setOptionPreviewUrl(url);
+        toast.success("Image ready");
     }
 
     // Handle option save
@@ -481,16 +579,32 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         }
 
         startTransition(async () => {
-            if (editingOption) {
-                const result = await updateOption(editingOption.id, {
-                    optionText: optionForm.optionText,
-                    nomineeCode: optionForm.nomineeCode || undefined,
-                    email: optionForm.email || undefined,
-                    description: optionForm.description || undefined,
-                    imageUrl: optionForm.imageUrl || undefined,
-                    fieldValues: optionForm.fieldValues.filter(f => f.value.trim()),
-                });
+            // Determine the final image URL:
+            // 1. If we have a NEW file to upload, we'll set it after uploading.
+            // 2. If no new file AND no existing image path, it means image was removed -> null.
+            // 3. If no new file but we HAVE an existing image path, it stays as is.
+            let finalImageUrl: string | null | undefined = optionForm.imageUrl || (pendingOptionFile ? undefined : null);
 
+            if (pendingOptionFile) {
+                const uploadedPath = await uploadNominee(pendingOptionFile);
+                if (!uploadedPath) {
+                    toast.error("Failed to upload image");
+                    return;
+                }
+                finalImageUrl = uploadedPath;
+            }
+
+            const payload = {
+                optionText: optionForm.optionText,
+                nomineeCode: optionForm.nomineeCode || undefined,
+                email: optionForm.email || undefined,
+                description: optionForm.description || undefined,
+                imageUrl: finalImageUrl,
+                fieldValues: optionForm.fieldValues.filter(f => f.value.trim()),
+            };
+
+            if (editingOption) {
+                const result = await updateOption(editingOption.id, payload);
                 if (result.success) {
                     setCategories(prev =>
                         prev.map(c => ({
@@ -503,7 +617,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                         nomineeCode: result.data?.nomineeCode ?? o.nomineeCode,
                                         email: optionForm.email || null,
                                         description: optionForm.description || null,
-                                        imageUrl: optionForm.imageUrl || null,
+                                        imageUrl: finalImageUrl || null,
                                         fieldValues: optionForm.fieldValues,
                                     }
                                     : o
@@ -513,18 +627,16 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     toast.success("Nominee updated");
                     setOptionDialogOpen(false);
                     resetOptionForm();
+                    setPendingOptionFile(null);
+                    setOptionPreviewUrl(null);
                 } else {
                     toast.error(result.error);
                 }
+                return;
             } else if (optionCategoryId) {
                 const result = await createOption(eventId, {
                     categoryId: optionCategoryId,
-                    optionText: optionForm.optionText,
-                    nomineeCode: optionForm.nomineeCode || undefined,
-                    email: optionForm.email || undefined,
-                    description: optionForm.description || undefined,
-                    imageUrl: optionForm.imageUrl || undefined,
-                    fieldValues: optionForm.fieldValues.filter(f => f.value.trim()),
+                    ...payload
                 });
 
                 if (result.success) {
@@ -537,17 +649,17 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                         ...c.votingOptions,
                                         {
                                             id: result.data.id,
-                                            optionText: optionForm.optionText,
+                                            optionText: payload.optionText,
                                             nomineeCode: result.data.nomineeCode ?? null,
-                                            email: optionForm.email || null,
-                                            description: optionForm.description || null,
-                                            imageUrl: optionForm.imageUrl || null,
+                                            email: payload.email || null,
+                                            description: payload.description || null,
+                                            imageUrl: finalImageUrl || null,
                                             status: "approved" as VotingOptionStatus,
                                             isPublicNomination: false,
                                             nominatedByName: null,
                                             votesCount: BigInt(0),
                                             orderIdx: c.votingOptions.length,
-                                            fieldValues: optionForm.fieldValues,
+                                            fieldValues: payload.fieldValues,
                                         },
                                     ],
                                 };
@@ -558,6 +670,8 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     toast.success("Nominee added");
                     setOptionDialogOpen(false);
                     resetOptionForm();
+                    setPendingOptionFile(null);
+                    setOptionPreviewUrl(null);
                 } else {
                     toast.error(result.error);
                 }
@@ -755,10 +869,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                     </p>
                 </div>
                 {canEdit && (
-                    <Sheet open={categoryDialogOpen} onOpenChange={(open) => {
-                        setCategoryDialogOpen(open);
-                        if (!open) resetCategoryForm();
-                    }}>
+                    <Sheet open={categoryDialogOpen} onOpenChange={handleCategoryCloseAttempt}>
                         <SheetTrigger asChild>
                             <Button size="sm">
                                 <Plus className="size-4 mr-2" />
@@ -906,6 +1017,16 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                                     {editingCategory ? "Save Changes" : "Add Category"}
                                 </Button>
                             </SheetFooter>
+
+                            <ConfirmDiscardDialog
+                                open={showCategoryDiscardDialog}
+                                onOpenChange={setShowCategoryDiscardDialog}
+                                onConfirm={() => {
+                                    setShowCategoryDiscardDialog(false);
+                                    setCategoryDialogOpen(false);
+                                    resetCategoryForm();
+                                }}
+                            />
                         </SheetContent>
                     </Sheet>
                 )}
@@ -1075,10 +1196,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
             )}
 
             {/* Option Sheet */}
-            <Sheet open={optionDialogOpen} onOpenChange={(open) => {
-                setOptionDialogOpen(open);
-                if (!open) resetOptionForm();
-            }}>
+            <Sheet open={optionDialogOpen} onOpenChange={handleOptionCloseAttempt}>
                 <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
                     <SheetHeader>
                         <SheetTitle>
@@ -1094,7 +1212,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                             <Label>Original Photo</Label>
                             <div className="flex items-start gap-4">
                                 <div className="size-24 rounded-lg border bg-muted overflow-hidden relative shrink-0">
-                                    {optionForm.imageUrl && optionFormImageDisplayUrl ? (
+                                    {optionFormImageDisplayUrl ? (
                                         <Image
                                             src={optionFormImageDisplayUrl}
                                             alt="Nominee"
@@ -1333,6 +1451,18 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                             {editingOption ? "Save Changes" : "Add Nominee"}
                         </Button>
                     </SheetFooter>
+
+                    <ConfirmDiscardDialog
+                        open={showOptionDiscardDialog}
+                        onOpenChange={setShowOptionDiscardDialog}
+                        onConfirm={() => {
+                            setShowOptionDiscardDialog(false);
+                            setOptionDialogOpen(false);
+                            resetOptionForm();
+                            setPendingOptionFile(null);
+                            setOptionPreviewUrl(null);
+                        }}
+                    />
                 </SheetContent>
             </Sheet>
 

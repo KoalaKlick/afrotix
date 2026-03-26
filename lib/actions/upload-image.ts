@@ -9,7 +9,7 @@ import {
 // import { convertToWebP } from "@/lib/image-utils";
 import { logger } from "@/lib/logger";
 
-type ActionResult<T = void> =
+export type ActionResult<T = void> =
     | { success: true; data: T }
     | { success: false; error: string };
 
@@ -73,19 +73,8 @@ export async function uploadImage(
     const storageBucket = STORAGE_BUCKETS[bucket.toUpperCase() as keyof typeof STORAGE_BUCKETS];
 
     try {
-        // ── Delete old file if provided ──────────────────────────────────────
-        if (options.oldPath) {
-            const oldNormalized = normalizeToPath(options.oldPath, storageBucket);
-            if (oldNormalized) {
-                const del = await deleteStorageFile(storageBucket, oldNormalized);
-                if (!del.success) {
-                    logger.warn(
-                        { oldNormalized, error: del.error },
-                        "Failed to delete old image, continuing with upload"
-                    );
-                }
-            }
-        }
+        // Cleanup of old files is now handled by the data update actions (deferred deletion)
+        // to ensure data consistency if the user cancels the form.
 
 
         // ── No conversion on server; file is already webp if needed ──
@@ -101,7 +90,7 @@ export async function uploadImage(
             .from(storageBucket)
             .upload(filePath, uploadFile, {
                 cacheControl: "3600",
-                upsert: true,
+                upsert: false,
                 contentType: "image/webp",
             });
 

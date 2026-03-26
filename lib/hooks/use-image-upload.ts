@@ -22,11 +22,10 @@ interface UseImageUploadOptions {
 interface UseImageUploadReturn {
     isUploading: boolean;
     /**
-     * Convert file to WebP, delete the old image (if `oldPath` is provided),
-     * upload via the unified `uploadImage` action, and return the storage path.
-     * Returns `null` on failure.
+     * Convert file to WebP, upload via the unified `uploadImage` action, 
+     * and return the storage path. Returns `null` on failure.
      */
-    upload: (file: File, oldPath?: string | null) => Promise<string | null>;
+    upload: (file: File) => Promise<string | null>;
 }
 
 /**
@@ -40,7 +39,7 @@ interface UseImageUploadReturn {
  *   convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
  * });
  *
- * const path = await upload(file, form.templateImage);
+ * const path = await upload(file);
  * if (path) setForm(prev => ({ ...prev, templateImage: path }));
  */
 export function useImageUpload({
@@ -51,7 +50,7 @@ export function useImageUpload({
 }: UseImageUploadOptions = {}): UseImageUploadReturn {
     const [isUploading, setIsUploading] = useState(false);
 
-    async function upload(file: File, oldPath?: string | null): Promise<string | null> {
+    async function upload(file: File): Promise<string | null> {
         setIsUploading(true);
         try {
             const optimizedFile = await convertToWebP(file, convertOptions);
@@ -62,7 +61,6 @@ export function useImageUpload({
             const result = await uploadImage(formData, {
                 bucket,
                 folder,
-                oldPath: oldPath ?? undefined,
             });
 
             if (result.success) {

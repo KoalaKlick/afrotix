@@ -23,8 +23,8 @@ export type EventCreateInput = {
     endDate?: Date | string;
     timezone?: string;
     isPublic?: boolean;
-    coverImage?: string;
-    bannerImage?: string;
+    coverImage?: string | null;
+    bannerImage?: string | null;
     venueName?: string;
     venueAddress?: string;
     venueCity?: string;

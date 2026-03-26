@@ -28,6 +28,7 @@ import { getUserRoleInOrganization } from "@/lib/dal/organization";
 import { normalizeEventStatus } from "@/lib/event-status";
 import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import type { EventType, EventStatus } from "@/lib/generated/prisma";
+import { deleteStorageFile, STORAGE_BUCKETS } from "@/lib/storage-utils";
 
 // Action result type
 type ActionResult<T = void> =
@@ -305,7 +306,8 @@ export async function updateExistingEvent(
     for (const field of fields) {
         const value = formData.get(field);
         if (value !== null) {
-            updates[field] = value || undefined;
+            // Convert empty string to null to allow clearing fields (Prisma uses null to clear)
+            updates[field] = value === "" ? null : value;
         }
     }
 
@@ -325,6 +327,14 @@ export async function updateExistingEvent(
         const updated = await updateEvent(eventId, updates);
         if (!updated) {
             return { success: false, error: "Failed to update event" };
+        }
+
+        // Cleanup old images if they changed
+        if (updates.coverImage !== undefined && event.coverImage && event.coverImage !== updates.coverImage) {
+            await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.coverImage);
+        }
+        if (updates.bannerImage !== undefined && event.bannerImage && event.bannerImage !== updates.bannerImage) {
+            await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.bannerImage);
         }
 
         revalidatePath(`/my-events/${eventId}`);
@@ -491,6 +501,14 @@ export async function deleteExistingEvent(eventId: string): Promise<ActionResult
         const deleted = await deleteEvent(eventId);
         if (!deleted) {
             return { success: false, error: "Failed to delete event" };
+        }
+
+        // Cleanup storage
+        if (event.coverImage) {
+            await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.coverImage);
+        }
+        if (event.bannerImage) {
+            await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.bannerImage);
         }
 
         revalidatePath("/my-events");

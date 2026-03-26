@@ -155,6 +155,10 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         maxAttendees: event.maxAttendees?.toString() ?? "",
         isPublic: event.isPublic,
     });
+    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+    const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
+    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+    const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
     const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,26 +175,6 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         endDate: formData.endDate || null,
     });
     const canViewPublicPage = Boolean(publicEventUrl && formData.isPublic && publicationStatus === "published");
-
-    // Generate display URLs from paths
-    const coverDisplayUrl = getEventImageUrl(formData.coverImage);
-    const bannerDisplayUrl = getEventImageUrl(formData.bannerImage);
-
-    // Save a single field
-    async function saveField(fieldName: string, value: unknown) {
-        const formDataObj = new FormData();
-        formDataObj.set(fieldName, String(value));
-
-        startTransition(async () => {
-            const result = await updateExistingEvent(event.id, formDataObj);
-            if (result.success) {
-                toast.success("Changes saved");
-                setEditingField(null);
-            } else {
-                toast.error(result.error);
-            }
-        });
-    }
 
     // Save multiple fields at once
     async function saveMultipleFields(fields: Record<string, unknown>) {
@@ -212,27 +196,89 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         });
     }
 
+    // Generate display URLs from paths or previews
+    const coverDisplayUrl = coverPreviewUrl || getEventImageUrl(formData.coverImage);
+    const bannerDisplayUrl = bannerPreviewUrl || getEventImageUrl(formData.bannerImage);
+
+    // Save a single field
+    async function saveField(fieldName: string, value: unknown) {
+        const formDataObj = new FormData();
+        formDataObj.set(fieldName, String(value));
+
+        startTransition(async () => {
+            const result = await updateExistingEvent(event.id, formDataObj);
+            if (result.success) {
+                toast.success("Changes saved");
+                setEditingField(null);
+            } else {
+                toast.error(result.error);
+            }
+        });
+    }
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        startTransition(async () => {
+            let finalCoverImage = formData.coverImage;
+            let finalBannerImage = formData.bannerImage;
+
+            // Upload pending cover if exists
+            if (pendingCoverFile) {
+                const path = await uploadCover(pendingCoverFile);
+                if (path) finalCoverImage = path;
+                else {
+                    toast.error("Failed to upload cover image");
+                    return;
+                }
+            }
+
+            // Upload pending banner if exists
+            if (pendingBannerFile) {
+                const path = await uploadBanner(pendingBannerFile);
+                if (path) finalBannerImage = path;
+                else {
+                    toast.error("Failed to upload banner image");
+                    return;
+                }
+            }
+
+            const submitData = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    submitData.append(key, String(value));
+                }
+            });
+
+            // Update with final images
+            if (finalCoverImage) submitData.set("coverImage", finalCoverImage);
+            if (finalBannerImage) submitData.set("bannerImage", finalBannerImage);
+
+            const result = await updateExistingEvent(event.id, submitData);
+            if (result.success) {
+                toast.success("Event updated successfully");
+                setPendingCoverFile(null);
+                setPendingBannerFile(null);
+                setCoverPreviewUrl(null);
+                setBannerPreviewUrl(null);
+            } else {
+                toast.error(result.error || "Failed to update event");
+            }
+        });
+    };
+
     // Image upload handler
     async function handleImageUpload(file: File, type: "cover" | "banner") {
-        const uploader = type === "cover" ? uploadCover : uploadBanner;
-        const oldPath = type === "cover" ? formData.coverImage : formData.bannerImage;
-
-        const path = await uploader(file, oldPath || null);
-        if (!path) return;
-
-        const fieldName = type === "cover" ? "coverImage" : "bannerImage";
-        setFormData(prev => ({ ...prev, [fieldName]: path }));
-
-        // Save to database directly
-        const saveFormData = new FormData();
-        saveFormData.set(fieldName, path);
-        const saveResult = await updateExistingEvent(event.id, saveFormData);
-
-        if (saveResult.success) {
-            toast.success(`${type === "cover" ? "Cover" : "Banner"} image updated`);
+        const url = URL.createObjectURL(file);
+        if (type === "cover") {
+            setPendingCoverFile(file);
+            if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+            setCoverPreviewUrl(url);
         } else {
-            toast.error(saveResult.error);
+            setPendingBannerFile(file);
+            if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+            setBannerPreviewUrl(url);
         }
+        toast.success(`${type === "cover" ? "Cover" : "Banner"} image ready to save`);
     }
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, type: "cover" | "banner") {

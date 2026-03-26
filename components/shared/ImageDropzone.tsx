@@ -30,7 +30,7 @@ export interface InitialFile {
 export interface ImageDropzoneProps {
     /**
      * Pre-populated files that are already uploaded.
-     * Pass `{ id: storagePath, url: getCategoryTemplateImageUrl(path) }` when editing.
+     * Pass `{ id: storagePath, url: getStorageUrl(path) }` when editing.
      */
     readonly initialFiles?: InitialFile[];
 
@@ -39,8 +39,7 @@ export interface ImageDropzoneProps {
 
     /**
      * Called when a new file is dropped.
-     * Must resolve with `{ status: "success", result: storagePath }` — the path,
-     * not the full URL — so it can be persisted directly to the DB.
+     * Must resolve with `{ status: "success", result: storagePath }` or `{ status: "error", error: string }`.
      */
     readonly onDropFile?: (file: File) => Promise<
         | { status: "success"; result: string }
@@ -50,7 +49,6 @@ export interface ImageDropzoneProps {
     /**
      * Convert the storage path in `file.result` to a displayable URL.
      * Defaults to using the value as-is.
-     * Pass e.g. `getCategoryTemplateImageUrl` here.
      */
     readonly getDisplayUrl?: (path: string) => string | null;
 
@@ -63,6 +61,13 @@ export interface ImageDropzoneProps {
     readonly gridCols?: "grid-cols-1" | "grid-cols-2" | "grid-cols-3" | "grid-cols-4";
     readonly icon?: React.ReactNode;
     readonly className?: string;
+
+    /**
+     * When true (default), the drop zone trigger is hidden once the total
+     * number of files (initial + newly dropped) reaches maxFiles.
+     */
+    readonly hideWhenFull?: boolean;
+
     readonly children?: (state: ReturnType<typeof useDropzone>) => React.ReactNode;
 }
 
@@ -93,8 +98,10 @@ export function ImageDropzone({
     gridCols = "grid-cols-3",
     icon = <CloudUploadIcon className="size-8" />,
     className,
+    hideWhenFull = true,
     children,
 }: ImageDropzoneProps) {
+    // Track which initial files the user has removed locally
     const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
     const visibleInitialFiles = initialFiles.filter((f) => !removedIds.has(f.id));
 
@@ -103,10 +110,30 @@ export function ImageDropzone({
         onRemoveInitialFile?.(id);
     }
 
+    // When maxFiles === 1, wrap onDropFile so that dropping a new file first
+    // evicts the current initial file (if any), avoiding the "too many files" error.
+    const wrappedOnDropFile: typeof onDropFile = async (file) => {
+        if (maxFiles === 1 && visibleInitialFiles.length > 0) {
+            // Remove the existing initial file before uploading the replacement
+            handleRemoveInitial(visibleInitialFiles[0].id);
+        }
+        return onDropFile(file);
+    };
+
     const dropzone = useDropzone({
-        onDropFile,
+        // Use shiftOnMaxFiles so the library doesn't hard-block when replacing
+        shiftOnMaxFiles: maxFiles === 1,
+        onDropFile: wrappedOnDropFile,
         validation: { accept, maxSize, maxFiles },
     });
+
+    // As soon as the dropzone has any file in flight (pending or settled),
+    // suppress initial files so they never render alongside the new upload.
+    const hasNewFiles = dropzone.fileStatuses.length > 0;
+    const displayedInitialFiles = hasNewFiles ? [] : visibleInitialFiles;
+
+    const totalFiles = displayedInitialFiles.length + dropzone.fileStatuses.length;
+    const isFull = totalFiles >= maxFiles;
 
     function resolveDisplayUrl(result: string): string {
         return (getDisplayUrl ? getDisplayUrl(result) : null) ?? result;
@@ -115,29 +142,35 @@ export function ImageDropzone({
     return (
         <div className={`not-prose flex flex-col gap-4 ${className ?? ""}`}>
             <Dropzone {...dropzone}>
-                <div>
-                    <div className="flex justify-between">
-                        <DropzoneDescription>
-                            {description ?? `Please select up to ${maxFiles} images`}
-                        </DropzoneDescription>
-                        <DropzoneMessage />
+                {/* ── Drop zone trigger — hidden when full and hideWhenFull is true ── */}
+                {(!hideWhenFull || !isFull) && (
+                    <div>
+                        <div className="flex justify-between">
+                            <DropzoneDescription>
+                                {description ?? `Please select up to ${maxFiles} image${maxFiles === 1 ? "" : "s"}`}
+                            </DropzoneDescription>
+                            <DropzoneMessage />
+                        </div>
+                        <DropZoneArea>
+                            <DropzoneTrigger className="flex flex-col items-center gap-4 bg-transparent p-10 text-center text-sm">
+                                {icon}
+                                <div>
+                                    <p className="font-semibold">{uploadLabel}</p>
+                                    <p className="text-sm text-muted-foreground">{uploadSubLabel}</p>
+                                </div>
+                            </DropzoneTrigger>
+                        </DropZoneArea>
                     </div>
-                    <DropZoneArea>
-                        <DropzoneTrigger className="flex flex-col items-center gap-4 bg-transparent p-10 text-center text-sm">
-                            {icon}
-                            <div>
-                                <p className="font-semibold">{uploadLabel}</p>
-                                <p className="text-sm text-muted-foreground">{uploadSubLabel}</p>
-                            </div>
-                        </DropzoneTrigger>
-                    </DropZoneArea>
-                </div>
+                )}
 
-                {/* ── Already-uploaded (initial) files ── */}
-                {visibleInitialFiles.length > 0 && (
-                    <ol className={`grid ${gridCols} gap-3 p-0`}>
-                        {visibleInitialFiles.map((file) => (
-                            <li
+                {/* ── Unified file list ─────────────────────────────────────────────
+                    Initial files and newly-dropped files share one grid so there's
+                    never a duplicate preview when maxFiles === 1.                  ── */}
+                {(displayedInitialFiles.length > 0 || dropzone.fileStatuses.length > 0) && (
+                    <div className={`grid ${gridCols} gap-3 p-0`}>
+                        {/* Already-uploaded (initial) files */}
+                        {displayedInitialFiles.map((file) => (
+                            <div
                                 key={file.id}
                                 className="overflow-hidden rounded-md bg-secondary p-0 shadow-sm"
                             >
@@ -162,46 +195,47 @@ export function ImageDropzone({
                                         <Trash2Icon className="size-4" />
                                     </button>
                                 </div>
-                            </li>
-                        ))}
-                    </ol>
-                )}
-
-                {/* ── Newly-dropped files ── */}
-                <DropzoneFileList className={`grid ${gridCols} gap-3 p-0`}>
-                    {dropzone.fileStatuses.map((file) => (
-                        <DropzoneFileListItem
-                            className="overflow-hidden rounded-md bg-secondary p-0 shadow-sm"
-                            key={file.id}
-                            file={file}
-                        >
-                            {file.status === "pending" && (
-                                <div className="aspect-video animate-pulse bg-black/20" />
-                            )}
-                            {file.status === "success" && (
-                                <div className="relative aspect-video w-full">
-                                    <Image
-                                        src={resolveDisplayUrl(file.result)}
-                                        alt={`uploaded-${file.fileName}`}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
-                            )}
-                            <div className="flex items-center justify-between p-2 pl-4">
-                                <div className="min-w-0">
-                                    <p className="truncate text-sm">{file.fileName}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {(file.file.size / (1024 * 1024)).toFixed(2)} MB
-                                    </p>
-                                </div>
-                                <DropzoneRemoveFile className="shrink-0 hover:outline">
-                                    <Trash2Icon className="size-4" />
-                                </DropzoneRemoveFile>
                             </div>
-                        </DropzoneFileListItem>
-                    ))}
-                </DropzoneFileList>
+                        ))}
+
+                        {/* Newly-dropped files — rendered inside DropzoneFileList for
+                            correct context (DropzoneRemoveFile needs it) */}
+                        <DropzoneFileList className="contents">
+                            {dropzone.fileStatuses.map((file) => (
+                                <DropzoneFileListItem
+                                    className="overflow-hidden rounded-md bg-secondary p-0 shadow-sm"
+                                    key={file.id}
+                                    file={file}
+                                >
+                                    {file.status === "pending" && (
+                                        <div className="aspect-video animate-pulse bg-black/20" />
+                                    )}
+                                    {file.status === "success" && (
+                                        <div className="relative aspect-video w-full">
+                                            <Image
+                                                src={resolveDisplayUrl(file.result)}
+                                                alt={`uploaded-${file.fileName}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="flex items-center justify-between p-2 pl-4">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm">{file.fileName}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {(file.file.size / (1024 * 1024)).toFixed(2)} MB
+                                            </p>
+                                        </div>
+                                        <DropzoneRemoveFile className="shrink-0 hover:outline">
+                                            <Trash2Icon className="size-4" />
+                                        </DropzoneRemoveFile>
+                                    </div>
+                                </DropzoneFileListItem>
+                            ))}
+                        </DropzoneFileList>
+                    </div>
+                )}
 
                 {children?.(dropzone)}
             </Dropzone>

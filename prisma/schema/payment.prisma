@@ -1,32 +1,27 @@
-// Prisma Schema - Payments & Wallet
-// Wallet, transactions, payments, payouts, and fee configuration
-
 model Wallet {
-  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId            String?      @map("user_id") @db.Uuid
-  organizationId    String?      @map("organization_id") @db.Uuid
-  balance           Decimal      @default(0) @db.Decimal(15, 2)
-  currency          CurrencyCode @default(NGN)
-  pendingCredits    Decimal      @default(0) @map("pending_credits") @db.Decimal(15, 2)
-  pendingDebits     Decimal      @default(0) @map("pending_debits") @db.Decimal(15, 2)
-  totalCredits      Decimal      @default(0) @map("total_credits") @db.Decimal(15, 2)
-  totalDebits       Decimal      @default(0) @map("total_debits") @db.Decimal(15, 2)
-  isActive          Boolean      @default(true) @map("is_active")
-  isLocked          Boolean      @default(false) @map("is_locked")
-  lockReason        String?      @map("lock_reason")
-  lastTransactionAt DateTime?    @map("last_transaction_at") @db.Timestamptz
-  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String?       @map("user_id") @db.Uuid
+  organizationId    String?       @map("organization_id") @db.Uuid
+  balance           Decimal       @default(0) @db.Decimal(15, 2)
+  currency          CurrencyCode  @default(NGN)
+  pendingCredits    Decimal       @default(0) @map("pending_credits") @db.Decimal(15, 2)
+  pendingDebits     Decimal       @default(0) @map("pending_debits") @db.Decimal(15, 2)
+  totalCredits      Decimal       @default(0) @map("total_credits") @db.Decimal(15, 2)
+  totalDebits       Decimal       @default(0) @map("total_debits") @db.Decimal(15, 2)
+  isActive          Boolean       @default(true) @map("is_active")
+  isLocked          Boolean       @default(false) @map("is_locked")
+  lockReason        String?       @map("lock_reason")
+  lastTransactionAt DateTime?     @map("last_transaction_at") @db.Timestamptz(6)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  payouts           Payout[]
+  transactions      Transaction[]
+  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user              Profile?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user         Profile?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-  payouts      Payout[]
-
-  @@index([userId], name: "idx_wallets_user")
-  @@index([organizationId], name: "idx_wallets_organization")
-  @@index([currency], name: "idx_wallets_currency")
+  @@index([userId], map: "idx_wallets_user")
+  @@index([organizationId], map: "idx_wallets_organization")
+  @@index([currency], map: "idx_wallets_currency")
   @@map("wallets")
 }
 
@@ -53,20 +48,18 @@ model Transaction {
   metadata          Json?
   ipAddress         String?             @map("ip_address") @db.Inet
   userAgent         String?             @map("user_agent")
-  completedAt       DateTime?           @map("completed_at") @db.Timestamptz
-  failedAt          DateTime?           @map("failed_at") @db.Timestamptz
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  completedAt       DateTime?           @map("completed_at") @db.Timestamptz(6)
+  failedAt          DateTime?           @map("failed_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  wallet            Wallet              @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
-  // Relations
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
-
-  @@index([walletId], name: "idx_transactions_wallet")
-  @@index([reference], name: "idx_transactions_reference")
-  @@index([status], name: "idx_transactions_status")
-  @@index([type], name: "idx_transactions_type")
-  @@index([category], name: "idx_transactions_category")
-  @@index([createdAt], name: "idx_transactions_created")
+  @@index([walletId], map: "idx_transactions_wallet")
+  @@index([reference], map: "idx_transactions_reference")
+  @@index([status], map: "idx_transactions_status")
+  @@index([type], map: "idx_transactions_type")
+  @@index([category], map: "idx_transactions_category")
+  @@index([createdAt], map: "idx_transactions_created")
   @@map("transactions")
 }
 
@@ -84,17 +77,15 @@ model Payment {
   providerReference String?           @map("provider_reference")
   status            TransactionStatus @default(pending)
   providerResponse  Json?             @map("provider_response")
-  verifiedAt        DateTime?         @map("verified_at") @db.Timestamptz
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  verifiedAt        DateTime?         @map("verified_at") @db.Timestamptz(6)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user              Profile?          @relation(fields: [userId], references: [id])
 
-  // Relations
-  user Profile? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([userId], name: "idx_payments_user")
-  @@index([reference], name: "idx_payments_reference")
-  @@index([status], name: "idx_payments_status")
-  @@index([providerReference], name: "idx_payments_provider_ref")
+  @@index([userId], map: "idx_payments_user")
+  @@index([reference], map: "idx_payments_reference")
+  @@index([status], map: "idx_payments_status")
+  @@index([providerReference], map: "idx_payments_provider_ref")
   @@map("payments")
 }
 
@@ -120,20 +111,18 @@ model Payout {
   notes             String?
   requiresApproval  Boolean          @default(false) @map("requires_approval")
   approvedBy        String?          @map("approved_by") @db.Uuid
-  approvedAt        DateTime?        @map("approved_at") @db.Timestamptz
-  processedAt       DateTime?        @map("processed_at") @db.Timestamptz
-  completedAt       DateTime?        @map("completed_at") @db.Timestamptz
-  failedAt          DateTime?        @map("failed_at") @db.Timestamptz
-  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  approvedAt        DateTime?        @map("approved_at") @db.Timestamptz(6)
+  processedAt       DateTime?        @map("processed_at") @db.Timestamptz(6)
+  completedAt       DateTime?        @map("completed_at") @db.Timestamptz(6)
+  failedAt          DateTime?        @map("failed_at") @db.Timestamptz(6)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  approver          Profile?         @relation("ApprovedPayouts", fields: [approvedBy], references: [id])
+  wallet            Wallet?          @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
-  // Relations
-  wallet   Wallet?  @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  approver Profile? @relation("ApprovedPayouts", fields: [approvedBy], references: [id])
-
-  @@index([walletId], name: "idx_payouts_wallet")
-  @@index([reference], name: "idx_payouts_reference")
-  @@index([status], name: "idx_payouts_status")
+  @@index([walletId], map: "idx_payouts_wallet")
+  @@index([reference], map: "idx_payouts_reference")
+  @@index([status], map: "idx_payouts_status")
   @@map("payouts")
 }
 
@@ -150,10 +139,10 @@ model FeeConfiguration {
   currency            CurrencyCode         @default(NGN)
   isActive            Boolean              @default(true) @map("is_active")
   description         String?
-  effectiveFrom       DateTime             @default(now()) @map("effective_from") @db.Timestamptz
-  effectiveTo         DateTime?            @map("effective_to") @db.Timestamptz
-  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  effectiveFrom       DateTime             @default(now()) @map("effective_from") @db.Timestamptz(6)
+  effectiveTo         DateTime?            @map("effective_to") @db.Timestamptz(6)
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("fee_configurations")
 }
