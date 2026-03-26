@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, type Dispatch, type SetStateAction } from "react";
+import { useTransition, type Dispatch, type SetStateAction, useMemo } from "react";
 import {
     DndContext,
     closestCenter,
@@ -14,18 +14,12 @@ import {
     arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
+    horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    Card,
-    CardContent,
-} from "@/components/ui/card";
-import {
-    Accordion,
-    AccordionContent,
-} from "@/components/ui/accordion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -58,16 +52,14 @@ import {
     reorderCategories,
 } from "@/lib/actions/voting";
 import { toast } from "sonner";
-import {
-    removeCategory,
-    removeOptionFromCategories,
-    updateOptionStatusInCategories,
-} from "./state-updaters";
+import { cn } from "@/lib/utils";
 
 interface CategoryListProps {
     readonly eventId: string;
     readonly categories: VotingCategory[];
     readonly setCategories: Dispatch<SetStateAction<VotingCategory[]>>;
+    readonly activeCategoryId: string | undefined;
+    readonly setActiveCategoryId: (id: string | undefined) => void;
     readonly canEdit: boolean;
     readonly onEditCategory: (category: VotingCategory) => void;
     readonly onAddOption: (categoryId: string) => void;
@@ -80,6 +72,8 @@ export function CategoryList({
     eventId,
     categories,
     setCategories,
+    activeCategoryId,
+    setActiveCategoryId,
     canEdit,
     onEditCategory,
     onAddOption,
@@ -116,7 +110,13 @@ export function CategoryList({
         startTransition(async () => {
             const result = await deleteCategory(categoryId);
             if (result.success) {
-                setCategories(prev => removeCategory(prev, categoryId));
+                setCategories(prev => {
+                    const filtered = prev.filter(c => c.id !== categoryId);
+                    if (activeCategoryId === categoryId) {
+                        setActiveCategoryId(filtered[0]?.id);
+                    }
+                    return filtered;
+                });
                 toast.success("Category deleted");
             } else {
                 toast.error(result.error);
@@ -128,7 +128,12 @@ export function CategoryList({
         startTransition(async () => {
             const result = await deleteOption(optionId);
             if (result.success) {
-                setCategories(prev => removeOptionFromCategories(prev, optionId));
+                setCategories(prev =>
+                    prev.map(c => ({
+                        ...c,
+                        votingOptions: c.votingOptions.filter(o => o.id !== optionId),
+                    }))
+                );
                 toast.success("Nominee deleted");
             } else {
                 toast.error(result.error);
@@ -140,7 +145,14 @@ export function CategoryList({
         startTransition(async () => {
             const result = await approveNominationAction(optionId);
             if (result.success) {
-                setCategories(prev => updateOptionStatusInCategories(prev, optionId, "approved"));
+                setCategories(prev =>
+                    prev.map(c => ({
+                        ...c,
+                        votingOptions: c.votingOptions.map(o =>
+                            o.id === optionId ? { ...o, status: "approved" as const } : o
+                        ),
+                    }))
+                );
                 toast.success("Nomination approved");
             } else {
                 toast.error(result.error);
@@ -152,7 +164,14 @@ export function CategoryList({
         startTransition(async () => {
             const result = await rejectNominationAction(optionId);
             if (result.success) {
-                setCategories(prev => updateOptionStatusInCategories(prev, optionId, "rejected"));
+                setCategories(prev =>
+                    prev.map(c => ({
+                        ...c,
+                        votingOptions: c.votingOptions.map(o =>
+                            o.id === optionId ? { ...o, status: "rejected" as const } : o
+                        ),
+                    }))
+                );
                 toast.success("Nomination rejected");
             } else {
                 toast.error(result.error);
@@ -181,143 +200,161 @@ export function CategoryList({
     }
 
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-        >
-            <SortableContext
-                items={categories.map(c => c.id)}
-                strategy={verticalListSortingStrategy}
-            >
-                <Accordion type="multiple" defaultValue={categories.map(c => c.id)} className="space-y-2 ">
-                    {categories.map((category) => {
-                        const pendingCount = category.votingOptions.filter(o => o.status === "pending").length;
-                        return (
-                            <SortableCategoryItem
-                                key={category.id}
-                                category={category}
-                                canEdit={canEdit}
-                                dragHandleSlot={
-                                    <div className="text-left flex-1">
-                                        <div className="font-medium flex items-center gap-2">
-                                            {category.name}
-                                            {category.allowPublicNomination && (
-                                                <Badge variant="outline" className="text-xs">
-                                                    <Globe className="size-3 mr-1" />
-                                                    Public
-                                                </Badge>
-                                            )}
-                                            {pendingCount > 0 && (
-                                                <Badge variant="secondary" className="text-xs">
-                                                    {pendingCount} pending
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <div className="text-sm text-muted-foreground">
-                                            {category.votingOptions.filter(o => o.status === "approved").length} nominees
-                                            {category.allowMultiple && " • Multiple selection"}
-                                            {category.customFields && category.customFields.length > 0 && (
-                                                <span> • {category.customFields.length} custom fields</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                }
-                            >
-                                <AccordionContent className="px-4 pb-4 ">
-                                    {category.description && (
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            {category.description}
-                                        </p>
-                                    )}
+        <Tabs value={activeCategoryId} onValueChange={setActiveCategoryId} className="space-y-4">
+            <div className={cn(
+                "flex items-center gap-2 overflow-x-auto no-scrollbar border-b bg-muted/30 -mx-6 px-6",
+            )}>
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext
+                        items={categories.map(c => c.id)}
+                        strategy={horizontalListSortingStrategy}
+                    >
+                        <TabsList className="bg-transparent h-auto p-0 flex flex-nowrap w-max gap-px">
+                            {categories.map((category) => (
+                                <SortableCategoryItem
+                                    key={category.id}
+                                    category={category}
+                                    canEdit={canEdit}
+                                />
+                            ))}
+                        </TabsList>
+                    </SortableContext>
+                </DndContext>
+            </div>
 
-                                    {/* Category Actions */}
+            {categories.map((category) => {
+                const pendingCount = category.votingOptions.filter(o => o.status === "pending").length;
+                const approvedNominees = category.votingOptions.filter(o => o.status === "approved");
+                
+                return (
+                    <TabsContent key={category.id} value={category.id} className="space-y-4 pt-2 mt-0">
+                        {/* Category Info & Actions */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <h4 className="text-lg font-semibold">{category.name}</h4>
+                                    {category.allowPublicNomination && (
+                                        <Badge variant="outline" className="text-xs">
+                                            <Globe className="size-3 mr-1" />
+                                            Public
+                                        </Badge>
+                                    )}
+                                    {pendingCount > 0 && (
+                                        <Badge variant="secondary" className="text-xs">
+                                            {pendingCount} pending
+                                        </Badge>
+                                    )}
+                                </div>
+                                {category.description && (
+                                    <p className="text-sm text-muted-foreground max-w-2xl">
+                                        {category.description}
+                                    </p>
+                                )}
+                            </div>
+
+                            {canEdit && (
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => onEditCategory(category)}
+                                    >
+                                        <Pencil className="size-4 mr-2" />
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => onOpenFields(category)}
+                                    >
+                                        <Settings className="size-4 mr-2" />
+                                        Fields
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => onAddOption(category.id)}
+                                    >
+                                        <Plus className="size-4 mr-2" />
+                                        Add Nominee
+                                    </Button>
+                                    
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="text-destructive h-8 px-2">
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Delete Category?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will delete "{category.name}" and all its nominees.
+                                                    This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={() => handleDeleteCategory(category.id)}
+                                                    className="bg-destructive text-destructive-foreground"
+                                                >
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Nominees Grid */}
+                        {category.votingOptions.length === 0 ? (
+                            <Card className="border-dashed">
+                                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                                    <Users className="size-12 text-muted-foreground mb-4 opacity-20" />
+                                    <h4 className="font-medium mb-1 text-muted-foreground">No nominees yet</h4>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Add candidates to this category to start voting
+                                    </p>
                                     {canEdit && (
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            <Button
-                                                variant="secondary"
-                                                size="sm"
-                                                onClick={() => onEditCategory(category)}
-                                            >
-                                                <Pencil className="size-4 mr-2" />
-                                                Edit
-                                            </Button>
-                                            <Button
-                                                variant="tertiary"
-                                                size="sm"
-                                                onClick={() => onAddOption(category.id)}
-                                            >
-                                                <Plus className="size-4 mr-2" />
-                                                Add Nominee
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                onClick={() => onOpenFields(category)}
-                                            >
-                                                <Settings className="size-4 mr-2" />
-                                                Custom Fields
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="text-destructive" disabled={isPending}>
-                                                        {isPending ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Trash2 className="size-4 mr-2" />}
-                                                        Delete
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Delete Category?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This will delete the category and all its nominees.
-                                                            This action cannot be undone.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            onClick={() => handleDeleteCategory(category.id)}
-                                                            className="bg-destructive text-destructive-foreground"
-                                                        >
-                                                            Delete
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            onClick={() => onAddOption(category.id)}
+                                        >
+                                            <Plus className="size-4 mr-2" />
+                                            Add First Nominee
+                                        </Button>
                                     )}
-
-                                    {/* Nominees Grid */}
-                                    {category.votingOptions.length === 0 ? (
-                                        <div className="text-center py-8 text-muted-foreground">
-                                            <Users className="size-8 mx-auto mb-2 opacity-50" />
-                                            <p className="text-sm">No nominees yet</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                            {category.votingOptions.map((option) => {
-                                                const displayImage = option.imageUrl;
-                                                return (
-                                                    <NomineeCard
-                                                        key={option.id}
-                                                        option={option}
-                                                        displayImage={displayImage}
-                                                        canEdit={canEdit}
-                                                        isPending={isPending}
-                                                        onEdit={() => onEditOption(option, category.id)}
-                                                        onDelete={() => handleDeleteOption(option.id)}
-                                                        onApprove={() => handleApproveNomination(option.id)}
-                                                        onReject={() => handleRejectNomination(option.id)}
-                                                    />
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </AccordionContent>
-                            </SortableCategoryItem>
-                        );
-                    })}
-                </Accordion>
-            </SortableContext>
-        </DndContext>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {category.votingOptions.map((option) => (
+                                    <NomineeCard
+                                        key={option.id}
+                                        option={option}
+                                        displayImage={option.imageUrl}
+                                        canEdit={canEdit}
+                                        isPending={isPending}
+                                        onEdit={() => onEditOption(option, category.id)}
+                                        onDelete={() => handleDeleteOption(option.id)}
+                                        onApprove={() => handleApproveNomination(option.id)}
+                                        onReject={() => handleRejectNomination(option.id)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </TabsContent>
+                );
+            })}
+        </Tabs>
     );
 }
+
+

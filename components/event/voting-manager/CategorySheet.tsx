@@ -144,7 +144,7 @@ export function CategorySheet({
 
             // Step 1: Upload pending file if it exists
             if (pendingFile) {
-                const uploadedPath = await upload(pendingFile);
+                const uploadedPath = await upload(pendingFile, form.templateImage || undefined);
                 if (!uploadedPath) {
                     toast.error("Failed to upload image");
                     return;

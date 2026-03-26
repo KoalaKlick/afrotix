@@ -92,7 +92,6 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             </div>
 
             <PanAfricanDivider />
-            <pre>{JSON.stringify(votingCategories, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2)}</pre>
 
             {/* Voting Categories Section - Only for voting/hybrid events */}
             {votingCategories.length > 0 && (

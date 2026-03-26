@@ -200,7 +200,7 @@ export function OptionSheet({
             let finalImageUrl: string | null | undefined = form.imageUrl || (pendingFile ? undefined : null);
 
             if (pendingFile) {
-                const uploadedPath = await uploadNominee(pendingFile);
+                const uploadedPath = await uploadNominee(pendingFile, form.imageUrl);
                 if (!uploadedPath) {
                     toast.error("Failed to upload image");
                     return;

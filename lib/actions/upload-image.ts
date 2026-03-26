@@ -73,9 +73,13 @@ export async function uploadImage(
     const storageBucket = STORAGE_BUCKETS[bucket.toUpperCase() as keyof typeof STORAGE_BUCKETS];
 
     try {
-        // Cleanup of old files is now handled by the data update actions (deferred deletion)
-        // to ensure data consistency if the user cancels the form.
-
+        // Immediate cleanup if oldPath provided
+        if (options.oldPath) {
+            const oldPath = normalizeToPath(options.oldPath, bucket);
+            if (oldPath) {
+                await deleteStorageFile(bucket, oldPath);
+            }
+        }
 
         // ── No conversion on server; file is already webp if needed ──
         let uploadFile: File = file;
