@@ -26,13 +26,17 @@ interface EventStep3Props {
         maxAttendees?: number | null;
         isPublic?: boolean;
     } | null;
-    readonly onSave: (formData: FormData) => Promise<ActionResult<{ id: string }>>;
-    readonly onNext: () => void;
+    readonly onSuccess: (data: {
+        coverImage?: string;
+        bannerImage?: string;
+        maxAttendees?: number | null;
+        isPublic: boolean;
+    }) => void;
     readonly onBack: () => void;
     readonly onSkip: () => void;
 }
 
-export function EventStep3MediaSettings({ initialData, onSave, onNext, onBack, onSkip }: EventStep3Props) {
+export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip }: EventStep3Props) {
     const [isPending, startTransition] = useTransition();
     const [coverImage, setCoverImage] = useState(initialData?.coverImage ?? "");
     const [bannerImage, setBannerImage] = useState(initialData?.bannerImage ?? "");
@@ -139,29 +143,22 @@ export function EventStep3MediaSettings({ initialData, onSave, onNext, onBack, o
                 else return; // Error toast handled by hook
             }
 
-            const formData = new FormData();
-            formData.set("coverImage", finalCoverImage);
-            formData.set("bannerImage", finalBannerImage);
-            formData.set("maxAttendees", maxAttendees);
-            formData.set("isPublic", String(isPublic));
+            onSuccess({
+                coverImage: finalCoverImage,
+                bannerImage: finalBannerImage,
+                maxAttendees: maxAttendees ? parseInt(maxAttendees, 10) : null,
+                isPublic,
+            });
 
-            const result = await onSave(formData);
-            if (result.success) {
-                onNext();
-                setPendingCoverFile(null);
-                setPendingBannerFile(null);
-                if (coverPreviewUrl) {
-                    URL.revokeObjectURL(coverPreviewUrl);
-                    setCoverPreviewUrl(null);
-                }
-                if (bannerPreviewUrl) {
-                    URL.revokeObjectURL(bannerPreviewUrl);
-                    setBannerPreviewUrl(null);
-                }
-            } else if (result.fieldErrors) {
-                setErrors(result.fieldErrors as Record<string, string[]>);
-            } else {
-                toast.error(result.error || "Validation failed");
+            setPendingCoverFile(null);
+            setPendingBannerFile(null);
+            if (coverPreviewUrl) {
+                URL.revokeObjectURL(coverPreviewUrl);
+                setCoverPreviewUrl(null);
+            }
+            if (bannerPreviewUrl) {
+                URL.revokeObjectURL(bannerPreviewUrl);
+                setBannerPreviewUrl(null);
             }
         });
     }
