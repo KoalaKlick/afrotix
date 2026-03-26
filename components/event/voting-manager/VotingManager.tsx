@@ -37,6 +37,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const [fieldsDialogOpen, setFieldsDialogOpen] = useState(false);
     const [fieldsCategoryId, setFieldsCategoryId] = useState<string | null>(null);
+    const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>(categories[0]?.id);
 
     const selectedCategory = selectedCategoryId
         ? categories.find(category => category.id === selectedCategoryId) ?? null
@@ -125,7 +126,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                         onCategoryCreated={handleCategoryCreated}
                         onCategoryUpdated={handleCategoryUpdated}
                         trigger={
-                            <Button size="sm" onClick={() => setEditingCategory(null)}>
+                            <Button variant="tertiary" size="sm" onClick={() => setEditingCategory(null)}>
                                 <Plus className="size-4 mr-2" />
                                 Add Category
                             </Button>
@@ -138,6 +139,8 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                 eventId={eventId}
                 categories={categories}
                 setCategories={setCategories}
+                activeCategoryId={activeCategoryId}
+                setActiveCategoryId={setActiveCategoryId}
                 canEdit={canEdit}
                 onEditCategory={openEditCategory}
                 onAddOption={openAddOption}

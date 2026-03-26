@@ -1,9 +1,6 @@
-/**
- * Event Detail Client Component
- * View and edit event details
- */
 
 "use client";
+
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -11,8 +8,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -22,51 +17,51 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-    Calendar,
-    Clock,
-    MapPin,
-    Video,
-    Users,
-    Eye,
-    EyeOff,
+    Loader2,
+    Upload,
     Pencil,
     Check,
     X,
-    Trash2,
-    Upload,
-    Loader2,
+    ChevronDown,
     ExternalLink,
+    EyeOff,
     Ticket,
     Vote,
     Layers,
     Megaphone,
-    ChevronDown,
+    Settings,
+
 } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
     updateExistingEvent,
-    deleteExistingEvent,
-    uploadEventImage,
-    changeEventStatus,
+    changeEventStatus
 } from "@/lib/actions/event";
-import { convertToWebP } from "@/lib/image-utils";
-import { getEventLifecycleStatus, getEventPublicationStatus } from "@/lib/event-status";
 import { getEventImageUrl } from "@/lib/image-url-utils";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { VotingManager } from "@/components/event";
+import {
+    getEventPublicationStatus,
+    getEventLifecycleStatus
+} from "@/lib/event-status";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import type { OrganizationRole } from "@/lib/generated/prisma";
-import type { CustomField } from "@/lib/types/voting";
+import type {
+    EventDetailStatsData,
+    VoteTrendPoint
+} from "@/lib/types/event-stats";
+import type {
+    CustomField,
+    VotingCategory
+} from "@/lib/types/voting";
+import {
+    VotingManager,
+    EventOverviewTab,
+    DeleteEventDialog,
+    EventSettingsTab,
+    type VotingChartCategory
+} from "@/components/event";
+
+// --- Types ---
 
 interface EventData {
     id: string;
@@ -74,15 +69,15 @@ interface EventData {
     slug: string;
     type: string;
     status: string;
-    description?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
+    description: string | null;
+    startDate: string | null;
+    endDate: string | null;
     timezone: string;
     isVirtual: boolean;
-    virtualLink?: string | null;
-    venueName?: string | null;
-    venueAddress?: string | null;
-    venueCity?: string | null;
+    virtualLink: string | null;
+    venueName: string | null;
+    venueAddress: string | null;
+    venueCity: string | null;
     venueCountry: string;
     coverImage?: string | null;
     bannerImage?: string | null;
@@ -93,51 +88,19 @@ interface EventData {
     publishedAt?: string | null;
 }
 
+
 type VotingOptionStatus = "pending" | "approved" | "rejected";
 
-interface FieldValue {
-    fieldId: string;
-    value: string;
-}
 
-interface VotingOption {
-    id: string;
-    optionText: string;
-    nomineeCode: string | null;
-    email: string | null;
-    description: string | null;
-    imageUrl: string | null;
-    finalImage: string | null;
-    status: VotingOptionStatus;
-    isPublicNomination: boolean;
-    nominatedByName: string | null;
-    votesCount: number;
-    orderIdx: number;
-    fieldValues?: FieldValue[];
-}
 
-interface VotingCategory {
-    id: string;
-    name: string;
-    description: string | null;
-    maxVotesPerUser: number;
-    allowMultiple: boolean;
-    templateImage: string | null;
-    templateConfig: unknown;
-    showFinalImage: boolean;
-    allowPublicNomination: boolean;
-    nominationDeadline: string | Date | null;
-    requireApproval: boolean;
-    orderIdx: number;
-    votingOptions: VotingOption[];
-    customFields?: CustomField[];
-}
 
 interface EventDetailClientProps {
     readonly event: EventData;
     readonly organizationSlug?: string;
     readonly userRole: OrganizationRole;
     readonly votingCategories?: VotingCategory[];
+    readonly eventStats: EventDetailStatsData;
+    readonly voteTrend?: VoteTrendPoint[];
 }
 
 const typeIcons: Record<string, typeof Ticket> = {
@@ -155,10 +118,21 @@ const statusColors: Record<string, string> = {
     ended: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
 };
 
-export function EventDetailClient({ event, organizationSlug, userRole, votingCategories = [] }: EventDetailClientProps) {
+export function EventDetailClient({ event, organizationSlug, userRole, votingCategories = [], eventStats, voteTrend = [] }: EventDetailClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
-    const [isUploading, setIsUploading] = useState(false);
+
+    const { isUploading: isUploadingCover, upload: uploadCover } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
+    });
+    const { isUploading: isUploadingBanner, upload: uploadBanner } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1920, maxHeight: 400, maxSizeMB: 2 },
+    });
+    const isUploading = isUploadingCover || isUploadingBanner;
 
     // Editable fields state
     const [editingField, setEditingField] = useState<string | null>(null);
@@ -181,11 +155,15 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         maxAttendees: event.maxAttendees?.toString() ?? "",
         isPublic: event.isPublic,
     });
-
-    const coverInputRef = useRef<HTMLInputElement>(null);
+    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+    const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
+    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+    const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
 
     const canEdit = userRole === "owner" || userRole === "admin";
+
     const canDelete = canEdit && event.status === "draft";
     const publicEventUrl = organizationSlug
         ? `/${organizationSlug}/event/${event.slug}`
@@ -197,27 +175,6 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         endDate: formData.endDate || null,
     });
     const canViewPublicPage = Boolean(publicEventUrl && formData.isPublic && publicationStatus === "published");
-    const isPrivate = !formData.isPublic;
-
-    // Generate display URLs from paths
-    const coverDisplayUrl = getEventImageUrl(formData.coverImage);
-    const bannerDisplayUrl = getEventImageUrl(formData.bannerImage);
-
-    // Save a single field
-    async function saveField(fieldName: string, value: unknown) {
-        const formDataObj = new FormData();
-        formDataObj.set(fieldName, String(value));
-
-        startTransition(async () => {
-            const result = await updateExistingEvent(event.id, formDataObj);
-            if (result.success) {
-                toast.success("Changes saved");
-                setEditingField(null);
-            } else {
-                toast.error(result.error);
-            }
-        });
-    }
 
     // Save multiple fields at once
     async function saveMultipleFields(fields: Record<string, unknown>) {
@@ -239,50 +196,89 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         });
     }
 
-    // Image upload handler
-    async function handleImageUpload(file: File, type: "cover" | "banner") {
-        setIsUploading(true);
+    // Generate display URLs from paths or previews
+    const coverDisplayUrl = coverPreviewUrl || getEventImageUrl(formData.coverImage);
+    const bannerDisplayUrl = bannerPreviewUrl || getEventImageUrl(formData.bannerImage);
 
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: type === "cover" ? 1200 : 1920,
-                maxHeight: type === "cover" ? 630 : 400,
-                maxSizeMB: 2,
-            });
+    // Save a single field
+    async function saveField(fieldName: string, value: unknown) {
+        const formDataObj = new FormData();
+        formDataObj.set(fieldName, String(value));
 
-            const uploadFormData = new FormData();
-            uploadFormData.set("file", optimizedFile);
-
-            // Pass old image path for deletion
-            const oldImagePath = type === "cover" ? formData.coverImage : formData.bannerImage;
-            if (oldImagePath) {
-                uploadFormData.set("oldImagePath", oldImagePath);
-            }
-
-            const result = await uploadEventImage(uploadFormData, type);
+        startTransition(async () => {
+            const result = await updateExistingEvent(event.id, formDataObj);
             if (result.success) {
-                const fieldName = type === "cover" ? "coverImage" : "bannerImage";
-                setFormData(prev => ({ ...prev, [fieldName]: result.data.path }));
-
-                // Save to database directly
-                const saveFormData = new FormData();
-                saveFormData.set(fieldName, result.data.path);
-                const saveResult = await updateExistingEvent(event.id, saveFormData);
-
-                if (saveResult.success) {
-                    toast.success(`${type === "cover" ? "Cover" : "Banner"} image updated`);
-                } else {
-                    toast.error(saveResult.error);
-                }
+                toast.success("Changes saved");
+                setEditingField(null);
             } else {
                 toast.error(result.error);
             }
-        } catch {
-            toast.error("Failed to upload image");
-        } finally {
-            setIsUploading(false);
+        });
+    }
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        startTransition(async () => {
+            let finalCoverImage = formData.coverImage;
+            let finalBannerImage = formData.bannerImage;
+
+            // Upload pending cover if exists
+            if (pendingCoverFile) {
+                const path = await uploadCover(pendingCoverFile);
+                if (path) finalCoverImage = path;
+                else {
+                    toast.error("Failed to upload cover image");
+                    return;
+                }
+            }
+
+            // Upload pending banner if exists
+            if (pendingBannerFile) {
+                const path = await uploadBanner(pendingBannerFile);
+                if (path) finalBannerImage = path;
+                else {
+                    toast.error("Failed to upload banner image");
+                    return;
+                }
+            }
+
+            const submitData = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    submitData.append(key, String(value));
+                }
+            });
+
+            // Update with final images
+            if (finalCoverImage) submitData.set("coverImage", finalCoverImage);
+            if (finalBannerImage) submitData.set("bannerImage", finalBannerImage);
+
+            const result = await updateExistingEvent(event.id, submitData);
+            if (result.success) {
+                toast.success("Event updated successfully");
+                setPendingCoverFile(null);
+                setPendingBannerFile(null);
+                setCoverPreviewUrl(null);
+                setBannerPreviewUrl(null);
+            } else {
+                toast.error(result.error || "Failed to update event");
+            }
+        });
+    };
+
+    // Image upload handler
+    async function handleImageUpload(file: File, type: "cover" | "banner") {
+        const url = URL.createObjectURL(file);
+        if (type === "cover") {
+            setPendingCoverFile(file);
+            if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+            setCoverPreviewUrl(url);
+        } else {
+            setPendingBannerFile(file);
+            if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+            setBannerPreviewUrl(url);
         }
+        toast.success(`${type === "cover" ? "Cover" : "Banner"} image ready to save`);
     }
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, type: "cover" | "banner") {
@@ -310,22 +306,10 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         });
     }
 
-    async function handleDelete() {
-        startTransition(async () => {
-            const result = await deleteExistingEvent(event.id);
-            if (result.success) {
-                toast.success("Event deleted");
-                router.push("/my-events");
-            } else {
-                toast.error(result.error);
-            }
-        });
-    }
-
     const TypeIcon = typeIcons[event.type] ?? Ticket;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 @container">
             {/* Header Section */}
             <div className="bg-card border rounded-xl overflow-hidden">
                 {/* Banner */}
@@ -475,6 +459,11 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                             <p className="text-sm text-muted-foreground mt-1">
                                 /{event.slug}
                             </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Created {new Date(event.createdAt).toLocaleDateString()}
+                                {" · "}
+                                Updated {new Date(event.updatedAt).toLocaleDateString()}
+                            </p>
                         </div>
 
                         {/* Actions */}
@@ -523,32 +512,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                             )}
 
                             {canDelete && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="sm">
-                                            <Trash2 className="size-4 mr-2" />
-                                            Delete
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Delete this event?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the event
-                                                and all associated data.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction
-                                                onClick={handleDelete}
-                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                            >
-                                                Delete Event
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                                <DeleteEventDialog eventId={event.id} />
                             )}
                         </div>
                     </div>
@@ -557,117 +521,43 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
 
             {/* Tabs */}
             <Tabs defaultValue="overview" className="space-y-4">
-                <TabsList className={cn(
+                <TabsList variant="afro" className={cn(
                     "grid w-full",
-                    (event.type === "voting" || event.type === "hybrid") ? "grid-cols-5" : "grid-cols-4"
+                    (event.type === "voting" || event.type === "hybrid") ? "grid-cols-3" : "grid-cols-2"
                 )}>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     {(event.type === "voting" || event.type === "hybrid") && (
                         <TabsTrigger value="voting">Voting</TabsTrigger>
                     )}
-                    <TabsTrigger value="datetime">Date & Time</TabsTrigger>
-                    <TabsTrigger value="location">Location</TabsTrigger>
-                    <TabsTrigger value="settings">Settings</TabsTrigger>
+                    <TabsTrigger value="settings" className="gap-1.5">
+                        <Settings className="size-4" />
+                        Settings
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
                 <TabsContent value="overview" className="space-y-4">
-                    <div className="bg-card border rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold">Description</h3>
-                            {canEdit && editingField !== "description" && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditingField("description")}
-                                >
-                                    <Pencil className="size-4 mr-2" />
-                                    Edit
-                                </Button>
-                            )}
-                        </div>
-
-                        {editingField === "description" ? (
-                            <div className="space-y-4">
-                                <Textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Describe your event..."
-                                    rows={6}
-                                />
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setFormData(prev => ({ ...prev, description: event.description ?? "" }));
-                                            setEditingField(null);
-                                        }}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={() => saveField("description", formData.description)}
-                                        disabled={isPending}
-                                    >
-                                        {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                                        Save
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="text-muted-foreground whitespace-pre-wrap">
-                                {formData.description || "No description provided."}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="bg-card border rounded-xl p-4">
-                            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                                <Calendar className="size-4" />
-                                Created
-                            </div>
-                            <p className="font-medium">
-                                {new Date(event.createdAt).toLocaleDateString()}
-                            </p>
-                        </div>
-                        <div className="bg-card border rounded-xl p-4">
-                            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                                <Clock className="size-4" />
-                                Updated
-                            </div>
-                            <p className="font-medium">
-                                {new Date(event.updatedAt).toLocaleDateString()}
-                            </p>
-                        </div>
-                        {event.publishedAt && (
-                            <div className="bg-card border rounded-xl p-4">
-                                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                                    <Check className="size-4" />
-                                    Published
-                                </div>
-                                <p className="font-medium">
-                                    {new Date(event.publishedAt).toLocaleDateString()}
-                                </p>
-                            </div>
-                        )}
-                        <div className="bg-card border rounded-xl p-4">
-                            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                                <Users className="size-4" />
-                                Capacity
-                            </div>
-                            <p className="font-medium">
-                                {formData.maxAttendees || "Unlimited"}
-                            </p>
-                        </div>
-                    </div>
+                    <EventOverviewTab
+                        eventStats={eventStats}
+                        eventType={event.type}
+                        voteTrend={voteTrend}
+                        votingCategories={votingCategories.map((cat): VotingChartCategory => ({
+                            id: cat.id,
+                            name: cat.name,
+                            votingOptions: cat.votingOptions.map(opt => ({
+                                id: opt.id,
+                                optionText: opt.optionText,
+                                votesCount: typeof opt.votesCount === "bigint" ? Number(opt.votesCount) : opt.votesCount,
+                                imageUrl: opt.imageUrl,
+                            })),
+                        }))}
+                    />
                 </TabsContent>
 
-                {/* Voting Tab - Only for voting/hybrid events */}
+                {/* Voting Tab */}
                 {(event.type === "voting" || event.type === "hybrid") && (
                     <TabsContent value="voting" className="space-y-4">
-                        <div className="bg-card border rounded-xl p-6">
+                        <div className="">
                             <VotingManager
                                 eventId={event.id}
                                 categories={votingCategories.map(cat => ({
@@ -683,412 +573,27 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                     </TabsContent>
                 )}
 
-                {/* Date & Time Tab */}
-                <TabsContent value="datetime" className="space-y-4">
-                    <div className="bg-card border rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold">Event Schedule</h3>
-                            {canEdit && editingField !== "datetime" && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditingField("datetime")}
-                                >
-                                    <Pencil className="size-4 mr-2" />
-                                    Edit
-                                </Button>
-                            )}
-                        </div>
 
-                        {editingField === "datetime" ? (
-                            <div className="space-y-4">
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label>Start Date & Time</Label>
-                                        <Input
-                                            type="datetime-local"
-                                            value={formData.startDate}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>End Date & Time</Label>
-                                        <Input
-                                            type="datetime-local"
-                                            value={formData.endDate}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Timezone</Label>
-                                    <Input
-                                        value={formData.timezone}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, timezone: e.target.value }))}
-                                        placeholder="Africa/Lagos"
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : "",
-                                                endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "",
-                                                timezone: event.timezone,
-                                            }));
-                                            setEditingField(null);
-                                        }}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={() => saveMultipleFields({
-                                            startDate: formData.startDate || undefined,
-                                            endDate: formData.endDate || undefined,
-                                            timezone: formData.timezone,
-                                        })}
-                                        disabled={isPending}
-                                    >
-                                        {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                                        Save
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <p className="text-sm text-muted-foreground mb-1">Starts</p>
-                                    <p className="font-medium">
-                                        {formData.startDate
-                                            ? new Date(formData.startDate).toLocaleString()
-                                            : "Not set"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground mb-1">Ends</p>
-                                    <p className="font-medium">
-                                        {formData.endDate
-                                            ? new Date(formData.endDate).toLocaleString()
-                                            : "Not set"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground mb-1">Timezone</p>
-                                    <p className="font-medium">{formData.timezone}</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </TabsContent>
 
-                {/* Location Tab */}
-                <TabsContent value="location" className="space-y-4">
-                    <div className="bg-card border rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold">Event Location</h3>
-                            {canEdit && editingField !== "location" && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditingField("location")}
-                                >
-                                    <Pencil className="size-4 mr-2" />
-                                    Edit
-                                </Button>
-                            )}
-                        </div>
 
-                        {editingField === "location" ? (
-                            <div className="space-y-4">
-                                {/* Virtual Toggle */}
-                                <div className="flex items-center gap-4">
-                                    <Label>Event Type</Label>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant={formData.isVirtual ? "outline" : "default"}
-                                            onClick={() => setFormData(prev => ({ ...prev, isVirtual: false }))}
-                                        >
-                                            <MapPin className="size-4 mr-2" />
-                                            Physical
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant={formData.isVirtual ? "default" : "outline"}
-                                            onClick={() => setFormData(prev => ({ ...prev, isVirtual: true }))}
-                                        >
-                                            <Video className="size-4 mr-2" />
-                                            Virtual
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {formData.isVirtual ? (
-                                    <div className="space-y-2">
-                                        <Label>Virtual Link</Label>
-                                        <Input
-                                            type="url"
-                                            value={formData.virtualLink}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, virtualLink: e.target.value }))}
-                                            placeholder="https://zoom.us/j/..."
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <Label>Venue Name</Label>
-                                            <Input
-                                                value={formData.venueName}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, venueName: e.target.value }))}
-                                                placeholder="e.g., Eko Convention Center"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Address</Label>
-                                            <Input
-                                                value={formData.venueAddress}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, venueAddress: e.target.value }))}
-                                                placeholder="123 Main Street"
-                                            />
-                                        </div>
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            <div className="space-y-2">
-                                                <Label>City</Label>
-                                                <Input
-                                                    value={formData.venueCity}
-                                                    onChange={(e) => setFormData(prev => ({ ...prev, venueCity: e.target.value }))}
-                                                    placeholder="Lagos"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Country</Label>
-                                                <Input
-                                                    value={formData.venueCountry}
-                                                    onChange={(e) => setFormData(prev => ({ ...prev, venueCountry: e.target.value }))}
-                                                    placeholder="Nigeria"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                isVirtual: event.isVirtual,
-                                                virtualLink: event.virtualLink ?? "",
-                                                venueName: event.venueName ?? "",
-                                                venueAddress: event.venueAddress ?? "",
-                                                venueCity: event.venueCity ?? "",
-                                                venueCountry: event.venueCountry,
-                                            }));
-                                            setEditingField(null);
-                                        }}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={() => saveMultipleFields({
-                                            isVirtual: formData.isVirtual,
-                                            virtualLink: formData.virtualLink || undefined,
-                                            venueName: formData.venueName || undefined,
-                                            venueAddress: formData.venueAddress || undefined,
-                                            venueCity: formData.venueCity || undefined,
-                                            venueCountry: formData.venueCountry,
-                                        })}
-                                        disabled={isPending}
-                                    >
-                                        {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                                        Save
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {formData.isVirtual ? (
-                                    <div className="flex items-start gap-3">
-                                        <Video className="size-5 text-primary mt-0.5" />
-                                        <div>
-                                            <p className="font-medium">Virtual Event</p>
-                                            {formData.virtualLink ? (
-                                                <a
-                                                    href={formData.virtualLink}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-sm text-primary hover:underline"
-                                                >
-                                                    {formData.virtualLink}
-                                                </a>
-                                            ) : (
-                                                <p className="text-sm text-muted-foreground">No link provided</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-start gap-3">
-                                        <MapPin className="size-5 text-primary mt-0.5" />
-                                        <div>
-                                            {formData.venueName ? (
-                                                <>
-                                                    <p className="font-medium">{formData.venueName}</p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {[formData.venueAddress, formData.venueCity, formData.venueCountry]
-                                                            .filter(Boolean)
-                                                            .join(", ") || "Address not provided"}
-                                                    </p>
-                                                </>
-                                            ) : (
-                                                <p className="text-muted-foreground">Location not set</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </TabsContent>
 
                 {/* Settings Tab */}
-                <TabsContent value="settings" className="space-y-4">
-                    <div className="bg-card border rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold">Event Settings</h3>
-                            {canEdit && editingField !== "settings" && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditingField("settings")}
-                                >
-                                    <Pencil className="size-4 mr-2" />
-                                    Edit
-                                </Button>
-                            )}
-                        </div>
-
-                        {editingField === "settings" ? (
-                            <div className="space-y-6">
-                                {/* Visibility */}
-                                <div className="space-y-3">
-                                    <Label>Event Visibility</Label>
-                                    <div className="flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, isPublic: true }))}
-                                            className={cn(
-                                                "flex-1 flex items-center gap-3 p-4 rounded-xl border-2 transition-all",
-                                                formData.isPublic
-                                                    ? "border-primary bg-primary/5"
-                                                    : "border-muted hover:border-muted-foreground/30"
-                                            )}
-                                        >
-                                            <Eye className={cn("size-5", formData.isPublic ? "text-primary" : "text-muted-foreground")} />
-                                            <div className="text-left">
-                                                <p className="font-medium">Public</p>
-                                                <p className="text-xs text-muted-foreground">Anyone can discover this event</p>
-                                            </div>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, isPublic: false }))}
-                                            className={cn(
-                                                "flex-1 flex items-center gap-3 p-4 rounded-xl border-2 transition-all",
-                                                isPrivate
-                                                    ? "border-primary bg-primary/5"
-                                                    : "border-muted hover:border-muted-foreground/30"
-                                            )}
-                                        >
-                                            <EyeOff className={cn("size-5", isPrivate ? "text-primary" : "text-muted-foreground")} />
-                                            <div className="text-left">
-                                                <p className="font-medium">Private</p>
-                                                <p className="text-xs text-muted-foreground">Only organization members can view this event</p>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Max Attendees */}
-                                <div className="space-y-2">
-                                    <Label>Maximum Attendees</Label>
-                                    <Input
-                                        type="number"
-                                        value={formData.maxAttendees}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, maxAttendees: e.target.value }))}
-                                        placeholder="Leave empty for unlimited"
-                                        min={1}
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Leave empty for unlimited capacity
-                                    </p>
-                                </div>
-
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                isPublic: event.isPublic,
-                                                maxAttendees: event.maxAttendees?.toString() ?? "",
-                                            }));
-                                            setEditingField(null);
-                                        }}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={() => saveMultipleFields({
-                                            isPublic: formData.isPublic,
-                                            maxAttendees: formData.maxAttendees || undefined,
-                                        })}
-                                        disabled={isPending}
-                                    >
-                                        {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                                        Save
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    {formData.isPublic ? (
-                                        <Eye className="size-5 text-green-600" />
-                                    ) : (
-                                        <EyeOff className="size-5 text-yellow-600" />
-                                    )}
-                                    <div>
-                                        <p className="font-medium">
-                                            {formData.isPublic ? "Public Event" : "Private Event"}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {formData.isPublic
-                                                ? "This event is visible to everyone"
-                                                : "This event is only visible to organization members"}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Users className="size-5 text-primary" />
-                                    <div>
-                                        <p className="font-medium">
-                                            {formData.maxAttendees || "Unlimited"} Capacity
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Maximum number of attendees
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                <TabsContent value="settings" className="space-y-6">
+                    <EventSettingsTab
+                        formData={formData}
+                        setFormData={setFormData}
+                        event={event}
+                        editingField={editingField}
+                        setEditingField={setEditingField}
+                        canEdit={canEdit}
+                        isPending={isPending}
+                        saveField={saveField}
+                        saveMultipleFields={saveMultipleFields}
+                    />
                 </TabsContent>
             </Tabs>
         </div>
     );
 }
+
+

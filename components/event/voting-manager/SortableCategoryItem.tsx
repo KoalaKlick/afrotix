@@ -1,22 +1,16 @@
-"use client";
-
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-import {
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
+import { TabsTrigger } from "@/components/ui/tabs";
 import type { VotingCategory } from "@/lib/types/voting";
+import { cn } from "@/lib/utils";
 
 interface SortableCategoryItemProps {
     readonly category: VotingCategory;
     readonly canEdit: boolean;
-    readonly children: React.ReactNode;
-    readonly dragHandleSlot: React.ReactNode;
 }
 
-export function SortableCategoryItem({ category, canEdit, children, dragHandleSlot }: SortableCategoryItemProps) {
+export function SortableCategoryItem({ category, canEdit }: SortableCategoryItemProps) {
     const {
         attributes,
         listeners,
@@ -27,38 +21,33 @@ export function SortableCategoryItem({ category, canEdit, children, dragHandleSl
     } = useSortable({ id: category.id });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform: CSS.Translate.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 1 : 0,
-        position: "relative" as const,
+        zIndex: isDragging ? 10 : 1,
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes}>
-            <AccordionItem
-                value={category.id}
-                className="border rounded-lg bg-card"
-            >
-                <div className="flex items-center gap-3 px-4">
-                    {canEdit && (
-                        <button
-                            type="button"
-                            aria-label="Drag to reorder category"
-                            {...listeners}
-                            className="cursor-grab active:cursor-grabbing touch-none p-1 -m-1 hover:bg-muted rounded"
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                        >
-                            <GripVertical className="size-4 text-muted-foreground" />
-                        </button>
-                    )}
-                    <AccordionTrigger className="flex-1 px-0 hover:no-underline">
-                        {dragHandleSlot}
-                    </AccordionTrigger>
+        <TabsTrigger
+            ref={setNodeRef}
+            style={style}
+            value={category.id}
+            className={cn(
+                "relative flex items-center gap-1.5 h-full",
+                isDragging && "opacity-50 shadow-md ring-2 ring-primary/20 cursor-grabbing"
+            )}
+        >
+            {canEdit && (
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-0.5 -ml-1 hover:bg-muted rounded text-muted-foreground transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <GripVertical className="size-3.5" />
                 </div>
-                {children}
-            </AccordionItem>
-        </div>
+            )}
+            <span className="font-medium whitespace-nowrap">{category.name}</span>
+        </TabsTrigger>
     );
 }

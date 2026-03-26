@@ -286,3 +286,26 @@ export async function ensureProfile(
         return null;
     }
 }
+
+export const getProfileStats = cache(async (userId: string) => {
+    try {
+        logger.info({ userId }, "[DAL] Fetching event stats for user");
+
+        const [organizations, createdEvents] = await Promise.all([
+            prisma.organization.findMany({
+                where: { members: { some: { userId } } },
+                select: { id: true },
+            }),
+            prisma.event.count({ where: { creatorId: userId } }),
+        ]);
+
+        return {
+            organizationCount: organizations.length,
+            createdEvents,
+        };
+
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching event stats for user:");
+        return { organizationCount: 0, createdEvents: 0 };
+    }
+});

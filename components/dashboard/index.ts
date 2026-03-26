@@ -9,3 +9,7 @@ export { RecentActivity, sampleActivities, emptyActivities } from "./RecentActiv
 export { UpcomingEvents, sampleUpcomingEvents } from "./UpcomingEvents";
 export { WelcomeCard, defaultSetupSteps, type SetupStep } from "./WelcomeCard";
 export { DashboardContent } from "./DashboardContent";
+export { OngoingEvents } from "./OngoingEvents";
+export { RevenueChart } from "./RevenueChart";
+export { EventTypePieChart } from "./EventTypePieChart";
+export { RecentOrdersTable } from "./RecentOrdersTable";

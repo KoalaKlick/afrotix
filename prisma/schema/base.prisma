@@ -1,6 +1,3 @@
-// Prisma Schema - Base Configuration
-// Generator and datasource configuration
-
 generator client {
   provider = "prisma-client-js"
   output   = "../../lib/generated/prisma"

@@ -56,7 +56,7 @@ export function NomineeCard({
     return (
         <Card
             className={cn(
-                "overflow-hidden group",
+                "overflow-hidden group p-0",
                 option.status === "pending" && "ring-2 ring-yellow-500/50",
                 option.status === "rejected" && "opacity-50"
             )}

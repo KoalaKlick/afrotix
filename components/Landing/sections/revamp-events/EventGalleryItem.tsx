@@ -13,8 +13,13 @@ export type DbEvent = Event & {
     }
 }
 
+const accentCycle3: ('red' | 'yellow' | 'green')[] = ['red', 'yellow', 'green']
+const accentCycle4: ('red' | 'yellow' | 'green' | 'black')[] = ['red', 'yellow', 'green', 'black']
+
 interface EventCardProps {
     readonly item: EventItem | DbEvent
+    readonly index?: number
+    readonly colorCount?: 3 | 4
     readonly className?: string
     readonly size?: 'default' | 'large'
 }
@@ -24,12 +29,14 @@ const accentTextColors: Record<string, string> = {
     red: 'text-[#CE1126]',
     yellow: 'text-[#FFCD00]',
     green: 'text-[#009A44]',
+    black: 'text-[#1A1A1A]',
 }
 
 const badgeColors: Record<string, string> = {
     red: 'text-[#CE1126]',
     yellow: 'text-[#FFCD00]',
     green: 'text-[#009A44]',
+    black: 'text-[#1A1A1A]',
 }
 
 /**
@@ -58,12 +65,13 @@ function isDbEvent(item: EventItem | DbEvent): item is DbEvent {
     return typeof item.id === 'string';
 }
 
-export function EventCard({ item, className, size = 'default' }: EventCardProps) {
+export function EventCard({ item, index = 0, colorCount = 3, className, size = 'default' }: EventCardProps) {
     // Determine if it's a DB event or a static landing item
     const isDb = isDbEvent(item);
 
     const title = item.title;
-    const accentColor = !isDb ? (item as EventItem).accentColor : 'green';
+    const cycle = colorCount === 4 ? accentCycle4 : accentCycle3;
+    const accentColor = !isDb ? (item as EventItem).accentColor : cycle[index % cycle.length];
     const colorClass = accentTextColors[accentColor] ?? 'text-[#009A44]';
 
     const image = isDb ? getEventImageUrl((item as DbEvent).coverImage) : (item as EventItem).image;

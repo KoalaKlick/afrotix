@@ -229,7 +229,7 @@ export function CustomFieldsSheet({
             onOpenChange(o);
             if (!o) onClose();
         }}>
-            <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetContent side="right" variant="afro" className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
                     <SheetTitle>
                         Custom Fields for {category?.name}

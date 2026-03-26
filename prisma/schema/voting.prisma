@@ -1,147 +1,120 @@
-// Prisma Schema - Voting
-// Voting categories, options, and votes
-
 model VotingCategory {
-  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  eventId         String  @map("event_id") @db.Uuid
-  name            String
-  description     String?
-  orderIdx        Int     @default(0) @map("order_idx")
-  maxVotesPerUser Int     @default(1) @map("max_votes_per_user")
-  allowMultiple   Boolean @default(false) @map("allow_multiple")
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId               String                @map("event_id") @db.Uuid
+  name                  String
+  description           String?
+  orderIdx              Int                   @default(0) @map("order_idx")
+  maxVotesPerUser       Int                   @default(1) @map("max_votes_per_user")
+  allowMultiple         Boolean               @default(false) @map("allow_multiple")
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  allowPublicNomination Boolean               @default(false) @map("allow_public_nomination")
+  nominationDeadline    DateTime?             @map("nomination_deadline") @db.Timestamptz(6)
+  requireApproval       Boolean               @default(true) @map("require_approval")
+  templateConfig        Json?                 @map("template_config")
+  templateImage         String?               @map("template_image")
+  showFinalImage        Boolean               @default(true) @map("show_final_image")
+  votes                 Vote[]
+  event                 Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  customFields          VotingCategoryField[]
+  votingOptions         VotingOption[]
 
-  // Template settings
-  templateImage  String?  @map("template_image") // Background template image URL
-  templateConfig Json?    @map("template_config") // JSON with position/size settings for nominee photo overlay
-  showFinalImage Boolean  @default(true) @map("show_final_image") // Show finalImage (with template) on cards instead of imageUrl
-
-  // Public nomination settings
-  allowPublicNomination Boolean   @default(false) @map("allow_public_nomination")
-  nominationDeadline    DateTime? @map("nomination_deadline") @db.Timestamptz
-  requireApproval       Boolean   @default(true) @map("require_approval") // Admin must approve public nominations
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-
-  // Relations
-  event         Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  votingOptions VotingOption[]
-  votes         Vote[]
-  customFields  VotingCategoryField[]
-
-  @@index([eventId], name: "idx_voting_categories_event")
+  @@index([eventId], map: "idx_voting_categories_event")
   @@map("voting_categories")
 }
 
-// Custom fields that admin can define per category
 model VotingCategoryField {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  categoryId  String   @map("category_id") @db.Uuid
-  fieldName   String   @map("field_name")
-  fieldType   String   @default("text") @map("field_type") // text, email, phone, url, textarea, select
-  fieldLabel  String   @map("field_label")
+  id          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId  String                   @map("category_id") @db.Uuid
+  fieldName   String                   @map("field_name")
+  fieldType   String                   @default("text") @map("field_type")
+  fieldLabel  String                   @map("field_label")
   placeholder String?
-  isRequired  Boolean  @default(false) @map("is_required")
-  options     String[] @default([]) // For select type fields
-  orderIdx    Int      @default(0) @map("order_idx")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  isRequired  Boolean                  @default(false) @map("is_required")
+  options     String[]                 @default([])
+  orderIdx    Int                      @default(0) @map("order_idx")
+  createdAt   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  category    VotingCategory           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  values      VotingOptionFieldValue[]
 
-  // Relations
-  category VotingCategory           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  values   VotingOptionFieldValue[]
-
-  @@index([categoryId], name: "idx_voting_category_fields_category")
+  @@index([categoryId], map: "idx_voting_category_fields_category")
   @@map("voting_category_fields")
 }
 
 model VotingOption {
-  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  eventId    String  @map("event_id") @db.Uuid
-  categoryId String? @map("category_id") @db.Uuid
-
-  // Basic nominee info
-  optionText  String  @map("option_text") // Nominee name
-  nomineeCode String? @map("nominee_code") // Unique code like "NOM001"
-  email       String? // Nominee's email
-  description String?
-  imageUrl    String? @map("image_url") // Original nominee photo
-  finalImage  String? @map("final_image") // Combined image with template
-
-  // Status and ordering
-  orderIdx   Int                @default(0) @map("order_idx")
-  votesCount BigInt             @default(0) @map("votes_count")
-  status     VotingOptionStatus @default(approved) // For public nominations
-
-  // Public nomination tracking
-  isPublicNomination Boolean @default(false) @map("is_public_nomination")
-  nominatedById      String? @map("nominated_by_id") @db.Uuid
-  nominatedByEmail   String? @map("nominated_by_email")
-  nominatedByName    String? @map("nominated_by_name")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-
-  // Relations
-  event       Event                    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  category    VotingCategory?          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  votes       Vote[]
-  fieldValues VotingOptionFieldValue[]
-  nominatedBy Profile?                 @relation("NominatedOptions", fields: [nominatedById], references: [id], onDelete: SetNull)
+  id                 String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId            String                   @map("event_id") @db.Uuid
+  categoryId         String?                  @map("category_id") @db.Uuid
+  optionText         String                   @map("option_text")
+  description        String?
+  imageUrl           String?                  @map("image_url")
+  orderIdx           Int                      @default(0) @map("order_idx")
+  votesCount         BigInt                   @default(0) @map("votes_count")
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  email              String?
+  finalImage         String?                  @map("final_image")
+  isPublicNomination Boolean                  @default(false) @map("is_public_nomination")
+  nominatedByEmail   String?                  @map("nominated_by_email")
+  nominatedById      String?                  @map("nominated_by_id") @db.Uuid
+  nominatedByName    String?                  @map("nominated_by_name")
+  nomineeCode        String?                  @map("nominee_code")
+  status             VotingOptionStatus       @default(approved)
+  votes              Vote[]
+  fieldValues        VotingOptionFieldValue[]
+  category           VotingCategory?          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  event              Event                    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  nominatedBy        Profile?                 @relation("NominatedOptions", fields: [nominatedById], references: [id])
 
   @@unique([eventId, nomineeCode])
-  @@index([eventId], name: "idx_voting_options_event")
-  @@index([categoryId], name: "idx_voting_options_category")
-  @@index([status], name: "idx_voting_options_status")
+  @@index([eventId], map: "idx_voting_options_event")
+  @@index([categoryId], map: "idx_voting_options_category")
+  @@index([status], map: "idx_voting_options_status")
   @@map("voting_options")
 }
 
-// Store values for custom fields
 model VotingOptionFieldValue {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  optionId  String   @map("option_id") @db.Uuid
-  fieldId   String   @map("field_id") @db.Uuid
+  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  optionId  String              @map("option_id") @db.Uuid
+  fieldId   String              @map("field_id") @db.Uuid
   value     String
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  // Relations
-  option VotingOption        @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  field  VotingCategoryField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  field     VotingCategoryField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  option    VotingOption        @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
   @@unique([optionId, fieldId])
-  @@index([optionId], name: "idx_voting_option_field_values_option")
+  @@index([optionId], map: "idx_voting_option_field_values_option")
   @@map("voting_option_field_values")
 }
 
-enum VotingOptionStatus {
-  pending // Awaiting admin approval (public nominations)
-  approved // Approved and visible
-  rejected // Rejected by admin
-
-  @@map("voting_option_status")
-}
-
 model Vote {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  eventId          String   @map("event_id") @db.Uuid
-  optionId         String   @map("option_id") @db.Uuid
-  categoryId       String?  @map("category_id") @db.Uuid
-  voterId          String?  @map("voter_id") @db.Uuid
-  voterEmail       String?  @map("voter_email")
-  voterIp          String?  @map("voter_ip") @db.Inet
-  amountPaid       Decimal  @default(0) @map("amount_paid") @db.Decimal(10, 2)
-  paymentReference String?  @map("payment_reference")
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  // Relations
-  event    Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  option   VotingOption    @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  category VotingCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  voter    Profile?        @relation(fields: [voterId], references: [id], onDelete: SetNull)
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId          String          @map("event_id") @db.Uuid
+  optionId         String          @map("option_id") @db.Uuid
+  categoryId       String?         @map("category_id") @db.Uuid
+  voterId          String?         @map("voter_id") @db.Uuid
+  voterEmail       String?         @map("voter_email")
+  voterIp          String?         @map("voter_ip") @db.Inet
+  amountPaid       Decimal         @default(0) @map("amount_paid") @db.Decimal(10, 2)
+  paymentReference String?         @map("payment_reference")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  category         VotingCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  event            Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  option           VotingOption    @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  voter            Profile?        @relation(fields: [voterId], references: [id])
 
   @@unique([eventId, optionId, voterId])
-  @@index([eventId], name: "idx_votes_event")
-  @@index([optionId], name: "idx_votes_option")
-  @@index([voterId], name: "idx_votes_voter")
-  @@index([createdAt], name: "idx_votes_created_at")
+  @@index([eventId], map: "idx_votes_event")
+  @@index([optionId], map: "idx_votes_option")
+  @@index([voterId], map: "idx_votes_voter")
+  @@index([createdAt], map: "idx_votes_created_at")
   @@map("votes")
+}
+
+enum VotingOptionStatus {
+  pending
+  approved
+  rejected
+
+  @@map("voting_option_status")
 }

@@ -1,6 +1,3 @@
-// Prisma Schema - Enums
-// All enum definitions for the application
-
 enum OrganizationRole {
   owner
   admin

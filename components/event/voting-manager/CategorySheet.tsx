@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, useCallback } from "react";
-import Image from "next/image";
+import { useEffect, useTransition, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,100 +15,73 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import {
-    Trash2,
-    Loader2,
-    Upload,
-    ImageIcon,
-    Clock,
-    Globe,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2, Clock, Globe } from "lucide-react";
 import { toast } from "sonner";
-import { convertToWebP } from "@/lib/image-utils";
-import {
-    createCategory,
-    updateCategory,
-    uploadTemplateImage,
-} from "@/lib/actions/voting";
-import type { VotingCategory } from "@/lib/types/voting";
-
-export interface CategoryFormData {
-    name: string;
-    description: string;
-    maxVotesPerUser: number;
-    allowMultiple: boolean;
-    allowPublicNomination: boolean;
-    nominationDeadline: string;
-    requireApproval: boolean;
-    templateImage: string;
-    showFinalImage: boolean;
-}
+import { createCategory, updateCategory } from "@/lib/actions/voting";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
+import { getCategoryTemplateImageUrl } from "@/lib/image-url-utils";
+import { ImageDropzone } from "@/components/shared/ImageDropzone";
+import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
+import type { VotingCategory, CategoryFormData } from "@/lib/types/voting";
 
 interface CategorySheetProps {
     readonly eventId: string;
     readonly open: boolean;
     readonly onOpenChange: (open: boolean) => void;
-    readonly editingCategory: VotingCategory | null;
-    readonly nextOrderIndex: number;
+    readonly trigger?: React.ReactNode;
+    readonly editingCategory?: VotingCategory | null;
     readonly onCategoryCreated: (category: VotingCategory) => void;
     readonly onCategoryUpdated: (category: VotingCategory) => void;
-    readonly trigger?: React.ReactNode;
+    readonly nextOrderIndex?: number;
 }
+
+const EMPTY_FORM: CategoryFormData = {
+    name: "",
+    description: "",
+    maxVotesPerUser: 1,
+    allowMultiple: false,
+    allowPublicNomination: false,
+    nominationDeadline: "",
+    requireApproval: false,
+    templateImage: null,
+    templateConfig: null,
+    showFinalImage: true,
+};
 
 export function CategorySheet({
     eventId,
     open,
     onOpenChange,
+    trigger,
     editingCategory,
-    nextOrderIndex,
     onCategoryCreated,
     onCategoryUpdated,
-    trigger,
+    nextOrderIndex = 0,
 }: CategorySheetProps) {
-    const [form, setForm] = useState<CategoryFormData>({
-        name: "",
-        description: "",
-        maxVotesPerUser: 1,
-        allowMultiple: false,
-        allowPublicNomination: false,
-        nominationDeadline: "",
-        requireApproval: true,
-        templateImage: "",
-        showFinalImage: true,
-    });
     const [isPending, startTransition] = useTransition();
-    const [isUploadingTemplate, setIsUploadingTemplate] = useState(false);
-    const templateInputRef = useRef<HTMLInputElement>(null);
+    const [form, setForm] = useState<CategoryFormData>(EMPTY_FORM);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
+    const { isUploading, upload } = useImageUpload({
+        bucket: "events",
+        folder: "templates",
+        convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
+    });
 
     const resetForm = useCallback(() => {
-        setForm({
-            name: "",
-            description: "",
-            maxVotesPerUser: 1,
-            allowMultiple: false,
-            allowPublicNomination: false,
-            nominationDeadline: "",
-            requireApproval: true,
-            templateImage: "",
-            showFinalImage: true,
-        });
-    }, []);
+        setForm(EMPTY_FORM);
+        setPendingFile(null);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+    }, [previewUrl]);
 
     useEffect(() => {
-        if (!open) {
-            return;
-        }
-
-        if (editingCategory) {
+        if (open && editingCategory) {
             setForm({
                 name: editingCategory.name,
                 description: editingCategory.description ?? "",
@@ -117,89 +89,70 @@ export function CategorySheet({
                 allowMultiple: editingCategory.allowMultiple,
                 allowPublicNomination: editingCategory.allowPublicNomination,
                 nominationDeadline: editingCategory.nominationDeadline
-                    ? new Date(editingCategory.nominationDeadline).toISOString().slice(0, 16)
+                    ? (typeof editingCategory.nominationDeadline === 'string'
+                        ? editingCategory.nominationDeadline.slice(0, 16)
+                        : editingCategory.nominationDeadline.toISOString().slice(0, 16))
                     : "",
                 requireApproval: editingCategory.requireApproval,
-                templateImage: editingCategory.templateImage ?? "",
-                showFinalImage: editingCategory.showFinalImage,
+                templateImage: editingCategory.templateImage ?? null,
+                templateConfig: editingCategory.templateConfig ?? null,
+                showFinalImage: editingCategory.showFinalImage ?? true,
             });
-            return;
+        } else if (!open) {
+            resetForm();
         }
+    }, [open, editingCategory, resetForm]);
 
-        resetForm();
-    }, [editingCategory, open, resetForm]);
+    const initialDeadline = editingCategory?.nominationDeadline
+        ? (typeof editingCategory.nominationDeadline === 'string'
+            ? editingCategory.nominationDeadline.slice(0, 16)
+            : editingCategory.nominationDeadline.toISOString().slice(0, 16))
+        : "";
 
-    async function handleTemplateImageUpload(file: File) {
-        setIsUploadingTemplate(true);
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 1,
-                maxWidth: 1200,
-                maxHeight: 1200,
-                maxSizeMB: 5,
-            });
+    const isDirty =
+        form.name !== (editingCategory?.name ?? "") ||
+        form.description !== (editingCategory?.description ?? "") ||
+        form.maxVotesPerUser !== (editingCategory?.maxVotesPerUser ?? 1) ||
+        form.allowMultiple !== (editingCategory?.allowMultiple ?? false) ||
+        form.allowPublicNomination !== (editingCategory?.allowPublicNomination ?? false) ||
+        form.requireApproval !== (editingCategory?.requireApproval ?? false) ||
+        form.showFinalImage !== (editingCategory?.showFinalImage ?? true) ||
+        form.nominationDeadline !== initialDeadline ||
+        pendingFile !== null;
 
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-
-            const result = await uploadTemplateImage(formData);
-            if (result.success) {
-                setForm(prev => ({ ...prev, templateImage: result.data.url }));
-                toast.success("Template uploaded");
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to upload template");
-        } finally {
-            setIsUploadingTemplate(false);
+    const handleCloseAttempt = (newOpen: boolean) => {
+        if (!newOpen && isDirty) {
+            setShowDiscardDialog(true);
+        } else {
+            onOpenChange(newOpen);
+            if (!newOpen) resetForm();
         }
-    }
+    };
 
-    function handleSave() {
+    const handleSave = () => {
         if (!form.name.trim()) {
             toast.error("Category name is required");
             return;
         }
 
         startTransition(async () => {
-            if (editingCategory) {
-                const result = await updateCategory(editingCategory.id, {
-                    name: form.name,
-                    description: form.description || undefined,
-                    maxVotesPerUser: form.maxVotesPerUser,
-                    allowMultiple: form.allowMultiple,
-                    allowPublicNomination: form.allowPublicNomination,
-                    nominationDeadline: form.nominationDeadline || undefined,
-                    requireApproval: form.requireApproval,
-                    templateImage: form.templateImage || undefined,
-                    showFinalImage: form.showFinalImage,
-                });
+            // Determine the final image URL:
+            // 1. If we have a NEW file to upload, we'll set it after uploading.
+            // 2. If no new file AND no existing image path, it means image was removed -> null.
+            // 3. If no new file but we HAVE an existing image path, it stays as is.
+            let finalImageUrl: string | null | undefined = form.templateImage || (pendingFile ? undefined : null);
 
-                if (result.success) {
-                    onCategoryUpdated({
-                        ...editingCategory,
-                        name: form.name,
-                        description: form.description || null,
-                        maxVotesPerUser: form.maxVotesPerUser,
-                        allowMultiple: form.allowMultiple,
-                        allowPublicNomination: form.allowPublicNomination,
-                        nominationDeadline: form.nominationDeadline || null,
-                        requireApproval: form.requireApproval,
-                        templateImage: form.templateImage || null,
-                        showFinalImage: form.showFinalImage,
-                    });
-                    toast.success("Category updated");
-                    onOpenChange(false);
-                    resetForm();
-                } else {
-                    toast.error(result.error);
+            // Step 1: Upload pending file if it exists
+            if (pendingFile) {
+                const uploadedPath = await upload(pendingFile, form.templateImage || undefined);
+                if (!uploadedPath) {
+                    toast.error("Failed to upload image");
+                    return;
                 }
-
-                return;
+                finalImageUrl = uploadedPath;
             }
 
-            const result = await createCategory(eventId, {
+            const payload = {
                 name: form.name,
                 description: form.description || undefined,
                 maxVotesPerUser: form.maxVotesPerUser,
@@ -207,84 +160,137 @@ export function CategorySheet({
                 allowPublicNomination: form.allowPublicNomination,
                 nominationDeadline: form.nominationDeadline || undefined,
                 requireApproval: form.requireApproval,
-                templateImage: form.templateImage || undefined,
+                templateImage: finalImageUrl,
+                templateConfig: form.templateConfig || undefined,
                 showFinalImage: form.showFinalImage,
-            });
+            };
 
+            if (editingCategory) {
+                console.log("form payload", payload);
+                const result = await updateCategory(editingCategory.id, payload);
+                console.log("Update category result:", result);
+                if (result.success) {
+                    onCategoryUpdated({
+                        ...editingCategory,
+                        ...payload,
+                        description: form.description || null,
+                        nominationDeadline: form.nominationDeadline || null,
+                        templateImage: finalImageUrl || null,
+                    });
+                    toast.success("Category updated");
+                    onOpenChange(false);
+                } else {
+                    toast.error(result.error ?? "Failed to update category");
+                }
+                return;
+            }
+
+            const result = await createCategory(eventId, payload);
             if (result.success) {
                 onCategoryCreated({
                     id: result.data.id,
-                    name: form.name,
+                    ...payload,
                     description: form.description || null,
-                    maxVotesPerUser: form.maxVotesPerUser,
-                    allowMultiple: form.allowMultiple,
-                    templateImage: form.templateImage || null,
-                    templateConfig: null,
-                    showFinalImage: form.showFinalImage,
-                    allowPublicNomination: form.allowPublicNomination,
                     nominationDeadline: form.nominationDeadline || null,
-                    requireApproval: form.requireApproval,
+                    templateImage: finalImageUrl || null,
                     orderIdx: nextOrderIndex,
                     votingOptions: [],
                     customFields: [],
                 });
                 toast.success("Category created");
                 onOpenChange(false);
-                resetForm();
             } else {
-                toast.error(result.error);
+                toast.error(result.error ?? "Failed to create category");
             }
         });
-    }
+    };
+
+    // `id` = storage path (key + what gets passed to onRemoveInitialFile)
+    // `url` = full public URL for display only
+    const templateDisplayUrl = getCategoryTemplateImageUrl(form.templateImage);
+    const initialFiles =
+        (previewUrl || (form.templateImage && templateDisplayUrl))
+            ? [{ 
+                id: pendingFile ? "pending" : (form.templateImage || "initial"), 
+                url: previewUrl || templateDisplayUrl || "", 
+                name: pendingFile ? pendingFile.name : "Template image" 
+            }]
+            : [];
 
     return (
-        <Sheet open={open} onOpenChange={(o) => {
-            onOpenChange(o);
-            if (!o) resetForm();
-        }}>
+        <Sheet
+            open={open}
+            onOpenChange={handleCloseAttempt}
+        >
             {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
-            <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+
+            <SheetContent side="right" variant="afro" className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
-                    <SheetTitle>
-                        {editingCategory ? "Edit Category" : "Add Category"}
-                    </SheetTitle>
-                    <SheetDescription>
-                        Create a voting category for nominees
-                    </SheetDescription>
+                    <SheetTitle>{editingCategory ? "Edit Category" : "Add Category"}</SheetTitle>
+                    <SheetDescription>Create or edit a voting category for nominees</SheetDescription>
                 </SheetHeader>
+
                 <SheetBody>
                     <Tabs defaultValue="basic" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList variant="afro" className="grid w-full grid-cols-2">
                             <TabsTrigger value="basic">Basic</TabsTrigger>
                             <TabsTrigger value="nominations">Nominations</TabsTrigger>
-                            <TabsTrigger value="template">Template</TabsTrigger>
                         </TabsList>
 
-                        {/* Basic Tab */}
+                        {/* ── Basic Tab ── */}
                         <TabsContent value="basic" className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <Label>Category Template Image</Label>
+                                <ImageDropzone
+                                    maxFiles={1}
+                                    gridCols="grid-cols-1"
+                                    uploadLabel="Upload template image"
+                                    uploadSubLabel="Click or drag and drop to upload"
+                                    initialFiles={initialFiles}
+                                    onRemoveInitialFile={() => {
+                                        setForm((prev) => ({ ...prev, templateImage: null }));
+                                        setPendingFile(null);
+                                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                                        setPreviewUrl(null);
+                                    }}
+                                    getDisplayUrl={getCategoryTemplateImageUrl}
+                                    onDropFile={async (file) => {
+                                        // Store file locally and create preview
+                                        setPendingFile(file);
+                                        const url = URL.createObjectURL(file);
+                                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                                        setPreviewUrl(url);
+
+                                        return { status: "success", result: "pending" };
+                                    }}
+                                />
+                            </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="category-name">Name *</Label>
                                 <Input
                                     id="category-name"
                                     value={form.name}
                                     onChange={(e) =>
-                                        setForm(prev => ({ ...prev, name: e.target.value }))
+                                        setForm((prev) => ({ ...prev, name: e.target.value }))
                                     }
                                     placeholder="e.g., Best Actor"
                                 />
                             </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="category-description">Description</Label>
                                 <Textarea
                                     id="category-description"
                                     value={form.description}
                                     onChange={(e) =>
-                                        setForm(prev => ({ ...prev, description: e.target.value }))
+                                        setForm((prev) => ({ ...prev, description: e.target.value }))
                                     }
                                     placeholder="Describe this category..."
                                     rows={3}
                                 />
                             </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="max-votes">Max Votes Per User</Label>
                                 <Input
@@ -293,13 +299,14 @@ export function CategorySheet({
                                     min={1}
                                     value={form.maxVotesPerUser}
                                     onChange={(e) =>
-                                        setForm(prev => ({
+                                        setForm((prev) => ({
                                             ...prev,
                                             maxVotesPerUser: Number.parseInt(e.target.value) || 1,
                                         }))
                                     }
                                 />
                             </div>
+
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
                                     <Label>Allow Multiple Selections</Label>
@@ -310,13 +317,13 @@ export function CategorySheet({
                                 <Switch
                                     checked={form.allowMultiple}
                                     onCheckedChange={(checked) =>
-                                        setForm(prev => ({ ...prev, allowMultiple: checked }))
+                                        setForm((prev) => ({ ...prev, allowMultiple: checked }))
                                     }
                                 />
                             </div>
                         </TabsContent>
 
-                        {/* Nominations Tab */}
+                        {/* ── Nominations Tab ── */}
                         <TabsContent value="nominations" className="space-y-4 py-4">
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
@@ -331,10 +338,11 @@ export function CategorySheet({
                                 <Switch
                                     checked={form.allowPublicNomination}
                                     onCheckedChange={(checked) =>
-                                        setForm(prev => ({ ...prev, allowPublicNomination: checked }))
+                                        setForm((prev) => ({ ...prev, allowPublicNomination: checked }))
                                     }
                                 />
                             </div>
+
                             {form.allowPublicNomination && (
                                 <>
                                     <Separator />
@@ -348,13 +356,17 @@ export function CategorySheet({
                                             type="datetime-local"
                                             value={form.nominationDeadline}
                                             onChange={(e) =>
-                                                setForm(prev => ({ ...prev, nominationDeadline: e.target.value }))
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    nominationDeadline: e.target.value,
+                                                }))
                                             }
                                         />
                                         <p className="text-xs text-muted-foreground">
                                             Leave empty for no deadline
                                         </p>
                                     </div>
+
                                     <div className="flex items-center justify-between">
                                         <div className="space-y-0.5">
                                             <Label>Require Approval</Label>
@@ -365,109 +377,7 @@ export function CategorySheet({
                                         <Switch
                                             checked={form.requireApproval}
                                             onCheckedChange={(checked) =>
-                                                setForm(prev => ({ ...prev, requireApproval: checked }))
-                                            }
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </TabsContent>
-
-                        {/* Template Tab */}
-                        <TabsContent value="template" className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label>Nominee Photo Template</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Upload a template image for positioning nominee photos
-                                </p>
-                            </div>
-                            {form.templateImage ? (
-                                <div className="space-y-3">
-                                    <div className="relative aspect-video rounded-lg border overflow-hidden bg-muted">
-                                        <Image
-                                            src={form.templateImage}
-                                            alt="Template"
-                                            fill
-                                            className="object-contain"
-                                        />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => templateInputRef.current?.click()}
-                                            disabled={isUploadingTemplate}
-                                        >
-                                            {isUploadingTemplate ? (
-                                                <Loader2 className="size-4 mr-2 animate-spin" />
-                                            ) : (
-                                                <Upload className="size-4 mr-2" />
-                                            )}
-                                            Replace
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setForm(prev => ({ ...prev, templateImage: "" }))}
-                                        >
-                                            <Trash2 className="size-4 mr-2" />
-                                            Remove
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <button
-                                    type="button"
-                                    tabIndex={0}
-                                    onClick={() => templateInputRef.current?.click()}
-                                    onKeyDown={(e) => e.key === "Enter" && templateInputRef.current?.click()}
-                                    className={cn(
-                                        "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-                                        "hover:border-primary hover:bg-muted/50",
-                                        isUploadingTemplate && "pointer-events-none opacity-50"
-                                    )}
-                                >
-                                    {isUploadingTemplate ? (
-                                        <Loader2 className="size-8 mx-auto mb-2 animate-spin text-muted-foreground" />
-                                    ) : (
-                                        <ImageIcon className="size-8 mx-auto mb-2 text-muted-foreground" />
-                                    )}
-                                    <p className="text-sm text-muted-foreground">
-                                        {isUploadingTemplate ? "Uploading..." : "Click to upload template image"}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        PNG, JPG, or WebP (max 10MB)
-                                    </p>
-                                </button>
-                            )}
-                            <input
-                                ref={templateInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                className="hidden"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleTemplateImageUpload(file);
-                                    e.target.value = "";
-                                }}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                When a template is set, nominees can position their photo on it during upload.
-                            </p>
-                            {form.templateImage && (
-                                <>
-                                    <Separator className="my-4" />
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-0.5">
-                                            <Label>Show Template Image on Cards</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Display the combined template image instead of the original photo
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            checked={form.showFinalImage}
-                                            onCheckedChange={(checked) =>
-                                                setForm(prev => ({ ...prev, showFinalImage: checked }))
+                                                setForm((prev) => ({ ...prev, requireApproval: checked }))
                                             }
                                         />
                                     </div>
@@ -476,6 +386,7 @@ export function CategorySheet({
                         </TabsContent>
                     </Tabs>
                 </SheetBody>
+
                 <SheetFooter>
                     <Button
                         variant="outline"
@@ -491,6 +402,16 @@ export function CategorySheet({
                         {editingCategory ? "Save Changes" : "Add Category"}
                     </Button>
                 </SheetFooter>
+
+                <ConfirmDiscardDialog
+                    open={showDiscardDialog}
+                    onOpenChange={setShowDiscardDialog}
+                    onConfirm={() => {
+                        setShowDiscardDialog(false);
+                        onOpenChange(false);
+                        resetForm();
+                    }}
+                />
             </SheetContent>
         </Sheet>
     );
