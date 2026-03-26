@@ -202,7 +202,7 @@ export function CategoryList({
     return (
         <Tabs value={activeCategoryId} onValueChange={setActiveCategoryId} className="space-y-4">
             <div className={cn(
-                "flex items-center gap-2 overflow-x-auto no-scrollbar border-b bg-muted/30 -mx-6 px-6",
+                "flex items-center gap-2 overflow-x-auto no-scrollbar pb-1",
             )}>
                 <DndContext
                     sensors={sensors}
@@ -213,7 +213,7 @@ export function CategoryList({
                         items={categories.map(c => c.id)}
                         strategy={horizontalListSortingStrategy}
                     >
-                        <TabsList className="bg-transparent h-auto p-0 flex flex-nowrap w-max gap-px">
+                        <TabsList variant="afro" className={cn("w-full justify-start overflow-x-auto")}>
                             {categories.map((category) => (
                                 <SortableCategoryItem
                                     key={category.id}
@@ -356,5 +356,6 @@ export function CategoryList({
         </Tabs>
     );
 }
+
 
 

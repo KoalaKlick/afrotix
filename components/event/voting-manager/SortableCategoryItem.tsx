@@ -28,32 +28,26 @@ export function SortableCategoryItem({ category, canEdit }: SortableCategoryItem
     };
 
     return (
-        <div
+        <TabsTrigger
             ref={setNodeRef}
             style={style}
-            className="relative flex items-center h-full"
+            value={category.id}
+            className={cn(
+                "relative flex items-center gap-1.5 h-full",
+                isDragging && "opacity-50 shadow-md ring-2 ring-primary/20 cursor-grabbing"
+            )}
         >
-            <TabsTrigger
-                value={category.id}
-                className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 h-full rounded-none border-b-2 border-transparent transition-all",
-                    "data-[state=active]:border-primary data-[state=active]:bg-background/50",
-                    "hover:bg-muted/50",
-                    isDragging && "opacity-50"
-                )}
-            >
-                {canEdit && (
-                    <div
-                        {...attributes}
-                        {...listeners}
-                        className="cursor-grab active:cursor-grabbing p-0.5 -ml-1 hover:bg-muted rounded text-muted-foreground transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <GripVertical className="size-3.5" />
-                    </div>
-                )}
-                <span className="font-medium whitespace-nowrap">{category.name}</span>
-            </TabsTrigger>
-        </div>
+            {canEdit && (
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-0.5 -ml-1 hover:bg-muted rounded text-muted-foreground transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <GripVertical className="size-3.5" />
+                </div>
+            )}
+            <span className="font-medium whitespace-nowrap">{category.name}</span>
+        </TabsTrigger>
     );
 }
