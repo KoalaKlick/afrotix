@@ -36,7 +36,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
     updateExistingEvent,
-    uploadEventImage,
     changeEventStatus
 } from "@/lib/actions/event";
 import { getEventImageUrl } from "@/lib/image-url-utils";
@@ -44,7 +43,7 @@ import {
     getEventPublicationStatus,
     getEventLifecycleStatus
 } from "@/lib/event-status";
-import { convertToWebP } from "@/lib/image-utils";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import type { OrganizationRole } from "@/lib/generated/prisma";
 import type {
     EventDetailStatsData,
@@ -122,7 +121,18 @@ const statusColors: Record<string, string> = {
 export function EventDetailClient({ event, organizationSlug, userRole, votingCategories = [], eventStats, voteTrend = [] }: EventDetailClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
-    const [isUploading, setIsUploading] = useState(false);
+
+    const { isUploading: isUploadingCover, upload: uploadCover } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
+    });
+    const { isUploading: isUploadingBanner, upload: uploadBanner } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1920, maxHeight: 400, maxSizeMB: 2 },
+    });
+    const isUploading = isUploadingCover || isUploadingBanner;
 
     // Editable fields state
     const [editingField, setEditingField] = useState<string | null>(null);
@@ -145,6 +155,10 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         maxAttendees: event.maxAttendees?.toString() ?? "",
         isPublic: event.isPublic,
     });
+    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+    const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
+    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+    const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
     const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,26 +175,6 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         endDate: formData.endDate || null,
     });
     const canViewPublicPage = Boolean(publicEventUrl && formData.isPublic && publicationStatus === "published");
-
-    // Generate display URLs from paths
-    const coverDisplayUrl = getEventImageUrl(formData.coverImage);
-    const bannerDisplayUrl = getEventImageUrl(formData.bannerImage);
-
-    // Save a single field
-    async function saveField(fieldName: string, value: unknown) {
-        const formDataObj = new FormData();
-        formDataObj.set(fieldName, String(value));
-
-        startTransition(async () => {
-            const result = await updateExistingEvent(event.id, formDataObj);
-            if (result.success) {
-                toast.success("Changes saved");
-                setEditingField(null);
-            } else {
-                toast.error(result.error);
-            }
-        });
-    }
 
     // Save multiple fields at once
     async function saveMultipleFields(fields: Record<string, unknown>) {
@@ -202,50 +196,89 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         });
     }
 
-    // Image upload handler
-    async function handleImageUpload(file: File, type: "cover" | "banner") {
-        setIsUploading(true);
+    // Generate display URLs from paths or previews
+    const coverDisplayUrl = coverPreviewUrl || getEventImageUrl(formData.coverImage);
+    const bannerDisplayUrl = bannerPreviewUrl || getEventImageUrl(formData.bannerImage);
 
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: type === "cover" ? 1200 : 1920,
-                maxHeight: type === "cover" ? 630 : 400,
-                maxSizeMB: 2,
-            });
+    // Save a single field
+    async function saveField(fieldName: string, value: unknown) {
+        const formDataObj = new FormData();
+        formDataObj.set(fieldName, String(value));
 
-            const uploadFormData = new FormData();
-            uploadFormData.set("file", optimizedFile);
-
-            // Pass old image path for deletion
-            const oldImagePath = type === "cover" ? formData.coverImage : formData.bannerImage;
-            if (oldImagePath) {
-                uploadFormData.set("oldImagePath", oldImagePath);
-            }
-
-            const result = await uploadEventImage(uploadFormData, type);
+        startTransition(async () => {
+            const result = await updateExistingEvent(event.id, formDataObj);
             if (result.success) {
-                const fieldName = type === "cover" ? "coverImage" : "bannerImage";
-                setFormData(prev => ({ ...prev, [fieldName]: result.data.path }));
-
-                // Save to database directly
-                const saveFormData = new FormData();
-                saveFormData.set(fieldName, result.data.path);
-                const saveResult = await updateExistingEvent(event.id, saveFormData);
-
-                if (saveResult.success) {
-                    toast.success(`${type === "cover" ? "Cover" : "Banner"} image updated`);
-                } else {
-                    toast.error(saveResult.error);
-                }
+                toast.success("Changes saved");
+                setEditingField(null);
             } else {
                 toast.error(result.error);
             }
-        } catch {
-            toast.error("Failed to upload image");
-        } finally {
-            setIsUploading(false);
+        });
+    }
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        startTransition(async () => {
+            let finalCoverImage = formData.coverImage;
+            let finalBannerImage = formData.bannerImage;
+
+            // Upload pending cover if exists
+            if (pendingCoverFile) {
+                const path = await uploadCover(pendingCoverFile);
+                if (path) finalCoverImage = path;
+                else {
+                    toast.error("Failed to upload cover image");
+                    return;
+                }
+            }
+
+            // Upload pending banner if exists
+            if (pendingBannerFile) {
+                const path = await uploadBanner(pendingBannerFile);
+                if (path) finalBannerImage = path;
+                else {
+                    toast.error("Failed to upload banner image");
+                    return;
+                }
+            }
+
+            const submitData = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    submitData.append(key, String(value));
+                }
+            });
+
+            // Update with final images
+            if (finalCoverImage) submitData.set("coverImage", finalCoverImage);
+            if (finalBannerImage) submitData.set("bannerImage", finalBannerImage);
+
+            const result = await updateExistingEvent(event.id, submitData);
+            if (result.success) {
+                toast.success("Event updated successfully");
+                setPendingCoverFile(null);
+                setPendingBannerFile(null);
+                setCoverPreviewUrl(null);
+                setBannerPreviewUrl(null);
+            } else {
+                toast.error(result.error || "Failed to update event");
+            }
+        });
+    };
+
+    // Image upload handler
+    async function handleImageUpload(file: File, type: "cover" | "banner") {
+        const url = URL.createObjectURL(file);
+        if (type === "cover") {
+            setPendingCoverFile(file);
+            if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+            setCoverPreviewUrl(url);
+        } else {
+            setPendingBannerFile(file);
+            if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+            setBannerPreviewUrl(url);
         }
+        toast.success(`${type === "cover" ? "Cover" : "Banner"} image ready to save`);
     }
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, type: "cover" | "banner") {

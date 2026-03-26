@@ -1,39 +1,34 @@
-// Prisma Schema - User & Auth
-// Profile model for user authentication and data
-
 model Profile {
-  id                  String   @id @db.Uuid
-  email               String   @unique
-  username            String?  @unique
-  fullName            String?  @map("full_name")
-  avatarUrl           String?  @map("avatar_url")
-  onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
-  onboardingStep      Int      @default(0) @map("onboarding_step")
-  referredBy          String?  @map("referred_by") @db.Uuid
-  referralCodeUsed    String?  @map("referral_code_used")
-  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
-
-  // Relations
-  referrer                Promoter?                @relation("ReferredUsers", fields: [referredBy], references: [id], onDelete: SetNull)
-  createdOrganizations    Organization[]           @relation("CreatedOrganizations")
-  organizationMemberships OrganizationMember[]
-  organizationInvitations OrganizationInvitation[] @relation("InviterInvitations")
-  membershipRequests      MembershipRequest[]
-  resolvedRequests        MembershipRequest[]      @relation("MembershipRequestResolver")
+  id                      String                   @id @db.Uuid
+  email                   String                   @unique
+  username                String?                  @unique
+  fullName                String?                  @map("full_name")
+  avatarUrl               String?                  @map("avatar_url")
+  onboardingCompleted     Boolean                  @default(false) @map("onboarding_completed")
+  onboardingStep          Int                      @default(0) @map("onboarding_step")
+  referredBy              String?                  @map("referred_by") @db.Uuid
+  referralCodeUsed        String?                  @map("referral_code_used")
+  createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdEvents           Event[]                  @relation("CreatedEvents")
-  votes                   Vote[]
-  ticketOrders            TicketOrder[]
-  ticketsCheckedIn        Ticket[]                 @relation("CheckedInTickets")
-  promoter                Promoter?
-  referrals               Referral[]               @relation("ReferredUser")
-  wallets                 Wallet[]
+  resolvedRequests        MembershipRequest[]      @relation("MembershipRequestResolver")
+  membershipRequests      MembershipRequest[]
+  organizationInvitations OrganizationInvitation[] @relation("InviterInvitations")
+  organizationMemberships OrganizationMember[]
+  createdOrganizations    Organization[]           @relation("CreatedOrganizations")
   payments                Payment[]
   approvedPayouts         Payout[]                 @relation("ApprovedPayouts")
+  referrer                Promoter?                @relation("ReferredUsers", fields: [referredBy], references: [id])
+  promoter                Promoter?
+  referrals               Referral[]               @relation("ReferredUser")
+  ticketOrders            TicketOrder[]
+  ticketsCheckedIn        Ticket[]                 @relation("CheckedInTickets")
+  votes                   Vote[]
   nominatedOptions        VotingOption[]           @relation("NominatedOptions")
+  wallets                 Wallet[]
 
-  @@index([email], name: "idx_profiles_email")
-  @@index([username], name: "idx_profiles_username")
-  @@index([referredBy], name: "idx_profiles_referred_by")
+  @@index([email], map: "idx_profiles_email")
+  @@index([username], map: "idx_profiles_username")
+  @@index([referredBy], map: "idx_profiles_referred_by")
   @@map("profiles")
 }

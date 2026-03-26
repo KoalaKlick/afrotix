@@ -5,23 +5,24 @@
 
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
     DndContext,
     closestCenter,
-    KeyboardSensor,
-    PointerSensor,
     useSensor,
     useSensors,
+    PointerSensor,
+    KeyboardSensor,
     type DragEndEvent,
 } from "@dnd-kit/core";
 import {
     arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
-    useSortable,
     verticalListSortingStrategy,
+    horizontalListSortingStrategy,
+    useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
@@ -82,17 +83,13 @@ import {
     Users,
     Loader2,
     GripVertical,
-    Upload,
-    ImageIcon,
     Vote,
-    Mail,
-    Hash,
-    Clock,
     Globe,
     Settings,
-    FileText,
-    Layers,
 } from "lucide-react";
+
+import { CategoryList } from "./voting-manager/CategoryList";
+
 import {
     createCategory,
     updateCategory,
@@ -100,8 +97,6 @@ import {
     createOption,
     updateOption,
     deleteOption,
-    uploadNomineeImage,
-    uploadTemplateImage,
     createCategoryField,
     updateCategoryField,
     deleteCategoryField,
@@ -109,11 +104,15 @@ import {
     rejectNominationAction,
     reorderCategories,
 } from "@/lib/actions/voting";
-import { convertToWebP } from "@/lib/image-utils";
+
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { NomineeCard } from "./NomineeCard";
+import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
+import { CategorySheet } from "./voting-manager/CategorySheet";
+import { OptionSheet } from "./voting-manager/OptionSheet";
 import {
     FIELD_TYPES,
     type FieldType,
@@ -152,54 +151,55 @@ function SortableCategoryItem({ category, canEdit, children, dragHandleSlot }: S
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 1 : 0,
+        zIndex: isDragging ? 20 : 0,
         position: "relative" as const,
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes}>
-            <AccordionItem
+        <div ref={setNodeRef} style={style} {...attributes} className="inline-block">
+            <TabsTrigger
                 value={category.id}
-                className="border rounded-lg bg-card"
+                className={cn(
+                    "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all relative overflow-hidden h-10 min-w-40 border-t-2 border-x-2 rounded-t-lg",
+                    "data-[state=active]:bg-background data-[state=active]:border-primary data-[state=active]:border-b-background",
+                    "data-[state=inactive]:bg-muted/30 data-[state=inactive]:border-transparent hover:bg-muted/50",
+                    isDragging && "shadow-lg cursor-grabbing"
+                )}
             >
-                <AccordionTrigger className="px-4 hover:no-underline">
-                    <div className="flex items-center gap-3 flex-1">
-                        {canEdit && (
-                            <button
-                                type="button"
-                                {...listeners}
-                                className="cursor-grab active:cursor-grabbing touch-none p-1 -m-1 hover:bg-muted rounded"
-                                onClick={(e) => e.stopPropagation()}
-                                onKeyDown={(e) => e.stopPropagation()}
-                            >
-                                <GripVertical className="size-4 text-muted-foreground" />
-                            </button>
-                        )}
-                        {dragHandleSlot}
+                {canEdit && (
+                    <div
+                        {...listeners}
+                        className="cursor-grab active:cursor-grabbing p-1 -ml-2 hover:bg-muted/80 rounded transition-colors"
+                    >
+                        <GripVertical className="size-3 text-muted-foreground" />
                     </div>
-                </AccordionTrigger>
-                {children}
-            </AccordionItem>
+                )}
+                <span className="truncate flex-1 text-left">{category.name}</span>
+                {category.votingOptions.filter(o => o.status === "pending").length > 0 && (
+                    <span className="flex h-2 w-2 rounded-full bg-destructive" />
+                )}
+                
+                {/* Visual Excel Sheet indicator line */}
+                <div className={cn(
+                    "absolute bottom-0 left-0 right-0 h-1 transition-opacity",
+                    "data-[state=active]:opacity-0",
+                    "data-[state=inactive]:opacity-100 group-data-[orientation=horizontal]:bg-border"
+                )} />
+            </TabsTrigger>
         </div>
     );
 }
 
 export function VotingManager({ eventId, categories: initialCategories, canEdit }: VotingManagerProps) {
     const [categories, setCategories] = useState(initialCategories);
+    const [activeCategoryId, setActiveCategoryId] = useState<string | undefined>(
+        initialCategories[0]?.id
+    );
     const [isPending, startTransition] = useTransition();
 
     // Category dialog state
     const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<VotingCategory | null>(null);
-    const [categoryForm, setCategoryForm] = useState({
-        name: "",
-        description: "",
-        maxVotesPerUser: 1,
-        allowMultiple: false,
-        allowPublicNomination: false,
-        nominationDeadline: "",
-        requireApproval: true,
-    });
 
     // Custom fields dialog state
     const [fieldsDialogOpen, setFieldsDialogOpen] = useState(false);
@@ -218,18 +218,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
     const [optionDialogOpen, setOptionDialogOpen] = useState(false);
     const [editingOption, setEditingOption] = useState<VotingOption | null>(null);
     const [optionCategoryId, setOptionCategoryId] = useState<string | null>(null);
-    const [optionForm, setOptionForm] = useState({
-        optionText: "",
-        nomineeCode: "",
-        email: "",
-        description: "",
-        imageUrl: "",
-        fieldValues: [] as { fieldId: string; value: string }[],
-    });
-    const [isUploadingImage, setIsUploadingImage] = useState(false);
-    const imageInputRef = useRef<HTMLInputElement>(null);
-
-    const optionFormImageDisplayUrl = getEventImageUrl(optionForm.imageUrl);
 
     // DnD sensors for category reordering
     const sensors = useSensors(
@@ -243,8 +231,35 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         })
     );
 
-    // Handle drag end for category reordering
-    function handleDragEnd(event: DragEndEvent) {
+
+    const handleCategoryCloseAttempt = (open: boolean) => {
+        setCategoryDialogOpen(open);
+        if (!open) {
+            setEditingCategory(null);
+        }
+    };
+
+    const handleOptionCloseAttempt = (open: boolean) => {
+        setOptionDialogOpen(open);
+        if (!open) {
+            setEditingOption(null);
+            setOptionCategoryId(null);
+        }
+    };
+
+    // Sync categories and ensure active ID is valid
+    useEffect(() => {
+        setCategories(initialCategories);
+        if (initialCategories.length > 0 && (!activeCategoryId || !initialCategories.find(c => c.id === activeCategoryId))) {
+            setActiveCategoryId(initialCategories[0].id);
+        }
+    }, [initialCategories, activeCategoryId]);
+
+    const activeCategory = useMemo(() => 
+        categories.find(c => c.id === activeCategoryId),
+    [categories, activeCategoryId]);
+
+    const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
 
         if (over && active.id !== over.id) {
@@ -267,193 +282,23 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         }
     }
 
-    // Reset category form
-    function resetCategoryForm() {
-        setCategoryForm({
-            name: "",
-            description: "",
-            maxVotesPerUser: 1,
-            allowMultiple: false,
-            allowPublicNomination: false,
-            nominationDeadline: "",
-            requireApproval: true,
-        });
-        setEditingCategory(null);
-    }
 
-    // Reset field form
-    function resetFieldForm() {
-        setFieldForm({
-            fieldName: "",
-            fieldType: "text",
-            fieldLabel: "",
-            placeholder: "",
-            isRequired: false,
-            options: "",
-        });
-        setEditingField(null);
-    }
-
-    // Reset option form
-    function resetOptionForm() {
-        setOptionForm({
-            optionText: "",
-            nomineeCode: "",
-            email: "",
-            description: "",
-            imageUrl: "",
-            fieldValues: [],
-        });
-        setEditingOption(null);
-        setOptionCategoryId(null);
-    }
-
-    // Open category dialog for editing
-    function openEditCategory(category: VotingCategory) {
+    function handleEditCategory(category: VotingCategory) {
         setEditingCategory(category);
-        setCategoryForm({
-            name: category.name,
-            description: category.description ?? "",
-            maxVotesPerUser: category.maxVotesPerUser,
-            allowMultiple: category.allowMultiple,
-            allowPublicNomination: category.allowPublicNomination,
-            nominationDeadline: category.nominationDeadline
-                ? new Date(category.nominationDeadline).toISOString().slice(0, 16)
-                : "",
-            requireApproval: category.requireApproval,
-        });
         setCategoryDialogOpen(true);
     }
 
-    // Open custom fields dialog
-    function openFieldsDialog(category: VotingCategory) {
-        setFieldsCategory(category);
-        setFieldsDialogOpen(true);
-    }
-
-    // Open option dialog for adding
-    function openAddOption(categoryId: string) {
-        resetOptionForm();
-        setOptionCategoryId(categoryId);
-        // Initialize field values for custom fields
-        const category = categories.find(c => c.id === categoryId);
-        if (category?.customFields) {
-            setOptionForm(prev => ({
-                ...prev,
-                fieldValues: (category.customFields ?? []).map(f => ({ fieldId: f.id, value: "" })),
-            }));
-        }
-        setOptionDialogOpen(true);
-    }
-
-    // Open option dialog for editing
-    function openEditOption(option: VotingOption, categoryId: string) {
-        setEditingOption(option);
-        setOptionCategoryId(categoryId);
-        const category = categories.find(c => c.id === categoryId);
-        setOptionForm({
-            optionText: option.optionText,
-            nomineeCode: option.nomineeCode ?? "",
-            email: option.email ?? "",
-            description: option.description ?? "",
-            imageUrl: option.imageUrl ?? "",
-            fieldValues: category?.customFields?.map(f => ({
-                fieldId: f.id,
-                value: option.fieldValues?.find(v => v.fieldId === f.id)?.value ?? "",
-            })) ?? [],
-        });
-        setOptionDialogOpen(true);
-    }
-
-    // Handle category save
-    function handleSaveCategory() {
-        if (!categoryForm.name.trim()) {
-            toast.error("Category name is required");
-            return;
-        }
-
-        startTransition(async () => {
-            if (editingCategory) {
-                const result = await updateCategory(editingCategory.id, {
-                    name: categoryForm.name,
-                    description: categoryForm.description || undefined,
-                    maxVotesPerUser: categoryForm.maxVotesPerUser,
-                    allowMultiple: categoryForm.allowMultiple,
-                    allowPublicNomination: categoryForm.allowPublicNomination,
-                    nominationDeadline: categoryForm.nominationDeadline || undefined,
-                    requireApproval: categoryForm.requireApproval,
-                });
-
-                if (result.success) {
-                    setCategories(prev =>
-                        prev.map(c =>
-                            c.id === editingCategory.id
-                                ? {
-                                    ...c,
-                                    name: categoryForm.name,
-                                    description: categoryForm.description || null,
-                                    maxVotesPerUser: categoryForm.maxVotesPerUser,
-                                    allowMultiple: categoryForm.allowMultiple,
-                                    allowPublicNomination: categoryForm.allowPublicNomination,
-                                    nominationDeadline: categoryForm.nominationDeadline || null,
-                                    requireApproval: categoryForm.requireApproval,
-                                }
-                                : c
-                        )
-                    );
-                    toast.success("Category updated");
-                    setCategoryDialogOpen(false);
-                    resetCategoryForm();
-                } else {
-                    toast.error(result.error);
-                }
-            } else {
-                const result = await createCategory(eventId, {
-                    name: categoryForm.name,
-                    description: categoryForm.description || undefined,
-                    maxVotesPerUser: categoryForm.maxVotesPerUser,
-                    allowMultiple: categoryForm.allowMultiple,
-                    allowPublicNomination: categoryForm.allowPublicNomination,
-                    nominationDeadline: categoryForm.nominationDeadline || undefined,
-                    requireApproval: categoryForm.requireApproval,
-                });
-
-                if (result.success) {
-                    setCategories(prev => [
-                        ...prev,
-                        {
-                            id: result.data.id,
-                            name: categoryForm.name,
-                            description: categoryForm.description || null,
-                            maxVotesPerUser: categoryForm.maxVotesPerUser,
-                            allowMultiple: categoryForm.allowMultiple,
-                            templateImage: null,
-                            templateConfig: null,
-                            showFinalImage: true,
-                            allowPublicNomination: categoryForm.allowPublicNomination,
-                            nominationDeadline: categoryForm.nominationDeadline || null,
-                            requireApproval: categoryForm.requireApproval,
-                            orderIdx: prev.length,
-                            votingOptions: [],
-                            customFields: [],
-                        },
-                    ]);
-                    toast.success("Category created");
-                    setCategoryDialogOpen(false);
-                    resetCategoryForm();
-                } else {
-                    toast.error(result.error);
-                }
-            }
-        });
-    }
-
-    // Handle category delete
     function handleDeleteCategory(categoryId: string) {
         startTransition(async () => {
             const result = await deleteCategory(categoryId);
             if (result.success) {
-                setCategories(prev => prev.filter(c => c.id !== categoryId));
+                setCategories(prev => {
+                    const filtered = prev.filter(c => c.id !== categoryId);
+                    if (activeCategoryId === categoryId) {
+                        setActiveCategoryId(filtered[0]?.id);
+                    }
+                    return filtered;
+                });
                 toast.success("Category deleted");
             } else {
                 toast.error(result.error);
@@ -461,133 +306,18 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         });
     }
 
-    // Handle image upload
-    async function handleImageUpload(file: File) {
-        setIsUploadingImage(true);
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: 400,
-                maxHeight: 400,
-                maxSizeMB: 1,
-            });
-
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-
-            // Pass old image path for deletion
-            if (optionForm.imageUrl) {
-                formData.set("oldImagePath", optionForm.imageUrl);
-            }
-
-            const result = await uploadNomineeImage(formData);
-            if (result.success) {
-                // Store original image path in imageUrl (template is applied separately)
-                setOptionForm(prev => ({ ...prev, imageUrl: result.data.path }));
-                toast.success("Image uploaded");
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to upload image");
-        } finally {
-            setIsUploadingImage(false);
-        }
+    function handleOpenAddOption(categoryId: string) {
+        setOptionCategoryId(categoryId);
+        setEditingOption(null);
+        setOptionDialogOpen(true);
     }
 
-    // Handle option save
-    function handleSaveOption() {
-        if (!optionForm.optionText.trim()) {
-            toast.error("Nominee name is required");
-            return;
-        }
-
-        startTransition(async () => {
-            if (editingOption) {
-                const result = await updateOption(editingOption.id, {
-                    optionText: optionForm.optionText,
-                    nomineeCode: optionForm.nomineeCode || undefined,
-                    email: optionForm.email || undefined,
-                    description: optionForm.description || undefined,
-                    imageUrl: optionForm.imageUrl || undefined,
-                    fieldValues: optionForm.fieldValues.filter(f => f.value.trim()),
-                });
-
-                if (result.success) {
-                    setCategories(prev =>
-                        prev.map(c => ({
-                            ...c,
-                            votingOptions: c.votingOptions.map(o =>
-                                o.id === editingOption.id
-                                    ? {
-                                        ...o,
-                                        optionText: optionForm.optionText,
-                                        nomineeCode: result.data?.nomineeCode ?? o.nomineeCode,
-                                        email: optionForm.email || null,
-                                        description: optionForm.description || null,
-                                        imageUrl: optionForm.imageUrl || null,
-                                        fieldValues: optionForm.fieldValues,
-                                    }
-                                    : o
-                            ),
-                        }))
-                    );
-                    toast.success("Nominee updated");
-                    setOptionDialogOpen(false);
-                    resetOptionForm();
-                } else {
-                    toast.error(result.error);
-                }
-            } else if (optionCategoryId) {
-                const result = await createOption(eventId, {
-                    categoryId: optionCategoryId,
-                    optionText: optionForm.optionText,
-                    nomineeCode: optionForm.nomineeCode || undefined,
-                    email: optionForm.email || undefined,
-                    description: optionForm.description || undefined,
-                    imageUrl: optionForm.imageUrl || undefined,
-                    fieldValues: optionForm.fieldValues.filter(f => f.value.trim()),
-                });
-
-                if (result.success) {
-                    setCategories(prev =>
-                        prev.map(c => {
-                            if (c.id === optionCategoryId) {
-                                return {
-                                    ...c,
-                                    votingOptions: [
-                                        ...c.votingOptions,
-                                        {
-                                            id: result.data.id,
-                                            optionText: optionForm.optionText,
-                                            nomineeCode: result.data.nomineeCode ?? null,
-                                            email: optionForm.email || null,
-                                            description: optionForm.description || null,
-                                            imageUrl: optionForm.imageUrl || null,
-                                            status: "approved" as VotingOptionStatus,
-                                            isPublicNomination: false,
-                                            nominatedByName: null,
-                                            votesCount: BigInt(0),
-                                            orderIdx: c.votingOptions.length,
-                                            fieldValues: optionForm.fieldValues,
-                                        },
-                                    ],
-                                };
-                            }
-                            return c;
-                        })
-                    );
-                    toast.success("Nominee added");
-                    setOptionDialogOpen(false);
-                    resetOptionForm();
-                } else {
-                    toast.error(result.error);
-                }
-            }
-        });
+    function handleEditOption(option: VotingOption, categoryId: string) {
+        setEditingOption(option);
+        setOptionCategoryId(categoryId);
+        setOptionDialogOpen(true);
     }
 
-    // Handle option delete
     function handleDeleteOption(optionId: string) {
         startTransition(async () => {
             const result = await deleteOption(optionId);
@@ -603,6 +333,24 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                 toast.error(result.error);
             }
         });
+    }
+
+    // Open custom fields dialog
+    function openFieldsDialog(category: VotingCategory) {
+        setFieldsCategory(category);
+        setFieldsDialogOpen(true);
+    }
+
+    function resetFieldForm() {
+        setFieldForm({
+            fieldName: "",
+            fieldType: "text",
+            fieldLabel: "",
+            placeholder: "",
+            isRequired: false,
+            options: "",
+        });
+        setEditingField(null);
     }
 
     // Handle custom field save
@@ -776,587 +524,56 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                         {categories.length} {categories.length === 1 ? "category" : "categories"}
                     </p>
                 </div>
-                {canEdit && (
-                    <Sheet open={categoryDialogOpen} onOpenChange={(open) => {
-                        setCategoryDialogOpen(open);
-                        if (!open) resetCategoryForm();
-                    }}>
-                        <SheetTrigger asChild>
-                            <Button size="sm">
-                                <Plus className="size-4 mr-2" />
-                                Add Category
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-                            <SheetHeader>
-                                <SheetTitle>
-                                    {editingCategory ? "Edit Category" : "Add Category"}
-                                </SheetTitle>
-                                <SheetDescription>
-                                    Create a voting category for nominees
-                                </SheetDescription>
-                            </SheetHeader>
-                            <SheetBody>
-                                <Tabs defaultValue="basic" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="basic">Basic</TabsTrigger>
-                                        <TabsTrigger value="nominations">Nominations</TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="basic" className="space-y-4 py-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="category-name">Name *</Label>
-                                            <Input
-                                                id="category-name"
-                                                value={categoryForm.name}
-                                                onChange={(e) =>
-                                                    setCategoryForm(prev => ({ ...prev, name: e.target.value }))
-                                                }
-                                                placeholder="e.g., Best Actor"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="category-description">Description</Label>
-                                            <Textarea
-                                                id="category-description"
-                                                value={categoryForm.description}
-                                                onChange={(e) =>
-                                                    setCategoryForm(prev => ({ ...prev, description: e.target.value }))
-                                                }
-                                                placeholder="Describe this category..."
-                                                rows={3}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="max-votes">Max Votes Per User</Label>
-                                            <Input
-                                                id="max-votes"
-                                                type="number"
-                                                min={1}
-                                                value={categoryForm.maxVotesPerUser}
-                                                onChange={(e) =>
-                                                    setCategoryForm(prev => ({
-                                                        ...prev,
-                                                        maxVotesPerUser: Number.parseInt(e.target.value) || 1,
-                                                    }))
-                                                }
-                                            />
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div className="space-y-0.5">
-                                                <Label>Allow Multiple Selections</Label>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Users can vote for multiple nominees
-                                                </p>
-                                            </div>
-                                            <Switch
-                                                checked={categoryForm.allowMultiple}
-                                                onCheckedChange={(checked) =>
-                                                    setCategoryForm(prev => ({ ...prev, allowMultiple: checked }))
-                                                }
-                                            />
-                                        </div>
-                                    </TabsContent>
-                                    <TabsContent value="nominations" className="space-y-4 py-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="space-y-0.5">
-                                                <Label className="flex items-center gap-2">
-                                                    <Globe className="size-4" />
-                                                    Allow Public Nominations
-                                                </Label>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Anyone can nominate for this category
-                                                </p>
-                                            </div>
-                                            <Switch
-                                                checked={categoryForm.allowPublicNomination}
-                                                onCheckedChange={(checked) =>
-                                                    setCategoryForm(prev => ({ ...prev, allowPublicNomination: checked }))
-                                                }
-                                            />
-                                        </div>
-                                        {categoryForm.allowPublicNomination && (
-                                            <>
-                                                <Separator />
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="nomination-deadline" className="flex items-center gap-2">
-                                                        <Clock className="size-4" />
-                                                        Nomination Deadline
-                                                    </Label>
-                                                    <Input
-                                                        id="nomination-deadline"
-                                                        type="datetime-local"
-                                                        value={categoryForm.nominationDeadline}
-                                                        onChange={(e) =>
-                                                            setCategoryForm(prev => ({ ...prev, nominationDeadline: e.target.value }))
-                                                        }
-                                                    />
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Leave empty for no deadline
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="space-y-0.5">
-                                                        <Label>Require Approval</Label>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Review nominations before publishing
-                                                        </p>
-                                                    </div>
-                                                    <Switch
-                                                        checked={categoryForm.requireApproval}
-                                                        onCheckedChange={(checked) =>
-                                                            setCategoryForm(prev => ({ ...prev, requireApproval: checked }))
-                                                        }
-                                                    />
-                                                </div>
-                                            </>
-                                        )}
-                                    </TabsContent>
-                                </Tabs>
-                            </SheetBody>
-                            <SheetFooter>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setCategoryDialogOpen(false);
-                                        resetCategoryForm();
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button onClick={handleSaveCategory} disabled={isPending}>
-                                    {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                                    {editingCategory ? "Save Changes" : "Add Category"}
-                                </Button>
-                            </SheetFooter>
-                        </SheetContent>
-                    </Sheet>
-                )}
-            </div>
-
-            {/* Empty State */}
-            {categories.length === 0 && (
-                <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                        <Vote className="size-12 text-muted-foreground mb-4" />
-                        <h4 className="font-medium mb-1">No categories yet</h4>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            Add voting categories to organize your nominees
-                        </p>
-                        {canEdit && (
-                            <Button onClick={() => setCategoryDialogOpen(true)}>
-                                <Plus className="size-4 mr-2" />
-                                Add First Category
-                            </Button>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Categories List */}
-            {categories.length > 0 && (
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                >
-                    <SortableContext
-                        items={categories.map(c => c.id)}
-                        strategy={verticalListSortingStrategy}
-                    >
-                        <Accordion type="multiple" defaultValue={categories.map(c => c.id)} className="space-y-2">
-                            {categories.map((category) => {
-                                const pendingCount = category.votingOptions.filter(o => o.status === "pending").length;
-                                return (
-                                    <SortableCategoryItem
-                                        key={category.id}
-                                        category={category}
-                                        canEdit={canEdit}
-                                        dragHandleSlot={
-                                            <div className="text-left flex-1">
-                                                <div className="font-medium flex items-center gap-2">
-                                                    {category.name}
-                                                    {category.allowPublicNomination && (
-                                                        <Badge variant="outline" className="text-xs">
-                                                            <Globe className="size-3 mr-1" />
-                                                            Public
-                                                        </Badge>
-                                                    )}
-                                                    {pendingCount > 0 && (
-                                                        <Badge variant="secondary" className="text-xs">
-                                                            {pendingCount} pending
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">
-                                                    {category.votingOptions.filter(o => o.status === "approved").length} nominees
-                                                    {category.allowMultiple && " • Multiple selection"}
-                                                    {category.customFields && category.customFields.length > 0 && (
-                                                        <span> • {category.customFields.length} custom fields</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        }
-                                    >
-                                        <AccordionContent className="px-4 pb-4">
-                                            {category.description && (
-                                                <p className="text-sm text-muted-foreground mb-4">
-                                                    {category.description}
-                                                </p>
-                                            )}
-
-                                            {/* Category Actions */}
-                                            {canEdit && (
-                                                <div className="flex flex-wrap gap-2 mb-4">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openEditCategory(category)}
-                                                    >
-                                                        <Pencil className="size-4 mr-2" />
-                                                        Edit
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openAddOption(category.id)}
-                                                    >
-                                                        <Plus className="size-4 mr-2" />
-                                                        Add Nominee
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openFieldsDialog(category)}
-                                                    >
-                                                        <Settings className="size-4 mr-2" />
-                                                        Custom Fields
-                                                    </Button>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button variant="outline" size="sm" className="text-destructive">
-                                                                <Trash2 className="size-4 mr-2" />
-                                                                Delete
-                                                            </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Delete Category?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This will delete the category and all its nominees.
-                                                                    This action cannot be undone.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction
-                                                                    onClick={() => handleDeleteCategory(category.id)}
-                                                                    className="bg-destructive text-destructive-foreground"
-                                                                >
-                                                                    Delete
-                                                                </AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                </div>
-                                            )}
-
-                                            {/* Nominees Grid */}
-                                            {category.votingOptions.length === 0 ? (
-                                                <div className="text-center py-8 text-muted-foreground">
-                                                    <Users className="size-8 mx-auto mb-2 opacity-50" />
-                                                    <p className="text-sm">No nominees yet</p>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                                    {category.votingOptions.map((option) => {
-                                                        // Use imageUrl for display
-                                                        const displayImage = option.imageUrl;
-                                                        return (
-                                                            <NomineeCard
-                                                                key={option.id}
-                                                                option={option}
-                                                                displayImage={displayImage}
-                                                                canEdit={canEdit}
-                                                                isPending={isPending}
-                                                                onEdit={() => openEditOption(option, category.id)}
-                                                                onDelete={() => handleDeleteOption(option.id)}
-                                                                onApprove={() => handleApproveNomination(option.id)}
-                                                                onReject={() => handleRejectNomination(option.id)}
-                                                            />
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </AccordionContent>
-                                    </SortableCategoryItem>
-                                );
-                            })}
-                        </Accordion>
-                    </SortableContext>
-                </DndContext>
-            )}
-
-            {/* Option Sheet */}
-            <Sheet open={optionDialogOpen} onOpenChange={(open) => {
-                setOptionDialogOpen(open);
-                if (!open) resetOptionForm();
-            }}>
-                <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-                    <SheetHeader>
-                        <SheetTitle>
-                            {editingOption ? "Edit Nominee" : "Add Nominee"}
-                        </SheetTitle>
-                        <SheetDescription>
-                            {editingOption ? "Update nominee details" : "Add a new nominee to this category"}
-                        </SheetDescription>
-                    </SheetHeader>
-                    <SheetBody className="space-y-4">
-                        {/* Image Upload */}
-                        <div className="space-y-2">
-                            <Label>Original Photo</Label>
-                            <div className="flex items-start gap-4">
-                                <div className="size-24 rounded-lg border bg-muted overflow-hidden relative shrink-0">
-                                    {optionForm.imageUrl && optionFormImageDisplayUrl ? (
-                                        <Image
-                                            src={optionFormImageDisplayUrl}
-                                            alt="Nominee"
-                                            fill
-                                            className="object-cover"
-                                            unoptimized
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <ImageIcon className="size-8 text-muted-foreground" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex-1 space-y-2">
-                                    <input
-                                        ref={imageInputRef}
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/webp,image/gif"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) handleImageUpload(file);
-                                            e.target.value = "";
-                                        }}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => imageInputRef.current?.click()}
-                                        disabled={isUploadingImage}
-                                    >
-                                        {isUploadingImage ? (
-                                            <Loader2 className="size-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <Upload className="size-4 mr-2" />
-                                        )}
-                                        Upload Photo
-                                    </Button>
-                                    {optionForm.imageUrl && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setOptionForm(prev => ({ ...prev, imageUrl: "" }))}
-                                        >
-                                            Remove
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="option-name">Name *</Label>
-                            <Input
-                                id="option-name"
-                                value={optionForm.optionText}
-                                onChange={(e) =>
-                                    setOptionForm(prev => ({ ...prev, optionText: e.target.value }))
-                                }
-                                placeholder="e.g., John Doe"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="option-code" className="flex items-center gap-2">
-                                <Hash className="size-4" />
-                                Nominee Code
-                            </Label>
-                            <Input
-                                id="option-code"
-                                value={optionForm.nomineeCode}
-                                onChange={(e) =>
-                                    setOptionForm(prev => ({ ...prev, nomineeCode: e.target.value }))
-                                }
-                                placeholder="e.g., NOM001 (auto-generated if empty)"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                Unique code for voting. Leave empty to auto-generate.
-                            </p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="option-email" className="flex items-center gap-2">
-                                <Mail className="size-4" />
-                                Email
-                            </Label>
-                            <Input
-                                id="option-email"
-                                type="email"
-                                value={optionForm.email}
-                                onChange={(e) =>
-                                    setOptionForm(prev => ({ ...prev, email: e.target.value }))
-                                }
-                                placeholder="nominee@email.com"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="option-description">Description</Label>
-                            <Textarea
-                                id="option-description"
-                                value={optionForm.description}
-                                onChange={(e) =>
-                                    setOptionForm(prev => ({ ...prev, description: e.target.value }))
-                                }
-                                placeholder="Brief description..."
-                                rows={3}
-                            />
-                        </div>
-
-                        {/* Custom Fields */}
-                        {currentCategory?.customFields && currentCategory.customFields.length > 0 && (
-                            <>
-                                <Separator />
-                                <div className="space-y-4">
-                                    <Label className="flex items-center gap-2">
-                                        <FileText className="size-4" />
-                                        Additional Information
-                                    </Label>
-                                    {currentCategory.customFields.map((field) => {
-                                        const fieldValue = optionForm.fieldValues.find(f => f.fieldId === field.id);
-                                        return (
-                                            <div key={field.id} className="space-y-2">
-                                                <Label htmlFor={`field-${field.id}`}>
-                                                    {field.fieldLabel}
-                                                    {field.isRequired && " *"}
-                                                </Label>
-                                                {field.fieldType === "textarea" ? (
-                                                    <Textarea
-                                                        id={`field-${field.id}`}
-                                                        value={fieldValue?.value ?? ""}
-                                                        onChange={(e) => {
-                                                            setOptionForm(prev => ({
-                                                                ...prev,
-                                                                fieldValues: prev.fieldValues.map(f =>
-                                                                    f.fieldId === field.id
-                                                                        ? { ...f, value: e.target.value }
-                                                                        : f
-                                                                ),
-                                                            }));
-                                                        }}
-                                                        placeholder={field.placeholder ?? undefined}
-                                                        rows={3}
-                                                    />
-                                                ) : field.fieldType === "select" && field.options ? (
-                                                    <Select
-                                                        value={fieldValue?.value ?? ""}
-                                                        onValueChange={(value) => {
-                                                            setOptionForm(prev => ({
-                                                                ...prev,
-                                                                fieldValues: prev.fieldValues.map(f =>
-                                                                    f.fieldId === field.id
-                                                                        ? { ...f, value }
-                                                                        : f
-                                                                ),
-                                                            }));
-                                                        }}
-                                                    >
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder={field.placeholder ?? "Select..."} />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {field.options.map((opt) => (
-                                                                <SelectItem key={opt} value={opt}>
-                                                                    {opt}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                ) : field.fieldType === "file" ? (
-                                                    <div className="space-y-2">
-                                                        <Input
-                                                            id={`field-${field.id}`}
-                                                            type="file"
-                                                            onChange={async (e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (!file) return;
-                                                                // For now, store the file name - actual upload would be handled separately
-                                                                setOptionForm(prev => ({
-                                                                    ...prev,
-                                                                    fieldValues: prev.fieldValues.map(f =>
-                                                                        f.fieldId === field.id
-                                                                            ? { ...f, value: file.name }
-                                                                            : f
-                                                                    ),
-                                                                }));
-                                                                toast.info("File selected: " + file.name);
-                                                            }}
-                                                            className="cursor-pointer"
-                                                        />
-                                                        {fieldValue?.value && (
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Current: {fieldValue.value}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <Input
-                                                        id={`field-${field.id}`}
-                                                        type={getInputType(field.fieldType)}
-                                                        value={fieldValue?.value ?? ""}
-                                                        onChange={(e) => {
-                                                            setOptionForm(prev => ({
-                                                                ...prev,
-                                                                fieldValues: prev.fieldValues.map(f =>
-                                                                    f.fieldId === field.id
-                                                                        ? { ...f, value: e.target.value }
-                                                                        : f
-                                                                ),
-                                                            }));
-                                                        }}
-                                                        placeholder={field.placeholder ?? undefined}
-                                                    />
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </>
-                        )}
-                    </SheetBody>
-                    <SheetFooter>
+                    <div className="flex items-center gap-2">
                         <Button
-                            variant="outline"
+                            size="sm"
                             onClick={() => {
-                                setOptionDialogOpen(false);
-                                resetOptionForm();
+                                setEditingCategory(null);
+                                setCategoryDialogOpen(true);
                             }}
                         >
-                            Cancel
+                            <Plus className="size-4 mr-2" />
+                            Add Category
                         </Button>
-                        <Button onClick={handleSaveOption} disabled={isPending || isUploadingImage}>
-                            {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                            {editingOption ? "Save Changes" : "Add Nominee"}
-                        </Button>
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
+                    </div>
+            </div>
+
+            {/* Categories Tabs and Nominees */}
+            <CategoryList
+                eventId={eventId}
+                categories={categories}
+                setCategories={setCategories}
+                activeCategoryId={activeCategoryId}
+                setActiveCategoryId={setActiveCategoryId}
+                canEdit={canEdit}
+                onEditCategory={handleEditCategory}
+                onAddOption={handleOpenAddOption}
+                onOpenFields={openFieldsDialog}
+                onEditOption={handleEditOption}
+                onAddFirst={() => setCategoryDialogOpen(true)}
+            />
+
+            {/* Option Sheet */}
+            <OptionSheet
+                eventId={eventId}
+                open={optionDialogOpen}
+                onOpenChange={handleOptionCloseAttempt}
+                category={categories.find(c => c.id === optionCategoryId) ?? null}
+                editingOption={editingOption}
+                onOptionCreated={(catId, newOption) => {
+                    setCategories(prev =>
+                        prev.map(c => c.id === catId ? { ...c, votingOptions: [...c.votingOptions, newOption] } : c)
+                    );
+                }}
+                onOptionUpdated={(updatedOption) => {
+                    setCategories(prev =>
+                        prev.map(c => ({
+                            ...c,
+                            votingOptions: c.votingOptions.map(o => o.id === updatedOption.id ? updatedOption : o)
+                        }))
+                    );
+                }}
+            />
 
             {/* Custom Fields Sheet */}
             <Sheet open={fieldsDialogOpen} onOpenChange={(open) => {

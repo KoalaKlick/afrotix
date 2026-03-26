@@ -5,24 +5,27 @@
 
 "use client";
 
-import { useState, useTransition, useRef, type ChangeEvent, type ComponentProps } from "react";
+import { useState, useTransition, useRef, useMemo, type ChangeEvent, type ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Image as ImageIcon, Upload, X, Eye, EyeOff, Users, CheckCircle } from "lucide-react";
-import { uploadEventImage } from "@/lib/actions/event";
-import { convertToWebP } from "@/lib/image-utils";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import type { ActionResult } from "@/lib/actions/upload-image";
+import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
 
 interface EventStep3Props {
-    readonly initialData?: {
+    readonly initialData: {
         coverImage?: string;
         bannerImage?: string;
         maxAttendees?: number | null;
         isPublic?: boolean;
-    };
+    } | null;
     readonly onSuccess: (data: {
         coverImage?: string;
         bannerImage?: string;
@@ -35,59 +38,80 @@ interface EventStep3Props {
 
 export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip }: EventStep3Props) {
     const [isPending, startTransition] = useTransition();
-    const [isUploading, setIsUploading] = useState(false);
     const [coverImage, setCoverImage] = useState(initialData?.coverImage ?? "");
     const [bannerImage, setBannerImage] = useState(initialData?.bannerImage ?? "");
     const [maxAttendees, setMaxAttendees] = useState<string>(
         initialData?.maxAttendees?.toString() ?? ""
     );
     const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
+    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+    const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
+    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+    const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
+    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+    const [pendingAction, setPendingAction] = useState<"back" | "skip" | null>(null);
     const [errors, setErrors] = useState<Record<string, string[]>>({});
     const isPrivate = !isPublic;
 
     const coverInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
 
-    // Generate display URLs from paths
-    const coverDisplayUrl = getEventImageUrl(coverImage);
-    const bannerDisplayUrl = getEventImageUrl(bannerImage);
+    const { isUploading: isUploadingCover, upload: runUploadCover } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
+    });
+    const { isUploading: isUploadingBanner, upload: runUploadBanner } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1920, maxHeight: 400, maxSizeMB: 2 },
+    });
+    const isUploading = isUploadingCover || isUploadingBanner;
+
+    // Generate display URLs from paths or previews
+    const coverDisplayPreview = coverPreviewUrl || getEventImageUrl(coverImage);
+    const bannerDisplayPreview = bannerPreviewUrl || getEventImageUrl(bannerImage);
+
+    const isDirty = useMemo(() => {
+        return (
+            pendingCoverFile !== null ||
+            pendingBannerFile !== null ||
+            maxAttendees !== (initialData?.maxAttendees?.toString() ?? "") ||
+            isPublic !== (initialData?.isPublic ?? true) ||
+            coverImage !== (initialData?.coverImage ?? "") ||
+            bannerImage !== (initialData?.bannerImage ?? "")
+        );
+    }, [pendingCoverFile, pendingBannerFile, maxAttendees, isPublic, coverImage, bannerImage, initialData]);
+
+    const handleBack = () => {
+        if (isDirty) {
+            setPendingAction("back");
+            setShowDiscardDialog(true);
+        } else {
+            onBack();
+        }
+    };
+
+    const handleSkip = () => {
+        if (isDirty) {
+            setPendingAction("skip");
+            setShowDiscardDialog(true);
+        } else {
+            onSkip();
+        }
+    };
 
     async function handleImageUpload(file: File, type: "cover" | "banner") {
-        setIsUploading(true);
         setErrors({});
-
-        try {
-            // Convert to WebP for optimization with appropriate dimensions
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: type === "cover" ? 1200 : 1920,
-                maxHeight: type === "cover" ? 630 : 400,
-                maxSizeMB: 2,
-            });
-
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-
-            // Pass old image path for deletion
-            const oldImagePath = type === "cover" ? coverImage : bannerImage;
-            if (oldImagePath) {
-                formData.set("oldImagePath", oldImagePath);
-            }
-
-            const result = await uploadEventImage(formData, type);
-            if (result.success) {
-                if (type === "cover") {
-                    setCoverImage(result.data.path);
-                } else {
-                    setBannerImage(result.data.path);
-                }
-            } else {
-                setErrors({ [type]: [result.error] });
-            }
-        } catch {
-            setErrors({ [type]: ["Failed to upload image"] });
-        } finally {
-            setIsUploading(false);
+        const url = URL.createObjectURL(file);
+        if (type === "cover") {
+            setPendingCoverFile(file);
+            if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+            setCoverPreviewUrl(url);
+        } else {
+            setPendingBannerFile(file);
+            if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+            setBannerPreviewUrl(url);
         }
     }
 
@@ -98,17 +122,44 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
         }
     }
 
-    function handleSubmit(e: Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]) {
+    function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setErrors({});
 
-        startTransition(() => {
+        startTransition(async () => {
+            let finalCoverImage = coverImage;
+            let finalBannerImage = bannerImage;
+
+            // Upload pending images if they exist
+            if (pendingCoverFile) {
+                const path = await runUploadCover(pendingCoverFile);
+                if (path) finalCoverImage = path;
+                else return; // Error toast handled by hook
+            }
+
+            if (pendingBannerFile) {
+                const path = await runUploadBanner(pendingBannerFile);
+                if (path) finalBannerImage = path;
+                else return; // Error toast handled by hook
+            }
+
             onSuccess({
-                coverImage: coverImage || undefined,
-                bannerImage: bannerImage || undefined,
-                maxAttendees: maxAttendees ? Number.parseInt(maxAttendees, 10) : null,
+                coverImage: finalCoverImage,
+                bannerImage: finalBannerImage,
+                maxAttendees: maxAttendees ? parseInt(maxAttendees, 10) : null,
                 isPublic,
             });
+
+            setPendingCoverFile(null);
+            setPendingBannerFile(null);
+            if (coverPreviewUrl) {
+                URL.revokeObjectURL(coverPreviewUrl);
+                setCoverPreviewUrl(null);
+            }
+            if (bannerPreviewUrl) {
+                URL.revokeObjectURL(bannerPreviewUrl);
+                setBannerPreviewUrl(null);
+            }
         });
     }
 
@@ -129,18 +180,21 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                     className="hidden"
                 />
 
-                {coverImage && coverDisplayUrl ? (
+                {(coverImage || coverPreviewUrl) ? (
                     <div className="relative rounded-xl overflow-hidden border aspect-video">
-                        <Image
-                            src={coverDisplayUrl}
+                        <img
+                            src={(coverDisplayPreview || undefined) as string | undefined}
                             alt="Cover"
-                            fill
-                            className="object-cover"
-                            unoptimized
+                            className="object-cover w-full h-full"
                         />
                         <button
                             type="button"
-                            onClick={() => setCoverImage("")}
+                            onClick={() => {
+                                setCoverImage("");
+                                setPendingCoverFile(null);
+                                if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+                                setCoverPreviewUrl(null);
+                            }}
                             className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
                         >
                             <X className="size-4" />
@@ -187,18 +241,21 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                     className="hidden"
                 />
 
-                {bannerImage && bannerDisplayUrl ? (
+                {(bannerImage || bannerPreviewUrl) ? (
                     <div className="relative rounded-xl overflow-hidden border h-32">
-                        <Image
-                            src={bannerDisplayUrl}
+                        <img
+                            src={(bannerDisplayPreview || undefined) as string | undefined}
                             alt="Banner"
-                            fill
-                            className="object-cover"
-                            unoptimized
+                            className="object-cover w-full h-full"
                         />
                         <button
                             type="button"
-                            onClick={() => setBannerImage("")}
+                            onClick={() => {
+                                setBannerImage("");
+                                setPendingBannerFile(null);
+                                if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+                                setBannerPreviewUrl(null);
+                            }}
                             className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
                         >
                             <X className="size-4" />
@@ -281,13 +338,13 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
 
             {/* Actions */}
             <div className="flex justify-between pt-4">
-                <Button type="button" variant="ghost" onClick={onBack}>
+                <Button type="button" variant="ghost" onClick={handleBack}>
                     <ArrowLeft className="mr-2 size-4" />
                     Back
                 </Button>
 
                 <div className="flex gap-2">
-                    <Button type="button" variant="outline" onClick={onSkip}>
+                    <Button type="button" variant="outline" onClick={handleSkip}>
                         Skip for Now
                     </Button>
                     <Button type="submit" disabled={isPending || isUploading}>
@@ -305,6 +362,17 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                     </Button>
                 </div>
             </div>
+
+            <ConfirmDiscardDialog
+                open={showDiscardDialog}
+                onOpenChange={setShowDiscardDialog}
+                onConfirm={() => {
+                    setShowDiscardDialog(false);
+                    if (pendingAction === "back") onBack();
+                    else if (pendingAction === "skip") onSkip();
+                    setPendingAction(null);
+                }}
+            />
         </form>
     );
 }

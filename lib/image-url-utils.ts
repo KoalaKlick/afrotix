@@ -63,6 +63,10 @@ export function getEventImageUrl(pathOrUrl: string | null | undefined): string |
     return getStorageUrl(BUCKETS.EVENTS, pathOrUrl);
 }
 
+export function getCategoryTemplateImageUrl(pathOrUrl: string | null | undefined): string | null {
+    return getStorageUrl(BUCKETS.EVENTS, pathOrUrl);
+}
+
 /**
  * Convenience function for organization image URLs (logo/banner)
  */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, useCallback } from "react";
+import { useEffect, useRef, useState, useTransition, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,13 +27,13 @@ import {
 import { toast } from "sonner";
 import type { VotingCategory, VotingOption, VotingOptionStatus } from "@/lib/types/voting";
 import { getEventImageUrl } from "@/lib/image-url-utils";
-import { convertToWebP } from "@/lib/image-utils";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import {
     createOption,
     updateOption,
-    uploadNomineeImage,
 } from "@/lib/actions/voting";
 import { OptionCustomFieldInput } from "./OptionCustomFieldInput";
+import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
 
 export interface OptionFormData {
     optionText: string;
@@ -71,11 +71,17 @@ export function OptionSheet({
         imageUrl: "",
         fieldValues: [],
     });
-    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+    const imageDisplayUrl = previewUrl || getEventImageUrl(form.imageUrl);
     const [isPending, startTransition] = useTransition();
     const imageInputRef = useRef<HTMLInputElement>(null);
-
-    const imageDisplayUrl = getEventImageUrl(form.imageUrl);
+    const { isUploading: isUploadingImage, upload: uploadNominee } = useImageUpload({
+        bucket: "events",
+        folder: "nominees",
+        convertOptions: { quality: 0.85, maxWidth: 400, maxHeight: 400, maxSizeMB: 1 },
+    });
 
     const resetForm = useCallback((nextCategory?: VotingCategory | null) => {
         setForm({
@@ -114,6 +120,51 @@ export function OptionSheet({
         resetForm(category);
     }, [category, editingOption, open, resetForm]);
 
+    const isDirty = useMemo(() => {
+        if (!editingOption) {
+            return form.optionText !== "" || 
+                   form.nomineeCode !== "" || 
+                   form.email !== "" || 
+                   form.description !== "" || 
+                   form.imageUrl !== "" || 
+                   form.fieldValues.some(f => f.value !== "") ||
+                   pendingFile !== null;
+        }
+        
+        const initialForm = {
+            optionText: editingOption.optionText,
+            nomineeCode: editingOption.nomineeCode ?? "",
+            email: editingOption.email ?? "",
+            description: editingOption.description ?? "",
+            imageUrl: editingOption.imageUrl ?? "",
+            fieldValues: category?.customFields?.map(field => ({
+                fieldId: field.id,
+                value: editingOption.fieldValues?.find(value => value.fieldId === field.id)?.value ?? "",
+            })) ?? [],
+        };
+
+        return form.optionText !== initialForm.optionText ||
+               form.nomineeCode !== initialForm.nomineeCode ||
+               form.email !== initialForm.email ||
+               form.description !== initialForm.description ||
+               form.imageUrl !== initialForm.imageUrl ||
+               JSON.stringify(form.fieldValues) !== JSON.stringify(initialForm.fieldValues) ||
+               pendingFile !== null;
+    }, [form, editingOption, category, pendingFile]);
+
+    const handleCloseAttempt = (newOpen: boolean) => {
+        if (!newOpen && isDirty) {
+            setShowDiscardDialog(true);
+        } else {
+            onOpenChange(newOpen);
+            if (!newOpen) {
+                resetForm(category);
+                setPendingFile(null);
+                setPreviewUrl(null);
+            }
+        }
+    };
+
     function updateFieldValue(fieldId: string, value: string) {
         setForm(prev => ({
             ...prev,
@@ -124,33 +175,11 @@ export function OptionSheet({
     }
 
     async function handleImageUpload(file: File) {
-        setIsUploadingImage(true);
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: 400,
-                maxHeight: 400,
-                maxSizeMB: 1,
-            });
-
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-            if (form.imageUrl) {
-                formData.set("oldImagePath", form.imageUrl);
-            }
-
-            const result = await uploadNomineeImage(formData);
-            if (result.success) {
-                setForm(prev => ({ ...prev, imageUrl: result.data.path }));
-                toast.success("Image uploaded");
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to upload image");
-        } finally {
-            setIsUploadingImage(false);
-        }
+        setPendingFile(file);
+        const url = URL.createObjectURL(file);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(url);
+        toast.success("Image ready");
     }
 
     function handleSave() {
@@ -164,15 +193,32 @@ export function OptionSheet({
         }
 
         startTransition(async () => {
+            // Determine the final image URL:
+            // 1. If we have a NEW file to upload, we'll set it after uploading.
+            // 2. If no new file AND no existing image path, it means image was removed -> null.
+            // 3. If no new file but we HAVE an existing image path, it stays as is.
+            let finalImageUrl: string | null | undefined = form.imageUrl || (pendingFile ? undefined : null);
+
+            if (pendingFile) {
+                const uploadedPath = await uploadNominee(pendingFile, form.imageUrl);
+                if (!uploadedPath) {
+                    toast.error("Failed to upload image");
+                    return;
+                }
+                finalImageUrl = uploadedPath;
+            }
+
+            const payload = {
+                optionText: form.optionText,
+                nomineeCode: form.nomineeCode || undefined,
+                email: form.email || undefined,
+                description: form.description || undefined,
+                imageUrl: finalImageUrl,
+                fieldValues: form.fieldValues.filter(field => field.value.trim()),
+            };
+
             if (editingOption) {
-                const result = await updateOption(editingOption.id, {
-                    optionText: form.optionText,
-                    nomineeCode: form.nomineeCode || undefined,
-                    email: form.email || undefined,
-                    description: form.description || undefined,
-                    imageUrl: form.imageUrl || undefined,
-                    fieldValues: form.fieldValues.filter(field => field.value.trim()),
-                });
+                const result = await updateOption(editingOption.id, payload);
 
                 if (result.success) {
                     onOptionUpdated({
@@ -181,12 +227,14 @@ export function OptionSheet({
                         nomineeCode: result.data?.nomineeCode ?? editingOption.nomineeCode,
                         email: form.email || null,
                         description: form.description || null,
-                        imageUrl: form.imageUrl || null,
+                        imageUrl: finalImageUrl || null,
                         fieldValues: form.fieldValues,
                     });
                     toast.success("Nominee updated");
                     onOpenChange(false);
                     resetForm(category);
+                    setPendingFile(null);
+                    setPreviewUrl(null);
                     return;
                 }
 
@@ -196,32 +244,29 @@ export function OptionSheet({
 
             const result = await createOption(eventId, {
                 categoryId: category.id,
-                optionText: form.optionText,
-                nomineeCode: form.nomineeCode || undefined,
-                email: form.email || undefined,
-                description: form.description || undefined,
-                imageUrl: form.imageUrl || undefined,
-                fieldValues: form.fieldValues.filter(field => field.value.trim()),
+                ...payload,
             });
 
             if (result.success) {
                 onOptionCreated(category.id, {
                     id: result.data.id,
-                    optionText: form.optionText,
+                    optionText: payload.optionText,
                     nomineeCode: result.data.nomineeCode ?? null,
-                    email: form.email || null,
-                    description: form.description || null,
-                    imageUrl: form.imageUrl || null,
+                    email: payload.email || null,
+                    description: payload.description || null,
+                    imageUrl: finalImageUrl || null,
                     status: "approved" as VotingOptionStatus,
                     isPublicNomination: false,
                     nominatedByName: null,
                     votesCount: BigInt(0),
                     orderIdx: category.votingOptions.length,
-                    fieldValues: form.fieldValues,
+                    fieldValues: payload.fieldValues,
                 });
                 toast.success("Nominee added");
                 onOpenChange(false);
                 resetForm(category);
+                setPendingFile(null);
+                setPreviewUrl(null);
             } else {
                 toast.error(result.error);
             }
@@ -230,12 +275,7 @@ export function OptionSheet({
 
     return (
         <>
-            <Sheet open={open} onOpenChange={(o) => {
-                onOpenChange(o);
-                if (!o) {
-                    resetForm(category);
-                }
-            }}>
+            <Sheet open={open} onOpenChange={handleCloseAttempt}>
                 <SheetContent side="right" variant="afro" className="w-full sm:max-w-xl overflow-y-auto">
                     <SheetHeader>
                         <SheetTitle>
@@ -251,7 +291,7 @@ export function OptionSheet({
                             <Label>Original Photo</Label>
                             <div className="flex items-start gap-4">
                                 <div className="size-24 rounded-lg border bg-muted overflow-hidden relative shrink-0">
-                                    {form.imageUrl && imageDisplayUrl ? (
+                                    {imageDisplayUrl ? (
                                         <Image
                                             src={imageDisplayUrl}
                                             alt="Nominee"
@@ -403,6 +443,18 @@ export function OptionSheet({
                             {editingOption ? "Save Changes" : "Add Nominee"}
                         </Button>
                     </SheetFooter>
+
+                    <ConfirmDiscardDialog
+                        open={showDiscardDialog}
+                        onOpenChange={setShowDiscardDialog}
+                        onConfirm={() => {
+                            setShowDiscardDialog(false);
+                            onOpenChange(false);
+                            resetForm(category);
+                            setPendingFile(null);
+                            setPreviewUrl(null);
+                        }}
+                    />
                 </SheetContent>
             </Sheet>
         </>
