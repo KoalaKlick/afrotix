@@ -33,7 +33,7 @@ export function SortableCategoryItem({ category, canEdit }: SortableCategoryItem
             style={style}
             value={category.id}
             className={cn(
-                "relative flex items-center gap-1.5 h-full",
+                "relative flex items-center gap-1.5 h-6.5",
                 isDragging && "opacity-50 shadow-md ring-2 ring-primary/20 cursor-grabbing"
             )}
         >

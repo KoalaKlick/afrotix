@@ -213,7 +213,7 @@ export function CategoryList({
                         items={categories.map(c => c.id)}
                         strategy={horizontalListSortingStrategy}
                     >
-                        <TabsList variant="afro" className={cn("w-full justify-start overflow-x-auto")}>
+                        <TabsList variant="afro" className={cn("w-full justify-start overflow-y overflow-x-auto")}>
                             {categories.map((category) => (
                                 <SortableCategoryItem
                                     key={category.id}
@@ -334,7 +334,7 @@ export function CategoryList({
                                 </CardContent>
                             </Card>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            <div className="grid @md:grid-cols-2 @2xl:grid-cols-3 @5xl:grid-cols-4 @7xl:grid-cols-5 gap-4">
                                 {category.votingOptions.map((option) => (
                                     <NomineeCard
                                         key={option.id}
