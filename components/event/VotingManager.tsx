@@ -100,8 +100,6 @@ import {
     createOption,
     updateOption,
     deleteOption,
-    uploadNomineeImage,
-    uploadTemplateImage,
     createCategoryField,
     updateCategoryField,
     deleteCategoryField,
@@ -109,7 +107,7 @@ import {
     rejectNominationAction,
     reorderCategories,
 } from "@/lib/actions/voting";
-import { convertToWebP } from "@/lib/image-utils";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -226,7 +224,12 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         imageUrl: "",
         fieldValues: [] as { fieldId: string; value: string }[],
     });
-    const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+    const { isUploading: isUploadingImage, upload: uploadNominee } = useImageUpload({
+        bucket: "events",
+        folder: "nominees",
+        convertOptions: { quality: 0.85, maxWidth: 400, maxHeight: 400, maxSizeMB: 1 },
+    });
     const imageInputRef = useRef<HTMLInputElement>(null);
 
     const optionFormImageDisplayUrl = getEventImageUrl(optionForm.imageUrl);
@@ -463,35 +466,10 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
 
     // Handle image upload
     async function handleImageUpload(file: File) {
-        setIsUploadingImage(true);
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: 400,
-                maxHeight: 400,
-                maxSizeMB: 1,
-            });
-
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-
-            // Pass old image path for deletion
-            if (optionForm.imageUrl) {
-                formData.set("oldImagePath", optionForm.imageUrl);
-            }
-
-            const result = await uploadNomineeImage(formData);
-            if (result.success) {
-                // Store original image path in imageUrl (template is applied separately)
-                setOptionForm(prev => ({ ...prev, imageUrl: result.data.path }));
-                toast.success("Image uploaded");
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to upload image");
-        } finally {
-            setIsUploadingImage(false);
+        const path = await uploadNominee(file, optionForm.imageUrl || null);
+        if (path) {
+            setOptionForm(prev => ({ ...prev, imageUrl: path }));
+            toast.success("Image uploaded");
         }
     }
 

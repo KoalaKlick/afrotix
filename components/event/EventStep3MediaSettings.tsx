@@ -10,8 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Image as ImageIcon, Upload, X, Eye, EyeOff, Users, CheckCircle } from "lucide-react";
-import { uploadEventImage } from "@/lib/actions/event";
-import { convertToWebP } from "@/lib/image-utils";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -35,7 +34,6 @@ interface EventStep3Props {
 
 export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip }: EventStep3Props) {
     const [isPending, startTransition] = useTransition();
-    const [isUploading, setIsUploading] = useState(false);
     const [coverImage, setCoverImage] = useState(initialData?.coverImage ?? "");
     const [bannerImage, setBannerImage] = useState(initialData?.bannerImage ?? "");
     const [maxAttendees, setMaxAttendees] = useState<string>(
@@ -48,46 +46,33 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
     const coverInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
 
+    const { isUploading: isUploadingCover, upload: uploadCover } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
+    });
+    const { isUploading: isUploadingBanner, upload: uploadBanner } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1920, maxHeight: 400, maxSizeMB: 2 },
+    });
+    const isUploading = isUploadingCover || isUploadingBanner;
+
     // Generate display URLs from paths
     const coverDisplayUrl = getEventImageUrl(coverImage);
     const bannerDisplayUrl = getEventImageUrl(bannerImage);
 
     async function handleImageUpload(file: File, type: "cover" | "banner") {
-        setIsUploading(true);
         setErrors({});
+        const uploader = type === "cover" ? uploadCover : uploadBanner;
+        const oldPath = type === "cover" ? coverImage : bannerImage;
 
-        try {
-            // Convert to WebP for optimization with appropriate dimensions
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: type === "cover" ? 1200 : 1920,
-                maxHeight: type === "cover" ? 630 : 400,
-                maxSizeMB: 2,
-            });
-
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-
-            // Pass old image path for deletion
-            const oldImagePath = type === "cover" ? coverImage : bannerImage;
-            if (oldImagePath) {
-                formData.set("oldImagePath", oldImagePath);
-            }
-
-            const result = await uploadEventImage(formData, type);
-            if (result.success) {
-                if (type === "cover") {
-                    setCoverImage(result.data.path);
-                } else {
-                    setBannerImage(result.data.path);
-                }
-            } else {
-                setErrors({ [type]: [result.error] });
-            }
-        } catch {
+        const path = await uploader(file, oldPath || null);
+        if (path) {
+            if (type === "cover") setCoverImage(path);
+            else setBannerImage(path);
+        } else {
             setErrors({ [type]: ["Failed to upload image"] });
-        } finally {
-            setIsUploading(false);
         }
     }
 

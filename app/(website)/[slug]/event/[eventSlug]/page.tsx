@@ -92,6 +92,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             </div>
 
             <PanAfricanDivider />
+            <pre>{JSON.stringify(votingCategories, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2)}</pre>
 
             {/* Voting Categories Section - Only for voting/hybrid events */}
             {votingCategories.length > 0 && (
@@ -109,9 +110,14 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                     <Link
                                         key={category.id}
                                         href={`/${orgSlug}/event/${eventSlug}/category/${category.id}`}
-                                        className="group bg-white rounded-2xl overflow-hidden border shadow-sm hover:shadow-xl transition-all duration-300"
+                                        className="group rounded-2xl overflow-hidden border shadow-sm hover:shadow-xl transition-all duration-300"
+                                        style={category.templateImage ? {
+                                            background: `url(${category.templateImage}) center/cover no-repeat`,
+                                            position: 'relative',
+                                        } : { backgroundColor: '#fff' }}
                                     >
-                                        <div className="p-6">
+
+                                        <div className={category.templateImage ? "p-6 bg-black/40" : "p-6"}>
                                             <div className="flex items-start justify-between mb-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-xl bg-[#FFCD00]/20 flex items-center justify-center">

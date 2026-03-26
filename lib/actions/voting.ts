@@ -31,12 +31,6 @@ import {
 } from "@/lib/dal/voting";
 import { getEventById } from "@/lib/dal/event";
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
-import {
-    STORAGE_BUCKETS,
-    deleteStorageFile,
-    normalizeToPath,
-} from "@/lib/storage-utils";
-import { logger } from "@/lib/logger";
 
 // Action result type
 type ActionResult<T = void> =
@@ -125,11 +119,13 @@ export async function updateCategory(
     data: {
         name?: string;
         description?: string;
+
         maxVotesPerUser?: number;
         allowMultiple?: boolean;
         allowPublicNomination?: boolean;
         nominationDeadline?: string | null;
         requireApproval?: boolean;
+        templateImage?: string;
     }
 ): Promise<ActionResult<{ id: string }>> {
     const category = await getVotingCategoryById(categoryId);
@@ -156,6 +152,7 @@ export async function updateCategory(
             nominationDeadline: data.nominationDeadline ? new Date(data.nominationDeadline) : undefined
         }),
         ...(data.requireApproval !== undefined && { requireApproval: data.requireApproval }),
+        ...(data.templateImage !== undefined && { templateImage: data.templateImage }),
     });
 
     if (!updated) {
@@ -359,78 +356,7 @@ export async function reorderOptionsAction(
     return { success: true, data: undefined };
 }
 
-/**
- * Upload nominee image
- * @param formData - Form data containing the file and optional old image path
- * @returns The storage path (not full URL) of the uploaded image
- */
-export async function uploadNomineeImage(
-    formData: FormData
-): Promise<ActionResult<{ path: string }>> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-        return { success: false, error: "Not authenticated" };
-    }
-
-    const file = formData.get("file") as File;
-    if (!file) {
-        return { success: false, error: "No file provided" };
-    }
-
-    // Get old image path/URL if provided (for deletion)
-    const oldImagePathOrUrl = formData.get("oldImagePath") as string | null;
-
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-        return { success: false, error: "Invalid file type. Use JPEG, PNG, WebP, or GIF." };
-    }
-
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-        return { success: false, error: "File too large. Maximum size is 5MB." };
-    }
-
-    try {
-        // Delete old image if exists
-        if (oldImagePathOrUrl) {
-            const oldPath = normalizeToPath(oldImagePathOrUrl, STORAGE_BUCKETS.EVENTS);
-            if (oldPath) {
-                const deleteResult = await deleteStorageFile(STORAGE_BUCKETS.EVENTS, oldPath);
-                if (!deleteResult.success) {
-                    logger.warn({ oldPath, error: deleteResult.error }, "Failed to delete old nominee image, continuing with upload");
-                }
-            }
-        }
-
-        // Generate unique filename (expect WebP from client-side conversion)
-        const filename = `nominee-${Date.now()}.webp`;
-        const filePath = `${user.id}/nominees/${filename}`;
-
-        // Upload to Supabase Storage
-        const { data, error } = await supabase.storage
-            .from(STORAGE_BUCKETS.EVENTS)
-            .upload(filePath, file, {
-                cacheControl: "3600",
-                upsert: true,
-                contentType: "image/webp",
-            });
-
-        if (error) {
-            logger.error({ error: error.message }, "[Action] Storage error");
-            return { success: false, error: "Failed to upload image" };
-        }
-
-        // Return the path (not the full URL)
-        return { success: true, data: { path: data.path } };
-    } catch (error) {
-        logger.error({ error }, "[Action] Error uploading nominee image");
-        return { success: false, error: "Failed to upload image" };
-    }
-}
 
 // ===================
 // CUSTOM FIELD ACTIONS
@@ -686,60 +612,4 @@ export async function submitPublicNominationAction(
     };
 }
 
-/**
- * Upload template image for a category
- */
-export async function uploadTemplateImage(
-    formData: FormData
-): Promise<ActionResult<{ url: string }>> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-        return { success: false, error: "Not authenticated" };
-    }
-
-    const file = formData.get("file") as File;
-    if (!file) {
-        return { success: false, error: "No file provided" };
-    }
-
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-        return { success: false, error: "Invalid file type. Use JPEG, PNG, or WebP." };
-    }
-
-    // Validate file size (max 10MB for templates)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-        return { success: false, error: "File too large. Maximum size is 10MB." };
-    }
-
-    try {
-        const ext = file.name.split('.').pop() || 'webp';
-        const filename = `template-${Date.now()}.${ext}`;
-        const path = `${user.id}/templates/${filename}`;
-
-        const { data, error } = await supabase.storage
-            .from("events")
-            .upload(path, file, {
-                cacheControl: "3600",
-                upsert: false,
-            });
-
-        if (error) {
-            console.error("[Action] Storage error:", error);
-            return { success: false, error: "Failed to upload template" };
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from("events")
-            .getPublicUrl(data.path);
-
-        return { success: true, data: { url: publicUrl } };
-    } catch (error) {
-        console.error("[Action] Error uploading template:", error);
-        return { success: false, error: "Failed to upload template" };
-    }
-}

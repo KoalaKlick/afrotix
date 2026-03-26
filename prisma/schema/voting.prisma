@@ -6,6 +6,7 @@ model VotingCategory {
   eventId         String  @map("event_id") @db.Uuid
   name            String
   description     String?
+  templateImage   String? @map("template_image") // Optional background image for category
   orderIdx        Int     @default(0) @map("order_idx")
   maxVotesPerUser Int     @default(1) @map("max_votes_per_user")
   allowMultiple   Boolean @default(false) @map("allow_multiple")

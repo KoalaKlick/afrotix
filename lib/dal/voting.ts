@@ -28,6 +28,7 @@ export type VotingCategoryCreateInput = {
     allowPublicNomination?: boolean;
     nominationDeadline?: Date;
     requireApproval?: boolean;
+    templateImage?: string;
 };
 
 export type VotingCategoryUpdateInput = Partial<Omit<VotingCategoryCreateInput, "eventId">>;

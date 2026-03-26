@@ -28,12 +28,6 @@ import { getUserRoleInOrganization } from "@/lib/dal/organization";
 import { normalizeEventStatus } from "@/lib/event-status";
 import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import type { EventType, EventStatus } from "@/lib/generated/prisma";
-import {
-    STORAGE_BUCKETS,
-    deleteStorageFile,
-    normalizeToPath,
-} from "@/lib/storage-utils";
-import { logger } from "@/lib/logger";
 
 // Action result type
 type ActionResult<T = void> =
@@ -509,77 +503,3 @@ export async function deleteExistingEvent(eventId: string): Promise<ActionResult
     }
 }
 
-/**
- * Upload event cover image
- * @param formData - Form data containing the file and optional old image path
- * @param type - Type of image (cover or banner)
- * @returns The storage path (not full URL) of the uploaded image
- */
-export async function uploadEventImage(
-    formData: FormData,
-    type: "cover" | "banner" = "cover"
-): Promise<ActionResult<{ path: string }>> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return { success: false, error: "Not authenticated" };
-    }
-
-    const file = formData.get("file") as File;
-    if (!file) {
-        return { success: false, error: "No file provided" };
-    }
-
-    // Get old image path/URL if provided (for deletion)
-    const oldImagePathOrUrl = formData.get("oldImagePath") as string | null;
-
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-        return { success: false, error: "Invalid file type. Use JPEG, PNG, WebP, or GIF." };
-    }
-
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-        return { success: false, error: "File too large. Maximum size is 5MB." };
-    }
-
-    try {
-        // Delete old image if exists
-        if (oldImagePathOrUrl) {
-            const oldPath = normalizeToPath(oldImagePathOrUrl, STORAGE_BUCKETS.EVENTS);
-            if (oldPath) {
-                const deleteResult = await deleteStorageFile(STORAGE_BUCKETS.EVENTS, oldPath);
-                if (!deleteResult.success) {
-                    logger.warn({ oldPath, error: deleteResult.error }, "Failed to delete old event image, continuing with upload");
-                }
-            }
-        }
-
-        // Generate unique filename (expect WebP from client-side conversion)
-        const filename = `${type}-${Date.now()}.webp`;
-        const filePath = `${user.id}/events/${filename}`;
-
-        // Upload to Supabase Storage
-        const { data, error } = await supabase.storage
-            .from(STORAGE_BUCKETS.EVENTS)
-            .upload(filePath, file, {
-                cacheControl: "3600",
-                upsert: true,
-                contentType: "image/webp",
-            });
-
-        if (error) {
-            logger.error({ error: error.message }, "[Action] Storage error");
-            return { success: false, error: "Failed to upload image" };
-        }
-
-        // Return the path (not the full URL)
-        return { success: true, data: { path: data.path } };
-    } catch (error) {
-        logger.error({ error }, "[Action] Error uploading image");
-        return { success: false, error: "Failed to upload image" };
-    }
-}

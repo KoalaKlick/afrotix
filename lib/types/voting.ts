@@ -62,6 +62,7 @@ export interface VotingCategory {
     id: string;
     name: string;
     description: string | null;
+    templateImage?: string | null;
     maxVotesPerUser: number;
     allowMultiple: boolean;
     allowPublicNomination: boolean;
@@ -72,6 +73,7 @@ export interface VotingCategory {
     customFields?: CustomField[];
 }
 
+export type VotingCategoryWithOptions = VotingCategory;
 // Form state types
 export interface CategoryFormData {
     name: string;

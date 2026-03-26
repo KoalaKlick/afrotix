@@ -27,11 +27,10 @@ import {
 import { toast } from "sonner";
 import type { VotingCategory, VotingOption, VotingOptionStatus } from "@/lib/types/voting";
 import { getEventImageUrl } from "@/lib/image-url-utils";
-import { convertToWebP } from "@/lib/image-utils";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import {
     createOption,
     updateOption,
-    uploadNomineeImage,
 } from "@/lib/actions/voting";
 import { OptionCustomFieldInput } from "./OptionCustomFieldInput";
 
@@ -71,11 +70,14 @@ export function OptionSheet({
         imageUrl: "",
         fieldValues: [],
     });
-    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const imageDisplayUrl = getEventImageUrl(form.imageUrl);
     const [isPending, startTransition] = useTransition();
     const imageInputRef = useRef<HTMLInputElement>(null);
-
-    const imageDisplayUrl = getEventImageUrl(form.imageUrl);
+    const { isUploading: isUploadingImage, upload: uploadNominee } = useImageUpload({
+        bucket: "events",
+        folder: "nominees",
+        convertOptions: { quality: 0.85, maxWidth: 400, maxHeight: 400, maxSizeMB: 1 },
+    });
 
     const resetForm = useCallback((nextCategory?: VotingCategory | null) => {
         setForm({
@@ -124,32 +126,10 @@ export function OptionSheet({
     }
 
     async function handleImageUpload(file: File) {
-        setIsUploadingImage(true);
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: 400,
-                maxHeight: 400,
-                maxSizeMB: 1,
-            });
-
-            const formData = new FormData();
-            formData.set("file", optimizedFile);
-            if (form.imageUrl) {
-                formData.set("oldImagePath", form.imageUrl);
-            }
-
-            const result = await uploadNomineeImage(formData);
-            if (result.success) {
-                setForm(prev => ({ ...prev, imageUrl: result.data.path }));
-                toast.success("Image uploaded");
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to upload image");
-        } finally {
-            setIsUploadingImage(false);
+        const path = await uploadNominee(file, form.imageUrl || null);
+        if (path) {
+            setForm(prev => ({ ...prev, imageUrl: path }));
+            toast.success("Image uploaded");
         }
     }
 

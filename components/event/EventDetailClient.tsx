@@ -36,7 +36,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
     updateExistingEvent,
-    uploadEventImage,
     changeEventStatus
 } from "@/lib/actions/event";
 import { getEventImageUrl } from "@/lib/image-url-utils";
@@ -44,7 +43,7 @@ import {
     getEventPublicationStatus,
     getEventLifecycleStatus
 } from "@/lib/event-status";
-import { convertToWebP } from "@/lib/image-utils";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import type { OrganizationRole } from "@/lib/generated/prisma";
 import type {
     EventDetailStatsData,
@@ -122,7 +121,18 @@ const statusColors: Record<string, string> = {
 export function EventDetailClient({ event, organizationSlug, userRole, votingCategories = [], eventStats, voteTrend = [] }: EventDetailClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
-    const [isUploading, setIsUploading] = useState(false);
+
+    const { isUploading: isUploadingCover, upload: uploadCover } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
+    });
+    const { isUploading: isUploadingBanner, upload: uploadBanner } = useImageUpload({
+        bucket: "events",
+        folder: "events",
+        convertOptions: { quality: 0.85, maxWidth: 1920, maxHeight: 400, maxSizeMB: 2 },
+    });
+    const isUploading = isUploadingCover || isUploadingBanner;
 
     // Editable fields state
     const [editingField, setEditingField] = useState<string | null>(null);
@@ -204,47 +214,24 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
 
     // Image upload handler
     async function handleImageUpload(file: File, type: "cover" | "banner") {
-        setIsUploading(true);
+        const uploader = type === "cover" ? uploadCover : uploadBanner;
+        const oldPath = type === "cover" ? formData.coverImage : formData.bannerImage;
 
-        try {
-            const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
-                maxWidth: type === "cover" ? 1200 : 1920,
-                maxHeight: type === "cover" ? 630 : 400,
-                maxSizeMB: 2,
-            });
+        const path = await uploader(file, oldPath || null);
+        if (!path) return;
 
-            const uploadFormData = new FormData();
-            uploadFormData.set("file", optimizedFile);
+        const fieldName = type === "cover" ? "coverImage" : "bannerImage";
+        setFormData(prev => ({ ...prev, [fieldName]: path }));
 
-            // Pass old image path for deletion
-            const oldImagePath = type === "cover" ? formData.coverImage : formData.bannerImage;
-            if (oldImagePath) {
-                uploadFormData.set("oldImagePath", oldImagePath);
-            }
+        // Save to database directly
+        const saveFormData = new FormData();
+        saveFormData.set(fieldName, path);
+        const saveResult = await updateExistingEvent(event.id, saveFormData);
 
-            const result = await uploadEventImage(uploadFormData, type);
-            if (result.success) {
-                const fieldName = type === "cover" ? "coverImage" : "bannerImage";
-                setFormData(prev => ({ ...prev, [fieldName]: result.data.path }));
-
-                // Save to database directly
-                const saveFormData = new FormData();
-                saveFormData.set(fieldName, result.data.path);
-                const saveResult = await updateExistingEvent(event.id, saveFormData);
-
-                if (saveResult.success) {
-                    toast.success(`${type === "cover" ? "Cover" : "Banner"} image updated`);
-                } else {
-                    toast.error(saveResult.error);
-                }
-            } else {
-                toast.error(result.error);
-            }
-        } catch {
-            toast.error("Failed to upload image");
-        } finally {
-            setIsUploading(false);
+        if (saveResult.success) {
+            toast.success(`${type === "cover" ? "Cover" : "Banner"} image updated`);
+        } else {
+            toast.error(saveResult.error);
         }
     }
 
