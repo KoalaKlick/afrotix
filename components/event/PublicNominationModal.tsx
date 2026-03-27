@@ -92,7 +92,7 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
                 if (!user) {
                     const { error: authError } = await supabase.auth.signInAnonymously();
                     if (authError) {
-                        toast.error(`Authentication failed: ${authError.message}`);
+                        toast.error("Unable to establish a secure session for upload. Please try again.");
                         return;
                     }
                 }

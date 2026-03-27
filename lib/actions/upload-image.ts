@@ -48,11 +48,8 @@ export async function uploadImage(
         data: { user },
     } = await supabase.auth.getUser();
 
-    // Only allow unauthenticated uploads for public nominations if they are anonymously signed in
-    // Note: Anonymous users in Supabase return as authenticated sessions.
-    const isPublicUpload = options.folder === "nominations";
-    
-    if (!user && !isPublicUpload) {
+    // Ensure user is authenticated (includes anonymous sessions)
+    if (!user) {
         return { success: false, error: "Not authenticated" };
     }
 

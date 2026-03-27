@@ -245,9 +245,16 @@ export const getVotingOptionsByCategory = cache(async (categoryId: string): Prom
  */
 export const getVotingOptionById = cache(async (id: string): Promise<VotingOption | null> => {
     try {
-        return await prisma.votingOption.findUnique({
+        const option = await prisma.votingOption.findUnique({
             where: { id },
         });
+
+        if (!option) return null;
+
+        return {
+            ...option,
+            votesCount: Number(option.votesCount)
+        } as any;
     } catch (error) {
         logger.error(error, "[DAL] Error fetching voting option:");
         return null;
