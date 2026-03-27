@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: CategoryDetailPageProps): Pro
     const category = await getVotingCategoryById(categoryId, false)
     if (!category || category.eventId !== event.id) return {}
 
-    const coverImage = getEventImageUrl(category.templateImage) ?? getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
+    const coverImage = getEventImageUrl(category.templateImage || event.bannerImage || event.coverImage) ?? "/landing/a.webp"
     const absoluteImage = coverImage.startsWith("http") ? coverImage : `${BASE_URL}${coverImage}`
     const pageUrl = `${BASE_URL}/${orgSlug}/event/${eventSlug}/category/${categoryId}`
 

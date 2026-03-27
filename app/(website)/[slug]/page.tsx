@@ -1,12 +1,45 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { getOrganizationProfile, getMembershipRequest } from "@/lib/dal/organization";
+import { getOrganizationProfile, getMembershipRequest, getOrganizationBySlug } from "@/lib/dal/organization";
 import { OrgProfileHero } from "@/components/organization/OrgProfileHero";
 import { OrgEventList } from "@/components/organization/OrgEventList";
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider";
+import { getEventImageUrl } from "@/lib/image-url-utils";
+import type { Metadata } from "next";
 
 interface OrgProfilePageProps {
     readonly params: Promise<{ slug: string }>;
+}
+
+const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN_URL || "https://sankofa-one.vercel.app";
+
+export async function generateMetadata({ params }: OrgProfilePageProps): Promise<Metadata> {
+    const { slug } = await params;
+    const organization = await getOrganizationBySlug(slug);
+    if (!organization) return {};
+
+    const bannerImage = getEventImageUrl(organization.bannerUrl || organization.logoUrl) ?? "/landing/a.webp";
+    const absoluteImage = bannerImage.startsWith("http") ? bannerImage : `${BASE_URL}${bannerImage}`;
+    const pageUrl = `${BASE_URL}/${slug}`;
+    const description = organization.description || `Member profile of ${organization.name} on Sankofa`;
+
+    return {
+        title: organization.name,
+        description,
+        openGraph: {
+            title: organization.name,
+            description,
+            url: pageUrl,
+            type: "website",
+            images: [{ url: absoluteImage, width: 1200, height: 630, alt: organization.name }],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: organization.name,
+            description,
+            images: [absoluteImage],
+        },
+    };
 }
 
 export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
