@@ -12,6 +12,8 @@ import { AfroTixLogo } from "@/components/shared/AfroTixLogo"
 import { cn } from '@/lib/utils'
 import PanafricanButton from '@/components/shared/PanafricanButton'
 
+import { PROJ_NAME } from '@/lib/const/branding'
+
 export function HeroSection() {
     const pathname = usePathname()
 
@@ -81,7 +83,7 @@ export function HeroSection() {
                         <p className="text-sm sm:text-base text-black/60 max-w-xl leading-relaxed mb-8">
                             Empower your events with live voting, seamless ticket
                             sales, and powerful analytics. From community polls to
-                            sold-out conferences, PanEvent makes it effortless.
+                            sold-out conferences, {PROJ_NAME} makes it effortless.
                         </p>
                         <div className='space-x-4'>
                             <Link

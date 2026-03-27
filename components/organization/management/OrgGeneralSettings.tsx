@@ -15,6 +15,7 @@ import { convertToWebP } from "@/lib/image-utils";
 import { getOrgImageUrl } from "@/lib/image-url-utils";
 import { TicketPreview } from "@/components/shared/TicketPreview";
 import { cn } from "@/lib/utils";
+import { DOMAIN_NAME } from "@/lib/const/branding";
 
 interface OrgGeneralSettingsProps {
     readonly organization: {
@@ -367,7 +368,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                                 onChange={(e) => setSlug(e.target.value.toLowerCase().replaceAll(/[^a-z0-9-]/g, ""))}
                                 placeholder="your-org"
                             />
-                            <p className="text-xs text-muted-foreground">afrotix.com/{slug || "your-org"}</p>
+                            <p className="text-xs text-muted-foreground">{DOMAIN_NAME}/{slug || "your-org"}</p>
                         </div>
                     </div>
 

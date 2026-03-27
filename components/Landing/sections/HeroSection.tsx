@@ -3,6 +3,7 @@
 import { ScrambleText } from '@/components/shared/ScrambleText'
 import PanafricanButton from '@/components/shared/PanafricanButton'
 import Image from 'next/image'
+import { PROJ_NAME } from '@/lib/const/branding'
 
 export function HeroSection() {
     return (
@@ -23,7 +24,7 @@ export function HeroSection() {
                                 <span className='text-primary-500'>Create</span>,<span className='text-secondary-500'>Manage</span>  <span className=' '>&</span> <span className='text-tertiary-500'>Grow</span> Events with <span className="">Real-Time Power</span>
                             </h1>
                             <p className="text-sm md:text-base text-sepia-200 mb-8 max-w-xl mx-auto">
-                                Empower your events with live voting, seamless ticket sales, and powerful analytics. From community polls to sold-out conferences, AfroTix makes it effortless.
+                                Empower your events with live voting, seamless ticket sales, and powerful analytics. From community polls to sold-out conferences, {PROJ_NAME} makes it effortless.
                             </p>
                             <div className="flex flex-row gap-4 ">
                                 <PanafricanButton

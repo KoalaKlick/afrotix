@@ -13,8 +13,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { PROJ_NAME } from "@/lib/const/branding";
+
 export const metadata: Metadata = {
-  title: "AfroTix",
+  title: PROJ_NAME,
   description: "Create, Manage & Grow Events with Real-Time Power",
   manifest: "/manifest.json",
   icons: {
@@ -22,28 +24,28 @@ export const metadata: Metadata = {
     shortcut: "/logo.svg",
     apple: "/logo.svg",
   },
-  metadataBase: new URL('https://sankofa-one.vercel.app/'), // Replace with your actual domain
+  metadataBase: new URL(process.env.NEXT_PUBLIC_DOMAIN_URL || 'https://sankofa-one.vercel.app/'),
   openGraph: {
-    title: "AfroTix",
+    title: PROJ_NAME,
     description: "Create, Manage & Grow Events with Real-Time Power",
     url: '/',
-    siteName: 'AfroTix',
+    siteName: PROJ_NAME,
     images: [
       {
-        url: '/og-1.webp', // Create a proper OG image (1200x630px)
+        url: '/og-1.webp',
         width: 1200,
         height: 630,
-        alt: 'AfroTix - Event Management Platform',
+        alt: `${PROJ_NAME} - Event Management Platform`,
       }
     ],
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
-    card: "summary_large_image", // Changed from "summary" for better preview
-    title: "AfroTix",
+    card: "summary_large_image",
+    title: PROJ_NAME,
     description: "Create, Manage & Grow Events with Real-Time Power",
-    images: ["/og-1.webp"], // Use same OG image
+    images: ["/og-1.webp"],
   },
 };
 

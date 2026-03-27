@@ -11,6 +11,7 @@ import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { Calendar, MapPin, Clock, Vote, Trophy, Users, ChevronRight } from "lucide-react"
 import type { Metadata } from "next"
+import { PROJ_NAME } from "@/lib/const/branding"
 
 interface EventDetailsPageProps {
     params: Promise<{
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: EventDetailsPageProps): Promi
     const pageUrl = `${BASE_URL}/${orgSlug}/event/${eventSlug}`
     const description = event.description
         ? event.description.replace(/<[^>]*>/g, "").slice(0, 200)
-        : `${event.title} — powered by Sankofa`
+        : `${event.title} — powered by ${PROJ_NAME}`
 
     return {
         title: event.title,

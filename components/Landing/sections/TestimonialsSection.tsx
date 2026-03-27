@@ -4,6 +4,7 @@ import { useRef } from "react"
 import { motion, useAnimationFrame } from "motion/react"
 import { Section } from '@/components/Landing/shared/Section'
 import { cn } from "@/lib/utils"
+import { PROJ_NAME } from "@/lib/const/branding"
 
 interface Testimonial {
     id: number
@@ -147,7 +148,7 @@ export function TestimonialsSection() {
                     Trusted By Event Creators
                 </h2>
                 <p className="text-gray-500 max-w-xl mx-auto">
-                    See what organizers across Africa are saying about AfroTix
+                    See what organizers across Africa are saying about {PROJ_NAME}
                 </p>
             </div>
 
@@ -163,13 +164,19 @@ export function TestimonialsSection() {
                     style={{ willChange: 'transform' }}
                 >
                     {/* Duplicate for seamless loop */}
-                    {[...testimonials, ...testimonials].map((testimonial, index) => (
-                        <TestimonialCard
-                            key={`${testimonial.id}-${index}`}
-                            testimonial={testimonial}
-                            isCenter={index % testimonials.length === 1}
-                        />
-                    ))}
+                    {[...testimonials, ...testimonials].map((t, index) => {
+                        const testimonial = {
+                            ...t,
+                            quote: t.quote.replace(/AfroTix/g, PROJ_NAME)
+                        };
+                        return (
+                            <TestimonialCard
+                                key={`${testimonial.id}-${index}`}
+                                testimonial={testimonial}
+                                isCenter={index % testimonials.length === 1}
+                            />
+                        );
+                    })}
                 </motion.div>
             </div>
         </Section>

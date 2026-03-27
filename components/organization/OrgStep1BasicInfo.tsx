@@ -16,6 +16,7 @@ import {
 import { validateOrgStep1 } from "@/lib/actions/organization";
 import { generateSlug } from "@/lib/validations/organization";
 import { useDebounce } from "@/hooks/use-debounce";
+import { PROJ_NAME, DOMAIN_NAME } from "@/lib/const/branding";
 
 interface OrgStep1BasicInfoProps {
     readonly defaultValues?: {
@@ -132,11 +133,11 @@ export function OrgStep1BasicInfo({
                         label="Organization URL"
                         name="slug"
                         type="text"
-                        placeholder="afro-beats-events"
+                        placeholder="your-event-slug"
                         value={slug}
                         onChange={(e) => handleSlugChange(e.target.value)}
                         error={errors.slug}
-                        hint={`afrotix.com/${slug || "your-org"}`}
+                        hint={`${DOMAIN_NAME}/${slug || "your-org"}`}
                         icon={<Globe className="h-4 w-4" />}
                         suffix={slugIcon()}
                         required

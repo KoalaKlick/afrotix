@@ -3,10 +3,14 @@ import { EventCard } from '@/components/Landing/sections/revamp-events'
 import { getPublicEvents } from '@/lib/dal/event'
 import { EventsFilter } from '@/components/event/EventsFilter'
 import type { EventType } from '@/lib/generated/prisma'
+import { PROJ_NAME } from '@/lib/const/branding'
+import type { Metadata } from 'next'
 
-export const metadata = {
-    title: 'Events | Sankofa',
-    description: 'Explore upcoming Pan-African events and cultural festivals.',
+export async function generateMetadata(): Promise<Metadata> {
+    return {
+        title: `Events | ${PROJ_NAME}`,
+        description: 'Explore upcoming Pan-African events and cultural festivals.',
+    }
 }
 
 interface EventsPageProps {

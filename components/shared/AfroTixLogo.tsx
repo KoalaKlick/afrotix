@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { motion, useInView, useAnimation, type Variants } from "motion/react"
 
+import { PROJ_NAME } from "@/lib/const/branding";
+
 interface AfroTixLogoProps {
     readonly className?: string
     /** Duration (ms) the logo is held visible before exiting. Default: 2800 */
@@ -25,6 +27,11 @@ export function AfroTixLogo({
     const dotControls = useAnimation()
     const cycleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const [active, setActive] = useState(false)
+
+    // Helper to determine how to render the name
+    const isAfroTix = PROJ_NAME.toLowerCase().includes("afrotix");
+    const namePart1 = isAfroTix ? "Afro" : PROJ_NAME;
+    const namePart2 = isAfroTix ? "Tix" : "";
 
     const letterVariants: Variants = {
         hidden: { opacity: 0, y: 16 },
@@ -127,7 +134,7 @@ export function AfroTixLogo({
             initial="hidden"
             animate={controls}
         >
-            <title>AfroTix Logo</title>
+            <title>{PROJ_NAME} Logo</title>
             <text
                 y="80"
                 fontFamily="'Poppins', Arial, sans-serif"
@@ -137,11 +144,13 @@ export function AfroTixLogo({
                 textAnchor="start"
             >
                 <motion.tspan fill="#C41E3A" custom={0} variants={letterVariants}>
-                    Afro
+                    {namePart1}
                 </motion.tspan>
-                <motion.tspan fill="#FFB800" custom={1} variants={letterVariants}>
-                    Tix
-                </motion.tspan>
+                {namePart2 && (
+                    <motion.tspan fill="#FFB800" custom={1} variants={letterVariants}>
+                        {namePart2}
+                    </motion.tspan>
+                )}
                 <motion.tspan
                     fill="#228B22"
                     variants={dotVariants}
@@ -152,4 +161,4 @@ export function AfroTixLogo({
             </text>
         </motion.svg>
     )
-}
+}

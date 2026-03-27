@@ -10,6 +10,7 @@ import { CheckCircle2, ArrowRight, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getOrgImageUrl } from "@/lib/image-url-utils";
+import { DOMAIN_NAME } from "@/lib/const/branding";
 
 interface OrgCreationCompleteProps {
     readonly organization: {
@@ -72,7 +73,7 @@ export function OrgCreationComplete({ organization }: OrgCreationCompleteProps) 
                     <div className="text-left">
                         <h3 className="font-semibold">{organization.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                            afrotix.com/{organization.slug}
+                            {DOMAIN_NAME}/{organization.slug}
                         </p>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 import { AfroTixLogo } from '@/components/shared/AfroTixLogo'
+import { PROJ_NAME } from '@/lib/const/branding'
 
 export function FooterSection() {
     return (
@@ -37,9 +38,9 @@ export function FooterSection() {
                     </div>
                 </div>
                 <div className="border-t border-neutral-800 mt-8 pt-8 text-center text-neutral-400">
-                    <p>&copy; 2024 AfroTix. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} {PROJ_NAME}. All rights reserved.</p>
                 </div>
             </div>
         </footer>
     )
-}
+}

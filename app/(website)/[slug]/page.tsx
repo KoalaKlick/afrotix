@@ -11,7 +11,8 @@ interface OrgProfilePageProps {
     readonly params: Promise<{ slug: string }>;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN_URL || "https://sankofa-one.vercel.app";
+const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN_URL;
+const PROJ_NAME = process.env.PROJECT_NAME;
 
 export async function generateMetadata({ params }: OrgProfilePageProps): Promise<Metadata> {
     const { slug } = await params;
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: OrgProfilePageProps): Promise
     const bannerImage = getEventImageUrl(organization.bannerUrl || organization.logoUrl) ?? "/landing/a.webp";
     const absoluteImage = bannerImage.startsWith("http") ? bannerImage : `${BASE_URL}${bannerImage}`;
     const pageUrl = `${BASE_URL}/${slug}`;
-    const description = organization.description || `Member profile of ${organization.name} on Sankofa`;
+    const description = organization.description || `Member profile of ${organization.name} on ${PROJ_NAME}`;
 
     return {
         title: organization.name,

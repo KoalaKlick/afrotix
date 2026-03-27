@@ -35,6 +35,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { convertToWebP } from "@/lib/image-utils";
 import { getOrgImageUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
+import { DOMAIN_NAME } from "@/lib/const/branding";
 
 interface CreateOrgDrawerProps {
     readonly open: boolean;
@@ -392,7 +393,7 @@ export function CreateOrgDrawer({ open, onOpenChange }: CreateOrgDrawerProps) {
                                         <p className="text-sm text-destructive">{errors.slug}</p>
                                     )}
                                     <p className="text-xs text-muted-foreground">
-                                        afrotix.com/{slug || "your-org"}
+                                        {DOMAIN_NAME}/{slug || "your-org"}
                                     </p>
                                 </div>
                             </div>

@@ -8,6 +8,7 @@ import {
 } from "@/components/organization";
 import { createNewOrganization } from "@/lib/actions/organization";
 import Image from "next/image";
+import { PROJ_NAME } from "@/lib/const/branding";
 
 // Form state type
 type OrgFormData = {
@@ -70,7 +71,7 @@ export function OrgCreationClient({ isInitialSetup = false }: OrgCreationClientP
         return (
             <div className="w-full max-w-md mx-auto px-4">
                 <div className="flex flex-col items-center justify-center gap-6 py-20">
-                    <Image src="/logo.svg" alt="AfroTix" width={120} height={40} className="h-10 w-auto animate-pulse" priority />
+                    <Image src="/logo.svg" alt={PROJ_NAME} width={120} height={40} className="h-10 w-auto animate-pulse" priority />
                     <p className="text-sm text-muted-foreground animate-pulse">Setting up your dashboard...</p>
                 </div>
             </div>

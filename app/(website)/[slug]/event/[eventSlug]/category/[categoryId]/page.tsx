@@ -12,6 +12,7 @@ import { ArrowLeft, Trophy, Users } from "lucide-react"
 import { PublicNominationModal } from "@/components/event/PublicNominationModal"
 import { NomineeGrid } from "@/components/event/PublicNomineeSheet"
 import type { Metadata } from "next"
+import { PROJ_NAME } from "@/lib/const/branding"
 
 interface CategoryDetailPageProps {
     params: Promise<{
@@ -168,7 +169,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                 }
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                Powered by Sankofa Event Management System
+                                Powered by {PROJ_NAME} Event Management System
                             </p>
                         </div>
                     </Section>

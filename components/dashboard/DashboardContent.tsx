@@ -9,6 +9,7 @@ import {
     EventTypePieChart,
     RecentOrdersTable,
 } from "@/components/dashboard";
+import { PROJ_NAME } from "@/lib/const/branding";
 
 interface OngoingEvent {
     id: string;
@@ -61,7 +62,7 @@ export function DashboardContent({
                 <CustomizableEventStats
                     stats={stats}
                     profileStats={profileStats}
-                    storageKey="sankofa:dashboard-stats"
+                    storageKey={`${PROJ_NAME.toLowerCase()}:dashboard-stats`}
                     defaultKeys={["total", "ticketsSold", "revenue", "votes"]}
                 />
 

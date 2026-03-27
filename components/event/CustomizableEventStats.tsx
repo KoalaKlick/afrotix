@@ -11,6 +11,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { StatCard, StatsGrid, statIcons, type EventStatsData } from "./EventStats";
 import { formatAmount } from "@/lib/utils";
+import { PROJ_NAME } from "@/lib/const/branding";
 
 const MAX_STATS = 4;
 
@@ -74,7 +75,7 @@ interface CustomizableEventStatsProps {
 export function CustomizableEventStats({
     stats,
     profileStats,
-    storageKey = "sankofa:my-events-stats",
+    storageKey = `${PROJ_NAME.toLowerCase()}:my-events-stats`,
     defaultKeys = DEFAULT_KEYS,
 }: CustomizableEventStatsProps) {
     const pool = useMemo(

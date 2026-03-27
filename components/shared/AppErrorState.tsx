@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { AlertTriangle, RefreshCw, WifiOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PROJ_NAME } from "@/lib/const/branding";
 
 type AppErrorStateProps = Readonly<{
     error: Error & { digest?: string }
@@ -58,7 +59,7 @@ export function AppErrorState({
             return {
                 title: isOffline ? "You appear to be offline" : "The connection was interrupted",
                 description:
-                    "Sankofa could not load the data needed for this page. Check your internet connection and try again.",
+                    `${PROJ_NAME} could not load the data needed for this page. Check your internet connection and try again.`,
                 icon: WifiOff,
             }
         }

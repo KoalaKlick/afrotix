@@ -28,6 +28,7 @@ import type { OrganizationRole } from "@/lib/generated/prisma"
 import { getOrgImageUrl } from "@/lib/image-url-utils"
 import { type OrganizationInfo } from "@/lib/const/navigation"
 import { CreateOrgDrawer } from "./create-org-drawer"
+import { PROJ_NAME } from "@/lib/const/branding"
 
 export type Organization = {
     id: string
@@ -121,7 +122,7 @@ export function OrganizationSwitcher({
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <AfroTixLogo className="h-6" />
                                 <span className="truncate text-xs text-black/70">
-                                    {activeOrg ? `@${activeOrg.slug}` : "Events Platform"}
+                                    {activeOrg ? `@${activeOrg.slug}` : `${PROJ_NAME} Platform`}
                                 </span>
                             </div>
                             <ChevronsUpDown className="ml-auto size-4" />
@@ -155,7 +156,7 @@ export function OrganizationSwitcher({
                                     {activeOrg ? activeOrg.name : "Personal Account"}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
-                                    {activeOrg ? `@${activeOrg.slug}` : "Your personal dashboard"}
+                                    {activeOrg ? `@${activeOrg.slug}` : `Your personal ${PROJ_NAME} dashboard`}
                                 </span>
                             </div>
                         </DropdownMenuItem>
