@@ -260,6 +260,7 @@ export function OptionSheet({
                     nominatedByName: null,
                     votesCount: BigInt(0),
                     orderIdx: category.votingOptions.length,
+                    deletionCode: null,
                     fieldValues: payload.fieldValues,
                 });
                 toast.success("Nominee added");
