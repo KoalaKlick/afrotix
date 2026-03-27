@@ -62,7 +62,7 @@ export function NominationDetailsDialog({
                             {selectedOption.option.description && (
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Description / Pitch</p>
-                                    <div 
+                                    <div
                                         className="text-sm bg-muted/30 p-3 rounded-lg leading-relaxed prose prose-sm max-w-none dark:prose-invert"
                                         dangerouslySetInnerHTML={{ __html: selectedOption.option.description }}
                                     />
@@ -89,32 +89,35 @@ export function NominationDetailsDialog({
 
 
                             {(selectedOption.option.nominatedByName || (selectedOption.option as any).nominatedByEmail) && (
-                                <Card variant="afro" className="mt-6 border-0 shadow-none">
-                                    <CardHeader className="pb-3 border-b border-background/10">
-                                        <CardTitle className="text-sm">Nominator Information</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pt-4 grid grid-cols-2 gap-4">
-                                        {selectedOption.option.nominatedByName && (
-                                            <div className="space-y-1">
-                                                <p className="text-xs font-medium opacity-70 uppercase tracking-wider">Nominated By</p>
-                                                <p className="text-sm font-medium">{selectedOption.option.nominatedByName}</p>
-                                            </div>
-                                        )}
-                                        {(selectedOption.option as any).nominatedByEmail && (
-                                            <div className="space-y-1">
-                                                <p className="text-xs font-medium opacity-70 uppercase tracking-wider">Email</p>
-                                                <p className="text-sm font-medium">{(selectedOption.option as any).nominatedByEmail}</p>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
+                                <div className="space-y-2">
+                                    <p className="text-sm">Nominated By</p>
+                                    <Card variant="afro" className=" border-0 shadow-xs p-2 w-fit">
+
+                                        <CardContent className="">
+
+                                            <div className="">{selectedOption.option.nominatedByName && (
+                                                <div className="space-y-1">
+                                                    <p className="text-sm font-medium">{selectedOption.option.nominatedByName}</p>
+                                                </div>
+                                            )}
+                                                {(selectedOption.option as any).nominatedByEmail && (
+                                                    <div className="space-y-1">
+                                                        <p className="text-sm ">{(selectedOption.option as any).nominatedByEmail}</p>
+                                                    </div>
+                                                )}</div>
+
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
                             )}
                         </div>
                     </div>
                 )}
                 <DialogFooter className="space-x-2 sm:gap-0 mt-2">
-                    <Button 
-                        variant="outline" 
+                    <Button
+                    
+                        variant="destructive"
                         onClick={() => {
                             if (selectedOption) onReject(selectedOption.option.id);
                             onClose();
@@ -124,7 +127,8 @@ export function NominationDetailsDialog({
                         <X className="size-4 mr-2" />
                         Reject
                     </Button>
-                    <Button 
+                    <Button
+                    variant='tertiary'
                         onClick={() => {
                             if (selectedOption) onApprove(selectedOption.option.id);
                             onClose();

@@ -84,6 +84,9 @@ export const getVotingCategories = cache(async (eventId: string, includeCustomFi
                 votingOptions: {
                     where: includePending ? { status: { in: ["approved", "pending"] } } : { status: "approved" },
                     orderBy: { orderIdx: "asc" },
+                    include: {
+                        fieldValues: true,
+                    },
                 },
                 ...(includeCustomFields && {
                     customFields: {
@@ -110,6 +113,9 @@ export const getVotingCategoryById = cache(async (id: string, includeCustomField
                 votingOptions: {
                     where: includePending ? { status: { in: ["approved", "pending"] } } : { status: "approved" },
                     orderBy: { orderIdx: "asc" },
+                    include: {
+                        fieldValues: true,
+                    },
                 },
                 ...(includeCustomFields && {
                     customFields: {
