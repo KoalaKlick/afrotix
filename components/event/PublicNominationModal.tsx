@@ -92,7 +92,7 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
                 if (!user) {
                     const { error: authError } = await supabase.auth.signInAnonymously();
                     if (authError) {
-                        toast.error("Authentication failed. Please try again.");
+                        toast.error(`Authentication failed: ${authError.message}`);
                         return;
                     }
                 }

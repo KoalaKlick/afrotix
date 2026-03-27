@@ -665,7 +665,7 @@ export async function submitPublicNominationAction(
         email: data.email?.trim(),
         description: data.description?.trim(),
         imageUrl: data.imageUrl,
-        nominatedById: user?.id,
+        nominatedById: user?.is_anonymous ? undefined : user?.id,
         nominatedByEmail: data.nominatorEmail?.trim() || user?.email,
         nominatedByName: data.nominatorName?.trim(),
         fieldValues: data.fieldValues,

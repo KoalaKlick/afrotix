@@ -81,11 +81,11 @@ export type VotingOptionWithFieldValues = VotingOption & {
  */
 export const getVotingCategories = cache(async (eventId: string, includeCustomFields = false, includePending = false): Promise<VotingCategoryWithOptions[]> => {
     try {
-        return await prisma.votingCategory.findMany({
+        const categories = await prisma.votingCategory.findMany({
             where: { eventId },
             include: {
                 votingOptions: {
-                    where: includePending ? {} : { status: "approved" },
+                    where: includePending ? { status: { in: ["approved", "pending"] } } : { status: "approved" },
                     orderBy: { orderIdx: "asc" },
                     include: {
                         fieldValues: true,
@@ -99,6 +99,17 @@ export const getVotingCategories = cache(async (eventId: string, includeCustomFi
             },
             orderBy: { orderIdx: "asc" },
         });
+
+        // Serialize Decimal and BigInt fields for client components
+        return categories.map(cat => ({
+            ...cat,
+            nominationPrice: Number(cat.nominationPrice),
+            votePrice: Number(cat.votePrice),
+            votingOptions: cat.votingOptions?.map(opt => ({
+                ...opt,
+                votesCount: Number(opt.votesCount)
+            }))
+        } as unknown as VotingCategoryWithOptions));
     } catch (error) {
         logger.error(error, "[DAL] Error fetching voting categories:");
         return [];
@@ -110,7 +121,7 @@ export const getVotingCategories = cache(async (eventId: string, includeCustomFi
  */
 export const getVotingCategoryById = cache(async (id: string, includeCustomFields = false, includePending = false): Promise<VotingCategoryWithOptions | null> => {
     try {
-        return await prisma.votingCategory.findUnique({
+        const category = await prisma.votingCategory.findUnique({
             where: { id },
             include: {
                 votingOptions: {
@@ -127,6 +138,19 @@ export const getVotingCategoryById = cache(async (id: string, includeCustomField
                 }),
             },
         });
+
+        if (!category) return null;
+
+        // Serialize Decimal and BigInt fields for client components
+        return {
+            ...category,
+            nominationPrice: Number(category.nominationPrice),
+            votePrice: Number(category.votePrice),
+            votingOptions: category.votingOptions?.map(opt => ({
+                ...opt,
+                votesCount: Number(opt.votesCount)
+            }))
+        } as unknown as VotingCategoryWithOptions;
     } catch (error) {
         logger.error(error, "[DAL] Error fetching voting category:");
         return null;
@@ -668,7 +692,7 @@ export async function submitPublicNomination(data: {
 export const getPublicNominationCategories = cache(async (eventId: string): Promise<VotingCategoryWithOptions[]> => {
     try {
         const now = new Date();
-        return await prisma.votingCategory.findMany({
+        const categories = await prisma.votingCategory.findMany({
             where: {
                 eventId,
                 allowPublicNomination: true,
@@ -688,6 +712,17 @@ export const getPublicNominationCategories = cache(async (eventId: string): Prom
             },
             orderBy: { orderIdx: "asc" },
         });
+
+        // Serialize Decimal and BigInt fields for client components
+        return categories.map(cat => ({
+            ...cat,
+            nominationPrice: Number(cat.nominationPrice),
+            votePrice: Number(cat.votePrice),
+            votingOptions: cat.votingOptions?.map(opt => ({
+                ...opt,
+                votesCount: Number(opt.votesCount)
+            }))
+        } as unknown as VotingCategoryWithOptions));
     } catch (error) {
         logger.error(error, "[DAL] Error fetching public nomination categories:");
         return [];
