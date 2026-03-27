@@ -1,10 +1,9 @@
 'use client'
 
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from "@/components/ui/input-otp"
+import dynamic from 'next/dynamic';
+const InputOTP = dynamic(() => import('@/components/ui/input-otp').then(mod => mod.InputOTP), { ssr: false });
+const InputOTPGroup = dynamic(() => import('@/components/ui/input-otp').then(mod => mod.InputOTPGroup), { ssr: false });
+const InputOTPSlot = dynamic(() => import('@/components/ui/input-otp').then(mod => mod.InputOTPSlot), { ssr: false });
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'

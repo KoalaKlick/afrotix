@@ -113,14 +113,14 @@ export function NomineeGrid({ nominees, votePrice = 0 }: NomineeGridProps) {
 
     return (
         <>
-            <div className="grid grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4 @7xl:grid-cols-5 @[90rem]:grid-cols-6 gap-8">
+            <div className="grid grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4 @7xl:grid-cols-5 @[90rem]:grid-cols-6 gap-6">
                 {nominees.map((nominee) => {
                     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
                     return (
                         <div
                             key={nominee.id}
                             onClick={() => setSelectedNominee(nominee)}
-                            className="group bg-white rounded-md overflow-hidden border shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
+                            className="group bg-white rounded-md overflow-hidden border shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer"
                         >
                             {/* Image */}
                             <div className="relative aspect-5/4 bg-linear-to-br from-[#009A44]/10 to-[#FFCD00]/10">
@@ -213,7 +213,7 @@ function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0 }: Publ
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col gap-0 h-full p-0 sm:max-w-lg">
+            <SheetContent className="flex flex-col w-full gap-0 h-full p-0 sm:max-w-lg">
                 {/* Sticky Header */}
                 <SheetHeader className="px-6 py-4 border-b shrink-0">
                     <SheetTitle className="text-left">{nominee.optionText}</SheetTitle>
