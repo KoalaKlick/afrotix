@@ -562,6 +562,8 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                 eventId={event.id}
                                 categories={votingCategories.map(cat => ({
                                     ...cat,
+                                    nominationPrice: cat.nominationPrice,
+                                    votePrice: cat.votePrice,
                                     votingOptions: cat.votingOptions.map(opt => ({
                                         ...opt,
                                         votesCount: BigInt(opt.votesCount),

@@ -55,6 +55,7 @@ export interface VotingOption {
     nominatedByName: string | null;
     votesCount: bigint;
     orderIdx: number;
+    deletionCode: string | null;
     fieldValues?: FieldValue[];
 }
 
@@ -69,6 +70,8 @@ export interface VotingCategory {
     allowMultiple: boolean;
     allowPublicNomination: boolean;
     nominationDeadline: string | Date | null;
+    nominationPrice: number;
+    votePrice: number;
     requireApproval: boolean;
     orderIdx: number;
     votingOptions: VotingOption[];
@@ -87,6 +90,8 @@ export interface CategoryFormData {
     requireApproval: boolean;
     templateImage?: string | null;
     templateConfig?: any | null;
+    nominationPrice: number;
+    votePrice: number;
     showFinalImage?: boolean;
 }
 
@@ -119,6 +124,8 @@ export const defaultCategoryForm: CategoryFormData = {
     requireApproval: true,
     templateImage: null,
     templateConfig: null,
+    nominationPrice: 0,
+    votePrice: 0,
     showFinalImage: true,
 };
 

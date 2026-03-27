@@ -108,3 +108,7 @@ export function formatNumber(
 export function formatAmount(value: number, currency = "GHS") {
   return formatNumber(value, { style: 'currency', currency })
 }
+
+export function generateDeletionCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}

@@ -100,9 +100,10 @@ async function shareNominee(nominee: VotingOption) {
 
 interface NomineeGridProps {
     readonly nominees: VotingOption[];
+    readonly votePrice?: number;
 }
 
-export function NomineeGrid({ nominees }: NomineeGridProps) {
+export function NomineeGrid({ nominees, votePrice = 0 }: NomineeGridProps) {
     const [selectedNominee, setSelectedNominee] = useState<VotingOption | null>(null);
 
     function handleShare(e: React.MouseEvent, nominee: VotingOption) {
@@ -175,7 +176,7 @@ export function NomineeGrid({ nominees }: NomineeGridProps) {
                                     }}
                                 >
                                     <Vote className="w-3.5 h-3.5" />
-                                    Vote
+                                    Vote {votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}
                                 </Button>
                             </div>
                         </div>
@@ -190,6 +191,7 @@ export function NomineeGrid({ nominees }: NomineeGridProps) {
                 onOpenChange={(open) => {
                     if (!open) setSelectedNominee(null);
                 }}
+                votePrice={votePrice}
             />
         </>
     );
@@ -201,9 +203,10 @@ interface PublicNomineeSheetProps {
     readonly nominee: VotingOption | null;
     readonly open: boolean;
     readonly onOpenChange: (open: boolean) => void;
+    readonly votePrice?: number;
 }
 
-function PublicNomineeSheet({ nominee, open, onOpenChange }: PublicNomineeSheetProps) {
+function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0 }: PublicNomineeSheetProps) {
     if (!nominee) return null;
 
     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
@@ -266,7 +269,7 @@ function PublicNomineeSheet({ nominee, open, onOpenChange }: PublicNomineeSheetP
                         }}
                     >
                         <Vote className="w-4 h-4" />
-                        Vote for {nominee.optionText}
+                        Vote for {nominee.optionText} {votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}
                     </Button>
                     <Button
                         variant="tertiary"

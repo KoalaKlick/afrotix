@@ -29,14 +29,19 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
 import type { VotingOption } from "@/lib/types/voting";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface NomineeCardProps {
     readonly option: VotingOption;
     readonly displayImage: string | null;
     readonly canEdit: boolean;
     readonly isPending: boolean;
+    readonly requiresDeletionCode: boolean;
     readonly onEdit: () => void;
-    readonly onDelete: () => void;
+    readonly onDelete: (code?: string) => void;
     readonly onApprove: () => void;
     readonly onReject: () => void;
 }
@@ -46,11 +51,13 @@ export function NomineeCard({
     displayImage,
     canEdit,
     isPending,
+    requiresDeletionCode,
     onEdit,
     onDelete,
     onApprove,
     onReject,
 }: NomineeCardProps) {
+    const [delCode, setDelCode] = useState("");
     const displayImageUrl = getEventImageUrl(displayImage);
 
     return (
@@ -135,12 +142,32 @@ export function NomineeCard({
                                             <AlertDialogTitle>Delete Nominee?</AlertDialogTitle>
                                             <AlertDialogDescription>
                                                 This will remove {option.optionText} from this category.
+                                                {requiresDeletionCode && (
+                                                    <div className="mt-4 space-y-2">
+                                                        <Label htmlFor="del-code">Enter 6-digit Deletion Code</Label>
+                                                        <Input
+                                                            id="del-code"
+                                                            placeholder="000000"
+                                                            value={delCode}
+                                                            onChange={(e) => setDelCode(e.target.value)}
+                                                            maxLength={6}
+                                                            className="text-center font-mono text-xl tracking-widest"
+                                                        />
+                                                        <p className="text-xs text-muted-foreground">
+                                                            This nominee paid a fee. The code was sent to their email.
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogCancel onClick={() => setDelCode("")}>Cancel</AlertDialogCancel>
                                             <AlertDialogAction
-                                                onClick={onDelete}
+                                                disabled={requiresDeletionCode && delCode.length !== 6}
+                                                onClick={() => {
+                                                    onDelete(requiresDeletionCode ? delCode : undefined);
+                                                    setDelCode("");
+                                                }}
                                                 className="bg-destructive text-destructive-foreground"
                                             >
                                                 Delete

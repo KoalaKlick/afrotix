@@ -31,6 +31,8 @@ export type VotingCategoryCreateInput = {
     templateImage?: string | null;
     templateConfig?: any;
     showFinalImage?: boolean;
+    nominationPrice?: number | Prisma.Decimal;
+    votePrice?: number | Prisma.Decimal;
 };
 
 export type VotingCategoryUpdateInput = Partial<Omit<VotingCategoryCreateInput, "eventId">>;
@@ -49,6 +51,7 @@ export type VotingOptionCreateInput = {
     nominatedById?: string;
     nominatedByEmail?: string;
     nominatedByName?: string;
+    deletionCode?: string | null;
 };
 
 export type VotingOptionUpdateInput = Partial<Omit<VotingOptionCreateInput, "eventId">>;
@@ -82,7 +85,7 @@ export const getVotingCategories = cache(async (eventId: string, includeCustomFi
             where: { eventId },
             include: {
                 votingOptions: {
-                    where: includePending ? { status: { in: ["approved", "pending"] } } : { status: "approved" },
+                    where: includePending ? {} : { status: "approved" },
                     orderBy: { orderIdx: "asc" },
                     include: {
                         fieldValues: true,

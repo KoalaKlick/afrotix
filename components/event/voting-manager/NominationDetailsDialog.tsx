@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Check, X } from "lucide-react";
+import { Check, X, Clock } from "lucide-react";
+import { StatusBadge } from "@/components/shared/status-badge";
 import type { VotingCategory, VotingOption } from "@/lib/types/voting";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 
@@ -43,7 +44,10 @@ export function NominationDetailsDialog({
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h3 className="text-lg font-semibold leading-none">{selectedOption.option.optionText}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold leading-none">{selectedOption.option.optionText}</h3>
+                                        <StatusBadge variant={selectedOption.option.status} size="sm" />
+                                    </div>
                                     <p className="text-sm text-muted-foreground mt-1">
                                         For {selectedOption.category.name}
                                     </p>
@@ -114,31 +118,36 @@ export function NominationDetailsDialog({
                         </div>
                     </div>
                 )}
-                <DialogFooter className="space-x-2 sm:gap-0 mt-2">
-                    <Button
-
-                        variant="destructive"
-                        onClick={() => {
-                            if (selectedOption) onReject(selectedOption.option.id);
-                            onClose();
-                        }}
-                        disabled={isPending}
-                    >
-                        <X className="size-4 mr-2" />
-                        Reject
-                    </Button>
-                    <Button
-                        variant='tertiary'
-                        onClick={() => {
-                            if (selectedOption) onApprove(selectedOption.option.id);
-                            onClose();
-                        }}
-                        disabled={isPending}
-                    >
-                        <Check className="size-4 mr-2" />
-                        Approve
-                    </Button>
-                </DialogFooter>
+                {selectedOption?.option.status === 'pending' ? (
+                    <DialogFooter className="space-x-2 sm:gap-0 mt-2">
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                if (selectedOption) onReject(selectedOption.option.id);
+                                onClose();
+                            }}
+                            disabled={isPending}
+                        >
+                            <X className="size-4 mr-2" />
+                            Reject
+                        </Button>
+                        <Button
+                            variant='tertiary'
+                            onClick={() => {
+                                if (selectedOption) onApprove(selectedOption.option.id);
+                                onClose();
+                            }}
+                            disabled={isPending}
+                        >
+                            <Check className="size-4 mr-2" />
+                            Approve
+                        </Button>
+                    </DialogFooter>
+                ) : (
+                    <DialogFooter className="mt-2 text-muted-foreground text-xs italic">
+                        This nomination has already been {selectedOption?.option.status}.
+                    </DialogFooter>
+                )}
             </DialogContent>
         </Dialog>
     );

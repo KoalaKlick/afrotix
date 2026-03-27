@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Vote } from "lucide-react";
 import { toast } from "sonner";
-import { approveNominationAction, rejectNominationAction } from "@/lib/actions/voting";
+import { 
+    approveNominationAction, 
+    rejectNominationAction, 
+    deleteOption 
+} from "@/lib/actions/voting";
 import type {
     CustomField,
     VotingCategory,
@@ -135,6 +139,23 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         });
     }
 
+    function handleDeleteOption(optionId: string, code?: string) {
+        startTransition(async () => {
+            const result = await deleteOption(optionId, code);
+            if (result.success) {
+                setCategories(prev =>
+                    prev.map(c => ({
+                        ...c,
+                        votingOptions: c.votingOptions.filter(o => o.id !== optionId),
+                    }))
+                );
+                toast.success("Nominee deleted");
+            } else {
+                toast.error(result.error);
+            }
+        });
+    }
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -208,6 +229,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                 onAddOption={openAddOption}
                 onOpenFields={openFieldsDialog}
                 onEditOption={openEditOption}
+                onDeleteOption={handleDeleteOption}
                 onAddFirst={openCreateCategory}
             />
 

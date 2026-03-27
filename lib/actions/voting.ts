@@ -8,6 +8,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/lib/generated/prisma";
+import { prisma } from "@/lib/prisma";
+import { generateDeletionCode } from "@/lib/utils";
 import {
     createVotingCategory,
     updateVotingCategory,
@@ -82,6 +84,8 @@ export async function createCategory(
         allowPublicNomination?: boolean;
         nominationDeadline?: string;
         requireApproval?: boolean;
+        nominationPrice?: number;
+        votePrice?: number;
     }
 ): Promise<ActionResult<{ id: string }>> {
     const check = await canEditEvent(eventId);
@@ -105,6 +109,8 @@ export async function createCategory(
         templateImage: data.templateImage,
         templateConfig: data.templateConfig,
         showFinalImage: data.showFinalImage,
+        nominationPrice: data.nominationPrice,
+        votePrice: data.votePrice,
     });
 
     if (!category) {
@@ -132,6 +138,8 @@ export async function updateCategory(
         templateImage?: string | null;
         templateConfig?: Record<string, unknown>;
         showFinalImage?: boolean;
+        nominationPrice?: number;
+        votePrice?: number;
     }
 ): Promise<ActionResult<{ id: string }>> {
     const category = await getVotingCategoryById(categoryId);
@@ -161,6 +169,8 @@ export async function updateCategory(
         ...(data.templateImage !== undefined && { templateImage: data.templateImage }),
         ...(data.templateConfig !== undefined && { templateConfig: data.templateConfig }),
         ...(data.showFinalImage !== undefined && { showFinalImage: data.showFinalImage }),
+        ...(data.nominationPrice !== undefined && { nominationPrice: data.nominationPrice }),
+        ...(data.votePrice !== undefined && { votePrice: data.votePrice }),
     });
 
     if (!updated) {
@@ -338,7 +348,7 @@ export async function updateOption(
 /**
  * Delete a voting option
  */
-export async function deleteOption(optionId: string): Promise<ActionResult> {
+export async function deleteOption(optionId: string, deletionCode?: string): Promise<ActionResult> {
     const option = await getVotingOptionById(optionId);
     if (!option) {
         return { success: false, error: "Option not found" };
@@ -349,9 +359,30 @@ export async function deleteOption(optionId: string): Promise<ActionResult> {
         return { success: false, error: check.error ?? "Not authorized" };
     }
 
+    // Check if category has a price
+    if (option.categoryId) {
+        const category = await prisma.votingCategory.findUnique({
+            where: { id: option.categoryId },
+            select: { nominationPrice: true },
+        });
+
+        if (category && Number(category.nominationPrice) > 0) {
+            // This is a paid nominee. If there's a deletionCode in DB, we must match it.
+            const opt = option as any;
+            if (opt.deletionCode) {
+                if (!deletionCode) {
+                    return { success: false, error: "Deletion code is required for paid nominees" };
+                }
+                if (opt.deletionCode !== deletionCode) {
+                    return { success: false, error: "Invalid deletion code. Please ask the nominee for the code sent to their email." };
+                }
+            }
+        }
+    }
+
     const deleted = await deleteVotingOption(optionId);
     if (!deleted) {
-        return { success: false, error: "Failed to delete option" };
+        return { success: false, error: "Failed to delete nominee" };
     }
 
     // Cleanup storage
@@ -542,7 +573,20 @@ export async function approveNominationAction(
         return { success: false, error: check.error ?? "Not authorized" };
     }
 
-    const approved = await approveNomination(optionId);
+    // Check if category has a price
+    let deletionCode = undefined;
+    if (option.categoryId) {
+        const category = await getVotingCategoryById(option.categoryId);
+        if (category && Number(category.nominationPrice) > 0) {
+            deletionCode = generateDeletionCode();
+        }
+    }
+
+    const approved = await updateVotingOption(optionId, { 
+        status: "approved" as any,
+        ...(deletionCode && { deletionCode })
+    });
+    
     if (!approved) {
         return { success: false, error: "Failed to approve nomination" };
     }

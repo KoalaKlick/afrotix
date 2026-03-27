@@ -18,7 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Clock, Globe } from "lucide-react";
+import { Loader2, Clock, Globe, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { createCategory, updateCategory } from "@/lib/actions/voting";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
@@ -49,6 +49,8 @@ const EMPTY_FORM: CategoryFormData = {
     templateImage: null,
     templateConfig: null,
     showFinalImage: true,
+    nominationPrice: 0,
+    votePrice: 0,
 };
 
 export function CategorySheet({
@@ -97,6 +99,8 @@ export function CategorySheet({
                 templateImage: editingCategory.templateImage ?? null,
                 templateConfig: editingCategory.templateConfig ?? null,
                 showFinalImage: editingCategory.showFinalImage ?? true,
+                nominationPrice: Number(editingCategory.nominationPrice) || 0,
+                votePrice: Number(editingCategory.votePrice) || 0,
             });
         } else if (!open) {
             resetForm();
@@ -118,6 +122,8 @@ export function CategorySheet({
         form.requireApproval !== (editingCategory?.requireApproval ?? false) ||
         form.showFinalImage !== (editingCategory?.showFinalImage ?? true) ||
         form.nominationDeadline !== initialDeadline ||
+        form.nominationPrice !== (Number(editingCategory?.nominationPrice) || 0) ||
+        form.votePrice !== (Number(editingCategory?.votePrice) || 0) ||
         pendingFile !== null;
 
     const handleCloseAttempt = (newOpen: boolean) => {
@@ -163,6 +169,8 @@ export function CategorySheet({
                 templateImage: finalImageUrl,
                 templateConfig: form.templateConfig || undefined,
                 showFinalImage: form.showFinalImage,
+                nominationPrice: form.nominationPrice,
+                votePrice: form.votePrice,
             };
 
             if (editingCategory) {
@@ -232,9 +240,10 @@ export function CategorySheet({
 
                 <SheetBody className="flex-1 overflow-y-auto pr-2">
                     <Tabs defaultValue="basic" className="w-full">
-                        <TabsList variant="afro" className="grid w-full grid-cols-2">
+                        <TabsList variant="afro" className="grid w-full grid-cols-3">
                             <TabsTrigger value="basic">Basic</TabsTrigger>
                             <TabsTrigger value="nominations">Nominations</TabsTrigger>
+                            <TabsTrigger value="pricing">Pricing</TabsTrigger>
                         </TabsList>
 
                         {/* ── Basic Tab ── */}
@@ -383,6 +392,61 @@ export function CategorySheet({
                                     </div>
                                 </>
                             )}
+                        </TabsContent>
+
+                        {/* ── Pricing Tab ── */}
+                        <TabsContent value="pricing" className="space-y-4 py-4">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="nomination-price" className="flex items-center gap-2">
+                                        <Hash className="size-4" />
+                                        Nominee Fee (GHS)
+                                    </Label>
+                                    <Input
+                                        id="nomination-price"
+                                        type="number"
+                                        min={0}
+                                        step="0.01"
+                                        value={form.nominationPrice}
+                                        onChange={(e) =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                nominationPrice: Number.parseFloat(e.target.value) || 0,
+                                            }))
+                                        }
+                                        placeholder="0.00"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Amount a person pays to become a nominee in this category.
+                                    </p>
+                                </div>
+
+                                <Separator />
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="vote-price" className="flex items-center gap-2">
+                                        <Hash className="size-4" />
+                                        Price Per Vote (GHS)
+                                    </Label>
+                                    <Input
+                                        id="vote-price"
+                                        type="number"
+                                        min={0}
+                                        step="0.01"
+                                        value={form.votePrice}
+                                        onChange={(e) =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                votePrice: Number.parseFloat(e.target.value) || 0,
+                                            }))
+                                        }
+                                        placeholder="0.00"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Amount a voter pays for each vote cast in this category.
+                                    </p>
+                                </div>
+                            </div>
                         </TabsContent>
                     </Tabs>
                 </SheetBody>

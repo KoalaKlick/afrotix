@@ -145,7 +145,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                     </div>
 
                     {category.votingOptions.length > 0 ? (
-                        <NomineeGrid nominees={category.votingOptions} />
+                        <NomineeGrid nominees={category.votingOptions} votePrice={Number(category.votePrice)} />
                     ) : (
                         <div className="text-center py-16">
                             <Users className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />

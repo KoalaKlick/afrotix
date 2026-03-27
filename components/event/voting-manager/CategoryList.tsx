@@ -66,6 +66,7 @@ interface CategoryListProps {
     readonly onAddOption: (categoryId: string) => void;
     readonly onOpenFields: (category: VotingCategory) => void;
     readonly onEditOption: (option: VotingOption, categoryId: string) => void;
+    readonly onDeleteOption: (optionId: string, code?: string) => void;
     readonly onAddFirst: () => void;
 }
 
@@ -80,6 +81,7 @@ export function CategoryList({
     onAddOption,
     onOpenFields,
     onEditOption,
+    onDeleteOption,
     onAddFirst,
 }: CategoryListProps) {
     const [isPending, startTransition] = useTransition();
@@ -125,22 +127,7 @@ export function CategoryList({
         });
     }
 
-    function handleDeleteOption(optionId: string) {
-        startTransition(async () => {
-            const result = await deleteOption(optionId);
-            if (result.success) {
-                setCategories(prev =>
-                    prev.map(c => ({
-                        ...c,
-                        votingOptions: c.votingOptions.filter(o => o.id !== optionId),
-                    }))
-                );
-                toast.success("Nominee deleted");
-            } else {
-                toast.error(result.error);
-            }
-        });
-    }
+    // This is handled by the parent VotingManager
 
     function handleApproveNomination(optionId: string) {
         startTransition(async () => {
@@ -254,6 +241,16 @@ export function CategoryList({
                                                 Public
                                             </Badge>
                                         )}
+                                        {Number(category.votePrice) > 0 && (
+                                            <Badge variant="secondary" className="text-xs bg-[#009A44]/10 text-[#009A44] border-[#009A44]/20">
+                                                GHS {Number(category.votePrice).toFixed(2)} / vote
+                                            </Badge>
+                                        )}
+                                        {Number(category.nominationPrice) > 0 && (
+                                            <Badge variant="secondary" className="text-xs bg-[#D21034]/10 text-[#D21034] border-[#D21034]/20">
+                                                GHS {Number(category.nominationPrice).toFixed(2)} / nominee
+                                            </Badge>
+                                        )}
                                         {pendingCount > 0 && (
                                             <Badge variant="secondary" className="text-xs">
                                                 {pendingCount} pending
@@ -355,7 +352,8 @@ export function CategoryList({
                                         canEdit={canEdit}
                                         isPending={isPending}
                                         onEdit={() => onEditOption(option, category.id)}
-                                        onDelete={() => handleDeleteOption(option.id)}
+                                        onDelete={(code) => onDeleteOption(option.id, code)}
+                                        requiresDeletionCode={Number(category.nominationPrice) > 0 && !!option.deletionCode}
                                         onApprove={() => handleApproveNomination(option.id)}
                                         onReject={() => handleRejectNomination(option.id)}
                                     />

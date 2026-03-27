@@ -88,6 +88,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                     voteTrend={voteTrend}
                     votingCategories={votingCategories.map(cat => ({
                         ...cat,
+                        nominationPrice: Number(cat.nominationPrice) || 0,
+                        votePrice: Number(cat.votePrice) || 0,
                         customFields: cat.customFields?.map(field => ({
                             ...field,
                             fieldType: normalizeFieldType(field.fieldType),

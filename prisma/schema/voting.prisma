@@ -13,6 +13,8 @@ model VotingCategory {
   requireApproval       Boolean               @default(true) @map("require_approval")
   templateConfig        Json?                 @map("template_config")
   templateImage         String?               @map("template_image")
+  nominationPrice       Decimal               @default(0) @map("nomination_price") @db.Decimal(10, 2)
+  votePrice             Decimal               @default(0) @map("vote_price") @db.Decimal(10, 2)
   showFinalImage        Boolean               @default(true) @map("show_final_image")
   votes                 Vote[]
   event                 Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -59,6 +61,7 @@ model VotingOption {
   nominatedById      String?                  @map("nominated_by_id") @db.Uuid
   nominatedByName    String?                  @map("nominated_by_name")
   nomineeCode        String?                  @map("nominee_code")
+  deletionCode       String?                  @map("deletion_code")
   status             VotingOptionStatus       @default(approved)
   votes              Vote[]
   fieldValues        VotingOptionFieldValue[]

@@ -47,7 +47,10 @@ export async function uploadImage(
         data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    // Only allow unauthenticated uploads for public nominations
+    const isPublicUpload = options.folder === "nominations";
+    
+    if (!user && !isPublicUpload) {
         return { success: false, error: "Not authenticated" };
     }
 
@@ -87,7 +90,8 @@ export async function uploadImage(
         // ── Build file path ──────────────────────────────────────────────────
         const folder = options.folder ?? "uploads";
         const filename = `${Date.now()}.webp`;
-        const filePath = `${user.id}/${folder}/${filename}`;
+        const ownerId = user?.id ?? "public";
+        const filePath = `${ownerId}/${folder}/${filename}`;
 
         // ── Upload ───────────────────────────────────────────────────────────
         const { data, error } = await supabase.storage
