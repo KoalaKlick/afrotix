@@ -110,7 +110,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                     <Link
                                         key={category.id}
                                         href={`/${orgSlug}/event/${eventSlug}/category/${category.id}`}
-                                        className="group flex flex-col rounded-2xl border bg-card shadow-sm hover:shadow-xl transition-all duration-300 relative"
+                                        className="group flex flex-col rounded-md border bg-card shadow-sm hover:shadow-xl transition-all duration-300 relative"
                                     >
                                         {category.templateImage && (
                                             <div className="relative w-full h-48 shrink-0 overflow-hidden bg-muted rounded-t-2xl">
