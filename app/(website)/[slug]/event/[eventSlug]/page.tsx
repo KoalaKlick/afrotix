@@ -8,6 +8,7 @@ import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import Image from "next/image"
+import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { Calendar, MapPin, Clock, Vote, Trophy, Users, ChevronRight } from "lucide-react"
 
 interface EventDetailsPageProps {
@@ -109,71 +110,68 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                     <Link
                                         key={category.id}
                                         href={`/${orgSlug}/event/${eventSlug}/category/${category.id}`}
-                                        className="group rounded-2xl overflow-hidden border shadow-sm hover:shadow-xl transition-all duration-300"
-                                        style={category.templateImage ? {
-                                            background: `url(${category.templateImage}) center/cover no-repeat`,
-                                            position: 'relative',
-                                        } : { backgroundColor: '#fff' }}
+                                        className="group flex flex-col rounded-2xl border bg-card shadow-sm hover:shadow-xl transition-all duration-300 relative"
                                     >
-
-                                        <div className={category.templateImage ? "p-6 bg-black/40" : "p-6"}>
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-[#FFCD00]/20 flex items-center justify-center">
-                                                        <Trophy className="w-5 h-5 text-[#FFCD00]" />
+                                        {category.templateImage && (
+                                            <div className="relative w-full h-48 shrink-0 overflow-hidden bg-muted rounded-t-2xl">
+                                                <Image 
+                                                    src={getEventImageUrl(category.templateImage) || ''}
+                                                    alt={category.name}
+                                                    fill
+                                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    unoptimized
+                                                />
+                                            </div>
+                                        )}
+                                        <div className={`p-6 flex flex-col flex-1 bg-white ${category.templateImage ? 'rounded-b-2xl' : 'rounded-2xl'}`}>
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-start gap-3 flex-1 min-w-0 pr-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-[#009A44]/10 flex items-center justify-center shrink-0">
+                                                        <Trophy className="w-5 h-5 text-[#009A44]" />
                                                     </div>
-                                                    <h3 className="text-lg font-bold uppercase tracking-tight group-hover:text-[#009A44] transition-colors">
+                                                    <h3 className="text-xl font-bold uppercase tracking-tight group-hover:text-[#009A44] transition-colors line-clamp-2 mt-1">
                                                         {category.name}
                                                     </h3>
                                                 </div>
-                                                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-[#009A44] group-hover:translate-x-1 transition-all" />
+                                                <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 group-hover:bg-[#009A44]/10 transition-colors">
+                                                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-[#009A44] group-hover:translate-x-0.5 transition-all" />
+                                                </div>
                                             </div>
-                                            {category.description && (
-                                                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+
+                                            {!category.templateImage && category.description && (
+                                                <p className="text-sm text-muted-foreground line-clamp-2 mb-6">
                                                     {category.description}
                                                 </p>
                                             )}
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <Users className="w-4 h-4" />
-                                                <span>{category.votingOptions.length} {category.votingOptions.length === 1 ? "nominee" : "nominees"}</span>
+                                            
+                                            <div className="mt-auto">
+                                                {!category.templateImage && (
+                                                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                                                        <Users className="w-4 h-4" />
+                                                        <span>{category.votingOptions.length} {category.votingOptions.length === 1 ? "nominee" : "nominees"}</span>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Preview of nominees */}
+                                                {category.votingOptions.length > 0 && (
+                                                    <div className="flex flex-row items-center mt-1 pt-1 mb-1">
+                                                        <AnimatedTooltip 
+                                                            items={category.votingOptions.slice(0, 5).map((nominee) => ({
+                                                                id: nominee.id as string,
+                                                                name: nominee.optionText,
+                                                                designation: nominee.nomineeCode || "Nominee",
+                                                                image: getEventImageUrl(nominee.imageUrl),
+                                                            }))} 
+                                                        />
+                                                        {category.votingOptions.length > 5 && (
+                                                            <div className="relative w-10 h-10 ml-2 rounded-full border-2 border-white bg-[#009A44] flex items-center justify-center shrink-0 z-40">
+                                                                <span className="text-white text-xs font-bold">+{category.votingOptions.length - 5}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        {/* Preview of nominees */}
-                                        {category.votingOptions.length > 0 && (
-                                            <div className="px-6 pb-6">
-                                                <div className="flex -space-x-3">
-                                                    {category.votingOptions.slice(0, 5).map((nominee, idx) => {
-                                                        const displayImage = nominee.imageUrl;
-                                                        const displayImageUrl = getEventImageUrl(displayImage);
-                                                        return (
-                                                            <div
-                                                                key={nominee.id}
-                                                                className="relative w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-linear-to-br from-[#009A44]/20 to-[#FFCD00]/20"
-                                                                style={{ zIndex: 5 - idx }}
-                                                            >
-                                                                {displayImageUrl ? (
-                                                                    <Image
-                                                                        src={displayImageUrl}
-                                                                        alt={nominee.optionText}
-                                                                        fill
-                                                                        className="object-cover"
-                                                                    />
-                                                                ) : (
-                                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                                        <Users className="w-4 h-4 text-muted-foreground/50" />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                    {category.votingOptions.length > 5 && (
-                                                        <div className="relative w-10 h-10 rounded-full border-2 border-white bg-[#009A44] flex items-center justify-center">
-                                                            <span className="text-white text-xs font-bold">+{category.votingOptions.length - 5}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
                                     </Link>
                                 ))}
                             </div>
