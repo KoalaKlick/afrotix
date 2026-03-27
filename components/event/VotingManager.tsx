@@ -179,7 +179,7 @@ function SortableCategoryItem({ category, canEdit, children, dragHandleSlot }: S
                 {category.votingOptions.filter(o => o.status === "pending").length > 0 && (
                     <span className="flex h-2 w-2 rounded-full bg-destructive" />
                 )}
-                
+
                 {/* Visual Excel Sheet indicator line */}
                 <div className={cn(
                     "absolute bottom-0 left-0 right-0 h-1 transition-opacity",
@@ -259,9 +259,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         }
     }, [initialCategories, activeCategoryId]);
 
-    const activeCategory = useMemo(() => 
+    const activeCategory = useMemo(() =>
         categories.find(c => c.id === activeCategoryId),
-    [categories, activeCategoryId]);
+        [categories, activeCategoryId]);
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
@@ -528,43 +528,43 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                         {categories.length} {categories.length === 1 ? "category" : "categories"}
                     </p>
                 </div>
-                    <div className="flex items-center gap-2">
-                        {canEdit && (() => {
-                            const pendingCount = categories.reduce((sum, cat) => 
-                                sum + cat.votingOptions.filter(o => o.status === "pending").length, 0);
-                            
-                            if (pendingCount > 0) {
-                                return (
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="relative mr-2"
-                                        onClick={() => setRequestsSheetOpen(true)}
-                                    >
-                                        <span className="absolute -top-1 -right-1 flex size-3">
-                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75"></span>
-                                            <span className="relative inline-flex size-3 rounded-full bg-destructive"></span>
-                                        </span>
-                                        Requests
-                                        <Badge variant="secondary" className="ml-2 bg-destructive/10 text-destructive hover:bg-destructive/20">
-                                            {pendingCount}
-                                        </Badge>
-                                    </Button>
-                                );
-                            }
-                            return null;
-                        })()}
-                        <Button
-                            size="sm"
-                            onClick={() => {
-                                setEditingCategory(null);
-                                setCategoryDialogOpen(true);
-                            }}
-                        >
-                            <Plus className="size-4 mr-2" />
-                            Add Category
-                        </Button>
-                    </div>
+                <div className="flex items-center gap-2">
+                    {canEdit && (() => {
+                        const pendingCount = categories.reduce((sum, cat) =>
+                            sum + cat.votingOptions.filter(o => o.status === "pending").length, 0);
+
+                        if (pendingCount > 0) {
+                            return (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="relative mr-2"
+                                    onClick={() => setRequestsSheetOpen(true)}
+                                >
+                                    <span className="absolute -top-1 -right-1 flex size-3">
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75"></span>
+                                        <span className="relative inline-flex size-3 rounded-full bg-destructive"></span>
+                                    </span>
+                                    Requests
+                                    <Badge variant="secondary" className="ml-2 bg-destructive/10 text-destructive hover:bg-destructive/20">
+                                        {pendingCount}
+                                    </Badge>
+                                </Button>
+                            );
+                        }
+                        return null;
+                    })()}
+                    <Button
+                        size="sm"
+                        onClick={() => {
+                            setEditingCategory(null);
+                            setCategoryDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="size-4 mr-2" />
+                        Add Category
+                    </Button>
+                </div>
             </div>
 
             {/* Categories Tabs and Nominees */}
