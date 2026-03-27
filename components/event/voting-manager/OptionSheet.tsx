@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
     Sheet,
     SheetBody,
@@ -276,8 +276,8 @@ export function OptionSheet({
     return (
         <>
             <Sheet open={open} onOpenChange={handleCloseAttempt}>
-                <SheetContent side="right" variant="afro" className="w-full sm:max-w-xl overflow-y-auto">
-                    <SheetHeader>
+                <SheetContent side="right" variant="afro" className="w-full sm:max-w-xl flex flex-col h-full">
+                    <SheetHeader className="shrink-0">
                         <SheetTitle>
                             {editingOption ? "Edit Nominee" : "Add Nominee"}
                         </SheetTitle>
@@ -285,7 +285,7 @@ export function OptionSheet({
                             {editingOption ? "Update nominee details" : "Add a new nominee to this category"}
                         </SheetDescription>
                     </SheetHeader>
-                    <SheetBody className="space-y-4">
+                    <SheetBody className="space-y-4 flex-1 overflow-y-auto pr-2">
                         {/* Image Upload */}
                         <div className="space-y-2">
                             <Label>Original Photo</Label>
@@ -393,14 +393,12 @@ export function OptionSheet({
 
                         <div className="space-y-2">
                             <Label htmlFor="option-description">Description</Label>
-                            <Textarea
-                                id="option-description"
+                            <RichTextEditor
                                 value={form.description}
-                                onChange={(e) =>
-                                    setForm(prev => ({ ...prev, description: e.target.value }))
+                                onChange={(val) =>
+                                    setForm(prev => ({ ...prev, description: val }))
                                 }
                                 placeholder="Brief description..."
-                                rows={3}
                             />
                         </div>
 
@@ -428,7 +426,7 @@ export function OptionSheet({
                             </>
                         )}
                     </SheetBody>
-                    <SheetFooter>
+                    <SheetFooter className="shrink-0 pt-2">
                         <Button
                             variant="outline"
                             onClick={() => {

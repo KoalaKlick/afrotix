@@ -142,9 +142,6 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                                     {nominee.nomineeCode}
                                                 </p>
                                             )}
-                                            {nominee.description && (
-                                                <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{nominee.description}</p>
-                                            )}
                                         </div>
                                     </div>
                                 );

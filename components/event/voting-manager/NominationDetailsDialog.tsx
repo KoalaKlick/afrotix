@@ -59,15 +59,7 @@ export function NominationDetailsDialog({
                                 )}
                             </div>
 
-                            {selectedOption.option.description && (
-                                <div className="space-y-1">
-                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Description / Pitch</p>
-                                    <div
-                                        className="text-sm bg-muted/30 p-3 rounded-lg leading-relaxed prose prose-sm max-w-none dark:prose-invert"
-                                        dangerouslySetInnerHTML={{ __html: selectedOption.option.description }}
-                                    />
-                                </div>
-                            )}
+
 
                             {selectedOption.category.customFields && selectedOption.category.customFields.length > 0 && selectedOption.option.fieldValues && selectedOption.option.fieldValues.length > 0 && (
                                 <div className="space-y-3">
@@ -87,7 +79,15 @@ export function NominationDetailsDialog({
                                 </div>
                             )}
 
-
+                            {selectedOption.option.description && (
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Description / Pitch</p>
+                                    <div
+                                        className="text-sm bg-muted/30 p-3 rounded-lg leading-relaxed prose prose-sm max-w-none dark:prose-invert"
+                                        dangerouslySetInnerHTML={{ __html: selectedOption.option.description }}
+                                    />
+                                </div>
+                            )}
                             {(selectedOption.option.nominatedByName || (selectedOption.option as any).nominatedByEmail) && (
                                 <div className="space-y-2">
                                     <p className="text-sm">Nominated By</p>
@@ -116,7 +116,7 @@ export function NominationDetailsDialog({
                 )}
                 <DialogFooter className="space-x-2 sm:gap-0 mt-2">
                     <Button
-                    
+
                         variant="destructive"
                         onClick={() => {
                             if (selectedOption) onReject(selectedOption.option.id);
@@ -128,7 +128,7 @@ export function NominationDetailsDialog({
                         Reject
                     </Button>
                     <Button
-                    variant='tertiary'
+                        variant='tertiary'
                         onClick={() => {
                             if (selectedOption) onApprove(selectedOption.option.id);
                             onClose();

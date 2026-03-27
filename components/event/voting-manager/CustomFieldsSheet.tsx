@@ -229,8 +229,8 @@ export function CustomFieldsSheet({
             onOpenChange(o);
             if (!o) onClose();
         }}>
-            <SheetContent side="right" variant="afro" className="w-full sm:max-w-lg overflow-y-auto">
-                <SheetHeader>
+            <SheetContent side="right" variant="afro" className="w-full sm:max-w-lg flex flex-col h-full">
+                <SheetHeader className="shrink-0">
                     <SheetTitle>
                         Custom Fields for {category?.name}
                     </SheetTitle>
@@ -238,7 +238,7 @@ export function CustomFieldsSheet({
                         Define additional fields that nominees can fill out
                     </SheetDescription>
                 </SheetHeader>
-                <SheetBody className="space-y-4">
+                <SheetBody className="space-y-4 flex-1 overflow-y-auto pr-2">
                     {/* Existing Fields */}
                     {category?.customFields?.length ? (
                         <div className="space-y-2">
@@ -394,7 +394,7 @@ export function CustomFieldsSheet({
                         </div>
                     </div>
                 </SheetBody>
-                <SheetFooter>
+                <SheetFooter className="shrink-0 pt-2">
                     <Button
                         variant="outline"
                         onClick={onClose}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition, type Dispatch, type SetStateAction, useMemo } from "react";
+import { getEventImageUrl } from "@/lib/image-url-utils";
 import {
     DndContext,
     closestCenter,
@@ -233,27 +234,38 @@ export function CategoryList({
                 return (
                     <TabsContent key={category.id} value={category.id} className="space-y-4 pt-2 mt-0">
                         {/* Category Info & Actions */}
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                    <h4 className="text-lg font-semibold">{category.name}</h4>
-                                    {category.allowPublicNomination && (
-                                        <Badge variant="outline" className="text-xs">
-                                            <Globe className="size-3 mr-1" />
-                                            Public
-                                        </Badge>
-                                    )}
-                                    {pendingCount > 0 && (
-                                        <Badge variant="secondary" className="text-xs">
-                                            {pendingCount} pending
-                                        </Badge>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border bg-muted/10">
+                            <div className="flex items-start gap-4 flex-1">
+                                {category.templateImage && (
+                                    <div className="size-16 rounded-lg overflow-hidden shrink-0 border bg-background relative hidden sm:block">
+                                        <img 
+                                            src={getEventImageUrl(category.templateImage) || ''} 
+                                            alt={category.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                )}
+                                <div className="space-y-1 mt-0.5">
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="text-lg font-bold">{category.name}</h4>
+                                        {category.allowPublicNomination && (
+                                            <Badge variant="outline" className="text-xs">
+                                                <Globe className="size-3 mr-1" />
+                                                Public
+                                            </Badge>
+                                        )}
+                                        {pendingCount > 0 && (
+                                            <Badge variant="secondary" className="text-xs">
+                                                {pendingCount} pending
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    {category.description && (
+                                        <p className="text-sm text-muted-foreground max-w-2xl">
+                                            {category.description}
+                                        </p>
                                     )}
                                 </div>
-                                {category.description && (
-                                    <p className="text-sm text-muted-foreground max-w-2xl">
-                                        {category.description}
-                                    </p>
-                                )}
                             </div>
 
                             {canEdit && (
@@ -313,7 +325,7 @@ export function CategoryList({
                         </div>
 
                         {/* Nominees Grid */}
-                        {category.votingOptions.length === 0 ? (
+                        {approvedNominees.length === 0 ? (
                             <Card className="border-dashed">
                                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                                     <Users className="size-12 text-muted-foreground mb-4 opacity-20" />
@@ -335,7 +347,7 @@ export function CategoryList({
                             </Card>
                         ) : (
                             <div className="grid @md:grid-cols-2 @2xl:grid-cols-3 @5xl:grid-cols-4 @7xl:grid-cols-5 gap-4">
-                                {category.votingOptions.map((option) => (
+                                {approvedNominees.map((option) => (
                                     <NomineeCard
                                         key={option.id}
                                         option={option}

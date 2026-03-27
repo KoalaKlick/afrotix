@@ -19,9 +19,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Check, X, Eye } from "lucide-react";
+import { Check, X, Eye, Clock, CheckCircle2, XCircle } from "lucide-react";
 import type { VotingCategory, VotingOption } from "@/lib/types/voting";
 import { NominationDetailsDialog } from "./NominationDetailsDialog";
+import { getEventImageUrl } from "@/lib/image-url-utils";
+import { StatusBadge } from "@/components/shared/status-badge";
 
 interface NominationRequestsSheetProps {
     readonly open: boolean;
@@ -42,54 +44,55 @@ export function NominationRequestsSheet({
 }: NominationRequestsSheetProps) {
     const [selectedOption, setSelectedOption] = useState<{ option: VotingOption; category: VotingCategory } | null>(null);
 
-    // Extract all pending options across all categories
-    const pendingNominations = useMemo(() => {
-        const pending: { option: VotingOption; categoryName: string }[] = [];
+    // Extract all public nominations across all categories
+    const publicNominations = useMemo(() => {
+        const publicOptions: { option: VotingOption; categoryName: string }[] = [];
         for (const category of categories) {
             for (const option of category.votingOptions) {
-                if (option.status === "pending") {
-                    pending.push({ option, categoryName: category.name });
+                if (option.isPublicNomination) {
+                    publicOptions.push({ option, categoryName: category.name });
                 }
             }
         }
         // Assuming newer nominations are generally appended (or we could sort by created at if we had it)
-        return pending.reverse(); 
+        return publicOptions.reverse(); 
     }, [categories]);
 
     return (
         <Sheet  open={open} onOpenChange={onOpenChange}>
-            <SheetContent variant="afro" side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-                <SheetHeader className="mb-6">
+            <SheetContent variant="afro" side="right" className="w-full sm:max-w-2xl px-3 flex flex-col h-full">
+                <SheetHeader className="mb-6 shrink-0">
                     <SheetTitle>Nomination Requests</SheetTitle>
                     <SheetDescription>
                         Review and approve public nominations for your event categories.
                     </SheetDescription>
                 </SheetHeader>
 
-                {pendingNominations.length === 0 ? (
+                <div className="flex-1 overflow-y-auto pr-2 pb-4">
+                    {publicNominations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg border-dashed">
                         <Badge variant="outline" className="mb-4">All caught up</Badge>
-                        <p className="font-medium mb-1">No pending requests</p>
-                       
+                        <p className="font-medium mb-1">No public requests found</p>
                     </div>
                 ) : (
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
+                    <div className="rounded-md border bg-white">
+                        <Table >
+                            <TableHeader >
                                 <TableRow>
                                     <TableHead>Nominee</TableHead>
                                     <TableHead>Category</TableHead>
                                     <TableHead>Details</TableHead>
+                                    <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
-                                {pendingNominations.map(({ option, categoryName }) => (
+                            <TableBody >
+                                {publicNominations.map(({ option, categoryName }) => (
                                     <TableRow key={option.id}>
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="size-8">
-                                                    <AvatarImage src={option.imageUrl ?? undefined} />
+                                                    <AvatarImage src={getEventImageUrl(option.imageUrl) ?? undefined} />
                                                     <AvatarFallback>
                                                         {option.optionText.slice(0, 2).toUpperCase()}
                                                     </AvatarFallback>
@@ -109,6 +112,9 @@ export function NominationRequestsSheet({
                                                 {!option.email && !option.nominatedByName && <span>-</span>}
                                             </div>
                                         </TableCell>
+                                        <TableCell>
+                                           <StatusBadge variant={option.status || 'default'} />
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Button
@@ -125,26 +131,30 @@ export function NominationRequestsSheet({
                                                 >
                                                     <Eye className="size-4" />
                                                 </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                                    onClick={() => onReject(option.id)}
-                                                    disabled={isPending}
-                                                    title="Reject"
-                                                >
-                                                    <X className="size-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="size-8 text-green-600 hover:bg-green-600/10 hover:text-green-600"
-                                                    onClick={() => onApprove(option.id)}
-                                                    disabled={isPending}
-                                                    title="Approve"
-                                                >
-                                                    <Check className="size-4" />
-                                                </Button>
+                                                {option.status === 'pending' && (
+                                                    <>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                            onClick={() => onReject(option.id)}
+                                                            disabled={isPending}
+                                                            title="Reject"
+                                                        >
+                                                            <X className="size-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="size-8 text-green-600 hover:bg-green-600/10 hover:text-green-600"
+                                                            onClick={() => onApprove(option.id)}
+                                                            disabled={isPending}
+                                                            title="Approve"
+                                                        >
+                                                            <Check className="size-4" />
+                                                        </Button>
+                                                    </>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -153,6 +163,7 @@ export function NominationRequestsSheet({
                         </Table>
                     </div>
                 )}
+                </div>
             </SheetContent>
 
             <NominationDetailsDialog 

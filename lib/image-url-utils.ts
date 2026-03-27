@@ -21,7 +21,10 @@ export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
  */
 export function isFullUrl(pathOrUrl: string | null | undefined): boolean {
     if (!pathOrUrl) return false;
-    return pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://");
+    return pathOrUrl.startsWith("http://") || 
+           pathOrUrl.startsWith("https://") ||
+           pathOrUrl.startsWith("blob:") ||
+           pathOrUrl.startsWith("data:");
 }
 
 /**

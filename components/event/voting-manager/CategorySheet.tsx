@@ -224,13 +224,13 @@ export function CategorySheet({
         >
             {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
 
-            <SheetContent side="right" variant="afro" className="w-full sm:max-w-lg overflow-y-auto">
-                <SheetHeader>
+            <SheetContent side="right" variant="afro" className="w-full sm:max-w-lg flex flex-col h-full">
+                <SheetHeader className="shrink-0">
                     <SheetTitle>{editingCategory ? "Edit Category" : "Add Category"}</SheetTitle>
                     <SheetDescription>Create or edit a voting category for nominees</SheetDescription>
                 </SheetHeader>
 
-                <SheetBody>
+                <SheetBody className="flex-1 overflow-y-auto pr-2">
                     <Tabs defaultValue="basic" className="w-full">
                         <TabsList variant="afro" className="grid w-full grid-cols-2">
                             <TabsTrigger value="basic">Basic</TabsTrigger>
@@ -261,7 +261,7 @@ export function CategorySheet({
                                         if (previewUrl) URL.revokeObjectURL(previewUrl);
                                         setPreviewUrl(url);
 
-                                        return { status: "success", result: "pending" };
+                                        return { status: "success", result: url };
                                     }}
                                 />
                             </div>
@@ -387,7 +387,7 @@ export function CategorySheet({
                     </Tabs>
                 </SheetBody>
 
-                <SheetFooter>
+                <SheetFooter className="shrink-0 pt-2">
                     <Button
                         variant="outline"
                         onClick={() => {
@@ -397,7 +397,7 @@ export function CategorySheet({
                     >
                         Cancel
                     </Button>
-                    <Button onClick={handleSave} disabled={isPending}>
+                    <Button variant='tertiary' onClick={handleSave} disabled={isPending}>
                         {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
                         {editingCategory ? "Save Changes" : "Add Category"}
                     </Button>

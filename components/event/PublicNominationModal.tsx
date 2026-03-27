@@ -122,15 +122,15 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
                     Nominate for this Category
                 </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="sm:max-w-xl w-full overflow-y-auto P-0 sm:p-6" variant="afro">
-                <SheetHeader>
+            <SheetContent side="right" className="sm:max-w-xl w-full flex flex-col h-full p-0 sm:p-6" variant="afro">
+                <SheetHeader className="shrink-0 pt-6 px-6 sm:p-0">
                     <SheetTitle>Nominate Someone</SheetTitle>
                     <SheetDescription>
                         Submit a nomination for {category.name}. It will be reviewed by the organizers before appearing publicly.
                     </SheetDescription>
                 </SheetHeader>
 
-                <form onSubmit={onSubmit} className="space-y-6 pt-4">
+                <form onSubmit={onSubmit} className="flex-1 overflow-y-auto space-y-6 pt-4 px-6 sm:px-1 min-h-0">
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label>Nominee Photo (Optional)</Label>
