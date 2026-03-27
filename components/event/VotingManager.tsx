@@ -5,11 +5,9 @@
 
 "use client";
 
-import { useState, useTransition, useRef, useMemo, useEffect } from "react";
-import Image from "next/image";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import {
-    DndContext,
-    closestCenter,
+
     useSensor,
     useSensors,
     PointerSensor,
@@ -18,17 +16,14 @@ import {
 } from "@dnd-kit/core";
 import {
     arrayMove,
-    SortableContext,
     sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-    horizontalListSortingStrategy,
+
     useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
     Card,
