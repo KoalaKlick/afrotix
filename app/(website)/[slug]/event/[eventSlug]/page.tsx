@@ -10,12 +10,49 @@ import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { Calendar, MapPin, Clock, Vote, Trophy, Users, ChevronRight } from "lucide-react"
+import type { Metadata } from "next"
 
 interface EventDetailsPageProps {
     params: Promise<{
         slug: string
         eventSlug: string
     }>
+}
+
+const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN_URL || "https://sankofa-one.vercel.app"
+
+export async function generateMetadata({ params }: EventDetailsPageProps): Promise<Metadata> {
+    const { slug: orgSlug, eventSlug } = await params
+    const organization = await getOrganizationBySlug(orgSlug)
+    if (!organization) return {}
+
+    const event = await getEventBySlug(organization.id, eventSlug)
+    if (!event) return {}
+
+    const coverImage = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
+    const absoluteImage = coverImage.startsWith("http") ? coverImage : `${BASE_URL}${coverImage}`
+    const pageUrl = `${BASE_URL}/${orgSlug}/event/${eventSlug}`
+    const description = event.description
+        ? event.description.replace(/<[^>]*>/g, "").slice(0, 200)
+        : `${event.title} — powered by Sankofa`
+
+    return {
+        title: event.title,
+        description,
+        openGraph: {
+            title: event.title,
+            description,
+            url: pageUrl,
+            type: "website",
+            images: [{ url: absoluteImage, width: 1200, height: 630, alt: event.title }],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: event.title,
+            description,
+            images: [absoluteImage],
+        },
+    }
 }
 
 export default async function EventDetailsPage({ params }: Readonly<EventDetailsPageProps>) {

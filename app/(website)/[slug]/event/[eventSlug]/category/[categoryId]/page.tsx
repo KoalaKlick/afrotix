@@ -11,6 +11,7 @@ import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import { ArrowLeft, Trophy, Users } from "lucide-react"
 import { PublicNominationModal } from "@/components/event/PublicNominationModal"
 import { NomineeGrid } from "@/components/event/PublicNomineeSheet"
+import type { Metadata } from "next"
 
 interface CategoryDetailPageProps {
     params: Promise<{
@@ -18,6 +19,47 @@ interface CategoryDetailPageProps {
         eventSlug: string
         categoryId: string
     }>
+}
+
+const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN_URL || "https://sankofa-one.vercel.app"
+
+export async function generateMetadata({ params }: CategoryDetailPageProps): Promise<Metadata> {
+    const { slug: orgSlug, eventSlug, categoryId } = await params
+    const organization = await getOrganizationBySlug(orgSlug)
+    if (!organization) return {}
+
+    const event = await getEventBySlug(organization.id, eventSlug)
+    if (!event) return {}
+
+    const category = await getVotingCategoryById(categoryId, false)
+    if (!category || category.eventId !== event.id) return {}
+
+    const coverImage = getEventImageUrl(category.templateImage) ?? getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
+    const absoluteImage = coverImage.startsWith("http") ? coverImage : `${BASE_URL}${coverImage}`
+    const pageUrl = `${BASE_URL}/${orgSlug}/event/${eventSlug}/category/${categoryId}`
+
+    const title = `${category.name} — ${event.title}`
+    const description = category.description
+        ? category.description.replace(/<[^>]*>/g, "").slice(0, 200)
+        : `Vote for your favorite nominee in ${category.name} at ${event.title}`
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            url: pageUrl,
+            type: "website",
+            images: [{ url: absoluteImage, width: 1200, height: 630, alt: category.name }],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: [absoluteImage],
+        },
+    }
 }
 
 export default async function CategoryDetailPage({ params }: Readonly<CategoryDetailPageProps>) {
