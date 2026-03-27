@@ -11,6 +11,7 @@ import { Loader2, Upload, ImageIcon, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { submitPublicNominationAction } from "@/lib/actions/voting";
+import { createClient } from "@/utils/supabase/client";
 import type { VotingCategoryWithOptions } from "@/lib/dal/voting";
 import { OptionCustomFieldInput } from "@/components/event/voting-manager/OptionCustomFieldInput";
 
@@ -84,6 +85,18 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
         startTransition(async () => {
             let finalImageUrl = undefined;
             if (pendingFile) {
+                // Secure Approach: Ensure anonymous sign-in before upload
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!user) {
+                    const { error: authError } = await supabase.auth.signInAnonymously();
+                    if (authError) {
+                        toast.error("Authentication failed. Please try again.");
+                        return;
+                    }
+                }
+
                 const uploadedPath = await upload(pendingFile);
                 if (!uploadedPath) {
                     toast.error("Image upload failed");

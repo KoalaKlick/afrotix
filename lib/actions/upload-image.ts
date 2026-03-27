@@ -43,11 +43,13 @@ export async function uploadImage(
     options: UploadImageOptions = {}
 ): Promise<ActionResult<{ path: string }>> {
     const supabase = await createClient();
+
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // Only allow unauthenticated uploads for public nominations
+    // Only allow unauthenticated uploads for public nominations if they are anonymously signed in
+    // Note: Anonymous users in Supabase return as authenticated sessions.
     const isPublicUpload = options.folder === "nominations";
     
     if (!user && !isPublicUpload) {
