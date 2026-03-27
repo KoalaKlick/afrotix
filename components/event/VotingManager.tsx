@@ -579,6 +579,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                 onAddOption={handleOpenAddOption}
                 onOpenFields={openFieldsDialog}
                 onEditOption={handleEditOption}
+                onDeleteOption={handleDeleteOption}
                 onAddFirst={() => setCategoryDialogOpen(true)}
             />
 
