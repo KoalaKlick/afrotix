@@ -1,8 +1,10 @@
 "use client";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
+import { Calendar, MoreVertical, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,8 +14,19 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getEventLifecycleStatus, getEventPublicationStatus } from "@/lib/event-status";
 import { getEventImageUrl } from "@/lib/image-url-utils";
+import { deleteExistingEvent } from "@/lib/actions/event";
 
 const statusColors: Record<string, string> = {
     draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -42,7 +55,25 @@ interface EventsListProps {
 }
 
 export function EventsList({ events, organizationSlug }: EventsListProps) {
+    const [isDeleting, startTransition] = useTransition();
+    const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+
+    const handleDelete = async () => {
+        if (!eventToDelete) return;
+
+        startTransition(async () => {
+            const result = await deleteExistingEvent(eventToDelete.id);
+            if (result.success) {
+                toast.success("Event deleted successfully");
+                setEventToDelete(null);
+            } else {
+                toast.error(result.error ?? "Failed to delete event");
+            }
+        });
+    };
+
     return (
+        <>
         <div className="grid gap-4">
             {events.map((event) => {
                 const coverImageUrl = getEventImageUrl(event.coverImage);
@@ -127,7 +158,13 @@ export function EventsList({ events, organizationSlug }: EventsListProps) {
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-destructive">
+                                    <DropdownMenuItem
+                                        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                        onSelect={(e) => {
+                                            e.preventDefault();
+                                            setEventToDelete(event);
+                                        }}
+                                    >
                                         <Trash2 className="mr-2 size-4" />
                                         Delete
                                     </DropdownMenuItem>
@@ -137,6 +174,39 @@ export function EventsList({ events, organizationSlug }: EventsListProps) {
                     </div>
                 );
             })}
-        </div>
+            </div>
+
+            <AlertDialog
+                open={!!eventToDelete}
+                onOpenChange={(open) => !open && !isDeleting && setEventToDelete(null)}
+            >
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the event "{eventToDelete?.title}".
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                "Delete Event"
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }

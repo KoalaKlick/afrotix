@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { PROJ_NAME } from "@/lib/const/branding";
+import { PROJ_NAME, DOMAIN_NAME } from "@/lib/const/branding";
 
 export const metadata: Metadata = {
   title: PROJ_NAME,
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     shortcut: "/logo.svg",
     apple: "/logo.svg",
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_DOMAIN_URL || 'https://sankofa-one.vercel.app/'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_DOMAIN_URL ?? `https://${DOMAIN_NAME}`),
   openGraph: {
     title: PROJ_NAME,
     description: "Create, Manage & Grow Events with Real-Time Power",
