@@ -117,7 +117,7 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
     return (
         <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
-                <Button variant="afro" size="lg" className="w-full sm:w-auto text-lg gap-2 mt-6">
+                <Button variant="tertiary" size="lg" className="w-full sm:w-auto text-lg gap-2 mt-6">
                     <PlusCircle className="size-5" />
                     Nominate for this Category
                 </Button>
