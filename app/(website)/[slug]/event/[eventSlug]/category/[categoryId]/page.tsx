@@ -8,9 +8,9 @@ import { getEventImageUrl } from "@/lib/image-url-utils"
 import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
-import { ArrowLeft, Trophy, Users, Vote } from "lucide-react"
+import { ArrowLeft, Trophy, Users } from "lucide-react"
 import { PublicNominationModal } from "@/components/event/PublicNominationModal"
-import { Card } from "@/components/ui/card"
+import { NomineeGrid } from "@/components/event/PublicNomineeSheet"
 
 interface CategoryDetailPageProps {
     params: Promise<{
@@ -90,8 +90,8 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
             <PanAfricanDivider />
 
             {/* Nominees Section */}
-            <Section className="py-16 bg-[#F8F7F1] ">
-                <div className="max-w-6xl mx-auto px-4 @container">
+            <Section maxWidth="full" className="py-16 w-full bg-[#F8F7F1] ">
+                <div className="max-w-360 mx-auto px-4 @container">
                     <div className="flex items-center justify-between mb-10">
                         <div className="flex items-center gap-3">
                             <Users className="w-6 h-6 text-[#009A44]" />
@@ -103,58 +103,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                     </div>
 
                     {category.votingOptions.length > 0 ? (
-                        <div className="grid grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-3 @7xl:grid-cols-4 gap-8">
-                            {category.votingOptions.map((nominee) => {
-                                const displayImage = nominee.imageUrl;
-                                const displayImageUrl = getEventImageUrl(displayImage);
-                                return (
-                                    <Card
-                                    variant="afro"
-                                        key={nominee.id}
-                                        className="group bg-white rounded-lg overflow-hidden border shadow-sm hover:shadow-xl  transition-all duration-300"
-                                    >
-                                        <div className="relative aspect-5/4 bg-linear-to-br from-[#009A44]/10 to-[#FFCD00]/10">
-                                            {displayImageUrl ? (
-                                                <Image
-                                                    src={displayImageUrl}
-                                                    alt={nominee.optionText}
-                                                    fill
-                                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                                    unoptimized
-                                                />
-                                            ) : (
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <Users className="w-16 h-16 text-muted-foreground/20" />
-                                                </div>
-                                            )}
-                                            {/* Vote overlay on hover */}
-                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                                <button
-                                                    type="button"
-                                                    className="bg-[#009A44] text-white font-bold uppercase py-3 px-8 rounded-full hover:bg-[#009A44]/90 transition-colors tracking-widest text-xs inline-flex items-center gap-2 shadow-lg"
-                                                >
-                                                    <Vote className="w-4 h-4" />
-                                                    Vote
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="p-5 flex items-start justify-between gap-3">
-                                            <div className="min-w-0">
-                                                <h3 className="font-bold text-base truncate">{nominee.optionText}</h3>
-                                                {nominee.nomineeCode && (
-                                                    <p className="text-xs text-[#009A44] font-mono font-semibold mt-0.5">
-                                                        {nominee.nomineeCode}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="shrink-0 w-8 h-8 rounded-full bg-[#009A44]/10 flex items-center justify-center group-hover:bg-[#009A44] transition-colors">
-                                                <Vote className="w-4 h-4 text-[#009A44] group-hover:text-white transition-colors" />
-                                            </div>
-                                        </div>
-                                    </Card>
-                                );
-                            })}
-                        </div>
+                        <NomineeGrid nominees={category.votingOptions} />
                     ) : (
                         <div className="text-center py-16">
                             <Users className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />

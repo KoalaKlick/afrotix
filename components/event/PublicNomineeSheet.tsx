@@ -10,8 +10,91 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { getEventImageUrl } from "@/lib/image-url-utils";
-import { Vote, Share2, Users, Hash, Mail } from "lucide-react";
+import { Vote, Share2, Users, Hash } from "lucide-react";
 import type { VotingOption } from "@/lib/types/voting";
+
+// ─── Strip HTML for plain-text share messages ────────────────────────────────
+
+function stripHtml(html: string): string {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent?.trim() || "";
+}
+
+// ─── Convert any image blob to JPEG via canvas ──────────────────────────────
+
+function convertToJpeg(blob: Blob): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) { URL.revokeObjectURL(url); reject(new Error("no canvas ctx")); return; }
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(
+                (jpegBlob) => {
+                    URL.revokeObjectURL(url);
+                    if (jpegBlob) resolve(jpegBlob);
+                    else reject(new Error("toBlob failed"));
+                },
+                "image/jpeg",
+                0.92
+            );
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image load failed")); };
+        img.src = url;
+    });
+}
+
+// ─── Rich share: image + description + vote link ─────────────────────────────
+
+async function shareNominee(nominee: VotingOption) {
+    const imageUrl = getEventImageUrl(nominee.imageUrl);
+    const plainDescription = nominee.description ? stripHtml(nominee.description) : "";
+    const shareUrl = window.location.href;
+
+    // Build share text: nominee name + description
+    let shareCaption = `Vote for ${nominee.optionText}!`;
+    if (plainDescription) shareCaption += `\n\n${plainDescription}`;
+
+    // Try to share with image converted to JPEG for WhatsApp compatibility
+    if (imageUrl && navigator.canShare) {
+        try {
+            const response = await fetch(imageUrl);
+            const originalBlob = await response.blob();
+            const jpegBlob = await convertToJpeg(originalBlob);
+
+            const file = new File(
+                [jpegBlob],
+                `${nominee.optionText.replace(/[^a-zA-Z0-9]/g, "_")}.jpg`,
+                { type: "image/jpeg" }
+            );
+
+            // Share image with caption text (single text field = WhatsApp caption)
+            const shareData: ShareData = {
+                text: shareCaption + `\n\n${shareUrl}`,
+                files: [file],
+            };
+
+            if (navigator.canShare(shareData)) {
+                await navigator.share(shareData);
+                return;
+            }
+        } catch {
+            // Fall through to text-only share
+        }
+    }
+
+    // Fallback: text-only share or clipboard
+    if (navigator.share) {
+        navigator.share({ title: nominee.optionText, text: shareCaption + `\n\n${shareUrl}` }).catch(() => { });
+    } else {
+        await navigator.clipboard.writeText(shareCaption + `\n\n${shareUrl}`);
+    }
+}
 
 // ─── Nominee Grid (client wrapper for click-to-open) ─────────────────────────
 
@@ -24,27 +107,19 @@ export function NomineeGrid({ nominees }: NomineeGridProps) {
 
     function handleShare(e: React.MouseEvent, nominee: VotingOption) {
         e.stopPropagation();
-        if (navigator.share) {
-            navigator.share({
-                title: nominee.optionText,
-                text: `Vote for ${nominee.optionText}!`,
-                url: window.location.href,
-            }).catch(() => { });
-        } else {
-            navigator.clipboard.writeText(window.location.href);
-        }
+        shareNominee(nominee);
     }
 
     return (
         <>
-            <div className="grid grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-3 @7xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4 @7xl:grid-cols-5 @[90rem]:grid-cols-6 gap-8">
                 {nominees.map((nominee) => {
                     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
                     return (
                         <div
                             key={nominee.id}
                             onClick={() => setSelectedNominee(nominee)}
-                            className="group bg-white rounded-2xl overflow-hidden border shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
+                            className="group bg-white rounded-md overflow-hidden border shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
                         >
                             {/* Image */}
                             <div className="relative aspect-5/4 bg-linear-to-br from-[#009A44]/10 to-[#FFCD00]/10">
@@ -90,9 +165,10 @@ export function NomineeGrid({ nominees }: NomineeGridProps) {
                                 </div>
                                 {/* Vote Button */}
                                 <Button
-                                    variant="outline"
+                                    variant="afro"
                                     size="sm"
-                                    className="w-full gap-2 border-[#009A44]/20 text-[#009A44] hover:bg-[#009A44] hover:text-white transition-colors font-semibold uppercase tracking-wider text-xs"
+                                    className="w-full"
+                                    // className="w-full transition-all duration-300 ease-in-out gap-2 border-[#009A44]/20 text-[#009A44] hover:bg-[#009A44] hover:text-white  font-semibold uppercase tracking-wider text-xs"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         // TODO: wire up actual voting
@@ -134,7 +210,7 @@ function PublicNomineeSheet({ nominee, open, onOpenChange }: PublicNomineeSheetP
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex flex-col h-full p-0 sm:max-w-lg">
+            <SheetContent className="flex flex-col gap-0 h-full p-0 sm:max-w-lg">
                 {/* Sticky Header */}
                 <SheetHeader className="px-6 py-4 border-b shrink-0">
                     <SheetTitle className="text-left">{nominee.optionText}</SheetTitle>
@@ -166,21 +242,10 @@ function PublicNomineeSheet({ nominee, open, onOpenChange }: PublicNomineeSheetP
                                 </p>
                             )}
                         </div>
-
-                        {/* Contact */}
-                        {nominee.email && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Mail className="w-4 h-4" />
-                                <span>{nominee.email}</span>
-                            </div>
-                        )}
-
                         {/* Description / Pitch */}
                         {nominee.description && (
                             <div className="space-y-2">
-                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                                    Why Vote For Me
-                                </h3>
+
                                 <div
                                     className="prose prose-sm max-w-none text-foreground"
                                     dangerouslySetInnerHTML={{ __html: nominee.description }}
@@ -193,7 +258,8 @@ function PublicNomineeSheet({ nominee, open, onOpenChange }: PublicNomineeSheetP
                 {/* Sticky Footer */}
                 <div className="border-t p-6 shrink-0 flex gap-3">
                     <Button
-                        className="flex-1 gap-2 bg-[#009A44] hover:bg-[#009A44]/90 text-white font-bold uppercase tracking-widest"
+                        className="grow"
+                        variant="afro"
                         size="lg"
                         onClick={() => {
                             // TODO: wire up actual voting
@@ -203,19 +269,9 @@ function PublicNomineeSheet({ nominee, open, onOpenChange }: PublicNomineeSheetP
                         Vote for {nominee.optionText}
                     </Button>
                     <Button
-                        variant="outline"
+                        variant="tertiary"
                         size="lg"
-                        onClick={() => {
-                            if (navigator.share) {
-                                navigator.share({
-                                    title: nominee.optionText,
-                                    text: `Vote for ${nominee.optionText}!`,
-                                    url: window.location.href,
-                                }).catch(() => { });
-                            } else {
-                                navigator.clipboard.writeText(window.location.href);
-                            }
-                        }}
+                        onClick={() => shareNominee(nominee)}
                     >
                         <Share2 className="w-4 h-4" />
                     </Button>
