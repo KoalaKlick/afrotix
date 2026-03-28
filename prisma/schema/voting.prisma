@@ -100,6 +100,9 @@ model Vote {
   voterIp          String?         @map("voter_ip") @db.Inet
   amountPaid       Decimal         @default(0) @map("amount_paid") @db.Decimal(10, 2)
   paymentReference String?         @map("payment_reference")
+  paymentId        String?         @map("payment_id") @db.Uuid
+  smsSent          Boolean         @default(false) @map("sms_sent")
+  whatsappSent     Boolean         @default(false) @map("whatsapp_sent")
   createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   category         VotingCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   event            Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)

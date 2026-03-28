@@ -1,168 +1,129 @@
-# Event & Voting Platform — Implementation Guide
-### For AI Code Agent | One Flow at a Time | Ghana
+# Event & Voting Platform — Implementation Guide (Ghana Flow)
+### For AI Code Agent | Project: Sankofa | Ghana
 ### Stack: Supabase · Paystack · Arkesel · WhatsApp Meta Cloud API
 
 ---
 
-## Before You Start
+## Overview
+This document outlines the implementation of the payment and delivery flow for Ghana, using Paystack for Mobile Money (MoMo) and card payments, Arkesel for SMS, and Meta Cloud API for WhatsApp notifications.
 
-### Confirmation channel rule — applies to every flow
-```
-payment.channel = "web"  AND  whatsapp_opt_in = false  →  SMS via Arkesel
-payment.channel = "web"  AND  whatsapp_opt_in = true   →  WhatsApp message
-payment.channel = "whatsapp"                           →  WhatsApp message
-```
+## Core Rules
 
-### Non-negotiable security rules
+### Confirmation Channel Rule
 ```
-1. Frontend NEVER writes to payments, tickets, votes, or payouts directly
-2. All payment writes go through Edge Functions using service_role key only
-3. status = "confirmed" is ONLY set by the Paystack webhook — never the frontend
-4. Every payment gets an idempotency key BEFORE calling Paystack
-5. Paystack webhook MUST verify HMAC SHA-512 signature before doing anything
-6. All secrets live in Supabase Vault — never in code or committed .env files
+payment.channel = "web"  AND  profile.whatsapp_opt_in = false  →  SMS via Arkesel
+payment.channel = "web"  AND  profile.whatsapp_opt_in = true   →  WhatsApp message
+payment.channel = "whatsapp"                                  →  WhatsApp message
 ```
 
-### Environment variables — set ALL before starting Flow 1
-```bash
-supabase secrets set SUPABASE_URL=https://your-project.supabase.co
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-supabase secrets set PAYSTACK_SECRET_KEY=sk_live_xxxxxxxxxxxx
-supabase secrets set PAYSTACK_WEBHOOK_SECRET=your-paystack-webhook-secret
-supabase secrets set ARKESEL_API_KEY=your-arkesel-api-key
-supabase secrets set ARKESEL_SENDER_ID=YourBrand
-supabase secrets set WHATSAPP_TOKEN=your-meta-access-token
-supabase secrets set WHATSAPP_PHONE_ID=your-phone-number-id
-supabase secrets set WHATSAPP_VERIFY_TOKEN=any-random-string-you-choose
-supabase secrets set APP_URL=https://your-app.com
-```
-
-### Agent instruction
-Implement one complete flow at a time. Run the "How to test" check at the end
-of each flow before moving to the next. Do not start a new flow until the
-previous one is confirmed working end-to-end.
-
----
----
-
-# FLOW 1 — User registers and sets up their account
-
-**What happens:** User signs up → profile created → they optionally tick
-"Send confirmations via WhatsApp" → profile saved.
+### Security & Integrity
+1. Frontend NEVER writes to `payments`, `tickets`, `votes`, or `ticket_orders` directly (except for initial pending order creation if applicable).
+2. All payment state changes (`confirmed`, `completed`) are handled by Edge Functions or DB triggers using the `service_role` key.
+3. Paystack webhook MUST verify the HMAC SHA-512 signature.
+4. All secrets live in Supabase Vault/Secrets.
 
 ---
 
-## 1A — Database
+## 1 — Database Schema (Actual Project Flow)
 
-```sql
-create table public.profiles (
-  id                 uuid primary key references auth.users(id) on delete cascade,
-  full_name          text not null,
-  phone              text unique not null,            -- E.164 format: +233XXXXXXXXX
-  ghana_card_number  text,                            -- KYC: Ghana Card or Voter ID
-  momo_number        text,                            -- Used for payouts
-  momo_network       text check (momo_network in ('mtn','airteltigo','vodafone')),
-  whatsapp_opt_in    boolean default false,           -- true = confirmations via WhatsApp
-  kyc_verified       boolean default false,
-  created_at         timestamptz default now(),
-  updated_at         timestamptz default now()
-);
+The project uses Prisma for schema management. Below are the key models involved in the payment flow.
 
-alter table public.profiles enable row level security;
-create policy "users view own profile"   on public.profiles
-  for select using (auth.uid() = id);
-create policy "users update own profile" on public.profiles
-  for update using (auth.uid() = id);
+### Profiles
+Existing table `profiles` maps to `Profile` model.
+Required additions (via migration):
+- `phone`: String (unique, E.164 format)
+- `whatsapp_opt_in`: Boolean (default: false)
+- `momo_number`: String (optional)
+- `momo_network`: String (optional)
 
--- Auto-create a blank profile when a user signs up
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, full_name, phone)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'full_name', ''),
-    coalesce(new.raw_user_meta_data->>'phone', '')
-  );
-  return new;
-end;
-$$ language plpgsql security definer;
+### Events
+Existing table `events` maps to `Event` model.
 
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
-```
+### Ticketing
+- `ticket_types`: Defines pricing and availability.
+- `ticket_orders`: Tracks the overall purchase.
+- `tickets`: Individual ticket instances generated after payment.
 
-## 1B — Frontend: registration form
+### Voting
+- `voting_categories`: Defines vote pricing (`vote_price`).
+- `voting_options`: Nominees receiving votes.
+- `votes`: Records of successful votes.
 
-```tsx
-// components/RegisterForm.tsx
-import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+### Payments
+Existing table `payments` maps to `Payment` model.
+Required attributes for Paystack flow (ensure these exist or add them):
+- `reference`: Unique payment identifier (used as Paystack reference).
+- `related_type`: "ticket_order" or "vote".
+- `related_id`: ID of the order or nominee.
+- `provider`: "paystack".
+- `status`: "pending", "completed", "failed".
+- `metadata`: JSON containing additional flow data (e.g., `vote_count`).
 
-export function RegisterForm() {
-  const [form, setForm] = useState({
-    full_name: "", phone: "", password: "", whatsapp_opt_in: false
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+---
 
-  async function handleSubmit() {
-    setLoading(true);
-    setError("");
+## 2 — Edge Functions
 
-    const phone = form.phone.startsWith("0")
-      ? "+233" + form.phone.slice(1)
-      : form.phone;
+### 2A — `initiate-payment`
+**Task:** Creates a Paystack transaction and returns the authorization URL or handles MoMo prompt.
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: `${phone.replace("+", "")}@placeholder.com`,
-      password: form.password,
-      options: { data: { full_name: form.full_name, phone } }
-    });
+**Logic:**
+1. Authenticate user.
+2. Validate the request (Type: Ticket or Vote).
+3. If Vote:
+   - Verify `voting_option` exists and category is active.
+   - Calculate amount: `category.vote_price * quantity`.
+4. If Ticket:
+   - Verify `ticket_order` exists or create a pending one.
+   - Use `order.total` as amount.
+5. Create a `Payment` record with status `pending`.
+6. Call Paystack `transaction/initialize`.
+7. Return Paystack data to frontend.
 
-    if (authError) { setError(authError.message); setLoading(false); return; }
+### 2B — `paystack-webhook`
+**Task:** Receives success/failure notifications from Paystack and updates the DB.
 
-    // Trigger auto-created the profile row — update it with full details
-    await supabase.from("profiles").update({
-      full_name: form.full_name,
-      phone,
-      whatsapp_opt_in: form.whatsapp_opt_in
-    }).eq("id", authData.user!.id);
+**Logic:**
+1. Verify HMAC signature.
+2. If `charge.success`:
+   - Find `Payment` by `reference`.
+   - Update `Payment` status to `completed`.
+   - Set `verified_at` and store `provider_response`.
+   - Update the related entity:
+     - If `vote`: Create/Confirm `Vote` record and increment `voting_option.votes_count`.
+     - If `ticket_order`: Update `ticket_order` status to `paid` and generate `Tickets`.
+   - Trigger `send-delivery` function.
 
-    setLoading(false);
-  }
+### 2C — `send-delivery`
+**Task:** Sends confirmation via SMS or WhatsApp.
 
-  return (
-    <div>
-      <input placeholder="Full name" value={form.full_name}
-        onChange={e => setForm({ ...form, full_name: e.target.value })} />
-      <input placeholder="Phone (e.g. 0244123456)" value={form.phone}
-        onChange={e => setForm({ ...form, phone: e.target.value })} />
-      <input type="password" placeholder="Password" value={form.password}
-        onChange={e => setForm({ ...form, password: e.target.value })} />
-      <label>
-        <input type="checkbox" checked={form.whatsapp_opt_in}
-          onChange={e => setForm({ ...form, whatsapp_opt_in: e.target.checked })} />
-        Send my confirmations via WhatsApp instead of SMS
-      </label>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <button onClick={handleSubmit} disabled={loading}>
-        {loading ? "Creating account..." : "Create account"}
-      </button>
-    </div>
-  );
-}
-```
+**Logic:**
+1. Fetch `Payment` and related `Profile`.
+2. Determine channel (SMS vs WhatsApp).
+3. Format message (Event title, Ticket codes, or Vote confirmation).
+4. Send via Arkesel (SMS) or Meta (WhatsApp).
+5. Update `ticket.sms_sent` or `vote.whatsapp_sent` flags.
 
-## 1C — How to test Flow 1
+---
 
-```
-1. Register a new user via the form
-2. Check Supabase → Authentication → Users — new user appears
-3. Check Supabase → Table Editor → profiles — matching row appears
-4. Confirm phone is stored in E.164 format (+233XXXXXXXXX)
-5. Toggle whatsapp_opt_in on and off — confirm it saves correctly
+## 3 — Implementation Steps
+
+### Step 1: Schema Update
+Ensure `profiles`, `payments`, `votes`, and `tickets` have the necessary fields for the Ghana Flow.
+
+### Step 2: Edge Function Setup
+Deploy `initiate-payment`, `paystack-webhook`, and `send-delivery` to Supabase.
+
+### Step 3: Frontend Integration
+Update the checkout components to call `initiate-payment` and handle the response.
+
+---
+
+## How to Test
+1. **Initiate**: Call `initiate-payment` from frontend, verify `Payment` record is `pending`.
+2. **Webhook**: Simulate Paystack webhook using `curl` with a valid HMAC.
+3. **Delivery**: Verify SMS/WhatsApp is received (use test numbers).
+4. **Data**: Confirm `votes_count` incremented or `tickets` generated.
+rectly
 ✓ Flow 1 complete — move to Flow 2
 ```
 

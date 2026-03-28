@@ -75,6 +75,7 @@ model Payment {
   currency          CurrencyCode      @default(NGN)
   provider          PaymentProvider
   providerReference String?           @map("provider_reference")
+  paystackTransactionId String?       @map("paystack_transaction_id")
   status            TransactionStatus @default(pending)
   providerResponse  Json?             @map("provider_response")
   verifiedAt        DateTime?         @map("verified_at") @db.Timestamptz(6)

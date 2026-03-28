@@ -1,9 +1,9 @@
 # Supabase Configuration for Afrotix
 # This file defines the Supabase project configuration
 
-[project]
-id = "your-project-ref"
-name = "Afrotix"
+# [project]
+# id = "your-project-ref"
+# name = "Afrotix"
 
 [db]
 # Database settings

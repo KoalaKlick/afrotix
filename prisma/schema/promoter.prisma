@@ -13,6 +13,8 @@ model Promoter {
   bankName            String?        @map("bank_name")
   bankAccountNumber   String?        @map("bank_account_number")
   bankAccountName     String?        @map("bank_account_name")
+  isGoldTier          Boolean        @default(false) @map("is_gold_tier")
+  totalRevenueGenerated Decimal       @default(0) @map("total_revenue_generated") @db.Decimal(15, 2)
   approvedAt          DateTime?      @map("approved_at") @db.Timestamptz(6)
   createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

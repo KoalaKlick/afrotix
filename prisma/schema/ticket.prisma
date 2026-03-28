@@ -64,6 +64,8 @@ model Ticket {
   checkInStatus   TicketCheckInStatus @default(not_checked_in) @map("check_in_status")
   checkedInAt     DateTime?           @map("checked_in_at") @db.Timestamptz(6)
   checkedInBy     String?             @map("checked_in_by") @db.Uuid
+  smsSent         Boolean             @default(false) @map("sms_sent")
+  whatsappSent    Boolean             @default(false) @map("whatsapp_sent")
   createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   checkedInByUser Profile?            @relation("CheckedInTickets", fields: [checkedInBy], references: [id])
