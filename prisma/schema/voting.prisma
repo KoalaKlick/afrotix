@@ -109,7 +109,6 @@ model Vote {
   option           VotingOption    @relation(fields: [optionId], references: [id], onDelete: Cascade)
   voter            Profile?        @relation(fields: [voterId], references: [id])
 
-  @@unique([eventId, optionId, voterId])
   @@index([eventId], map: "idx_votes_event")
   @@index([optionId], map: "idx_votes_option")
   @@index([voterId], map: "idx_votes_voter")

@@ -63,7 +63,7 @@ serve(async (req) => {
 
   const plan = profile?.pricing_plan || "essential";
   const amount = Number(payment.amount);
-  
+
   // Platform Fee Logic: Essential (3.5% + 10) | Professional (1.5% + 5)
   const feePercentage = plan === "professional" ? 0.015 : 0.035;
   const fixedFee = plan === "professional" ? 5 : 10;
@@ -76,10 +76,10 @@ serve(async (req) => {
       verified_at: new Date().toISOString(),
       paystack_transaction_id: String(event.data.id ?? ""),
       provider_response: event,
-      metadata: { 
-        ...payment.metadata, 
+      metadata: {
+        ...payment.metadata,
         platform_fee: platformFee,
-        organizer_plan: plan 
+        organizer_plan: plan
       }
     })
     .eq("id", payment.id);
@@ -110,9 +110,9 @@ serve(async (req) => {
       });
 
       // Update promoter's total revenue generated
-       await supabase.rpc("increment_promoter_revenue", { 
-        p_id: promoter.id, 
-        amt: amount 
+      await supabase.rpc("increment_promoter_revenue", {
+        p_id: promoter.id,
+        amt: amount
       });
     }
   }
@@ -145,10 +145,21 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (!voteError) {
-      await supabase.rpc("increment_vote_count", { 
-        opt_id: optionId, 
-        qty: voteCount 
+    if (voteError) {
+      console.error("Vote insert error:", voteError, {
+        event_id: voteMetadata.event_id,
+        option_id: optionId,
+        category_id: voteMetadata.category_id,
+        voter_id: payment.user_id,
+        voter_email: payment.email,
+        amount_paid: payment.amount,
+        payment_reference: reference,
+        payment_id: payment.id,
+      });
+    } else {
+      await supabase.rpc("increment_vote_count", {
+        opt_id: optionId,
+        qty: voteCount
       });
     }
   }
@@ -157,7 +168,7 @@ serve(async (req) => {
   // We use EdgeRuntime.waitUntil to avoid blocking the webhook response
   // EdgeRuntime is only available in some environments, for Supabase we can use standard fetch
   // but we don't need to wait for it.
-  
+
   fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-delivery`, {
     method: "POST",
     headers: {
