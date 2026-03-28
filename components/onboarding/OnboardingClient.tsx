@@ -6,6 +6,7 @@ import {
     Step1Welcome,
     Step2Avatar,
     Step3Referral,
+    Step4Pricing,
 } from "@/components/onboarding";
 import {
     OrgStep1BasicInfo,
@@ -57,15 +58,19 @@ export function OnboardingClient({
     function handleStep3Success() {
         setCurrentStep(3);
     }
-
+ 
     function handleStep3Skip() {
         setCurrentStep(3);
+    }
+ 
+    function handleStep4Success() {
+        setCurrentStep(4);
     }
 
     // --- Org creation step handlers ---
     function handleOrgStep1Success(data: { name: string; slug: string }) {
         setOrgFormData((prev) => ({ ...prev, ...data }));
-        setCurrentStep(4);
+        setCurrentStep(5);
     }
 
     function handleOrgStep2Success(data: { logoUrl?: string; description?: string }) {
@@ -126,8 +131,15 @@ export function OnboardingClient({
                 />
             )}
 
-            {/* Org Creation Steps */}
+            {/* Pricing Step */}
             {currentStep === 3 && (
+                <Step4Pricing
+                    onSuccess={handleStep4Success}
+                />
+            )}
+ 
+            {/* Org Creation Steps */}
+            {currentStep === 4 && (
                 <OrgStep1BasicInfo
                     defaultValues={{
                         name: orgFormData.name,
@@ -137,8 +149,8 @@ export function OnboardingClient({
                     isInitialSetup={true}
                 />
             )}
-
-            {currentStep === 4 && (
+ 
+            {currentStep === 5 && (
                 <OrgStep2Branding
                     defaultValues={{
                         logoUrl: orgFormData.logoUrl,

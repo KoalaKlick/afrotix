@@ -28,6 +28,11 @@ export type ProfileUpdateInput = {
     onboardingCompleted?: boolean;
     referredBy?: string;
     referralCodeUsed?: string;
+    pricingPlan?: "essential" | "professional";
+    communicationCredits?: number;
+    isVerifiedPartner?: boolean;
+    momoNumber?: string;
+    momoNetwork?: string;
 };
 
 /**

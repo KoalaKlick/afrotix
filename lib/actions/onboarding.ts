@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Onboarding Server Actions
  * Handles form submissions for the onboarding flow
  */
@@ -12,6 +12,7 @@ import {
     onboardingStep1Schema,
     onboardingStep2Schema,
     onboardingStep3Schema,
+    onboardingStep4Schema,
     TOTAL_ONBOARDING_STEPS,
 } from "@/lib/validations/profile";
 import {
@@ -207,7 +208,7 @@ export async function saveOnboardingStep2(
 }
 
 /**
- * Step 3: Apply referral code and complete onboarding
+ * Step 3: Apply referral code
  */
 export async function saveOnboardingStep3(
     formData: FormData,
@@ -241,16 +242,56 @@ export async function saveOnboardingStep3(
         }
     }
 
-    // Mark onboarding as complete
     const updated = await updateProfile(userId, {
-        onboardingStep: TOTAL_ONBOARDING_STEPS,
-        onboardingCompleted: true,
+        onboardingStep: 3,
     });
 
     if (!updated) {
-        return { success: false, error: "Failed to complete onboarding" };
+        return { success: false, error: "Failed to save referral" };
     }
 
+    revalidatePath("/setup/onboarding");
+    return { success: true };
+}
+ 
+/**
+ * Step 4: Save pricing plan & payout details and complete onboarding
+ */
+export async function saveOnboardingStep4(
+    formData: FormData,
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+    const userId = user.id;
+ 
+    const rawData = {
+        pricingPlan: formData.get("pricingPlan") as string,
+        momoNumber: formData.get("momoNumber") as string,
+        momoNetwork: formData.get("momoNetwork") as string,
+    };
+ 
+    const result = onboardingStep4Schema.safeParse(rawData);
+    if (!result.success) {
+        const errors = result.error.flatten().fieldErrors;
+        const firstError = Object.values(errors)[0]?.[0] ?? "Invalid input";
+        return { success: false, error: firstError };
+    }
+ 
+    // Mark onboarding as complete and save pricing
+    const updated = await updateProfile(userId, {
+        pricingPlan: result.data.pricingPlan,
+        momoNumber: result.data.momoNumber,
+        momoNetwork: result.data.momoNetwork,
+        onboardingStep: TOTAL_ONBOARDING_STEPS,
+        onboardingCompleted: true,
+    });
+ 
+    if (!updated) {
+        return { success: false, error: "Failed to complete onboarding" };
+    }
+ 
     revalidatePath("/setup/onboarding");
     revalidatePath("/dashboard");
     return { success: true };

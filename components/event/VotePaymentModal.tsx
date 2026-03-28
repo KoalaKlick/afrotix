@@ -21,9 +21,11 @@ import {
     Coins,
     Minus,
     Plus,
+    Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VotingOption } from "@/lib/types/voting";
+import { usePaystack } from "@/hooks/usePaystack";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,8 +53,11 @@ export function VotePaymentModal({
     const [step, setStep] = useState<ModalStep>("checkout");
     const [voteCount, setVoteCount] = useState(1);
     const [phone, setPhone] = useState("");
+    const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
+
+    const { resumeTransaction } = usePaystack();
 
     const totalAmount = votePrice * voteCount;
 
@@ -60,6 +65,7 @@ export function VotePaymentModal({
         setStep("checkout");
         setVoteCount(1);
         setPhone("");
+        setEmail("");
         setLoading(false);
         setErrorMsg("");
     }, []);
@@ -92,22 +98,24 @@ export function VotePaymentModal({
             
             const callbackUrl = `${process.env.NEXT_PUBLIC_DOMAIN_URL || window.location.origin}/payment/callback`;
 
-            // Normalise phone to E.164 for Paystack
+            // Normalise phone to E.164 for Paystack metadata
             const normalisedPhone = phone.startsWith("0")
-                ? "+233" + phone.slice(1)
+                ? "233" + phone.slice(1)
                 : phone.startsWith("+")
-                  ? phone
-                  : "+233" + phone;
+                  ? phone.slice(1)
+                  : phone;
 
-            // Use phone-derived placeholder email for Paystack (it requires an email field)
-            const placeholderEmail = `${normalisedPhone.replace("+", "")}@voter.sankofa.app`;
+            // Use provided email or fallback to phone-derived (Paystack requires it)
+            const finalEmail = email.includes("@") 
+                ? email 
+                : `${normalisedPhone}@voter.sankofa.app`;
 
-            const { data, error } = await supabase.functions.invoke(
+            const { data: response, error } = await supabase.functions.invoke(
                 "initiate-payment",
                 {
                     body: {
                         amount: totalAmount,
-                        email: placeholderEmail,
+                        email: finalEmail,
                         currency: "GHS",
                         purpose: `Vote for ${nominee.optionText}`,
                         relatedType: "vote",
@@ -118,31 +126,39 @@ export function VotePaymentModal({
                             option_id: nominee.id,
                             vote_count: voteCount,
                             nominee_name: nominee.optionText,
-                            phone: normalisedPhone,
+                            phone: "+" + normalisedPhone,
                             callback_url: callbackUrl,
                         },
                     },
                 }
             );
 
-            if (error) {
-                // Return value from edge function parse failed or returned non-200
-                throw new Error(error.message || "Payment initialization failed");
-            }
+            if (error) throw new Error(error.message || "Payment initialization failed");
 
-            if (data?.authorizationUrl) {
-                setStep("processing");
-                window.location.href = data.authorizationUrl;
+            // --- Use Paystack Inline ---
+            // The edge function returns: { success: true, accessCode: "...", ... }
+            if (response?.accessCode) {
+                resumeTransaction(response.accessCode, {
+                    onSuccess: (transaction: any) => {
+                        console.log("Paystack Success:", transaction);
+                        setStep("success");
+                    },
+                    onCancel: () => {
+                        console.log("Paystack Cancelled");
+                        setLoading(false);
+                    }
+                });
             } else {
-                throw new Error(data?.error || "No authorization URL returned");
+                throw new Error(response?.error || response?.detail || "Failed to get access code from Paystack");
             }
         } catch (err: any) {
-            setErrorMsg(err.message || "Something went wrong");
+            console.error("Payment Error:", err);
+            setErrorMsg(err.message || "Something went wrong during payment setup.");
             setStep("error");
         } finally {
             setLoading(false);
         }
-    }, [nominee, phone, totalAmount, eventId, categoryId, voteCount]);
+    }, [nominee, phone, email, totalAmount, eventId, categoryId, voteCount, resumeTransaction]);
 
     if (!nominee) return null;
 
@@ -152,7 +168,7 @@ export function VotePaymentModal({
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0 border-0 rounded-2xl bg-white">
                 {/* Hero Header */}
-                <div className="relative h-36 w-full bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] overflow-hidden">
+                <div className="relative h-36 w-full bg-linear-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] overflow-hidden">
                     <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[#FFCD00]/20 blur-2xl" />
                     <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-[#009A44]/20 blur-2xl" />
                     <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-[#CE1126]/15 blur-lg" />
@@ -244,66 +260,79 @@ export function VotePaymentModal({
                                 </span>
                             </div>
                             <span className="text-xl font-black text-[#009A44]">
-                                GHS {totalAmount.toFixed(2)}
+                                GHS {(totalAmount).toFixed(2)}
                             </span>
                         </div>
 
-                        {/* Phone Number */}
-                        <div className="space-y-1">
-                            <Label
-                                htmlFor="voter-phone"
-                                className="text-sm font-semibold"
-                            >
-                                MoMo Phone Number
-                            </Label>
-                            <p className="text-[11px] text-muted-foreground">
-                                You'll receive a payment prompt on this number
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="inline-flex items-center h-11 px-3 rounded-l-lg border border-r-0 bg-muted/50 text-sm font-medium text-muted-foreground">
-                                    +233
-                                </span>
-                                <Input
-                                    id="voter-phone"
-                                    type="tel"
-                                    inputMode="numeric"
-                                    placeholder="244 123 456"
-                                    value={phone}
-                                    onChange={(e) =>
-                                        setPhone(
-                                            e.target.value.replace(/[^\d]/g, "")
-                                        )
-                                    }
-                                    className="h-11 rounded-l-none"
-                                    maxLength={10}
-                                    autoFocus
-                                />
+                        {/* Contact Info */}
+                        <div className="space-y-4">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="voter-phone" className="text-sm font-semibold">
+                                    Phone Number
+                                </Label>
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center h-11 px-3 rounded-lg border bg-muted/50 text-sm font-medium text-muted-foreground border-muted-foreground/20 shrink-0">
+                                        +233
+                                    </span>
+                                    <Input
+                                        id="voter-phone"
+                                        type="tel"
+                                        inputMode="numeric"
+                                        placeholder="244 123 456"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, ""))}
+                                        className="h-11 rounded-lg"
+                                        maxLength={10}
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="voter-email" className="text-sm font-semibold flex items-center gap-1.5">
+                                    Email Address <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span>
+                                </Label>
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                                        <Mail className="w-4 h-4" />
+                                    </div>
+                                    <Input
+                                        id="voter-email"
+                                        type="email"
+                                        placeholder="voter@example.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="h-11 pl-10 rounded-lg"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-muted-foreground pl-1">
+                                    Receive a receipt from Paystack
+                                </p>
                             </div>
                         </div>
 
                         <Button
                             variant="afro"
                             size="lg"
-                            className="w-full h-12 text-sm font-bold"
+                            className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
                             onClick={handleSubmitPayment}
                             disabled={!phone || phone.length < 9 || loading}
                         >
                             {loading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Processing...
+                                    Initialising...
                                 </>
                             ) : (
                                 <>
                                     <Sparkles className="w-4 h-4 mr-2" />
-                                    Pay GHS {totalAmount.toFixed(2)}
+                                    Proceed to Payment
                                 </>
                             )}
                         </Button>
 
-                        <p className="text-[10px] text-center text-muted-foreground leading-relaxed">
-                            Powered by Paystack · Payments are secure and
-                            encrypted
+                        <p className="text-[10px] text-center text-muted-foreground leading-relaxed mt-2">
+                            Payments secured by Paystack · Supported: MoMo & Cards
                         </p>
                     </div>
                 )}
@@ -314,11 +343,10 @@ export function VotePaymentModal({
                         <Loader2 className="w-12 h-12 text-[#009A44] animate-spin" />
                         <div>
                             <p className="font-bold text-lg">
-                                Redirecting to payment...
+                                Opening checkout...
                             </p>
                             <p className="text-sm text-muted-foreground mt-1">
-                                You'll be taken to Paystack to complete your
-                                payment securely.
+                                Please complete the payment in the secure popup.
                             </p>
                         </div>
                     </div>
@@ -331,10 +359,9 @@ export function VotePaymentModal({
                             <XCircle className="w-8 h-8 text-red-500" />
                         </div>
                         <div>
-                            <p className="font-bold text-lg">Payment Failed</p>
+                            <p className="font-bold text-lg">Payment Error</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                                {errorMsg ||
-                                    "Something went wrong. Please try again."}
+                                {errorMsg || "Something went wrong. Please try again."}
                             </p>
                         </div>
                         <Button
@@ -349,25 +376,29 @@ export function VotePaymentModal({
 
                 {/* ─── Success ─────────────────────────────────── */}
                 {step === "success" && (
-                    <div className="p-8 flex flex-col items-center text-center space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-[#009A44]/10 flex items-center justify-center">
-                            <CheckCircle2 className="w-8 h-8 text-[#009A44]" />
+                    <div className="p-10 flex flex-col items-center text-center space-y-6 animate-in fade-in zoom-in duration-300">
+                        <div className="relative">
+                            <div className="absolute inset-0 rounded-full bg-[#009A44]/10 animate-ping" />
+                            <div className="relative w-24 h-24 rounded-full bg-[#009A44]/10 flex items-center justify-center">
+                                <CheckCircle2 className="w-12 h-12 text-[#009A44]" />
+                            </div>
                         </div>
-                        <div>
-                            <p className="font-bold text-lg">
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-black uppercase tracking-tight text-foreground">
                                 Vote Confirmed! 🎉
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                {voteCount} vote{voteCount > 1 ? "s" : ""} for{" "}
-                                <strong>{nominee.optionText}</strong> recorded
-                                successfully.
+                            </h2>
+                            <p className="text-sm text-muted-foreground max-w-[280px]">
+                                Your <strong>{voteCount} vote{voteCount > 1 ? "s" : ""}</strong> for{" "}
+                                <span className="text-[#009A44] font-bold">{nominee.optionText}</span> have been recorded successfully.
                             </p>
                         </div>
                         <Button
                             variant="afro"
+                            size="lg"
+                            className="w-full h-12"
                             onClick={() => handleClose(false)}
                         >
-                            Done
+                            Back to Event
                         </Button>
                     </div>
                 )}

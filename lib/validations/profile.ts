@@ -44,12 +44,26 @@ export const onboardingStep3Schema = z.object({
         .or(z.literal("")),
 });
 
+// Step 4: Pricing & Payments
+export const onboardingStep4Schema = z.object({
+    pricingPlan: z.enum(["essential", "professional"]),
+    momoNumber: z
+        .string()
+        .min(9, "Phone number must be at least 9 digits")
+        .max(15, "Phone number is too long")
+        .regex(/^\d+$/, "Phone number must contain only digits"),
+    momoNetwork: z.enum(["MTN", "VODAFONE", "AT"]),
+});
+
 // Complete onboarding schema (all steps combined)
 export const completeOnboardingSchema = z.object({
     fullName: fullNameSchema,
     username: usernameSchema,
     avatarUrl: avatarUrlSchema,
     referralCode: z.string().optional().or(z.literal("")),
+    pricingPlan: z.enum(["essential", "professional"]).optional(),
+    momoNumber: z.string().optional(),
+    momoNetwork: z.string().optional(),
 });
 
 // Profile update schema (for later profile edits)
@@ -57,12 +71,16 @@ export const updateProfileSchema = z.object({
     fullName: fullNameSchema.optional(),
     username: usernameSchema.optional(),
     avatarUrl: avatarUrlSchema,
+    pricingPlan: z.enum(["essential", "professional"]).optional(),
+    momoNumber: z.string().optional(),
+    momoNetwork: z.string().optional(),
 });
 
 // Type exports
 export type OnboardingStep1Data = z.infer<typeof onboardingStep1Schema>;
 export type OnboardingStep2Data = z.infer<typeof onboardingStep2Schema>;
 export type OnboardingStep3Data = z.infer<typeof onboardingStep3Schema>;
+export type OnboardingStep4Data = z.infer<typeof onboardingStep4Schema>;
 export type CompleteOnboardingData = z.infer<typeof completeOnboardingSchema>;
 export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 
@@ -71,6 +89,7 @@ export const ONBOARDING_STEPS = [
     { id: 1, title: "Welcome", description: "Let's set up your profile" },
     { id: 2, title: "Avatar", description: "Add a profile picture" },
     { id: 3, title: "Referral", description: "Got a referral code?" },
+    { id: 4, title: "Pricing", description: "Select your plan & payout details" },
 ] as const;
 
 export const TOTAL_ONBOARDING_STEPS = ONBOARDING_STEPS.length;
