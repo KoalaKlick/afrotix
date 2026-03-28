@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, Vote, Home } from "lucide-react";
@@ -9,7 +9,7 @@ import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 
 type CallbackState = "verifying" | "success" | "failed" | "unknown";
 
-export default function PaymentCallbackPage() {
+function PaymentCallbackContent() {
     const searchParams = useSearchParams();
     const reference = searchParams.get("reference") || searchParams.get("trxref");
     const [paymentId, setPaymentId] = useState<string | null>(null);
@@ -225,5 +225,17 @@ export default function PaymentCallbackPage() {
                 </p>
             </div>
         </main>
+    );
+}
+
+export default function PaymentCallbackPage() {
+    return (
+        <Suspense fallback={
+            <main className="min-h-screen bg-[#F8F7F1] flex items-center justify-center p-4">
+                <Loader2 className="w-10 h-10 text-[#009A44] animate-spin" />
+            </main>
+        }>
+            <PaymentCallbackContent />
+        </Suspense>
     );
 }
