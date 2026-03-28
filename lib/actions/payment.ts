@@ -3,46 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-
-// ─── Pricing Constants ─────────────────────────────────────────────────────────
-
-export const PRICING_PLANS = {
-    essential: {
-        name: "Essential",
-        subtitle: "Pay-As-You-Go",
-        subscription: 0,
-        feePercentage: 0.035,
-        fixedFee: 10,
-        payoutSpeed: "3-5 days",
-        bestFor: "One-off events or small meetups",
-    },
-    professional: {
-        name: "Professional",
-        subtitle: "Fixed Plan",
-        subscription: 500,
-        feePercentage: 0.015,
-        fixedFee: 5,
-        payoutSpeed: "Instant available",
-        bestFor: "Recurring events and festivals",
-    },
-} as const;
+import { PRICING_PLANS, type FeeBreakdown, type PricingPlan } from "@/lib/const/pricing";
 
 // ─── Fee Calculation ─────────────────────────────────────────────────────────
 
-export type FeeBreakdown = {
-    amount: number;
-    plan: "essential" | "professional";
-    feePercentage: number;
-    percentageFee: number;
-    fixedFee: number;
-    totalFee: number;
-    organizerReceives: number;
-    currency: string;
-};
-
 export async function calculateServiceFee(
     amount: number,
-    plan: "essential" | "professional" = "essential"
+    plan: PricingPlan = "essential"
 ): Promise<FeeBreakdown> {
     const config = PRICING_PLANS[plan];
     const percentageFee = amount * config.feePercentage;
@@ -63,7 +30,7 @@ export async function calculateServiceFee(
 // ─── Plan Management ─────────────────────────────────────────────────────────
 
 export async function updatePricingPlan(
-    plan: "essential" | "professional"
+    plan: PricingPlan
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const supabase = await createClient();

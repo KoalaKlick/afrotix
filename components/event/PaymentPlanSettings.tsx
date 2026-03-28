@@ -16,7 +16,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updatePricingPlan, PRICING_PLANS } from "@/lib/actions/payment";
+import { updatePricingPlan } from "@/lib/actions/payment";
+import { PRICING_PLANS } from "@/lib/const/pricing";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
