@@ -42,9 +42,9 @@ model Transaction {
   notes             String?
   relatedType       String?             @map("related_type")
   relatedId         String?             @map("related_id") @db.Uuid
-  provider          PaymentProvider?
   providerReference String?             @map("provider_reference")
   providerResponse  Json?               @map("provider_response")
+  paymentId         String?             @map("payment_id") @db.Uuid
   metadata          Json?
   ipAddress         String?             @map("ip_address") @db.Inet
   userAgent         String?             @map("user_agent")
@@ -52,6 +52,7 @@ model Transaction {
   failedAt          DateTime?           @map("failed_at") @db.Timestamptz(6)
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  payment           Payment?            @relation(fields: [paymentId], references: [id])
   wallet            Wallet              @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId], map: "idx_transactions_wallet")
@@ -82,6 +83,9 @@ model Payment {
   verifiedAt            DateTime?         @map("verified_at") @db.Timestamptz(6)
   createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ticketOrders         TicketOrder[]
+  transactions         Transaction[]
+  votes                Vote[]
   user                  Profile?          @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "idx_payments_user")

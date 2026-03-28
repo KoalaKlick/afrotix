@@ -98,12 +98,21 @@ export function VotePaymentModal({
 
             const callbackUrl = `${process.env.NEXT_PUBLIC_DOMAIN_URL || window.location.origin}/payment/callback`;
 
-            // Normalise phone to E.164 for Paystack metadata
+            // Normalise phone to E.164 for internal records
             const normalisedPhone = phone.startsWith("0")
                 ? "233" + phone.slice(1)
                 : phone.startsWith("+")
                     ? phone.slice(1)
                     : phone;
+
+            // Local 10-digit format for Paystack MoMo pre-fill (e.g. 024...)
+            const localPhone = phone.startsWith("233") 
+                ? "0" + phone.slice(3) 
+                : phone.startsWith("+233") 
+                    ? "0" + phone.slice(4) 
+                    : phone.startsWith("0") 
+                        ? phone 
+                        : "0" + phone;
 
             // Use provided email or fallback to phone-derived (Paystack requires it)
             const finalEmail = email.includes("@")
@@ -116,6 +125,7 @@ export function VotePaymentModal({
                     body: {
                         amount: totalAmount,
                         email: finalEmail,
+                        phone: localPhone, // Send 024... format for better pre-fill
                         currency: "GHS",
                         purpose: `Vote for ${nominee.optionText}`,
                         relatedType: "vote",
@@ -133,12 +143,17 @@ export function VotePaymentModal({
                 }
             );
 
-            if (error) throw new Error(error.message || "Payment initialization failed");
+            if (error) {
+                // Handle specific error codes from the Edge Function
+                const errorData = (error as any);
+                throw new Error(errorData.message || errorData.detail || "Payment initialization failed");
+            }
 
             // --- Use Paystack Inline ---
             // The edge function returns: { success: true, accessCode: "...", ... }
             if (response?.accessCode) {
                 resumeTransaction(response.accessCode, {
+                    phone: localPhone, // Pass local format for auto-filling the input
                     onSuccess: (transaction: any) => {
                         console.log("Paystack Success:", transaction);
                         setStep("success");
@@ -372,7 +387,7 @@ export function VotePaymentModal({
                         </div>
                         <div>
                             <p className="font-bold text-lg">Payment Error</p>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-sm text-muted-foreground mt-1 px-6">
                                 {errorMsg || "Something went wrong. Please try again."}
                             </p>
                         </div>

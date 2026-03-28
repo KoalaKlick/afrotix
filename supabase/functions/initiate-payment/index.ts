@@ -31,6 +31,7 @@ serve(async (req) => {
     const { 
       amount, 
       email, 
+      phone,
       currency = "GHS", 
       purpose, 
       relatedType, 
@@ -43,6 +44,58 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // --- Pre-flight Constraint Checks (Logged-in Only) ---
+    if (user && relatedType === "vote") {
+      const categoryId = metadata?.category_id;
+      const optionId = relatedId;
+
+      if (categoryId) {
+        // 1. Fetch Category limits
+        const { data: category } = await supabase
+          .from("voting_categories")
+          .select("max_votes_per_user, max_nominees_per_user")
+          .eq("id", categoryId)
+          .single();
+
+        if (category) {
+          // 2. Check if already voted for this specific nominee (Duplicate Transaction)
+          const { data: existingNomineeVote } = await supabase
+            .from("votes")
+            .select("id")
+            .eq("option_id", optionId)
+            .eq("voter_id", user.id)
+            .single();
+
+          if (existingNomineeVote) {
+             return new Response(JSON.stringify({ 
+               error: "Already Voted", 
+               detail: "You have already cast your ballot for this nominee." 
+             }), {
+               status: 403, // Forbidden
+               headers: { ...corsHeaders, "Content-Type": "application/json" },
+             });
+          }
+
+          // 3. Check if they've exceeded the 'max nominees' allowed in this category
+          const { count: nomineeCount } = await supabase
+            .from("votes")
+            .select("id", { count: "exact", head: true })
+            .eq("category_id", categoryId)
+            .eq("voter_id", user.id);
+
+          if (nomineeCount && nomineeCount >= category.max_nominees_per_user) {
+            return new Response(JSON.stringify({ 
+              error: "Nominee Limit Reached", 
+              detail: `You have already voted for the maximum allowed (${category.max_nominees_per_user}) nominees in this category.` 
+            }), {
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
+      }
     }
 
     // 2. Generate a unique reference
@@ -88,12 +141,27 @@ serve(async (req) => {
         amount: Math.round(Number(amount) * 100), // convert to subunits (pesewas/kobo)
         currency,
         reference,
+        phone: phone.startsWith("0") ? "+233" + phone.slice(1) : phone, // Root-level phone for V2 pre-fill
+        customer: {
+          email,
+          phone: phone, // Standard customer phone
+        },
         ...(callbackUrl && { callback_url: callbackUrl }),
         metadata: {
           payment_id: payment.id,
+          phone: phone, // Standard pre-fill
+          mobile_number: phone, // Specific for some GH providers
           related_type: relatedType,
           related_id: relatedId,
           ...metadata,
+          custom_fields: [
+            ...(metadata?.custom_fields || []),
+            {
+              display_name: "Payer Number",
+              variable_name: "phone",
+              value: phone
+            }
+          ]
         },
       }),
     });

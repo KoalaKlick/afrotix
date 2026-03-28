@@ -117,11 +117,14 @@ serve(async (req) => {
     }
   }
 
-  // 8. Update Related Entities
+  // 8. Update Related Entities (Normalized)
   if (payment.related_type === "ticket_order") {
     await supabase
       .from("ticket_orders")
-      .update({ status: "confirmed", paid_at: new Date().toISOString() })
+      .update({ 
+        status: "confirmed", 
+        payment_id: payment.id // link to the parent payment
+      })
       .eq("id", payment.related_id);
   }
 
@@ -133,28 +136,21 @@ serve(async (req) => {
     const { data: vote, error: voteError } = await supabase
       .from("votes")
       .insert({
+        payment_id: payment.id, // Only use the link
+        vote_count: voteCount,  // Record actual quantity
         event_id: voteMetadata.event_id,
         option_id: optionId,
         category_id: voteMetadata.category_id,
         voter_id: payment.user_id,
-        voter_email: payment.email,
-        amount_paid: payment.amount,
-        payment_reference: reference,
-        payment_id: payment.id,
       })
       .select()
       .single();
 
     if (voteError) {
       console.error("Vote insert error:", voteError, {
-        event_id: voteMetadata.event_id,
-        option_id: optionId,
-        category_id: voteMetadata.category_id,
-        voter_id: payment.user_id,
-        voter_email: payment.email,
-        amount_paid: payment.amount,
-        payment_reference: reference,
         payment_id: payment.id,
+        vote_count: voteCount,
+        option_id: optionId,
       });
     } else {
       await supabase.rpc("increment_vote_count", {

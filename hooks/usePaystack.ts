@@ -44,10 +44,20 @@ export function usePaystack() {
 
     /**
      * Resume a transaction using an access_code from the backend
+     * We use newTransaction here because it allows passing a 'phone' override
+     * which helps pre-fill the Mobile Money input field on the client side.
      */
-    const resumeTransaction = useCallback((accessCode: string, options?: PaystackOptions) => {
+    const resumeTransaction = useCallback((accessCode: string, options?: PaystackOptions & { phone?: string }) => {
+        if (!publicKey) {
+            console.error("Paystack public key is missing");
+            return;
+        }
+
         const paystack = new PaystackPop();
-        paystack.resumeTransaction(accessCode, {
+        paystack.newTransaction({
+            key: publicKey,
+            accessCode: accessCode,
+            phone: options?.phone, // This is the key for auto-filling the input field
             onSuccess: (transaction: any) => {
                 options?.onSuccess?.(transaction);
             },
@@ -55,7 +65,7 @@ export function usePaystack() {
                 options?.onCancel?.();
             },
         });
-    }, []);
+    }, [publicKey]);
 
     return {
         startTransaction,
