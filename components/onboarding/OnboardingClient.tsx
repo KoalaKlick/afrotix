@@ -65,6 +65,7 @@ export function OnboardingClient({
  
     function handleStep4Success() {
         setCurrentStep(4);
+        router.refresh();
     }
 
     // --- Org creation step handlers ---

@@ -60,8 +60,9 @@ serve(async (req) => {
           .eq("id", eventId)
           .single();
 
-        // ONLY enforce limits if the event is PRIVATE
-        if (eventData && !eventData.is_public) {
+        // ONLY enforce limits if the event is PRIVATE (is_public === false)
+        // If it is missing, null, or true, default to PUBLIC
+        if (eventData && eventData.is_public === false) {
           const { data: category } = await supabase
             .from("voting_categories")
             .select("max_votes_per_user, max_nominees_per_user")

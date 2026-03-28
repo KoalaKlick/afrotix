@@ -7,7 +7,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
-import { logger } from "@/lib/logger";
+import { logger, logAction } from "@/lib/logger";
 import { isReservedSlug } from "@/lib/validations/organization";
 import type {
     Organization,
@@ -193,6 +193,7 @@ export async function canManageOrganization(
  */
 export async function createOrganization(data: OrganizationCreateInput): Promise<Organization | null> {
     try {
+        const startTime = performance.now();
         return await prisma.$transaction(async (tx) => {
             // Create the organization
             const org = await tx.organization.create({
@@ -220,6 +221,7 @@ export async function createOrganization(data: OrganizationCreateInput): Promise
                 },
             });
 
+            logAction("createOrganization", performance.now() - startTime);
             return org;
         });
     } catch (error) {
@@ -358,15 +360,16 @@ export async function updateOrganizationMemberRole(
 /**
  * Get organization members with pagination
  */
-export async function getOrganizationMembers(
+export const getOrganizationMembers = cache(async (
     organizationId: string,
     options?: { page?: number; limit?: number }
-) {
+) => {
     const page = options?.page ?? 1;
     const limit = options?.limit ?? 20;
     const skip = (page - 1) * limit;
 
     try {
+        const startTime = performance.now();
         const [members, total] = await Promise.all([
             prisma.organizationMember.findMany({
                 where: { organizationId },
@@ -390,6 +393,8 @@ export async function getOrganizationMembers(
             }),
         ]);
 
+        logAction("getOrganizationMembers", performance.now() - startTime);
+
         return {
             members,
             total,
@@ -400,12 +405,12 @@ export async function getOrganizationMembers(
         logger.error(error, "[DAL] Error fetching organization members:");
         return { members: [], total: 0, page: 1, totalPages: 0 };
     }
-}
+});
 
 /**
  * Get pending invitations for an email
  */
-export async function getPendingInvitationsForEmail(email: string): Promise<InvitationWithOrganization[]> {
+export const getPendingInvitationsForEmail = cache(async (email: string): Promise<InvitationWithOrganization[]> => {
     try {
         return await prisma.organizationInvitation.findMany({
             where: {
@@ -431,12 +436,12 @@ export async function getPendingInvitationsForEmail(email: string): Promise<Invi
         logger.error(error, "[DAL] Error fetching pending invitations:");
         return [];
     }
-}
+});
 
 /**
  * Get invitations sent by an organization
  */
-export async function getOrganizationInvitations(organizationId: string): Promise<SentInvitation[]> {
+export const getOrganizationInvitations = cache(async (organizationId: string): Promise<SentInvitation[]> => {
     try {
         return await prisma.organizationInvitation.findMany({
             where: {
@@ -459,12 +464,12 @@ export async function getOrganizationInvitations(organizationId: string): Promis
         logger.error(error, "[DAL] Error fetching organization invitations:");
         return [];
     }
-}
+});
 
 /**
  * Get invitation by ID
  */
-export async function getInvitationById(id: string): Promise<OrganizationInvitation | null> {
+export const getInvitationById = cache(async (id: string): Promise<OrganizationInvitation | null> => {
     try {
         return await prisma.organizationInvitation.findUnique({
             where: { id },
@@ -476,7 +481,7 @@ export async function getInvitationById(id: string): Promise<OrganizationInvitat
         logger.error(error, "[DAL] Error fetching invitation by ID:");
         return null;
     }
-}
+});
 
 /**
  * Update invitation status
@@ -613,7 +618,7 @@ export async function createMembershipRequest(data: {
     }
 }
 
-export async function getMembershipRequest(organizationId: string, userId: string): Promise<MembershipRequest | null> {
+export const getMembershipRequest = cache(async (organizationId: string, userId: string): Promise<MembershipRequest | null> => {
     try {
         return await prisma.membershipRequest.findUnique({
             where: {
@@ -628,12 +633,12 @@ export async function getMembershipRequest(organizationId: string, userId: strin
         logger.error(error, "[DAL] Error fetching membership request:");
         return null;
     }
-}
+});
 
 /**
  * Handle membership requests (admin side)
  */
-export async function getMembershipRequests(organizationId: string): Promise<MembershipRequest[]> {
+export const getMembershipRequests = cache(async (organizationId: string): Promise<MembershipRequest[]> => {
     try {
         return await prisma.membershipRequest.findMany({
             where: {
@@ -656,7 +661,7 @@ export async function getMembershipRequests(organizationId: string): Promise<Mem
         logger.error(error, "[DAL] Error fetching membership requests:");
         return [];
     }
-}
+});
 
 export async function updateMembershipRequestStatus(
     requestId: string,

@@ -10,7 +10,7 @@ export default async function OnboardingPage() {
     if (!user) redirect("/auth/login");
 
     const profile = await getProfileById(user.id);
-    const initialStep = profile?.onboardingCompleted ? 3 : (profile?.onboardingStep ?? 0);
+    const initialStep = profile?.onboardingCompleted ? 4 : (profile?.onboardingStep ?? 0);
 
-    return <OnboardingClient initialStep={initialStep} />;
+    return <OnboardingClient key={initialStep} initialStep={initialStep} />;
 }

@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger, logAction } from '@/lib/logger';
 /**
  * Event Data Access Layer (DAL)
  * Server-side database operations for events
@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
-import type { Event, EventType, EventStatus, OrderStatus, TicketCheckInStatus } from "@/lib/generated/prisma";
+import type { Event, EventType, EventStatus, OrderStatus, TicketCheckInStatus, TransactionStatus } from "@/lib/generated/prisma";
 import { normalizeEventStatus } from "@/lib/event-status";
 
 // Types for DAL operations
@@ -104,9 +104,8 @@ export const getOrganizationEvents = cache(async (
     }
 ): Promise<Event[]> => {
     try {
+        const startTime = performance.now();
         const { status, type, limit = 50, offset = 0 } = options ?? {};
-
-        logger.info({ organizationId, status, type, limit, offset }, "[DAL] Fetching organization events");
 
         const events = await prisma.event.findMany({
             where: {
@@ -119,7 +118,7 @@ export const getOrganizationEvents = cache(async (
             skip: offset,
         });
 
-        logger.info({ count: events.length, organizationId }, "[DAL] Found events");
+        logAction("getOrganizationEvents", performance.now() - startTime);
 
         return events;
     } catch (error) {
@@ -238,7 +237,7 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
         maxAttendees,
     } = data;
 
-    logger.info({ organizationId, creatorId, title, slug, type, isPublic }, "[DAL] Creating event");
+    const startTime = performance.now();
 
     const event = await prisma.event.create({
         data: {
@@ -265,7 +264,7 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
         },
     });
 
-    logger.info({ eventId: event.id, organizationId: event.organizationId }, "[DAL] Event created");
+    logAction("createEvent", performance.now() - startTime);
 
     return event;
 }
@@ -330,85 +329,52 @@ export async function deleteEvent(id: string): Promise<boolean> {
 /**
  * Get event statistics for an organization
  */
-
-
-
 export const getOrganizationEventStats = cache(async (organizationId: string) => {
     try {
-        logger.info({ organizationId }, "[DAL] Fetching event stats for organization");
+        const startTime = performance.now();
 
         const now = new Date();
 
-        // Run all queries in parallel for performance
+        // Run consolidated queries in parallel
         const [
-            total,
-            published,
-            draft,
-            ongoing,
-            ended,
-            cancelled,
-            upcoming,
-            votingCount,
-            ticketedCount,
-            hybridCount,
-            advertisementCount,
+            statusTypeGroups,
+            activeEvents,
             ticketStats,
             voteCount,
             mostAttended,
             nextUpcoming,
             recentEnded,
+            totalAttendees,
         ] = await Promise.all([
-            // Basic counts
-            prisma.event.count({ where: { organizationId } }),
-            prisma.event.count({ where: { organizationId, status: { notIn: ["draft", "cancelled"] } } }),
-            prisma.event.count({ where: { organizationId, status: "draft" } }),
-            prisma.event.count({
-                where: {
-                    organizationId,
-                    status: { notIn: ["draft", "cancelled"] },
-                    startDate: { lte: now },
-                    OR: [{ endDate: null }, { endDate: { gte: now } }],
-                }
+            // 1. Consolidated counts by status and type
+            prisma.event.groupBy({
+                by: ["status", "type"],
+                where: { organizationId },
+                _count: true,
             }),
-            prisma.event.count({
+            // 2. Fetch dates for temporal filtering (ongoing, ended, upcoming)
+            prisma.event.findMany({
                 where: {
                     organizationId,
                     status: { notIn: ["draft", "cancelled"] },
-                    endDate: { lt: now },
-                }
-            }),
-            prisma.event.count({ where: { organizationId, status: "cancelled" } }),
-            // Upcoming: published events with future start date
-            prisma.event.count({
-                where: {
-                    organizationId,
-                    status: { notIn: ["draft", "cancelled"] },
-                    startDate: { gt: now },
                 },
+                select: { id: true, startDate: true, endDate: true },
             }),
-
-            // By type
-            prisma.event.count({ where: { organizationId, type: "voting" } }),
-            prisma.event.count({ where: { organizationId, type: "ticketed" } }),
-            prisma.event.count({ where: { organizationId, type: "hybrid" } }),
-            prisma.event.count({ where: { organizationId, type: "advertisement" } }),
-
-            // Ticket/Revenue aggregation
+            // 3. Ticket/Revenue aggregation
             prisma.ticketOrder.aggregate({
                 where: {
                     event: { organizationId },
                     status: { in: ["paid", "confirmed"] },
                 },
-                _sum: { total: true },
+                _sum: { subtotal: true },
                 _count: true,
             }),
-
-            // Total votes across all events
-            prisma.vote.count({
+            // 4. Total votes across all events (sum of voteCount)
+            prisma.vote.aggregate({
                 where: { event: { organizationId } },
+                _sum: { voteCount: true },
             }),
-
-            // Most attended event (by ticket count)
+            // 5. Most attended event
             prisma.event.findFirst({
                 where: { organizationId },
                 orderBy: { tickets: { _count: "desc" } },
@@ -418,8 +384,7 @@ export const getOrganizationEventStats = cache(async (organizationId: string) =>
                     _count: { select: { tickets: true } },
                 },
             }),
-
-            // Next upcoming event
+            // 6. Next upcoming event
             prisma.event.findFirst({
                 where: {
                     organizationId,
@@ -429,8 +394,7 @@ export const getOrganizationEventStats = cache(async (organizationId: string) =>
                 orderBy: { startDate: "asc" },
                 select: { id: true, title: true, startDate: true },
             }),
-
-            // Most recent ended event
+            // 7. Most recent ended event
             prisma.event.findFirst({
                 where: {
                     organizationId,
@@ -440,15 +404,50 @@ export const getOrganizationEventStats = cache(async (organizationId: string) =>
                 orderBy: { endDate: "desc" },
                 select: { id: true, title: true, endDate: true },
             }),
+            // 8. Total checked-in attendees
+            prisma.ticket.count({
+                where: {
+                    event: { organizationId },
+                    checkInStatus: "checked_in",
+                },
+            }),
         ]);
 
-        // Get total checked-in attendees
-        const totalAttendees = await prisma.ticket.count({
-            where: {
-                event: { organizationId },
-                checkInStatus: "checked_in",
-            },
-        });
+        // Process grouped counts in memory
+        let total = 0;
+        let draft = 0;
+        let cancelled = 0;
+        const byType = { voting: 0, ticketed: 0, hybrid: 0, advertisement: 0 };
+
+        for (const group of statusTypeGroups) {
+            const count = group._count;
+            total += count;
+            if (group.status === "draft") draft += count;
+            if (group.status === "cancelled") cancelled += count;
+
+            if (group.type in byType) {
+                byType[group.type as keyof typeof byType] += count;
+            }
+        }
+
+        // Process active events temporal status in memory
+        let ongoing = 0;
+        let ended = 0;
+        let upcoming = 0;
+        const published = activeEvents.length;
+
+        for (const event of activeEvents) {
+            const start = event.startDate;
+            const end = event.endDate;
+
+            if (start && start > now) {
+                upcoming++;
+            } else if (start && start <= now && (!end || end >= now)) {
+                ongoing++;
+            } else if (end && end < now) {
+                ended++;
+            }
+        }
 
         const upcomingEventHighlight = nextUpcoming?.startDate
             ? {
@@ -467,7 +466,6 @@ export const getOrganizationEventStats = cache(async (organizationId: string) =>
             : undefined;
 
         const stats = {
-            // Basic counts
             total,
             published,
             draft,
@@ -475,52 +473,32 @@ export const getOrganizationEventStats = cache(async (organizationId: string) =>
             ended,
             cancelled,
             upcoming,
-
-            // By event type
-            byType: {
-                voting: votingCount,
-                ticketed: ticketedCount,
-                hybrid: hybridCount,
-                advertisement: advertisementCount,
-            },
-
-            // Engagement metrics
+            byType,
             totalTicketsSold: ticketStats._count,
-            totalRevenue: Number(ticketStats._sum.total ?? 0),
+            totalRevenue: Number(ticketStats._sum.subtotal ?? 0),
             totalAttendees,
-            totalVotes: voteCount,
-
-            // Highlights
+            totalVotes: Number(voteCount._sum.voteCount ?? 0),
             mostAttendedEvent:
                 mostAttended && mostAttended._count.tickets > 0
                     ? {
                         id: mostAttended.id,
                         title: mostAttended.title,
                         attendees: mostAttended._count.tickets,
-                    }
+                      }
                     : undefined,
             upcomingEvent: upcomingEventHighlight,
             recentEvent: recentEventHighlight,
         };
 
-        logger.info({ organizationId, total, published, draft, ongoing }, "[DAL] Event stats");
+        logAction("getOrganizationEventStats", performance.now() - startTime);
 
         return stats;
     } catch (error) {
         logger.error(error, "[DAL] Error fetching event stats:");
         return {
-            total: 0,
-            published: 0,
-            draft: 0,
-            ongoing: 0,
-            ended: 0,
-            cancelled: 0,
-            upcoming: 0,
+            total: 0, published: 0, draft: 0, ongoing: 0, ended: 0, cancelled: 0, upcoming: 0,
             byType: { voting: 0, ticketed: 0, hybrid: 0, advertisement: 0 },
-            totalTicketsSold: 0,
-            totalRevenue: 0,
-            totalAttendees: 0,
-            totalVotes: 0,
+            totalTicketsSold: 0, totalRevenue: 0, totalAttendees: 0, totalVotes: 0,
         };
     }
 });
@@ -570,6 +548,12 @@ export const getRecentOrders = cache(async (organizationId: string, limit = 10) 
             where: { event: { organizationId } },
             include: {
                 event: { select: { title: true } },
+                payment: {
+                    select: {
+                        email: true,
+                        currency: true
+                    }
+                }
             },
             orderBy: { createdAt: "desc" },
             take: limit,
@@ -597,7 +581,7 @@ export const getMonthlyRevenue = cache(async (organizationId: string, months = 6
                 createdAt: { gte: startDate },
             },
             select: {
-                total: true,
+                subtotal: true,
                 createdAt: true,
             },
             orderBy: { createdAt: "asc" },
@@ -616,7 +600,7 @@ export const getMonthlyRevenue = cache(async (organizationId: string, months = 6
             const d = new Date(order.createdAt);
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
             if (key in monthlyData) {
-                monthlyData[key] += Number(order.total);
+                monthlyData[key] += Number(order.subtotal);
             }
         }
 
@@ -654,12 +638,16 @@ export const getEventDetailStats = cache(async (eventId: string) => {
             }),
             prisma.ticketOrder.aggregate({
                 where: { eventId, status: { in: paidStatuses } },
-                _sum: { total: true },
+                _sum: { subtotal: true },
             }),
             prisma.ticket.count({
                 where: { eventId, checkInStatus: checkedIn },
             }),
-            prisma.vote.count({ where: { eventId } }),
+            prisma.vote.aggregate({
+                where: { eventId },
+                _sum: { voteCount: true },
+                _count: { _all: true }
+            }),
             prisma.ticketOrder.count({
                 where: { eventId, status: { in: paidStatuses } },
             }),
@@ -672,11 +660,20 @@ export const getEventDetailStats = cache(async (eventId: string) => {
             }),
         ]);
 
+        const totalVoteSum = Number((totalVotes as any)._sum.voteCount ?? 0);
+        const totalVoteCount = (totalVotes as any)._count._all ?? 0;
+
+        // DEBUG LOG
+        logger.debug(
+            { eventId, sum: totalVoteSum, count: totalVoteCount },
+            `[DEBUG] Vote Aggregation | Sum: ${totalVoteSum}, Count: ${totalVoteCount}`
+        );
+
         return {
             ticketsSold,
-            revenue: Number(revenueResult._sum.total ?? 0),
+            revenue: Number(revenueResult._sum.subtotal ?? 0),
             checkIns,
-            totalVotes,
+            totalVotes: totalVoteSum,
             totalOrders,
             totalCategories,
             totalNominees,
@@ -706,16 +703,33 @@ export const getVoteTrend = cache(async (eventId: string): Promise<{ date: strin
     try {
         const votes = await prisma.vote.findMany({
             where: { eventId },
-            select: { createdAt: true },
+            select: { createdAt: true, voteCount: true },
             orderBy: { createdAt: "asc" },
         });
 
+        // Debug log raw results
+        if (votes.length > 0) {
+            const sample = votes.slice(0, 3);
+            logger.debug(
+                { eventId, totalRecords: votes.length, sample },
+                `[DEBUG] Vote Trend | Found ${votes.length} records. Sample: ${JSON.stringify(sample)}`
+            );
+        }
+
         // Group votes by date (YYYY-MM-DD)
         const grouped = new Map<string, number>();
+        let debugSum = 0;
         for (const vote of votes) {
             const dateKey = vote.createdAt.toISOString().slice(0, 10);
-            grouped.set(dateKey, (grouped.get(dateKey) ?? 0) + 1);
+            const qty = Number(vote.voteCount);
+            grouped.set(dateKey, (grouped.get(dateKey) ?? 0) + qty);
+            debugSum += qty;
         }
+
+        logger.debug(
+            { eventId, groupedSum: debugSum, recordCount: votes.length },
+            `[DEBUG] Vote Trend Completion | Grouped Sum: ${debugSum}, Record Count: ${votes.length}`
+        );
 
         // Fill in missing dates between first and last vote
         if (grouped.size === 0) return [];
@@ -734,5 +748,70 @@ export const getVoteTrend = cache(async (eventId: string): Promise<{ date: strin
     } catch (error) {
         logger.error(error, "[DAL] Error fetching vote trend:");
         return [];
+    }
+});
+
+/**
+ * Get paginated vote transactions for an event
+ */
+export const getEventVoteTransactions = cache(async (
+    eventId: string,
+    options?: {
+        limit?: number;
+        offset?: number;
+        status?: TransactionStatus;
+    }
+) => {
+    try {
+        const { limit = 10, offset = 0, status = "completed" } = options ?? {};
+
+        const votes = await prisma.vote.findMany({
+            where: {
+                eventId,
+                payment: { status },
+            },
+            include: {
+                option: { select: { optionText: true } },
+                payment: {
+                    select: {
+                        email: true,
+                        amount: true,
+                        currency: true,
+                        reference: true,
+                        status: true
+                    }
+                },
+                voter: { select: { fullName: true } },
+            },
+            orderBy: { createdAt: "desc" },
+            take: limit,
+            skip: offset,
+        });
+
+        const total = await prisma.vote.count({
+            where: {
+                eventId,
+                payment: { status },
+            },
+        });
+
+        return {
+            transactions: votes.map(v => ({
+                id: v.id,
+                voterName: v.voter?.fullName || "Guest",
+                voterEmail: v.payment?.email || "N/A",
+                optionName: v.option.optionText,
+                voteCount: v.voteCount,
+                amount: Number(v.payment?.amount || 0),
+                currency: v.payment?.currency || "GHS",
+                reference: v.payment?.reference || "",
+                status: v.payment?.status || "unknown",
+                createdAt: v.createdAt.toISOString(),
+            })),
+            total,
+        };
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching vote transactions:");
+        return { transactions: [], total: 0 };
     }
 });

@@ -55,11 +55,11 @@ export function EventTypePieChart({ byType }: EventTypePieChartProps) {
                 <h3 className="font-semibold">Event Types</h3>
             </div>
             {total === 0 ? (
-                <div className="flex h-50 items-center justify-center text-sm text-muted-foreground">
+                <div className="flex h-[320px] items-center justify-center text-sm text-muted-foreground">
                     No events yet
                 </div>
             ) : (
-                <ChartContainer config={chartConfig} className="h-50 w-full">
+                <ChartContainer config={chartConfig} className="h-[320px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie

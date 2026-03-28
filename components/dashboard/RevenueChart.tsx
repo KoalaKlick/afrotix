@@ -43,7 +43,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 <h3 className="font-semibold">Revenue Overview</h3>
             </div>
             {hasData ? (
-                <ChartContainer config={chartConfig} className="h-50 w-full">
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={data} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
                             <defs>
@@ -93,7 +93,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                     </ResponsiveContainer>
                 </ChartContainer>
             ) : (
-                <div className="flex h-50 items-center justify-center text-sm text-muted-foreground">
+                <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
                     No revenue data yet
                 </div>
             )}

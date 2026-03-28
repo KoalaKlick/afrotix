@@ -43,8 +43,13 @@ export function EventsFilter() {
 
     useEffect(() => {
         const query = createQueryString({ q: debouncedSearch })
-        router.push(`/events${query ? `?${query}` : ""}`, { scroll: false })
-    }, [debouncedSearch, createQueryString, router])
+        const currentQuery = searchParams.toString()
+
+        // Only push if the query has actually changed to prevent infinite loops
+        if (query !== currentQuery) {
+            router.push(`/events${query ? `?${query}` : ""}`, { scroll: false })
+        }
+    }, [debouncedSearch, createQueryString, router, searchParams])
 
     const handleTypeChange = (type: string) => {
         const query = createQueryString({ type })

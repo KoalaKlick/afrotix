@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger, logAction } from '@/lib/logger';
 /**
  * Profile Data Access Layer (DAL)
  * Server-side database operations for user profiles
@@ -212,10 +212,10 @@ export async function completeOnboarding(
 /**
  * Get onboarding status
  */
-export async function getOnboardingStatus(id: string): Promise<{
+export const getOnboardingStatus = cache(async (id: string): Promise<{
     completed: boolean;
     step: number;
-} | null> {
+} | null> => {
     try {
         const profile = await prisma.profile.findUnique({
             where: { id },
@@ -235,7 +235,7 @@ export async function getOnboardingStatus(id: string): Promise<{
         logger.error(error, "[DAL] Error getting onboarding status:");
         return null;
     }
-}
+});
 
 /**
  * Apply referral code to profile
@@ -294,7 +294,7 @@ export async function ensureProfile(
 
 export const getProfileStats = cache(async (userId: string) => {
     try {
-        logger.info({ userId }, "[DAL] Fetching event stats for user");
+        const startTime = performance.now();
 
         const [organizations, createdEvents] = await Promise.all([
             prisma.organization.findMany({
@@ -303,6 +303,8 @@ export const getProfileStats = cache(async (userId: string) => {
             }),
             prisma.event.count({ where: { creatorId: userId } }),
         ]);
+
+        logAction("getProfileStats", performance.now() - startTime);
 
         return {
             organizationCount: organizations.length,

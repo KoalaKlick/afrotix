@@ -5,11 +5,23 @@ import { StatCard, StatsGrid, statIcons } from "@/components/event/EventStats";
 import { VotingBarChart } from "./VotingBarChart";
 import { VotingTrendChart } from "./VotingTrendChart";
 import { CategoryDetailModal } from "./CategoryDetailModal";
+import { VoteTransactionsTable } from "./VoteTransactionsTable";
 import type { VotingChartCategory } from "./VotingBarChart";
 import type { EventDetailStatsData, VoteTrendPoint } from "@/lib/types/event-stats";
 import { formatAmount } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { 
+    Sheet, 
+    SheetContent, 
+    SheetHeader, 
+    SheetTitle, 
+    SheetDescription 
+} from "@/components/ui/sheet";
+import { getEventVoteTransactionsAction } from "@/lib/actions/event";
+import { FileText, Loader2 } from "lucide-react";
 
 interface EventOverviewTabProps {
+    readonly eventId: string;
     readonly eventStats: EventDetailStatsData;
     readonly eventType: string;
     readonly votingCategories: VotingChartCategory[];
@@ -17,6 +29,7 @@ interface EventOverviewTabProps {
 }
 
 export function EventOverviewTab({
+    eventId,
     eventStats,
     eventType,
     votingCategories,
@@ -25,10 +38,32 @@ export function EventOverviewTab({
     const isVotingType = eventType === "voting" || eventType === "hybrid";
     const [selectedCategory, setSelectedCategory] = useState<VotingChartCategory | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [breakdownOpen, setBreakdownOpen] = useState(false);
+    const [initialTxData, setInitialTxData] = useState<{ transactions: any[]; total: number } | null>(null);
+    const [isLoadingBreakdown, setIsLoadingBreakdown] = useState(false);
 
     function handleCategoryClick(category: VotingChartCategory) {
         setSelectedCategory(category);
         setModalOpen(true);
+    }
+
+    async function handleViewBreakdown() {
+        setBreakdownOpen(true);
+        if (!initialTxData) {
+            setIsLoadingBreakdown(true);
+            try {
+                const data = await getEventVoteTransactionsAction(eventId, 1, 10);
+                setInitialTxData(data);
+            } catch (error) {
+                console.error("Failed to load breakdown:", error);
+            } finally {
+                setIsLoadingBreakdown(false);
+            }
+        }
+    }
+
+    async function fetchPage(page: number) {
+        return await getEventVoteTransactionsAction(eventId, page, 10);
     }
 
     return (
@@ -53,11 +88,22 @@ export function EventOverviewTab({
                     description={eventStats.ticketsSold > 0 ? `${Math.round((eventStats.checkIns / eventStats.ticketsSold) * 100)}% of sold` : undefined}
                 />
                 {isVotingType ? (
-                    <StatCard
-                        label="Total Votes"
-                        value={eventStats.totalVotes}
-                        iconSrc={statIcons.vote}
-                    />
+                    <div className="relative group">
+                        <StatCard
+                            label="Total Votes"
+                            value={eventStats.totalVotes}
+                            iconSrc={statIcons.vote}
+                        />
+                        <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={handleViewBreakdown}
+                            className="absolute top-2 right-2 h-7 px-2 text-[10px] font-bold bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-100 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            <FileText className="size-3 mr-1" />
+                            BREAKDOWN
+                        </Button>
+                    </div>
                 ) : (
                     <StatCard
                         label="Orders"
@@ -85,6 +131,33 @@ export function EventOverviewTab({
                         open={modalOpen}
                         onOpenChange={setModalOpen}
                     />
+
+                    <Sheet open={breakdownOpen} onOpenChange={setBreakdownOpen}>
+                        <SheetContent className="sm:max-w-3xl overflow-y-auto">
+                            <SheetHeader className="mb-6">
+                                <SheetTitle className="flex items-center gap-2 text-2xl">
+                                    <FileText className="size-6 text-primary" />
+                                    Vote Transactions
+                                </SheetTitle>
+                                <SheetDescription>
+                                    View a detailed list of all successful vote purchases for this event.
+                                </SheetDescription>
+                            </SheetHeader>
+
+                            {isLoadingBreakdown ? (
+                                <div className="h-[400px] flex flex-col items-center justify-center gap-4 text-muted-foreground">
+                                    <Loader2 className="size-8 animate-spin text-primary" />
+                                    <p className="text-sm font-medium animate-pulse">Fetching transaction history...</p>
+                                </div>
+                            ) : initialTxData ? (
+                                <VoteTransactionsTable 
+                                    initialData={initialTxData}
+                                    eventId={eventId}
+                                    fetchPage={fetchPage}
+                                />
+                            ) : null}
+                        </SheetContent>
+                    </Sheet>
                 </>
             )}
         </div>

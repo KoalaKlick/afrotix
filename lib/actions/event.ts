@@ -520,4 +520,36 @@ export async function deleteExistingEvent(eventId: string): Promise<ActionResult
         return { success: false, error: "Failed to delete event" };
     }
 }
+import { 
+    getEventVoteTransactions 
+} from "@/lib/dal/event";
 
+/**
+ * Get paginated vote transactions for an event (Server Action)
+ */
+export async function getEventVoteTransactionsAction(
+    eventId: string,
+    page = 1,
+    limit = 10
+) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error("Not authenticated");
+    }
+
+    const event = await getEventById(eventId);
+    if (!event) {
+        throw new Error("Event not found");
+    }
+
+    // Check user has permission
+    const role = await getUserRoleInOrganization(user.id, event.organizationId);
+    if (!role) {
+        throw new Error("Not authorized");
+    }
+
+    const offset = (page - 1) * limit;
+    return await getEventVoteTransactions(eventId, { limit, offset });
+}

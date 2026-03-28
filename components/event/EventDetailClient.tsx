@@ -538,6 +538,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                 {/* Overview Tab */}
                 <TabsContent value="overview" className="space-y-4">
                     <EventOverviewTab
+                        eventId={event.id}
                         eventStats={eventStats}
                         eventType={event.type}
                         voteTrend={voteTrend}

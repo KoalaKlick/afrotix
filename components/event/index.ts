@@ -29,3 +29,4 @@ export { EventCreationClient } from "./EventCreationClient";
 export { VotingBarChart, type VotingChartCategory } from "./VotingBarChart";
 export { VotingTrendChart } from "./VotingTrendChart";
 export { CategoryDetailModal } from "./CategoryDetailModal";
+export { VoteTransactionsTable } from "./VoteTransactionsTable";
