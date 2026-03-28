@@ -95,19 +95,19 @@ export function VotePaymentModal({
         try {
             const { createClient } = await import("@/utils/supabase/client");
             const supabase = createClient();
-            
+
             const callbackUrl = `${process.env.NEXT_PUBLIC_DOMAIN_URL || window.location.origin}/payment/callback`;
 
             // Normalise phone to E.164 for Paystack metadata
             const normalisedPhone = phone.startsWith("0")
                 ? "233" + phone.slice(1)
                 : phone.startsWith("+")
-                  ? phone.slice(1)
-                  : phone;
+                    ? phone.slice(1)
+                    : phone;
 
             // Use provided email or fallback to phone-derived (Paystack requires it)
-            const finalEmail = email.includes("@") 
-                ? email 
+            const finalEmail = email.includes("@")
+                ? email
                 : `${normalisedPhone}@voter.sankofa.app`;
 
             const { data: response, error } = await supabase.functions.invoke(
@@ -165,8 +165,20 @@ export function VotePaymentModal({
     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
 
     return (
-        <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0 border-0 rounded-2xl bg-white">
+        <Dialog open={open} onOpenChange={handleClose} modal={false}>
+            <DialogContent
+                className="sm:max-w-md p-0 overflow-hidden gap-0 border-0 rounded-2xl bg-white"
+                onOpenAutoFocus={(e) => {
+                    if (loading) e.preventDefault();
+                }}
+                onFocusOutside={(e) => {
+                    if (loading) e.preventDefault();
+                }}
+                onInteractOutside={(e) => {
+                    // Prevent the Radix modal from closing when interacting with Paystack's overlay
+                    if (loading) e.preventDefault();
+                }}
+            >
                 {/* Hero Header */}
                 <div className="relative h-36 w-full bg-linear-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] overflow-hidden">
                     <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[#FFCD00]/20 blur-2xl" />
