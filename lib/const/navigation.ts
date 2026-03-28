@@ -1,6 +1,7 @@
 import {
     Building2,
     Calendar,
+    CreditCard,
     Home,
     TrendingUp,
 } from "lucide-react"
@@ -54,8 +55,14 @@ export const navMain: NavItem[] = [
         icon: TrendingUp,
     },
     {
+        title: "Billing",
+        url: "/organization/billing",
+        icon: CreditCard,
+    },
+    {
         title: "Organization",
         url: "/organization/manage",
         icon: Building2,
     },
 ]
+

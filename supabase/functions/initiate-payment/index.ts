@@ -73,6 +73,10 @@ serve(async (req) => {
     }
 
     // 4. Initialize Paystack Transaction
+    const callbackUrl = metadata?.callback_url || Deno.env.get("APP_URL") 
+      ? `${Deno.env.get("APP_URL")}/payment/callback` 
+      : undefined;
+
     const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: {
@@ -84,6 +88,7 @@ serve(async (req) => {
         amount: Math.round(Number(amount) * 100), // convert to subunits (pesewas/kobo)
         currency,
         reference,
+        ...(callbackUrl && { callback_url: callbackUrl }),
         metadata: {
           payment_id: payment.id,
           related_type: relatedType,

@@ -1,8 +1,32 @@
 const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
 
-const client = new Client({
-  connectionString: "postgresql://postgres.dekhbwnxmhgsvndwpiox:Koala%40Supabase13@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
-});
+// Load .env file manually (no dotenv dependency needed)
+const envPath = path.resolve(__dirname, '..', '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = trimmed.substring(0, eqIdx).trim();
+    let value = trimmed.substring(eqIdx + 1).trim();
+    // Strip surrounding quotes
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("ERROR: No database connection string found. Set DIRECT_URL or DATABASE_URL in .env");
+  process.exit(1);
+}
+
+const client = new Client({ connectionString });
 
 async function sync() {
   try {

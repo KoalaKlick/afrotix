@@ -133,8 +133,9 @@ export function AfroTixLogo({
             xmlns="http://www.w3.org/2000/svg"
             initial="hidden"
             animate={controls}
+            suppressHydrationWarning
         >
-            <title>{PROJ_NAME} Logo</title>
+            <title suppressHydrationWarning>{`${PROJ_NAME} Logo`}</title>
             <text
                 y="80"
                 fontFamily="'Poppins', Arial, sans-serif"

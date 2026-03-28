@@ -12,6 +12,7 @@ import {
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { Vote, Share2, Users, Hash } from "lucide-react";
 import type { VotingOption } from "@/lib/types/voting";
+import { VotePaymentModal } from "@/components/event/VotePaymentModal";
 
 // ─── Strip HTML for plain-text share messages ────────────────────────────────
 
@@ -101,10 +102,13 @@ async function shareNominee(nominee: VotingOption) {
 interface NomineeGridProps {
     readonly nominees: VotingOption[];
     readonly votePrice?: number;
+    readonly eventId: string;
+    readonly categoryId: string;
 }
 
-export function NomineeGrid({ nominees, votePrice = 0 }: NomineeGridProps) {
+export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId }: NomineeGridProps) {
     const [selectedNominee, setSelectedNominee] = useState<VotingOption | null>(null);
+    const [votingNominee, setVotingNominee] = useState<VotingOption | null>(null);
 
     function handleShare(e: React.MouseEvent, nominee: VotingOption) {
         e.stopPropagation();
@@ -169,14 +173,13 @@ export function NomineeGrid({ nominees, votePrice = 0 }: NomineeGridProps) {
                                     variant="afro"
                                     size="sm"
                                     className="w-full"
-                                    // className="w-full transition-all duration-300 ease-in-out gap-2 border-[#009A44]/20 text-[#009A44] hover:bg-[#009A44] hover:text-white  font-semibold uppercase tracking-wider text-xs"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        // TODO: wire up actual voting
+                                        setVotingNominee(nominee);
                                     }}
                                 >
                                     <Vote className="w-3.5 h-3.5" />
-                                    Vote {votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}
+                                    Vote {votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}  
                                 </Button>
                             </div>
                         </div>
@@ -192,6 +195,22 @@ export function NomineeGrid({ nominees, votePrice = 0 }: NomineeGridProps) {
                     if (!open) setSelectedNominee(null);
                 }}
                 votePrice={votePrice}
+                onVote={(nominee) => {
+                    setSelectedNominee(null);
+                    setVotingNominee(nominee);
+                }}
+            />
+
+            {/* Vote Payment Modal */}
+            <VotePaymentModal
+                nominee={votingNominee}
+                open={!!votingNominee}
+                onOpenChange={(open) => {
+                    if (!open) setVotingNominee(null);
+                }}
+                votePrice={votePrice}
+                eventId={eventId}
+                categoryId={categoryId}
             />
         </>
     );
@@ -204,9 +223,10 @@ interface PublicNomineeSheetProps {
     readonly open: boolean;
     readonly onOpenChange: (open: boolean) => void;
     readonly votePrice?: number;
+    readonly onVote?: (nominee: VotingOption) => void;
 }
 
-function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0 }: PublicNomineeSheetProps) {
+function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0, onVote }: PublicNomineeSheetProps) {
     if (!nominee) return null;
 
     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
@@ -265,7 +285,7 @@ function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0 }: Publ
                         variant="afro"
                         size="lg"
                         onClick={() => {
-                            // TODO: wire up actual voting
+                            if (onVote) onVote(nominee);
                         }}
                     >
                         <Vote className="w-4 h-4" />
