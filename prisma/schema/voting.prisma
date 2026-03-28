@@ -112,7 +112,6 @@ model Vote {
   @@index([optionId], map: "idx_votes_option")
   @@index([voterId], map: "idx_votes_voter")
   @@index([createdAt], map: "idx_votes_created_at")
-  @@unique([eventId, categoryId, optionId, voterId])
   @@map("votes")
 }
 

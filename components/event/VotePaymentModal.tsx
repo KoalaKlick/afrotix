@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ interface VotePaymentModalProps {
     readonly votePrice: number;
     readonly eventId: string;
     readonly categoryId: string;
+    readonly isPublic?: boolean;
 }
 
 type ModalStep = "checkout" | "processing" | "success" | "error";
@@ -49,6 +50,7 @@ export function VotePaymentModal({
     votePrice,
     eventId,
     categoryId,
+    isPublic = true,
 }: VotePaymentModalProps) {
     const [step, setStep] = useState<ModalStep>("checkout");
     const [voteCount, setVoteCount] = useState(1);
@@ -56,6 +58,8 @@ export function VotePaymentModal({
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
+    const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false);
+    const [checkingVoteStatus, setCheckingVoteStatus] = useState(false);
 
     const { resumeTransaction } = usePaystack();
 
@@ -68,6 +72,7 @@ export function VotePaymentModal({
         setEmail("");
         setLoading(false);
         setErrorMsg("");
+        setHasAlreadyVoted(false);
     }, []);
 
     const handleClose = useCallback(
@@ -77,6 +82,38 @@ export function VotePaymentModal({
         },
         [onOpenChange, resetModal]
     );
+
+    // --- Check Vote Status (For Private Events) ---
+    const checkVoteStatus = useCallback(async () => {
+        if (isPublic || !nominee || !open) return;
+
+        setCheckingVoteStatus(true);
+        try {
+            const { createClient } = await import("@/utils/supabase/client");
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (user) {
+                const { data: existingVote } = await supabase
+                    .from("votes")
+                    .select("id")
+                    .eq("option_id", nominee.id)
+                    .eq("voter_id", user.id)
+                    .maybeSingle();
+
+                setHasAlreadyVoted(!!existingVote);
+            }
+        } catch (err) {
+            console.error("Error checking vote status:", err);
+        } finally {
+            setCheckingVoteStatus(false);
+        }
+    }, [isPublic, nominee, open]);
+
+    // Re-check status when modal opens
+    useEffect(() => {
+        if (open) checkVoteStatus();
+    }, [open, checkVoteStatus]);
 
     const increment = useCallback(() => {
         setVoteCount((prev) => prev + 1);
@@ -343,12 +380,22 @@ export function VotePaymentModal({
                             size="lg"
                             className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
                             onClick={handleSubmitPayment}
-                            disabled={!phone || phone.length < 9 || loading}
+                            disabled={!phone || phone.length < 9 || loading || hasAlreadyVoted || checkingVoteStatus}
                         >
                             {loading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                     Initialising...
+                                </>
+                            ) : checkingVoteStatus ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Checking status...
+                                </>
+                            ) : hasAlreadyVoted ? (
+                                <>
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    Already Voted
                                 </>
                             ) : (
                                 <>

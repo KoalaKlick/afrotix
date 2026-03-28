@@ -104,9 +104,10 @@ interface NomineeGridProps {
     readonly votePrice?: number;
     readonly eventId: string;
     readonly categoryId: string;
+    readonly isPublic?: boolean;
 }
 
-export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId }: NomineeGridProps) {
+export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPublic }: NomineeGridProps) {
     const [selectedNominee, setSelectedNominee] = useState<VotingOption | null>(null);
     const [votingNominee, setVotingNominee] = useState<VotingOption | null>(null);
 
@@ -211,6 +212,7 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId }: No
                 votePrice={votePrice}
                 eventId={eventId}
                 categoryId={categoryId}
+                isPublic={isPublic}
             />
         </>
     );
