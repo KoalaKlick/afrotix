@@ -10,10 +10,14 @@ model Organization {
   faviconUrl     String?                  @map("favicon_url")
   websiteUrl     String?                  @map("website_url")
   contactEmail   String?                  @map("contact_email")
+  phone          String?
   createdBy      String?                  @map("created_by") @db.Uuid
   createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  
+  // Relations
   events         Event[]
+  socialLinks    OrganizationSocialLink[]
   requests       MembershipRequest[]
   invitations    OrganizationInvitation[]
   members        OrganizationMember[]
@@ -83,4 +87,16 @@ model MembershipRequest {
   @@index([userId], map: "idx_membership_req_user")
   @@index([status], map: "idx_membership_req_status")
   @@map("membership_requests")
+}
+
+model OrganizationSocialLink {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  url            String
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([organizationId], map: "idx_organization_social_org")
+  @@map("organization_social_links")
 }

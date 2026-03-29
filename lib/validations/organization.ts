@@ -119,7 +119,7 @@ export const organizationSlugSchema = z
 // Description validation (optional)
 export const organizationDescriptionSchema = z
     .string()
-    .max(500, "Description must be at most 500 characters")
+    .max(5000, "Description must be at most 5000 characters")
     .optional()
     .or(z.literal(""));
 
@@ -189,6 +189,8 @@ export const updateOrganizationSchema = z.object({
     websiteUrl: urlSchema,
     primaryColor: colorSchema,
     secondaryColor: colorSchema,
+    phone: z.string().optional().or(z.literal("")),
+    socialLinks: z.array(z.string().url("Invalid social URL")).optional(),
 });
 
 // Type exports

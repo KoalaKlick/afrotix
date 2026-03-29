@@ -53,7 +53,10 @@ export type OrganizationCreateInput = {
     createdBy: string;
 };
 
-export type OrganizationUpdateInput = Partial<Omit<OrganizationCreateInput, "createdBy">>;
+export type OrganizationUpdateInput = Partial<Omit<OrganizationCreateInput, "createdBy">> & {
+    phone?: string;
+    socialLinks?: string[];
+};
 
 export type OrganizationWithRole = Organization & {
     role: OrganizationRole;
@@ -64,10 +67,11 @@ export type OrganizationWithRole = Organization & {
  * Get organization by ID
  * Uses React cache for request deduplication
  */
-export const getOrganizationById = cache(async (id: string): Promise<Organization | null> => {
+export const getOrganizationById = cache(async (id: string) => {
     try {
         return await prisma.organization.findUnique({
             where: { id },
+            include: { socialLinks: true },
         });
     } catch (error) {
         logger.error(error, "[DAL] Error fetching organization:");
@@ -78,14 +82,16 @@ export const getOrganizationById = cache(async (id: string): Promise<Organizatio
 /**
  * Get organization by slug
  */
-export const getOrganizationBySlug = cache(async (slug: string): Promise<Organization | null> => {
+export const getOrganizationBySlug = cache(async (slug: string) => {
     try {
         return await prisma.organization.findUnique({
             where: { slug },
+            include: { socialLinks: true },
         });
     } catch (error) {
-        logger.error(error, "[DAL] Error fetching organization by slug:");
-        return null;
+        return await prisma.organization.findUnique({
+            where: { slug },
+        });
     }
 });
 
@@ -238,9 +244,34 @@ export async function updateOrganization(
     data: OrganizationUpdateInput
 ): Promise<Organization | null> {
     try {
-        return await prisma.organization.update({
-            where: { id },
-            data,
+        const { socialLinks, ...baseData } = data;
+        
+        return await prisma.$transaction(async (tx) => {
+            // Update base organization fields
+            const org = await tx.organization.update({
+                where: { id },
+                data: baseData,
+            });
+
+            // If socialLinks provided, sync them
+            if (socialLinks !== undefined) {
+                // Delete existing
+                await tx.organizationSocialLink.deleteMany({
+                    where: { organizationId: id },
+                });
+
+                // Create new ones
+                if (socialLinks.length > 0) {
+                    await tx.organizationSocialLink.createMany({
+                        data: socialLinks.map(url => ({
+                            url,
+                            organizationId: id,
+                        })),
+                    });
+                }
+            }
+
+            return org;
         });
     } catch (error) {
         logger.error(error, "[DAL] Error updating organization:");
@@ -564,6 +595,7 @@ export const getOrganizationProfile = cache(async (slug: string, viewerUserId?: 
         return await prisma.organization.findUnique({
             where: { slug },
             include: {
+                socialLinks: true,
                 events: {
                     where: {
                         status: { notIn: ["draft", "cancelled"] },

@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
-import { toast } from "sonner";
-import Image from "next/image";
-import { Building2, Globe, Mail, Loader2, Palette, X, Image as ImageIcon, Pencil } from "lucide-react";
+import { Building2, Globe, Mail, Loader2, Palette, X, Image as ImageIcon, Pencil, Phone, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { updateExistingOrganization, uploadOrgLogo, uploadOrgBanner } from "@/lib/actions/organization";
@@ -16,6 +13,10 @@ import { getOrgImageUrl } from "@/lib/image-url-utils";
 import { TicketPreview } from "@/components/shared/TicketPreview";
 import { cn } from "@/lib/utils";
 import { DOMAIN_NAME } from "@/lib/const/branding";
+import { getSocialPlatform } from "@/lib/utils/event-icons";
+import { useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+import Image from "next/image";
 
 interface OrgGeneralSettingsProps {
     readonly organization: {
@@ -29,6 +30,8 @@ interface OrgGeneralSettingsProps {
         secondaryColor: string;
         websiteUrl: string | null;
         contactEmail: string | null;
+        phone: string | null;
+        socialLinks: Array<{ url: string }>;
     };
 }
 
@@ -70,6 +73,26 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
     // Contact
     const [websiteUrl, setWebsiteUrl] = useState(organization.websiteUrl ?? "");
     const [contactEmail, setContactEmail] = useState(organization.contactEmail ?? "");
+    const [phone, setPhone] = useState(organization.phone ?? "");
+
+    // Socials
+    const [socialLinks, setSocialLinks] = useState<string[]>(
+        organization.socialLinks?.map(link => link.url) ?? []
+    );
+
+    const handleAddSocialLink = () => {
+        setSocialLinks([...socialLinks, ""]);
+    };
+
+    const handleRemoveSocialLink = (index: number) => {
+        setSocialLinks(socialLinks.filter((_, i) => i !== index));
+    };
+
+    const handleSocialLinkChange = (index: number, value: string) => {
+        const newLinks = [...socialLinks];
+        newLinks[index] = value;
+        setSocialLinks(newLinks);
+    };
 
     async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -182,10 +205,18 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
             return;
         }
 
-        // Validate URL if provided
+        // Validate URLs if provided
         if (websiteUrl && !/^https?:\/\/.+/.exec(websiteUrl)) {
             toast.error("Please enter a valid URL starting with http:// or https://");
             return;
+        }
+
+        const validSocialLinks = socialLinks.filter(l => l.trim() !== "");
+        for (const link of validSocialLinks) {
+            if (!/^https?:\/\/.+/.exec(link)) {
+                toast.error(`Invalid social URL: ${link}`);
+                return;
+            }
         }
 
         startTransition(async () => {
@@ -200,6 +231,8 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
             formData.set("secondaryColor", secondaryColor);
             formData.set("websiteUrl", websiteUrl);
             formData.set("contactEmail", contactEmail);
+            formData.set("phone", phone);
+            formData.set("socialLinks", JSON.stringify(validSocialLinks));
 
             const result = await updateExistingOrganization(organization.id, formData);
             if (result.success) {
@@ -374,12 +407,10 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
                     <div className="space-y-2">
                         <Label htmlFor="org-description">Description</Label>
-                        <Textarea
-                            id="org-description"
+                        <RichTextEditor 
                             value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                            onChange={setDescription}
                             placeholder="Tell people about your organization..."
-                            rows={4}
                         />
                     </div>
                 </CardContent>
@@ -499,14 +530,14 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Mail className="h-5 w-5" />
-                        Contact Information
+                        Contact & Details
                     </CardTitle>
                     <CardDescription>
-                        How people can reach your organization
+                        Internal and public contact information
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                <CardContent className="space-y-6">
+                    <div className="grid gap-4 sm:grid-cols-3">
                         <div className="space-y-2">
                             <Label htmlFor="org-website" className="flex items-center gap-1">
                                 <Globe className="h-3.5 w-3.5" /> Website
@@ -520,7 +551,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="org-email" className="flex items-center gap-1">
-                                <Mail className="h-3.5 w-3.5" /> Contact Email
+                                <Mail className="h-3.5 w-3.5" /> Support Email
                             </Label>
                             <Input
                                 id="org-email"
@@ -529,6 +560,83 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                                 onChange={(e) => setContactEmail(e.target.value)}
                                 placeholder="contact@yourorg.com"
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="org-phone" className="flex items-center gap-1">
+                                <Phone className="h-3.5 w-3.5" /> Phone Number
+                            </Label>
+                            <Input
+                                id="org-phone"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                placeholder="+233..."
+                            />
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <Label className="text-base">Social Profiles</Label>
+                                <p className="text-sm text-muted-foreground">
+                                    Display icons for these profiles on your public pages
+                                </p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddSocialLink}
+                                className="h-8"
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Profile
+                            </Button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {socialLinks.map((url, index) => {
+                                const platform = getSocialPlatform(url);
+                                return (
+                                    <div key={index} className="flex gap-2 items-start group">
+                                        <div className="flex-1">
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                                    {platform.icon}
+                                                </div>
+                                                <Input
+                                                    value={url}
+                                                    onChange={(e) => handleSocialLinkChange(index, e.target.value)}
+                                                    placeholder="https://facebook.com/your-page"
+                                                    className="pl-10"
+                                                />
+                                            </div>
+                                            {url && (
+                                                <p className={cn("text-[10px] mt-1 ml-1 font-medium", platform.color)}>
+                                                    Detected: {platform.name}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleRemoveSocialLink(index)}
+                                            className="h-10 w-10 text-muted-foreground hover:text-destructive"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                );
+                            })}
+
+                            {socialLinks.length === 0 && (
+                                <div className="text-center py-6 border-2 border-dashed rounded-lg bg-muted/30">
+                                    <p className="text-xs text-muted-foreground">No social profiles added yet</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </CardContent>

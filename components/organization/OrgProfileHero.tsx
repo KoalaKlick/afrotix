@@ -134,17 +134,6 @@ export function OrgProfileHero({
                         </Button>
                     </div>
                 </div>
-
-                {/* Description */}
-                {organization.description && (
-                    <Card className="mt-8 border-none shadow-sm bg-muted/30">
-                        <CardContent className="p-6">
-                            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                                {organization.description}
-                            </p>
-                        </CardContent>
-                    </Card>
-                )}
             </div>
         </div>
     );

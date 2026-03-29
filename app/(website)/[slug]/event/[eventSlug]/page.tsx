@@ -328,7 +328,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                         Sponsors.
                                     </h3>
                                     <div className="flex flex-wrap gap-4">
-                                        {(event as any).sponsors.slice(0, 6).map((sponsor: any, idx: number) => (
+                                        {(event as any).sponsors.map((sponsor: any, idx: number) => (
                                             <div key={idx} className="size-12 p-2 border rounded-xl bg-white flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-help" title={sponsor.name}>
                                                 {sponsor.logo ? (
                                                     <Image

@@ -4,10 +4,11 @@ import { getOrganizationProfile, getMembershipRequest, getOrganizationBySlug } f
 import { OrgProfileHero } from "@/components/organization/OrgProfileHero";
 import { OrgEventList } from "@/components/organization/OrgEventList";
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider";
-import { Globe, Mail, ImageIcon, Trophy, ChevronRight } from "lucide-react";
+import { Globe, Mail, Trophy, Phone } from "lucide-react";
 import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils";
-import { getSocialPlatform, getGalleryProvider } from "@/lib/utils/event-icons";
+import { getSocialPlatform } from "@/lib/utils/event-icons";
 import type { Metadata } from "next";
+import Image from "next/image";
 
 interface OrgProfilePageProps {
     readonly params: Promise<{ slug: string }>;
@@ -81,174 +82,121 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                     <OrgEventList events={organization.events} organizationSlug={slug} />
                 </section>
 
-                {/* Aggregated Organization Assets (Sponsors, Socials, Galleries) */}
-                {(() => {
-                    const allSponsors = organization.events.flatMap((e: any) => e.sponsors || []);
-                    const uniqueSponsors = Array.from(new Map(allSponsors.map((s: any) => [s.name, s])).values());
-                    
-                    const allSocials = organization.events.flatMap((e: any) => e.socialLinks || []);
-                    const uniqueSocials = Array.from(new Map(allSocials.map((s: any) => [s.url, s])).values());
-                    
-                    const allGalleries = organization.events.flatMap((e: any) => e.galleryLinks || []);
-                    const uniqueGalleries = Array.from(new Map(allGalleries.map((g: any) => [g.url, g])).values());
-
-                    return (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 py-16 border-t border-dashed">
-                            {/* Partners / Sponsors */}
-                            <div className="space-y-6">
-                                <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                    <Trophy className="w-5 h-5 text-[#009A44]" />
-                                    Our Partners.
-                                </h3>
-                                {uniqueSponsors.length > 0 ? (
-                                    <div className="flex flex-wrap gap-3">
-                                        {uniqueSponsors.slice(0, 12).map((sponsor: any, idx: number) => (
-                                            <div key={idx} className="size-12 p-1.5 border rounded-lg bg-white flex items-center justify-center grayscale hover:grayscale-0 transition-all cursor-help" title={sponsor.name}>
-                                                {sponsor.logo ? (
-                                                    <Image
-                                                        src={getEventImageUrl(sponsor.logo) || ""}
-                                                        alt={sponsor.name}
-                                                        width={32}
-                                                        height={32}
-                                                        className="object-contain max-h-full"
-                                                    />
-                                                ) : (
-                                                    <span className="text-[7px] font-bold text-center leading-none truncate">{sponsor.name}</span>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-muted-foreground italic">Partnering with leading brands for all our events.</p>
-                                )}
-                            </div>
-
-                            {/* Aggregated Socials */}
-                            <div className="space-y-6">
-                                <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                    <Globe className="w-5 h-5 text-[#009A44]" />
-                                    Global Feeds.
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {uniqueSocials.length > 0 ? (
-                                        uniqueSocials.map((link: any, idx: number) => (
-                                            <a
-                                                key={idx}
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="w-10 h-10 rounded-full border bg-white flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all"
-                                                title={link.url}
-                                            >
-                                                <div className="size-5 flex items-center justify-center">
-                                                    {getSocialPlatform(link.url, "size-full").icon}
-                                                </div>
-                                            </a>
-                                        ))
-                                    ) : (
-                                        <div className="flex items-center gap-3 text-muted-foreground opacity-50">
-                                            <div className="size-10 rounded-full border border-dashed flex items-center justify-center">
-                                                <ImageIcon className="size-4" />
-                                            </div>
-                                            <p className="text-xs italic">Stay connected for updates.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Featured Galleries */}
-                            <div className="space-y-6">
-                                <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                    <ImageIcon className="w-5 h-5 text-[#009A44]" />
-                                    Galleries.
-                                </h3>
-                                <div className="space-y-2">
-                                    {uniqueGalleries.length > 0 ? (
-                                        uniqueGalleries.slice(0, 3).map((link: any, idx: number) => (
-                                            <a
-                                                key={idx}
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-3 p-3 rounded-xl border bg-[#F8F7F1]/50 hover:bg-white hover:shadow-md transition-all group"
-                                            >
-                                                <div className="size-8 rounded-lg bg-white border flex items-center justify-center shrink-0">
-                                                    <div className="size-4 flex items-center justify-center">
-                                                        {getGalleryProvider(link.url, "size-full").icon}
-                                                    </div>
-                                                </div>
-                                                <p className="font-bold text-[10px] uppercase truncate">{link.name}</p>
-                                                <ChevronRight className="w-3 h-3 ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform" />
-                                            </a>
-                                        ))
-                                    ) : (
-                                        <p className="text-xs text-muted-foreground italic">Relive our event moments soon.</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })()}
-
                 {/* Organization Details Footer */}
                 <section className="pt-20 border-t border-dashed space-y-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-black uppercase tracking-tight">
-                                About {organization.name}.
-                            </h2>
-                            <div className="prose prose-p:text-muted-foreground max-w-none text-sm leading-relaxed">
-                                {organization.description ? (
-                                    <div className="whitespace-pre-wrap">{organization.description}</div>
-                                ) : (
-                                    <p className="italic text-muted-foreground/60 leading-relaxed">
-                                        Empowering the community through excellence and dedication. 
-                                        Join us in our journey to create impactful events and lasting memories.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                    {(() => {
+                        const allSponsors = organization.events.flatMap((e: any) => e.sponsors || []);
+                        const uniqueSponsors = Array.from(new Map(allSponsors.map((s: any) => [s.name, s])).values());
 
-                        <div className="space-y-8">
-                            <div className="p-6 rounded-2xl bg-white border border-dashed border-[#009A44]/20 space-y-4">
-                                <h3 className="text-sm font-bold uppercase tracking-widest text-[#009A44]">Organization Contacts.</h3>
-                                <div className="space-y-4">
-                                    {organization.websiteUrl && (
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-8 rounded-full bg-[#F8F7F1] flex items-center justify-center shrink-0">
-                                                <Globe className="size-4 text-[#009A44]" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Official Website</p>
-                                                <a href={organization.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold hover:underline truncate block">
-                                                    {organization.websiteUrl}
+                        return (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+                                {/* Column 1: Our Partners (Aggregated from events) */}
+                                <div className="space-y-6">
+                                    <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
+                                        <Trophy className="w-5 h-5 text-[#009A44]" />
+                                        Our Partners.
+                                    </h3>
+                                    {uniqueSponsors.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2.5">
+                                            {uniqueSponsors.slice(0, 15).map((sponsor: any, idx: number) => (
+                                                <div key={idx} className="size-10 p-1.5 border rounded-lg bg-white flex items-center justify-center grayscale hover:grayscale-0 transition-all cursor-help" title={sponsor.name}>
+                                                    {sponsor.logo ? (
+                                                        <Image
+                                                            src={getEventImageUrl(sponsor.logo) || ""}
+                                                            alt={sponsor.name}
+                                                            width={28}
+                                                            height={28}
+                                                            className="object-contain max-h-full"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-[6px] font-bold text-center leading-none truncate uppercase tracking-tighter">{sponsor.name}</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground italic leading-relaxed">Partnering with leading brands for event excellence.</p>
+                                    )}
+                                </div>
+
+                                {/* Column 2: About Organization */}
+                                <div className="space-y-6">
+                                    <h3 className="text-xl font-black uppercase tracking-tight">
+                                        About {organization.name}.
+                                    </h3>
+                                    <div className="prose prose-sm prose-p:text-muted-foreground prose-headings:text-foreground prose-li:text-muted-foreground max-w-none text-xs leading-relaxed">
+                                        {organization.description ? (
+                                            <div 
+                                                dangerouslySetInnerHTML={{ __html: organization.description }} 
+                                                className="rich-text-content"
+                                            />
+                                        ) : (
+                                            <p className="italic text-muted-foreground/60">
+                                                Dedicated to delivering exceptional events and fostering community engagement through innovation and excellence.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Column 3: Connect with Us (Contacts & Socials) */}
+                                <div className="space-y-8">
+                                    <h3 className="text-xl font-black uppercase tracking-tight">Connect with Us.</h3>
+                                    <div className="space-y-4">
+                                        {organization.websiteUrl && (
+                                            <div className="flex items-center gap-3 group">
+                                                <Globe className="size-4 text-[#009A44] group-hover:scale-110 transition-transform" />
+                                                <a href={organization.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-widest hover:text-[#009A44] transition-colors truncate">
+                                                    Official Website
                                                 </a>
                                             </div>
-                                        </div>
-                                    )}
-                                    {organization.contactEmail && (
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-8 rounded-full bg-[#F8F7F1] flex items-center justify-center shrink-0">
-                                                <Mail className="size-4 text-[#009A44]" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Email Support</p>
-                                                <a href={`mailto:${organization.contactEmail}`} className="text-xs font-semibold hover:underline truncate block">
+                                        )}
+                                        {organization.contactEmail && (
+                                            <div className="flex items-center gap-3 group">
+                                                <Mail className="size-4 text-[#009A44] group-hover:scale-110 transition-transform" />
+                                                <a href={`mailto:${organization.contactEmail}`} className="text-xs font-bold tracking-widest hover:text-[#009A44] transition-colors truncate">
                                                     {organization.contactEmail}
                                                 </a>
                                             </div>
+                                        )}
+                                        {(organization as any).phone && (
+                                            <div className="flex items-center gap-3 group">
+                                                <Phone className="size-4 text-[#009A44] group-hover:scale-110 transition-transform" />
+                                                <span className="text-xs font-bold uppercase tracking-widest">
+                                                    {(organization as any).phone}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Dedicated Social Links */}
+                                    {(organization as any).socialLinks?.length > 0 && (
+                                        <div className="pt-6 border-t border-dashed flex flex-wrap gap-2">
+                                            {(organization as any).socialLinks.map((link: any, idx: number) => (
+                                                <a
+                                                    key={idx}
+                                                    href={link.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-10 h-10 rounded-full border bg-white flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all shadow-sm"
+                                                    title={link.url}
+                                                >
+                                                    <div className="size-5 flex items-center justify-center">
+                                                        {getSocialPlatform(link.url, "size-full").icon}
+                                                    </div>
+                                                </a>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        );
+                    })()}
 
                     <div className="pt-12 border-t border-dashed text-center space-y-4">
                         <div className="flex items-center justify-center gap-2">
-                            <div className="h-1 w-8 bg-black" />
-                            <div className="h-1 w-8 bg-yellow-400" />
-                            <div className="h-1 w-8 bg-green-600" />
+                            <div className="h-1 w-8 bg-[#CE1126]" />
+                            <div className="h-1 w-8 bg-[#FFCD00]" />
+                            <div className="h-1 w-8 bg-[#009A44]" />
                         </div>
                         <div>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mb-1">

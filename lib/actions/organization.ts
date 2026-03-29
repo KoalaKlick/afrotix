@@ -362,6 +362,16 @@ export async function updateExistingOrganization(
         return { success: false, error: "You don't have permission to edit this organization" };
     }
 
+    const socialLinksJson = formData.get("socialLinks") as string;
+    let socialLinks: string[] | undefined = undefined;
+    try {
+        if (socialLinksJson) {
+            socialLinks = JSON.parse(socialLinksJson);
+        }
+    } catch {
+        logger.warn({ socialLinksJson }, "Failed to parse socialLinks JSON");
+    }
+
     const data = {
         name: (formData.get("name") as string) || undefined,
         slug: (formData.get("slug") as string) || undefined,
@@ -372,6 +382,8 @@ export async function updateExistingOrganization(
         websiteUrl: formData.get("websiteUrl") as string,
         primaryColor: formData.get("primaryColor") as string,
         secondaryColor: formData.get("secondaryColor") as string,
+        phone: formData.get("phone") as string,
+        socialLinks,
     };
 
     // Check slug availability if changing

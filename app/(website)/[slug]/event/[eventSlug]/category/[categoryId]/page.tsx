@@ -142,7 +142,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                     <span className="text-xs font-bold leading-none">{dateStr}</span>
                                 </div>
                             </div>
-                            
+
                             {timeStr && (
                                 <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
                                     <Clock className="w-4 h-4 text-[#FFCD00]" />
@@ -200,12 +200,12 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                     </div>
 
                     {category.votingOptions.length > 0 ? (
-                        <NomineeGrid 
-                            nominees={category.votingOptions} 
-                            votePrice={Number(category.votePrice)} 
-                            eventId={event.id} 
-                            categoryId={category.id} 
-                            isPublic={event.isPublic} 
+                        <NomineeGrid
+                            nominees={category.votingOptions}
+                            votePrice={Number(category.votePrice)}
+                            eventId={event.id}
+                            categoryId={category.id}
+                            isPublic={event.isPublic}
                             showTotalVotesPublicly={category.showTotalVotesPublicly}
                         />
                     ) : (
@@ -235,7 +235,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                 )}
                             </div>
                             <div className="pt-4 border-t border-dashed">
-                                <Link 
+                                <Link
                                     href={`/${orgSlug}/event/${eventSlug}`}
                                     className="inline-flex items-center text-xs font-bold text-[#009A44] hover:underline"
                                 >
@@ -252,18 +252,23 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                             </h3>
                             {((event as any).sponsors?.length > 0) ? (
                                 <div className="flex flex-wrap gap-3">
-                                    {(event as any).sponsors.slice(0, 6).map((sponsor: any, idx: number) => (
-                                        <div key={idx} className="size-12 p-1.5 border rounded-lg bg-white flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-help" title={sponsor.name}>
+                                    {(event as any).sponsors.map((sponsor: any, idx: number) => (
+                                        <div
+                                            key={idx}
+                                            className="relative h-12 w-20 border bg-white flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-help"
+                                            title={sponsor.name}
+                                        >
                                             {sponsor.logo ? (
                                                 <Image
                                                     src={getEventImageUrl(sponsor.logo) || ""}
                                                     alt={sponsor.name}
-                                                    width={32}
-                                                    height={32}
-                                                    className="object-contain max-h-full"
+                                                    fill
+                                                    className="object-contain"
                                                 />
                                             ) : (
-                                                <span className="text-[7px] font-bold text-center leading-none truncate">{sponsor.name}</span>
+                                                <span className="text-[7px] font-bold text-center leading-none truncate px-1">
+                                                    {sponsor.name}
+                                                </span>
                                             )}
                                         </div>
                                     ))}
@@ -283,7 +288,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                         Galleries.
                                     </h3>
                                     <div className="space-y-2">
-                                        {(event as any).galleryLinks.slice(0, 2).map((link: any, idx: number) => (
+                                        {(event as any).galleryLinks.map((link: any, idx: number) => (
                                             <a
                                                 key={idx}
                                                 href={link.url}
