@@ -78,6 +78,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         bannerImage: event.bannerImage,
                         maxAttendees: event.maxAttendees,
                         isPublic: event.isPublic,
+                        votingMode: (event as any).votingMode,
                         createdAt: event.createdAt.toISOString(),
                         updatedAt: event.updatedAt.toISOString(),
                         publishedAt: event.publishedAt?.toISOString() ?? null,

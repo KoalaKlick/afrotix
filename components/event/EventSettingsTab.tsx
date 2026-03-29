@@ -8,12 +8,14 @@ import {
     Eye,
     EyeOff,
     Loader2,
+    Lock,
     MapPin,
     Pencil,
     Users,
     Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isVotingEventType } from "@/lib/validations/event";
 
 interface EventFormData {
     title: string;
@@ -48,6 +50,7 @@ interface EventOriginalData {
     venueCountry: string;
     isPublic: boolean;
     maxAttendees?: number | null;
+    type?: string;
 }
 
 interface EventSettingsTabProps {
@@ -74,6 +77,7 @@ export function EventSettingsTab({
     saveMultipleFields,
 }: EventSettingsTabProps) {
     const isPrivate = !formData.isPublic;
+    const isVotingEvent = isVotingEventType(event.type ?? "");
 
     return (
         <div className="space-y-6">
@@ -398,7 +402,7 @@ export function EventSettingsTab({
             <div className="bg-card border rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold">Visibility & Capacity</h3>
-                    {canEdit && editingField !== "settings" && (
+                    {canEdit && editingField !== "settings" && !isVotingEvent && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -410,7 +414,29 @@ export function EventSettingsTab({
                     )}
                 </div>
 
-                {editingField === "settings" ? (
+                {/* Voting events: locked mode display */}
+                {isVotingEvent && (
+                    <div className="space-y-4 mb-4">
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50/80 border border-blue-100">
+                            <Lock className="size-5 text-blue-600 mt-0.5 shrink-0" />
+                            <div>
+                                <p className="font-medium text-blue-900">
+                                    {formData.isPublic ? "Public Voting" : "Internal Voting"}
+                                </p>
+                                <p className="text-xs text-blue-700 mt-0.5">
+                                    {formData.isPublic
+                                        ? "Anyone can vote · Paid voting only (min GHS 0.10) · Vote counts shown publicly"
+                                        : "Organization members only · Can be free · Only participation status shown"}
+                                </p>
+                                <p className="text-[10px] text-blue-500 mt-1.5 font-medium">
+                                    Voting mode cannot be changed after event creation
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {editingField === "settings" && !isVotingEvent ? (
                     <div className="space-y-6">
                         <div className="space-y-3">
                             <Label>Event Visibility</Label>
@@ -490,25 +516,27 @@ export function EventSettingsTab({
                             </Button>
                         </div>
                     </div>
-                ) : (
+                ) : editingField !== "settings" && (
                     <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            {formData.isPublic ? (
-                                <Eye className="size-5 text-green-600" />
-                            ) : (
-                                <EyeOff className="size-5 text-yellow-600" />
-                            )}
-                            <div>
-                                <p className="font-medium">
-                                    {formData.isPublic ? "Public Event" : "Private Event"}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {formData.isPublic
-                                        ? "This event is visible to everyone"
-                                        : "This event is only visible to organization members"}
-                                </p>
+                        {!isVotingEvent && (
+                            <div className="flex items-center gap-3">
+                                {formData.isPublic ? (
+                                    <Eye className="size-5 text-green-600" />
+                                ) : (
+                                    <EyeOff className="size-5 text-yellow-600" />
+                                )}
+                                <div>
+                                    <p className="font-medium">
+                                        {formData.isPublic ? "Public Event" : "Private Event"}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {formData.isPublic
+                                            ? "This event is visible to everyone"
+                                            : "This event is only visible to organization members"}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        )}
                         <div className="flex items-center gap-3">
                             <Users className="size-5 text-primary" />
                             <div>
@@ -526,3 +554,4 @@ export function EventSettingsTab({
         </div>
     );
 }
+

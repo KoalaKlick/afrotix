@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, Loader2, Ticket, Vote, Layers, Megaphone, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Ticket, Vote, Layers, Megaphone, Sparkles, Lock, Globe, Users } from "lucide-react";
 import { validateEventStep1 } from "@/lib/actions/event";
-import { EVENT_TYPES } from "@/lib/validations/event";
+import { EVENT_TYPES, VOTING_MODES, isVotingEventType } from "@/lib/validations/event";
 import { cn } from "@/lib/utils";
 
 interface EventStep1Props {
@@ -20,12 +20,14 @@ interface EventStep1Props {
         title?: string;
         slug?: string;
         type?: string;
+        votingMode?: string;
         description?: string;
     };
     readonly onSuccess: (data: {
         title: string;
         slug: string;
         type: string;
+        votingMode?: string;
         description?: string;
     }) => void;
 }
@@ -42,6 +44,7 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
     const [title, setTitle] = useState(initialData?.title ?? "");
     const [slug, setSlug] = useState(initialData?.slug ?? "");
     const [type, setType] = useState(initialData?.type ?? "ticketed");
+    const [votingMode, setVotingMode] = useState(initialData?.votingMode ?? "public");
     const [description, setDescription] = useState(initialData?.description ?? "");
     const [errors, setErrors] = useState<Record<string, string[]>>({});
     const [generalError, setGeneralError] = useState<string | null>(null);
@@ -67,6 +70,9 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
         formData.set("title", title);
         formData.set("slug", slug);
         formData.set("type", type);
+        if (isVotingEventType(type)) {
+            formData.set("votingMode", votingMode);
+        }
         formData.set("description", description);
 
         startTransition(async () => {
@@ -76,6 +82,7 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
                     title: result.data.title,
                     slug: result.data.slug,
                     type: result.data.type,
+                    votingMode: result.data.votingMode,
                     description: result.data.description,
                 });
             } else {
@@ -129,6 +136,46 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
                     <p className="text-sm text-destructive">{errors.type[0]}</p>
                 )}
             </div>
+
+            {/* Voting Mode Selection (only for voting/hybrid events) */}
+            {isVotingEventType(type) && (
+                <div className="space-y-3">
+                    <Label>Voting Mode</Label>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Lock className="size-3" />
+                        This cannot be changed after event creation
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                        {VOTING_MODES.map((mode) => {
+                            const isSelected = votingMode === mode.value;
+                            const Icon = mode.value === "public" ? Globe : Users;
+
+                            return (
+                                <button
+                                    key={mode.value}
+                                    type="button"
+                                    onClick={() => setVotingMode(mode.value)}
+                                    className={cn(
+                                        "flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all",
+                                        isSelected
+                                            ? "border-primary bg-primary/5"
+                                            : "border-muted hover:border-muted-foreground/30"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Icon className={cn("size-5", isSelected ? "text-primary" : "text-muted-foreground")} />
+                                        <span className="font-medium">{mode.label}</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{mode.description}</p>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {errors.votingMode && (
+                        <p className="text-sm text-destructive">{errors.votingMode[0]}</p>
+                    )}
+                </div>
+            )}
 
             {/* Event Title */}
             <div className="space-y-2">

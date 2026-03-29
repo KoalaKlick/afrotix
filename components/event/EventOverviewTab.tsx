@@ -24,6 +24,7 @@ interface EventOverviewTabProps {
     readonly eventId: string;
     readonly eventStats: EventDetailStatsData;
     readonly eventType: string;
+    readonly votingMode?: string | null;
     readonly votingCategories: VotingChartCategory[];
     readonly voteTrend: VoteTrendPoint[];
 }
@@ -32,6 +33,7 @@ export function EventOverviewTab({
     eventId,
     eventStats,
     eventType,
+    votingMode,
     votingCategories,
     voteTrend,
 }: EventOverviewTabProps) {
@@ -127,7 +129,9 @@ export function EventOverviewTab({
                     </div>
 
                     <CategoryDetailModal
+                        eventId={eventId}
                         category={selectedCategory}
+                        votingMode={votingMode}
                         open={modalOpen}
                         onOpenChange={setModalOpen}
                     />

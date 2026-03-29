@@ -31,6 +31,7 @@ export type VotingCategoryCreateInput = {
     templateImage?: string | null;
     templateConfig?: any;
     showFinalImage?: boolean;
+    showTotalVotesPublicly?: boolean;
     nominationPrice?: number | Prisma.Decimal;
     votePrice?: number | Prisma.Decimal;
 };
@@ -69,6 +70,7 @@ export type VotingCategoryFieldInput = {
 
 export type VotingCategoryWithOptions = VotingCategory & {
     votingOptions: VotingOption[];
+    showTotalVotesPublicly?: boolean;
     customFields?: VotingCategoryField[];
 };
 
@@ -105,6 +107,7 @@ export const getVotingCategories = cache(async (eventId: string, includeCustomFi
             ...cat,
             nominationPrice: Number(cat.nominationPrice),
             votePrice: Number(cat.votePrice),
+            showTotalVotesPublicly: cat.showTotalVotesPublicly,
             votingOptions: cat.votingOptions?.map(opt => ({
                 ...opt,
                 votesCount: Number(opt.votesCount)
@@ -146,6 +149,7 @@ export const getVotingCategoryById = cache(async (id: string, includeCustomField
             ...category,
             nominationPrice: Number(category.nominationPrice),
             votePrice: Number(category.votePrice),
+            showTotalVotesPublicly: category.showTotalVotesPublicly,
             votingOptions: category.votingOptions?.map(opt => ({
                 ...opt,
                 votesCount: Number(opt.votesCount)
@@ -732,6 +736,61 @@ export const getPublicNominationCategories = cache(async (eventId: string): Prom
         } as unknown as VotingCategoryWithOptions));
     } catch (error) {
         logger.error(error, "[DAL] Error fetching public nomination categories:");
+        return [];
+    }
+});
+
+// ============================================
+// Internal Vote Participation Tracking
+// ============================================
+
+export type VoteParticipant = {
+    memberId: string;
+    fullName: string;
+    hasVoted: boolean;
+};
+
+/**
+ * Get internal vote participation for an event category.
+ * Returns org members with hasVoted status.
+ * NEVER reveals which nominee they voted for.
+ */
+export const getInternalVoteParticipation = cache(async (
+    eventId: string,
+    categoryId: string,
+    organizationId: string
+): Promise<VoteParticipant[]> => {
+    try {
+        // Get all org members
+        const members = await prisma.organizationMember.findMany({
+            where: { organizationId },
+            include: {
+                user: {
+                    select: { id: true, fullName: true },
+                },
+            },
+        });
+
+        // Get voter IDs who voted in this category (just IDs!)
+        const votedUserIds = await prisma.vote.findMany({
+            where: {
+                eventId,
+                categoryId,
+                voterId: { not: null },
+            },
+            select: { voterId: true },
+            distinct: ["voterId"],
+        });
+
+        const votedSet = new Set(votedUserIds.map(v => v.voterId));
+
+        return members.map(m => ({
+            memberId: m.user.id,
+            fullName: m.user.fullName || "Unknown Member",
+            hasVoted: votedSet.has(m.user.id),
+        }));
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching vote participation:");
         return [];
     }
 });

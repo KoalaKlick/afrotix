@@ -66,6 +66,7 @@ export interface VotingCategory {
     templateImage?: string | null;
     templateConfig?: any | null;
     showFinalImage?: boolean;
+    showTotalVotesPublicly?: boolean;
     maxVotesPerUser: number;
     allowMultiple: boolean;
     allowPublicNomination: boolean;
@@ -93,6 +94,7 @@ export interface CategoryFormData {
     nominationPrice: number;
     votePrice: number;
     showFinalImage?: boolean;
+    showTotalVotesPublicly?: boolean;
 }
 
 export interface OptionFormData {
@@ -127,6 +129,7 @@ export const defaultCategoryForm: CategoryFormData = {
     nominationPrice: 0,
     votePrice: 0,
     showFinalImage: true,
+    showTotalVotesPublicly: true,
 };
 
 export const defaultOptionForm: OptionFormData = {

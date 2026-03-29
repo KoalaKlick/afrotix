@@ -105,9 +105,11 @@ interface NomineeGridProps {
     readonly eventId: string;
     readonly categoryId: string;
     readonly isPublic?: boolean;
+    readonly votingMode?: "internal" | "public";
+    readonly showTotalVotesPublicly?: boolean;
 }
 
-export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPublic }: NomineeGridProps) {
+export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPublic, votingMode = "public", showTotalVotesPublicly = true }: NomineeGridProps) {
     const [selectedNominee, setSelectedNominee] = useState<VotingOption | null>(null);
     const [votingNominee, setVotingNominee] = useState<VotingOption | null>(null);
 
@@ -180,8 +182,14 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                                     }}
                                 >
                                     <Vote className="w-3.5 h-3.5" />
-                                    Vote {votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}  
+                                    Vote {votingMode === "public" && votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}  
                                 </Button>
+                                {showTotalVotesPublicly && (
+                                    <div className="mt-3 pt-3 border-t flex items-center justify-center gap-1.5 text-xs text-muted-foreground font-medium">
+                                        <Users className="w-3.5 h-3.5" />
+                                        <span>{Number(nominee.votesCount).toLocaleString()} votes</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
@@ -200,6 +208,7 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                     setSelectedNominee(null);
                     setVotingNominee(nominee);
                 }}
+                showTotalVotesPublicly={showTotalVotesPublicly}
             />
 
             {/* Vote Payment Modal */}
@@ -213,6 +222,7 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                 eventId={eventId}
                 categoryId={categoryId}
                 isPublic={isPublic}
+                votingMode={votingMode}
             />
         </>
     );
@@ -226,9 +236,10 @@ interface PublicNomineeSheetProps {
     readonly onOpenChange: (open: boolean) => void;
     readonly votePrice?: number;
     readonly onVote?: (nominee: VotingOption) => void;
+    readonly showTotalVotesPublicly?: boolean;
 }
 
-function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0, onVote }: PublicNomineeSheetProps) {
+function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0, onVote, showTotalVotesPublicly = true }: PublicNomineeSheetProps) {
     if (!nominee) return null;
 
     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
@@ -275,6 +286,23 @@ function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0, onVote
                                     className="prose prose-sm max-w-none text-foreground"
                                     dangerouslySetInnerHTML={{ __html: nominee.description }}
                                 />
+                            </div>
+                        )}
+
+                        {/* Vote Count Stats (Public) */}
+                        {showTotalVotesPublicly && (
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-[#009A44]/5 border border-[#009A44]/10">
+                                <div className="w-12 h-12 rounded-full bg-[#009A44]/10 flex items-center justify-center shrink-0">
+                                    <Users className="w-6 h-6 text-[#009A44]" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-black text-[#009A44] leading-none">
+                                        {Number(nominee.votesCount).toLocaleString()}
+                                    </p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">
+                                        Total Votes Received
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import Image from "next/image";
 import {
     ResponsiveContainer,
@@ -20,8 +20,11 @@ import {
     type ChartConfig,
 } from "@/components/ui/chart";
 import type { VotingChartCategory } from "./VotingBarChart";
-import { Trophy, Vote, User } from "lucide-react";
+import { Trophy, Vote, User, Loader2 } from "lucide-react";
 import { getEventImageUrl } from "@/lib/image-url-utils";
+import { InternalVoterParticipation } from "./InternalVoterParticipation";
+import { getInternalVoteParticipationAction } from "@/lib/actions/voting";
+import type { VoteParticipant } from "@/lib/dal/voting";
 
 const BAR_COLORS = [
     "var(--color-primary-500)",
@@ -48,12 +51,37 @@ function ModalPieTooltip({ active, payload }: TooltipContentProps): ReactNode {
 }
 
 interface CategoryDetailModalProps {
+    readonly eventId?: string;
     readonly category: VotingChartCategory | null;
+    readonly votingMode?: string | null;
     readonly open: boolean;
     readonly onOpenChange: (open: boolean) => void;
 }
 
-export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDetailModalProps) {
+export function CategoryDetailModal({ eventId, category, votingMode, open, onOpenChange }: CategoryDetailModalProps) {
+    const [participants, setParticipants] = useState<VoteParticipant[]>([]);
+    const [isLoadingParticipation, setIsLoadingParticipation] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+        if (open && category && votingMode === "internal" && eventId) {
+            setIsLoadingParticipation(true);
+            getInternalVoteParticipationAction(eventId, category.id)
+                .then(res => {
+                    if (mounted && res.success) {
+                        setParticipants(res.data);
+                    }
+                })
+                .catch(err => console.error(err))
+                .finally(() => {
+                    if (mounted) setIsLoadingParticipation(false);
+                });
+        }
+        return () => {
+            mounted = false;
+        };
+    }, [open, category, votingMode, eventId]);
+
     if (!category) return null;
 
     const sorted = [...category.votingOptions].sort((a, b) => b.votesCount - a.votesCount);
@@ -180,6 +208,21 @@ export function CategoryDetailModal({ category, open, onOpenChange }: CategoryDe
                             })}
                         </div>
                     </div>
+                    {/* Internal Participation */}
+                    {votingMode === "internal" && (
+                        <div className="pt-4 border-t border-border/50">
+                            {isLoadingParticipation ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : (
+                                <InternalVoterParticipation 
+                                    participants={participants} 
+                                    categoryName={category.name}
+                                />
+                            )}
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

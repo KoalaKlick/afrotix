@@ -33,6 +33,11 @@ export const eventTypeSchema = z.enum(["voting", "ticketed", "advertisement", "h
     error: "Please select a valid event type",
 });
 
+// Voting mode enum — locked at creation
+export const votingModeSchema = z.enum(["internal", "public"], {
+    error: "Please select a valid voting mode",
+}).optional();
+
 // Storage path validation (for uploaded images stored in Supabase)
 export const storagePathSchema = z
     .string()
@@ -96,6 +101,7 @@ export const createEventStep1Schema = z.object({
     title: eventTitleSchema,
     slug: eventSlugSchema,
     type: eventTypeSchema,
+    votingMode: votingModeSchema,
     description: eventDescriptionSchema,
 });
 
@@ -125,6 +131,7 @@ export const createEventSchema = z.object({
     title: eventTitleSchema,
     slug: eventSlugSchema,
     type: eventTypeSchema,
+    votingMode: votingModeSchema,
     description: eventDescriptionSchema,
     startDate: z.string().optional(),
     endDate: z.string().optional(),
@@ -177,3 +184,21 @@ export const EVENT_TYPES = [
         icon: "Megaphone",
     },
 ] as const;
+
+export const VOTING_MODES = [
+    {
+        value: "public" as const,
+        label: "Public Voting",
+        description: "Anyone can vote. Paid voting only (min GHS 0.10). Vote counts shown publicly.",
+    },
+    {
+        value: "internal" as const,
+        label: "Internal Voting",
+        description: "Organization members only. Can be free. Only participation status shown.",
+    },
+] as const;
+
+/** Returns true if this event type supports voting (and thus needs a votingMode). */
+export function isVotingEventType(type: string): boolean {
+    return type === "voting" || type === "hybrid";
+}

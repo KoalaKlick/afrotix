@@ -17,6 +17,7 @@ model VotingCategory {
   votePrice             Decimal               @default(0) @map("vote_price") @db.Decimal(10, 2)
   showFinalImage        Boolean               @default(true) @map("show_final_image")
   maxNomineesPerUser    Int                   @default(1) @map("max_nominees_per_user")
+  showTotalVotesPublicly Boolean               @default(true) @map("show_total_votes_publicly")
   votes                 Vote[]
   event                 Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
   customFields          VotingCategoryField[]
@@ -98,6 +99,8 @@ model Vote {
   categoryId       String?         @map("category_id") @db.Uuid
   voterId          String?         @map("voter_id") @db.Uuid
   paymentId        String?         @map("payment_id") @db.Uuid
+  voterPhone       String?         @map("voter_phone")
+  voterEmail       String?         @map("voter_email")
   voteCount        Int             @default(1) @map("vote_count")
   smsSent          Boolean         @default(false) @map("sms_sent")
   whatsappSent     Boolean         @default(false) @map("whatsapp_sent")

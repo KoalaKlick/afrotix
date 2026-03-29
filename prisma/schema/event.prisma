@@ -6,6 +6,7 @@ model Event {
   description          String?
   slug                 String
   type                 EventType
+  votingMode           VotingMode       @default(public) @map("voting_mode")
   status               EventStatus      @default(draft)
   startDate            DateTime?        @map("start_date") @db.Timestamptz(6)
   endDate              DateTime?        @map("end_date") @db.Timestamptz(6)

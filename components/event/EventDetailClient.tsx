@@ -83,6 +83,7 @@ interface EventData {
     bannerImage?: string | null;
     maxAttendees?: number | null;
     isPublic: boolean;
+    votingMode?: string | null;
     createdAt: string;
     updatedAt: string;
     publishedAt?: string | null;
@@ -541,6 +542,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                         eventId={event.id}
                         eventStats={eventStats}
                         eventType={event.type}
+                        votingMode={event.votingMode}
                         voteTrend={voteTrend}
                         votingCategories={votingCategories.map((cat): VotingChartCategory => ({
                             id: cat.id,
@@ -571,16 +573,11 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                     })),
                                 }))}
                                 canEdit={canEdit}
+                                votingMode={event.votingMode}
                             />
                         </div>
                     </TabsContent>
-                )}
-
-
-
-
-
-                {/* Settings Tab */}
+                )}                {/* Settings Tab */}
                 <TabsContent value="settings" className="space-y-6">
                     <EventSettingsTab
                         formData={formData}

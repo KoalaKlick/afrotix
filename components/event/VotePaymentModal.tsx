@@ -22,6 +22,7 @@ import {
     Minus,
     Plus,
     Mail,
+    Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VotingOption } from "@/lib/types/voting";
@@ -37,6 +38,8 @@ interface VotePaymentModalProps {
     readonly eventId: string;
     readonly categoryId: string;
     readonly isPublic?: boolean;
+    /** The event's voting mode: "internal" (free, org-only) or "public" (paid) */
+    readonly votingMode?: "internal" | "public";
 }
 
 type ModalStep = "checkout" | "processing" | "success" | "error";
@@ -51,6 +54,7 @@ export function VotePaymentModal({
     eventId,
     categoryId,
     isPublic = true,
+    votingMode = "public",
 }: VotePaymentModalProps) {
     const [step, setStep] = useState<ModalStep>("checkout");
     const [voteCount, setVoteCount] = useState(1);
@@ -63,7 +67,8 @@ export function VotePaymentModal({
 
     const { resumeTransaction } = usePaystack();
 
-    const totalAmount = votePrice * voteCount;
+    const isInternalVoting = votingMode === "internal";
+    const totalAmount = isInternalVoting ? 0 : votePrice * voteCount;
 
     const resetModal = useCallback(() => {
         setStep("checkout");
@@ -83,9 +88,9 @@ export function VotePaymentModal({
         [onOpenChange, resetModal]
     );
 
-    // --- Check Vote Status (For Private Events) ---
+    // --- Check Vote Status ---
     const checkVoteStatus = useCallback(async () => {
-        if (isPublic || !nominee || !open) return;
+        if (!nominee || !open) return;
 
         setCheckingVoteStatus(true);
         try {
@@ -97,7 +102,7 @@ export function VotePaymentModal({
                 const { data: existingVote } = await supabase
                     .from("votes")
                     .select("id")
-                    .eq("option_id", nominee.id)
+                    .eq("category_id", categoryId)
                     .eq("voter_id", user.id)
                     .maybeSingle();
 
@@ -108,7 +113,7 @@ export function VotePaymentModal({
         } finally {
             setCheckingVoteStatus(false);
         }
-    }, [isPublic, nominee, open]);
+    }, [nominee, open, categoryId]);
 
     // Re-check status when modal opens
     useEffect(() => {
@@ -123,6 +128,37 @@ export function VotePaymentModal({
         setVoteCount((prev) => Math.max(1, prev - 1));
     }, []);
 
+    // --- Internal Vote (Free) ---
+    const handleInternalVote = useCallback(async () => {
+        if (!nominee) return;
+
+        setLoading(true);
+        setErrorMsg("");
+
+        try {
+            const { castInternalVote } = await import("@/lib/actions/voting");
+            const result = await castInternalVote({
+                eventId,
+                categoryId,
+                optionId: nominee.id,
+            });
+
+            if (result.success) {
+                setStep("success");
+            } else {
+                setErrorMsg(result.error || "Failed to cast vote");
+                setStep("error");
+            }
+        } catch (err: any) {
+            console.error("Internal vote error:", err);
+            setErrorMsg(err.message || "Something went wrong.");
+            setStep("error");
+        } finally {
+            setLoading(false);
+        }
+    }, [nominee, eventId, categoryId]);
+
+    // --- Public Vote (Paid) ---
     const handleSubmitPayment = useCallback(async () => {
         if (!nominee || !phone) return;
 
@@ -162,7 +198,7 @@ export function VotePaymentModal({
                     body: {
                         amount: totalAmount,
                         email: finalEmail,
-                        phone: localPhone, // Send 024... format for better pre-fill
+                        phone: localPhone,
                         currency: "GHS",
                         purpose: `Vote for ${nominee.optionText}`,
                         relatedType: "vote",
@@ -173,6 +209,8 @@ export function VotePaymentModal({
                             option_id: nominee.id,
                             vote_count: voteCount,
                             nominee_name: nominee.optionText,
+                            voter_phone: "+" + normalisedPhone,
+                            voter_email: email,
                             phone: "+" + normalisedPhone,
                             callback_url: callbackUrl,
                         },
@@ -181,16 +219,13 @@ export function VotePaymentModal({
             );
 
             if (error) {
-                // Handle specific error codes from the Edge Function
                 const errorData = (error as any);
                 throw new Error(errorData.message || errorData.detail || "Payment initialization failed");
             }
 
-            // --- Use Paystack Inline ---
-            // The edge function returns: { success: true, accessCode: "...", ... }
             if (response?.accessCode) {
                 resumeTransaction(response.accessCode, {
-                    phone: localPhone, // Pass local format for auto-filling the input
+                    phone: localPhone,
                     onSuccess: (transaction: any) => {
                         console.log("Paystack Success:", transaction);
                         setStep("success");
@@ -227,7 +262,6 @@ export function VotePaymentModal({
                     if (loading) e.preventDefault();
                 }}
                 onInteractOutside={(e) => {
-                    // Prevent the Radix modal from closing when interacting with Paystack's overlay
                     if (loading) e.preventDefault();
                 }}
             >
@@ -276,138 +310,190 @@ export function VotePaymentModal({
                 {/* ─── Checkout ──────────────────────────────────── */}
                 {step === "checkout" && (
                     <div className="p-5 space-y-5">
-                        {/* Vote Counter */}
-                        <div>
-                            <p className="text-sm font-semibold text-foreground mb-3">
-                                Number of votes
-                            </p>
-                            <div className="flex items-center justify-center gap-4">
-                                <button
-                                    type="button"
-                                    onClick={decrement}
-                                    disabled={voteCount <= 1}
-                                    className={cn(
-                                        "w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all duration-200",
-                                        voteCount <= 1
-                                            ? "border-muted text-muted-foreground/40 cursor-not-allowed"
-                                            : "border-muted-foreground/20 text-foreground hover:border-[#CE1126] hover:text-[#CE1126] hover:bg-[#CE1126]/5 active:scale-95"
-                                    )}
-                                >
-                                    <Minus className="w-5 h-5" />
-                                </button>
-
-                                <div className="flex flex-col items-center min-w-[80px]">
-                                    <span className="text-4xl font-black tabular-nums text-foreground leading-none">
-                                        {voteCount}
-                                    </span>
-                                    <span className="text-[11px] text-muted-foreground mt-1">
-                                        vote{voteCount !== 1 ? "s" : ""}
-                                    </span>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={increment}
-                                    className="w-12 h-12 rounded-xl border-2 border-muted-foreground/20 flex items-center justify-center text-foreground hover:border-[#009A44] hover:text-[#009A44] hover:bg-[#009A44]/5 active:scale-95 transition-all duration-200"
-                                >
-                                    <Plus className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Total */}
-                        <div className="flex items-center justify-between p-4 rounded-xl bg-linear-to-r from-[#009A44]/5 to-[#FFCD00]/5 border border-[#009A44]/10">
-                            <div className="flex items-center gap-2">
-                                <Coins className="w-4 h-4 text-[#009A44]" />
-                                <span className="text-sm font-medium">
-                                    Total
-                                </span>
-                            </div>
-                            <span className="text-xl font-black text-[#009A44]">
-                                GHS {(totalAmount).toFixed(2)}
-                            </span>
-                        </div>
-
-                        {/* Contact Info */}
-                        <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="voter-phone" className="text-sm font-semibold">
-                                    Phone Number
-                                </Label>
-                                <div className="flex items-center gap-2">
-                                    <span className="inline-flex items-center h-11 px-3 rounded-lg border bg-muted/50 text-sm font-medium text-muted-foreground border-muted-foreground/20 shrink-0">
-                                        +233
-                                    </span>
-                                    <Input
-                                        id="voter-phone"
-                                        type="tel"
-                                        inputMode="numeric"
-                                        placeholder="244 123 456"
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, ""))}
-                                        className="h-11 rounded-lg"
-                                        maxLength={10}
-                                        autoFocus
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="voter-email" className="text-sm font-semibold flex items-center gap-1.5">
-                                    Email Address <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span>
-                                </Label>
-                                <div className="relative">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-                                        <Mail className="w-4 h-4" />
+                        {isInternalVoting ? (
+                            /* ─── Internal Free Vote ─── */
+                            <>
+                                <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50/80 border border-blue-100">
+                                    <Lock className="w-5 h-5 text-blue-600 shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-blue-900">Internal Vote</p>
+                                        <p className="text-xs text-blue-700">
+                                            Free vote — organization members only
+                                        </p>
                                     </div>
-                                    <Input
-                                        id="voter-email"
-                                        type="email"
-                                        placeholder="voter@example.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="h-11 pl-10 rounded-lg"
-                                    />
                                 </div>
-                                <p className="text-[10px] text-muted-foreground pl-1">
-                                    Receive a receipt from Paystack
+
+                                <Button
+                                    variant="afro"
+                                    size="lg"
+                                    className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
+                                    onClick={handleInternalVote}
+                                    disabled={loading || hasAlreadyVoted || checkingVoteStatus}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Casting vote...
+                                        </>
+                                    ) : checkingVoteStatus ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Checking status...
+                                        </>
+                                    ) : hasAlreadyVoted ? (
+                                        <>
+                                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                                            Already Voted
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Vote className="w-4 h-4 mr-2" />
+                                            Confirm Vote
+                                        </>
+                                    )}
+                                </Button>
+
+                                <p className="text-[10px] text-center text-muted-foreground leading-relaxed">
+                                    Your vote is anonymous — no one will see who you voted for
                                 </p>
-                            </div>
-                        </div>
+                            </>
+                        ) : (
+                            /* ─── Public Paid Vote ─── */
+                            <>
+                                {/* Vote Counter */}
+                                <div>
+                                    <p className="text-sm font-semibold text-foreground mb-3">
+                                        Number of votes
+                                    </p>
+                                    <div className="flex items-center justify-center gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={decrement}
+                                            disabled={voteCount <= 1}
+                                            className={cn(
+                                                "w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all duration-200",
+                                                voteCount <= 1
+                                                    ? "border-muted text-muted-foreground/40 cursor-not-allowed"
+                                                    : "border-muted-foreground/20 text-foreground hover:border-[#CE1126] hover:text-[#CE1126] hover:bg-[#CE1126]/5 active:scale-95"
+                                            )}
+                                        >
+                                            <Minus className="w-5 h-5" />
+                                        </button>
 
-                        <Button
-                            variant="afro"
-                            size="lg"
-                            className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
-                            onClick={handleSubmitPayment}
-                            disabled={!phone || phone.length < 9 || loading || hasAlreadyVoted || checkingVoteStatus}
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Initialising...
-                                </>
-                            ) : checkingVoteStatus ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Checking status...
-                                </>
-                            ) : hasAlreadyVoted ? (
-                                <>
-                                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                                    Already Voted
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="w-4 h-4 mr-2" />
-                                    Proceed to Payment
-                                </>
-                            )}
-                        </Button>
+                                        <div className="flex flex-col items-center min-w-[80px]">
+                                            <span className="text-4xl font-black tabular-nums text-foreground leading-none">
+                                                {voteCount}
+                                            </span>
+                                            <span className="text-[11px] text-muted-foreground mt-1">
+                                                vote{voteCount !== 1 ? "s" : ""}
+                                            </span>
+                                        </div>
 
-                        <p className="text-[10px] text-center text-muted-foreground leading-relaxed mt-2">
-                            Payments secured by Paystack · Supported: MoMo & Cards
-                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={increment}
+                                            className="w-12 h-12 rounded-xl border-2 border-muted-foreground/20 flex items-center justify-center text-foreground hover:border-[#009A44] hover:text-[#009A44] hover:bg-[#009A44]/5 active:scale-95 transition-all duration-200"
+                                        >
+                                            <Plus className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Total */}
+                                <div className="flex items-center justify-between p-4 rounded-xl bg-linear-to-r from-[#009A44]/5 to-[#FFCD00]/5 border border-[#009A44]/10">
+                                    <div className="flex items-center gap-2">
+                                        <Coins className="w-4 h-4 text-[#009A44]" />
+                                        <span className="text-sm font-medium">
+                                            Total
+                                        </span>
+                                    </div>
+                                    <span className="text-xl font-black text-[#009A44]">
+                                        GHS {(totalAmount).toFixed(2)}
+                                    </span>
+                                </div>
+
+                                {/* Contact Info */}
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="voter-phone" className="text-sm font-semibold">
+                                            Phone Number
+                                        </Label>
+                                        <div className="flex items-center gap-2">
+                                            <span className="inline-flex items-center h-11 px-3 rounded-lg border bg-muted/50 text-sm font-medium text-muted-foreground border-muted-foreground/20 shrink-0">
+                                                +233
+                                            </span>
+                                            <Input
+                                                id="voter-phone"
+                                                type="tel"
+                                                inputMode="numeric"
+                                                placeholder="244 123 456"
+                                                value={phone}
+                                                onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, ""))}
+                                                className="h-11 rounded-lg"
+                                                maxLength={10}
+                                                autoFocus
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="voter-email" className="text-sm font-semibold flex items-center gap-1.5">
+                                            Email Address <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span>
+                                        </Label>
+                                        <div className="relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                                                <Mail className="w-4 h-4" />
+                                            </div>
+                                            <Input
+                                                id="voter-email"
+                                                type="email"
+                                                placeholder="voter@example.com"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="h-11 pl-10 rounded-lg"
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground pl-1">
+                                            Receive a receipt from Paystack
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    variant="afro"
+                                    size="lg"
+                                    className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
+                                    onClick={handleSubmitPayment}
+                                    disabled={!phone || phone.length < 9 || loading || hasAlreadyVoted || checkingVoteStatus}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Initialising...
+                                        </>
+                                    ) : checkingVoteStatus ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Checking status...
+                                        </>
+                                    ) : hasAlreadyVoted ? (
+                                        <>
+                                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                                            Already Voted
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-4 h-4 mr-2" />
+                                            Proceed to Payment
+                                        </>
+                                    )}
+                                </Button>
+
+                                <p className="text-[10px] text-center text-muted-foreground leading-relaxed mt-2">
+                                    Payments secured by Paystack · Supported: MoMo &amp; Cards
+                                </p>
+                            </>
+                        )}
                     </div>
                 )}
 
@@ -433,7 +519,9 @@ export function VotePaymentModal({
                             <XCircle className="w-8 h-8 text-red-500" />
                         </div>
                         <div>
-                            <p className="font-bold text-lg">Payment Error</p>
+                            <p className="font-bold text-lg">
+                                {isInternalVoting ? "Vote Failed" : "Payment Error"}
+                            </p>
                             <p className="text-sm text-muted-foreground mt-1 px-6">
                                 {errorMsg || "Something went wrong. Please try again."}
                             </p>
@@ -462,8 +550,8 @@ export function VotePaymentModal({
                                 Vote Confirmed! 🎉
                             </h2>
                             <p className="text-sm text-muted-foreground max-w-[280px]">
-                                Your <strong>{voteCount} vote{voteCount > 1 ? "s" : ""}</strong> for{" "}
-                                <span className="text-[#009A44] font-bold">{nominee.optionText}</span> have been recorded successfully.
+                                Your {isInternalVoting ? "vote" : <><strong>{voteCount} vote{voteCount > 1 ? "s" : ""}</strong></>} for{" "}
+                                <span className="text-[#009A44] font-bold">{nominee.optionText}</span> {isInternalVoting ? "has" : "have"} been recorded successfully.
                             </p>
                         </div>
                         <Button

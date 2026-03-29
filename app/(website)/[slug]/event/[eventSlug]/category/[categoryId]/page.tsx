@@ -82,7 +82,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
     // Only voting/hybrid events have categories
     if (event.type !== "voting" && event.type !== "hybrid") notFound()
 
-    const category = await getVotingCategoryById(categoryId, true)
+    const category = await getVotingCategoryById(categoryId, true) as any;
     if (!category || category.eventId !== event.id) notFound()
     const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
 
@@ -146,7 +146,14 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                     </div>
 
                     {category.votingOptions.length > 0 ? (
-                        <NomineeGrid nominees={category.votingOptions} votePrice={Number(category.votePrice)} eventId={event.id} categoryId={category.id} isPublic={event.isPublic} />
+                        <NomineeGrid 
+                            nominees={category.votingOptions} 
+                            votePrice={Number(category.votePrice)} 
+                            eventId={event.id} 
+                            categoryId={category.id} 
+                            isPublic={event.isPublic} 
+                            showTotalVotesPublicly={category.showTotalVotesPublicly}
+                        />
                     ) : (
                         <div className="text-center py-16">
                             <Users className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />

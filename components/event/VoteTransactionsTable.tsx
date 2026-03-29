@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
     Table,
     TableBody,
@@ -16,23 +16,22 @@ import {
     ChevronRight, 
     CheckCircle2, 
     Clock, 
-    User,
-    Mail,
     Hash
 } from "lucide-react";
 import { format } from "date-fns";
 
 interface Transaction {
     id: string;
-    voterName: string;
-    voterEmail: string;
-    optionName: string;
     voteCount: number;
     amount: number;
     currency: string;
     reference: string;
     status: string;
     createdAt: string;
+    voterEmail?: string;
+    voterPhone?: string;
+    nomineeName?: string;
+    nomineeCode?: string;
 }
 
 interface VoteTransactionsTableProps {
@@ -44,6 +43,11 @@ interface VoteTransactionsTableProps {
     readonly fetchPage: (page: number) => Promise<{ transactions: Transaction[]; total: number }>;
 }
 
+/**
+ * Anonymized vote transactions table.
+ * Shows payment info (amount, date, status) but NEVER reveals
+ * voter identity or which nominee was voted for.
+ */
 export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteTransactionsTableProps) {
     const [data, setData] = useState(initialData.transactions);
     const [total, setTotal] = useState(initialData.total);
@@ -69,16 +73,16 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 px-4">
             <div className="rounded-lg border bg-card">
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
-                            <TableHead>Voter</TableHead>
-                            <TableHead>Nominee</TableHead>
                             <TableHead className="text-center">Votes</TableHead>
                             <TableHead>Amount</TableHead>
                             <TableHead>Date</TableHead>
+                            <TableHead>Voter</TableHead>
+                            <TableHead>Nominee</TableHead>
                             <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -98,25 +102,6 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                         ) : (
                             data.map((tx) => (
                                 <TableRow key={tx.id} className="hover:bg-muted/30 transition-colors">
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="font-medium flex items-center gap-1.5">
-                                                <User className="size-3 text-muted-foreground" />
-                                                {tx.voterName}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                                <Mail className="size-3" />
-                                                {tx.voterEmail}
-                                            </span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="font-normal text-secondary-600 border-secondary-200 bg-secondary-50">
-                                                {tx.optionName}
-                                            </Badge>
-                                        </div>
-                                    </TableCell>
                                     <TableCell className="text-center">
                                         <span className="inline-flex items-center justify-center size-7 rounded-full bg-primary-50 text-primary-700 font-bold text-xs ring-1 ring-primary-200">
                                             {tx.voteCount}
@@ -140,6 +125,30 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                                                 {format(new Date(tx.createdAt), "MMM d, yyyy")}
                                             </span>
                                             <span>{format(new Date(tx.createdAt), "HH:mm")}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col text-sm">
+                                            {tx.voterEmail ? (
+                                                <span className="font-medium text-[13px]">{tx.voterEmail}</span>
+                                            ) : (
+                                                <span className="text-muted-foreground text-[13px]">No email</span>
+                                            )}
+                                            {tx.voterPhone && (
+                                                <span className="text-[10px] text-muted-foreground font-mono">
+                                                    {tx.voterPhone}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium">{tx.nomineeName || "N/A"}</span>
+                                            {tx.nomineeCode && (
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    #{tx.nomineeCode}
+                                                </span>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>

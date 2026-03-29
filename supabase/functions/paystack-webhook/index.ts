@@ -57,7 +57,7 @@ serve(async (req) => {
   // 6. Confirm Payment & Calculate Fees
   const { data: profile } = await supabase
     .from("profiles")
-    .select("pricing_plan, referred_by_id")
+    .select("pricing_plan, referred_by")
     .eq("id", payment.user_id)
     .single();
 
@@ -84,12 +84,11 @@ serve(async (req) => {
     })
     .eq("id", payment.id);
 
-  // 7. Handle Commissions (If referred)
-  if (profile?.referred_by_id) {
+  if (profile?.referred_by) {
     const { data: promoter } = await supabase
       .from("promoters")
       .select("id, is_gold_tier")
-      .eq("user_id", profile.referred_by_id)
+      .eq("user_id", profile.referred_by)
       .single();
 
     if (promoter) {
@@ -142,6 +141,8 @@ serve(async (req) => {
         option_id: optionId,
         category_id: voteMetadata.category_id,
         voter_id: payment.user_id,
+        voter_email: voteMetadata.voter_email || null,
+        voter_phone: voteMetadata.voter_phone || null,
       })
       .select()
       .single();
@@ -152,6 +153,9 @@ serve(async (req) => {
         vote_count: voteCount,
         option_id: optionId,
       });
+      // Throw error to ensure Paystack webhook marks it as failed and retries, 
+      // preventing silent database insertion failures.
+      throw new Error(`Failed to insert vote: ${JSON.stringify(voteError)}`);
     } else {
       await supabase.rpc("increment_vote_count", {
         opt_id: optionId,

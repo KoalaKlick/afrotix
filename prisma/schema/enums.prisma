@@ -25,6 +25,12 @@ enum EventType {
   hybrid
 }
 
+enum VotingMode {
+  internal
+  public
+  @@map("voting_mode")
+}
+
 enum EventStatus {
   draft
   published

@@ -36,6 +36,7 @@ interface CategorySheetProps {
     readonly onCategoryCreated: (category: VotingCategory) => void;
     readonly onCategoryUpdated: (category: VotingCategory) => void;
     readonly nextOrderIndex?: number;
+    readonly votingMode?: string | null;
 }
 
 const EMPTY_FORM: CategoryFormData = {
@@ -47,10 +48,10 @@ const EMPTY_FORM: CategoryFormData = {
     nominationDeadline: "",
     requireApproval: false,
     templateImage: null,
-    templateConfig: null,
-    showFinalImage: true,
     nominationPrice: 0,
     votePrice: 0,
+    showFinalImage: true,
+    showTotalVotesPublicly: true,
 };
 
 export function CategorySheet({
@@ -62,6 +63,7 @@ export function CategorySheet({
     onCategoryCreated,
     onCategoryUpdated,
     nextOrderIndex = 0,
+    votingMode,
 }: CategorySheetProps) {
     const [isPending, startTransition] = useTransition();
     const [form, setForm] = useState<CategoryFormData>(EMPTY_FORM);
@@ -80,7 +82,7 @@ export function CategorySheet({
         setPendingFile(null);
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
-    }, [previewUrl]);
+    }, [previewUrl, votingMode]);
 
     useEffect(() => {
         if (open && editingCategory) {
@@ -96,11 +98,11 @@ export function CategorySheet({
                         : editingCategory.nominationDeadline.toISOString().slice(0, 16))
                     : "",
                 requireApproval: editingCategory.requireApproval,
-                templateImage: editingCategory.templateImage ?? null,
                 templateConfig: editingCategory.templateConfig ?? null,
                 showFinalImage: editingCategory.showFinalImage ?? true,
+                showTotalVotesPublicly: editingCategory.showTotalVotesPublicly ?? true,
                 nominationPrice: Number(editingCategory.nominationPrice) || 0,
-                votePrice: Number(editingCategory.votePrice) || 0,
+                votePrice: Number(editingCategory.votePrice) || (votingMode === "public" ? 0.1 : 0),
             });
         } else if (!open) {
             resetForm();
@@ -121,6 +123,7 @@ export function CategorySheet({
         form.allowPublicNomination !== (editingCategory?.allowPublicNomination ?? false) ||
         form.requireApproval !== (editingCategory?.requireApproval ?? false) ||
         form.showFinalImage !== (editingCategory?.showFinalImage ?? true) ||
+        form.showTotalVotesPublicly !== (editingCategory?.showTotalVotesPublicly ?? true) ||
         form.nominationDeadline !== initialDeadline ||
         form.nominationPrice !== (Number(editingCategory?.nominationPrice) || 0) ||
         form.votePrice !== (Number(editingCategory?.votePrice) || 0) ||
@@ -138,6 +141,11 @@ export function CategorySheet({
     const handleSave = () => {
         if (!form.name.trim()) {
             toast.error("Category name is required");
+            return;
+        }
+
+        if (votingMode === "public" && form.votePrice < 0.1) {
+            toast.error("Public events require a minimum vote price of 0.10 GHS");
             return;
         }
 
@@ -165,12 +173,12 @@ export function CategorySheet({
                 allowMultiple: form.allowMultiple,
                 allowPublicNomination: form.allowPublicNomination,
                 nominationDeadline: form.nominationDeadline || undefined,
-                requireApproval: form.requireApproval,
                 templateImage: finalImageUrl,
                 templateConfig: form.templateConfig || undefined,
                 showFinalImage: form.showFinalImage,
-                nominationPrice: form.nominationPrice,
-                votePrice: form.votePrice,
+                showTotalVotesPublicly: form.showTotalVotesPublicly,
+                nominationPrice: votingMode === "internal" ? 0 : form.nominationPrice,
+                votePrice: votingMode === "internal" ? 0 : form.votePrice,
             };
 
             if (editingCategory) {
@@ -199,8 +207,10 @@ export function CategorySheet({
                     id: result.data.id,
                     ...payload,
                     description: form.description || null,
+                    requireApproval: form.requireApproval,
                     nominationDeadline: form.nominationDeadline || null,
                     templateImage: finalImageUrl || null,
+                    showTotalVotesPublicly: form.showTotalVotesPublicly,
                     orderIdx: nextOrderIndex,
                     votingOptions: [],
                     customFields: [],
@@ -240,10 +250,12 @@ export function CategorySheet({
 
                 <SheetBody className="flex-1 overflow-y-auto pr-2">
                     <Tabs defaultValue="basic" className="w-full">
-                        <TabsList variant="afro" className="grid w-full grid-cols-3">
+                        <TabsList variant="afro" className={`grid w-full ${votingMode === "internal" ? "grid-cols-2" : "grid-cols-3"}`}>
                             <TabsTrigger value="basic">Basic</TabsTrigger>
                             <TabsTrigger value="nominations">Nominations</TabsTrigger>
-                            <TabsTrigger value="pricing">Pricing</TabsTrigger>
+                            {votingMode !== "internal" && (
+                                <TabsTrigger value="pricing">Pricing</TabsTrigger>
+                            )}
                         </TabsList>
 
                         {/* ── Basic Tab ── */}
@@ -327,6 +339,21 @@ export function CategorySheet({
                                     checked={form.allowMultiple}
                                     onCheckedChange={(checked) =>
                                         setForm((prev) => ({ ...prev, allowMultiple: checked }))
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label>Make Vote Counts Public</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Show nominee vote totals to public visitors
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={form.showTotalVotesPublicly}
+                                    onCheckedChange={(checked) =>
+                                        setForm((prev) => ({ ...prev, showTotalVotesPublicly: checked }))
                                     }
                                 />
                             </div>
@@ -431,7 +458,7 @@ export function CategorySheet({
                                     <Input
                                         id="vote-price"
                                         type="number"
-                                        min={0}
+                                        min={votingMode === "public" ? 0.1 : 0}
                                         step="0.01"
                                         value={form.votePrice}
                                         onChange={(e) =>
@@ -440,7 +467,7 @@ export function CategorySheet({
                                                 votePrice: Number.parseFloat(e.target.value) || 0,
                                             }))
                                         }
-                                        placeholder="0.00"
+                                        placeholder={votingMode === "public" ? "0.10" : "0.00"}
                                     />
                                     <p className="text-xs text-muted-foreground">
                                         Amount a voter pays for each vote cast in this category.

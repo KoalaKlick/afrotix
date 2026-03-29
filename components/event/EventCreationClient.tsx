@@ -22,6 +22,7 @@ type EventFormData = {
     title: string;
     slug: string;
     type: string;
+    votingMode?: string;
     description?: string;
     startDate?: string;
     endDate?: string;
@@ -55,7 +56,7 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
     const [error, setError] = useState<string | null>(null);
 
     // Step 1 success - save basic info, move to step 2
-    function handleStep1Success(data: { title: string; slug: string; type: string; description?: string }) {
+    function handleStep1Success(data: { title: string; slug: string; type: string; votingMode?: string; description?: string }) {
         setFormData((prev) => ({ ...prev, ...data }));
         setCurrentStep(1);
     }
@@ -103,6 +104,7 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
             formDataObj.set("title", data.title);
             formDataObj.set("slug", data.slug);
             formDataObj.set("type", data.type);
+            if (data.votingMode) formDataObj.set("votingMode", data.votingMode);
             if (data.description) formDataObj.set("description", data.description);
             if (data.startDate) formDataObj.set("startDate", data.startDate);
             if (data.endDate) formDataObj.set("endDate", data.endDate);

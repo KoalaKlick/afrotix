@@ -8,7 +8,7 @@ import { logger, logAction } from '@/lib/logger';
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
-import type { Event, EventType, EventStatus, OrderStatus, TicketCheckInStatus, TransactionStatus } from "@/lib/generated/prisma";
+import type { Event, EventType, EventStatus, VotingMode, OrderStatus, TicketCheckInStatus, TransactionStatus } from "@/lib/generated/prisma";
 import { normalizeEventStatus } from "@/lib/event-status";
 
 // Types for DAL operations
@@ -23,6 +23,7 @@ export type EventCreateInput = {
     endDate?: Date | string;
     timezone?: string;
     isPublic?: boolean;
+    votingMode?: VotingMode;
     coverImage?: string | null;
     bannerImage?: string | null;
     venueName?: string;
@@ -221,6 +222,7 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
         title,
         slug,
         type,
+        votingMode,
         description,
         startDate,
         endDate,
@@ -251,6 +253,7 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
             endDate: endDate ? new Date(endDate) : null,
             timezone,
             isPublic,
+            ...(votingMode && { votingMode }),
             coverImage: coverImage ?? null,
             bannerImage: bannerImage ?? null,
             venueName: venueName ?? null,
@@ -752,7 +755,8 @@ export const getVoteTrend = cache(async (eventId: string): Promise<{ date: strin
 });
 
 /**
- * Get paginated vote transactions for an event
+ * Get paginated vote transactions for an event (ANONYMIZED)
+ * Never returns voter identity or which nominee was voted for.
  */
 export const getEventVoteTransactions = cache(async (
     eventId: string,
@@ -770,18 +774,27 @@ export const getEventVoteTransactions = cache(async (
                 eventId,
                 payment: { status },
             },
-            include: {
-                option: { select: { optionText: true } },
+            select: {
+                id: true,
+                voteCount: true,
+                createdAt: true,
                 payment: {
                     select: {
-                        email: true,
                         amount: true,
                         currency: true,
                         reference: true,
-                        status: true
+                        status: true,
+                        email: true
                     }
                 },
-                voter: { select: { fullName: true } },
+                voterEmail: true,
+                voterPhone: true,
+                option: {
+                    select: {
+                        optionText: true,
+                        nomineeCode: true
+                    }
+                }
             },
             orderBy: { createdAt: "desc" },
             take: limit,
@@ -798,14 +811,15 @@ export const getEventVoteTransactions = cache(async (
         return {
             transactions: votes.map(v => ({
                 id: v.id,
-                voterName: v.voter?.fullName || "Guest",
-                voterEmail: v.payment?.email || "N/A",
-                optionName: v.option.optionText,
                 voteCount: v.voteCount,
                 amount: Number(v.payment?.amount || 0),
                 currency: v.payment?.currency || "GHS",
                 reference: v.payment?.reference || "",
                 status: v.payment?.status || "unknown",
+                voterEmail: v.voterEmail || v.payment?.email,
+                voterPhone: v.voterPhone || undefined,
+                nomineeName: v.option?.optionText,
+                nomineeCode: v.option?.nomineeCode,
                 createdAt: v.createdAt.toISOString(),
             })),
             total,

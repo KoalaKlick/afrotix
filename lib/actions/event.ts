@@ -27,8 +27,9 @@ import {
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
 import { normalizeEventStatus } from "@/lib/event-status";
 import { getEffectiveOrganizationId } from "@/lib/organization-utils";
-import type { EventType, EventStatus } from "@/lib/generated/prisma";
+import type { EventType, EventStatus, VotingMode } from "@/lib/generated/prisma";
 import { deleteStorageFile, STORAGE_BUCKETS } from "@/lib/storage-utils";
+import { isVotingEventType } from "@/lib/validations/event";
 
 // Action result type
 type ActionResult<T = void> =
@@ -59,6 +60,7 @@ export async function validateEventStep1(
         title: formData.get("title") as string,
         slug: formData.get("slug") as string,
         type: formData.get("type") as string,
+        votingMode: formData.get("votingMode") as string || undefined,
         description: formData.get("description") as string || undefined,
     };
 
@@ -190,6 +192,7 @@ export async function createNewEvent(
         title: formData.get("title") as string,
         slug: formData.get("slug") as string,
         type: formData.get("type") as string,
+        votingMode: formData.get("votingMode") as string || undefined,
         description: formData.get("description") as string || undefined,
         startDate: formData.get("startDate") as string || undefined,
         endDate: formData.get("endDate") as string || undefined,
@@ -228,12 +231,18 @@ export async function createNewEvent(
 
     try {
         // Create the event
+        // For voting events, derive isPublic from votingMode
+        const effectiveIsPublic = isVotingEventType(result.data.type)
+            ? result.data.votingMode === "public"
+            : result.data.isPublic;
+
         const event = await createEvent({
             organizationId,
             creatorId: user.id,
             title: result.data.title,
             slug: result.data.slug,
             type: result.data.type as EventType,
+            votingMode: (result.data.votingMode as VotingMode) || undefined,
             description: result.data.description,
             startDate: result.data.startDate,
             endDate: result.data.endDate,
@@ -247,7 +256,7 @@ export async function createNewEvent(
             coverImage: result.data.coverImage,
             bannerImage: result.data.bannerImage,
             maxAttendees: result.data.maxAttendees ?? undefined,
-            isPublic: result.data.isPublic,
+            isPublic: effectiveIsPublic,
         });
 
         // Revalidate paths
@@ -316,7 +325,16 @@ export async function updateExistingEvent(
         updates.isVirtual = formData.get("isVirtual") === "true";
     }
     if (formData.has("isPublic")) {
-        updates.isPublic = formData.get("isPublic") !== "false";
+        // For voting events, isPublic is derived from votingMode and cannot be changed
+        if (isVotingEventType(event.type)) {
+            // Block changes to isPublic for voting events
+        } else {
+            updates.isPublic = formData.get("isPublic") !== "false";
+        }
+    }
+    // Block votingMode changes after creation
+    if (formData.has("votingMode")) {
+        return { success: false, error: "Voting mode cannot be changed after event creation" };
     }
     if (formData.has("maxAttendees")) {
         const val = formData.get("maxAttendees") as string;

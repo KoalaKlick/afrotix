@@ -35,9 +35,10 @@ interface VotingManagerProps {
     readonly eventId: string;
     readonly categories: VotingCategory[];
     readonly canEdit: boolean;
+    readonly votingMode?: string | null;
 }
 
-export function VotingManager({ eventId, categories: initialCategories, canEdit }: VotingManagerProps) {
+export function VotingManager({ eventId, categories: initialCategories, canEdit, votingMode }: VotingManagerProps) {
     const [categories, setCategories] = useState(initialCategories);
     const [isPending, startTransition] = useTransition();
     const [requestsSheetOpen, setRequestsSheetOpen] = useState(false);
@@ -204,6 +205,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
                             open={categoryDialogOpen}
                             onOpenChange={setCategoryDialogOpen}
                             editingCategory={editingCategory}
+                            votingMode={votingMode}
                             nextOrderIndex={categories.length}
                             onCategoryCreated={handleCategoryCreated}
                             onCategoryUpdated={handleCategoryUpdated}
