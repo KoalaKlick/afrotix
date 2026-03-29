@@ -1,15 +1,20 @@
 import { 
-    MessageCircle, 
-    Send, 
-    Facebook, 
-    Twitter, 
-    Instagram, 
     Share2, 
-    HardDrive, 
-    Image as ImageIcon, 
-    Globe
+    Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Import custom SVG icons as components
+import WhatsAppIcon from "@/app/assert/whatsapp.svg";
+import GoogleDriveIcon from "@/app/assert/google-drive.svg";
+import FacebookIcon from "@/app/assert/facebook.svg";
+import XIcon from "@/app/assert/x-icon.svg";
+import InstagramIcon from "@/app/assert/instagram.svg";
+import TelegramIcon from "@/app/assert/telegram.svg";
+import PixiesetIcon from "@/app/assert/pixieset.svg";
+import DropboxIcon from "@/app/assert/dropbox.svg";
+import FlickrIcon from "@/app/assert/flickr.svg";
+import LinkedInIcon from "@/app/assert/linkedin.svg";
 
 /**
  * Detects the social media platform from a URL and returns a label and icon.
@@ -21,36 +26,43 @@ export const getSocialPlatform = (url: string, className?: string) => {
     if (u.includes("wa.me") || u.includes("whatsapp")) {
         return { 
             name: "WhatsApp", 
-            icon: <MessageCircle className={cn(iconClass, "text-green-500")} />,
-            color: "text-green-500"
+            icon: <WhatsAppIcon className={iconClass} />,
+            color: "text-[#25D366]"
         };
     }
     if (u.includes("t.me") || u.includes("telegram")) {
         return { 
             name: "Telegram", 
-            icon: <Send className={cn(iconClass, "text-blue-400")} />,
-            color: "text-blue-400"
+            icon: <TelegramIcon className={iconClass} />,
+            color: "text-[#0088cc]"
         };
     }
     if (u.includes("facebook.com") || u.includes("fb.me")) {
         return { 
             name: "Facebook", 
-            icon: <Facebook className={cn(iconClass, "text-blue-600")} />,
-            color: "text-blue-600"
+            icon: <FacebookIcon className={iconClass} />,
+            color: "text-[#1877F2]"
         };
     }
     if (u.includes("x.com") || u.includes("twitter.com")) {
         return { 
             name: "X / Twitter", 
-            icon: <Twitter className={iconClass} />,
+            icon: <XIcon className={iconClass} />,
             color: "text-foreground"
         };
     }
     if (u.includes("instagram.com")) {
         return { 
             name: "Instagram", 
-            icon: <Instagram className={cn(iconClass, "text-pink-600")} />,
-            color: "text-pink-600"
+            icon: <InstagramIcon className={iconClass} />,
+            color: "text-[#E4405F]"
+        };
+    }
+    if (u.includes("linkedin.com")) {
+        return { 
+            name: "LinkedIn", 
+            icon: <LinkedInIcon className={iconClass} />,
+            color: "text-[#0A66C2]"
         };
     }
     
@@ -71,28 +83,28 @@ export const getGalleryProvider = (url: string, className?: string) => {
     if (u.includes("drive.google.com")) {
         return { 
             name: "Google Drive", 
-            icon: <HardDrive className={cn(iconClass, "text-primary")} />,
+            icon: <GoogleDriveIcon className={iconClass} />,
             color: "text-primary"
         };
     }
     if (u.includes("pixieset.com")) {
         return { 
             name: "Pixieset", 
-            icon: <ImageIcon className={cn(iconClass, "text-purple-500")} />,
+            icon: <PixiesetIcon className={iconClass} />,
             color: "text-purple-500"
         };
     }
     if (u.includes("dropbox.com")) {
         return { 
             name: "Dropbox", 
-            icon: <HardDrive className={cn(iconClass, "text-blue-500")} />,
+            icon: <DropboxIcon className={iconClass} />,
             color: "text-blue-500"
         };
     }
     if (u.includes("flickr.com")) {
         return { 
             name: "Flickr", 
-            icon: <ImageIcon className={cn(iconClass, "text-pink-500")} />,
+            icon: <FlickrIcon className={iconClass} />,
             color: "text-pink-500"
         };
     }

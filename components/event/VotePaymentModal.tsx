@@ -267,9 +267,7 @@ export function VotePaymentModal({
             >
                 {/* Hero Header */}
                 <div className="relative h-36 w-full bg-linear-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] overflow-hidden">
-                    <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[#FFCD00]/20 blur-2xl" />
-                    <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-[#009A44]/20 blur-2xl" />
-                    <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-[#CE1126]/15 blur-lg" />
+                 
 
                     <div className="relative z-10 flex items-end h-full p-5">
                         <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl shrink-0 bg-white/10">

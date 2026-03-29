@@ -582,6 +582,11 @@ export const getOrganizationProfile = cache(async (slug: string, viewerUserId?: 
                             }
                             : { isPublic: true }),
                     },
+                    include: {
+                        sponsors: true,
+                        galleryLinks: true,
+                        socialLinks: true,
+                    },
                     orderBy: { startDate: "asc" },
                 },
                 _count: {

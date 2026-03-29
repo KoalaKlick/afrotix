@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { defaultNavigationLinks, type NavbarNavLink } from '@/lib/const/landing'
 import { AfroTixLogo } from '@/components/shared/AfroTixLogo'
+import { useOrgBranding } from '@/components/providers/OrgBrandingProvider'
+import Image from 'next/image'
 
 const HERO_PAGES = ['/']
 
@@ -23,6 +25,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     ctaText = "Get started",
 }) => {
     const pathname = usePathname()
+    const { branding } = useOrgBranding()
+    const logoUrl = branding.logoUrl
+    const orgName = branding.name
+    
     // Derive variant directly — no need to store it in state
     const isHero = HERO_PAGES.includes(pathname)
 
@@ -92,6 +98,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     signInText={signInText}
                     ctaText={ctaText}
                     isLinkActive={isLinkActive}
+                    logoUrl={logoUrl}
+                    orgName={orgName}
                 />
             </motion.div>
 
@@ -109,7 +117,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                     >
                         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 h-20 flex items-center justify-between">
                             <Link href="/" className="flex-shrink-0">
-                                <AfroTixLogo className="h-9 w-auto" />
+                                {logoUrl ? (
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative h-10 w-10 overflow-hidden rounded-lg">
+                                            <Image 
+                                                src={logoUrl} 
+                                                alt={orgName || "Organization logo"} 
+                                                fill 
+                                                className="object-contain" 
+                                            />
+                                        </div>
+                                        {orgName && (
+                                            <span className="text-lg font-black uppercase tracking-tighter hidden lg:block">
+                                                {orgName}
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <AfroTixLogo className="h-9 w-auto" />
+                                )}
                             </Link>
 
                             <nav className="flex items-center gap-8">
@@ -164,11 +190,15 @@ function MobileNav({
     signInText,
     ctaText,
     isLinkActive,
+    logoUrl,
+    orgName,
 }: {
     navigationLinks: NavbarNavLink[]
     signInText: string
     ctaText: string
     isLinkActive: (href: string) => boolean
+    logoUrl: string | null
+    orgName: string | null
 }) {
     const [isOpen, setIsOpen] = useState(false)
 
@@ -176,7 +206,25 @@ function MobileNav({
         <>
             <div className="h-16 px-4 flex items-center justify-between">
                 <Link href="/">
-                    <AfroTixLogo className="h-8 w-auto" />
+                    {logoUrl ? (
+                        <div className="flex items-center gap-2">
+                             <div className="relative h-8 w-8 overflow-hidden rounded-md">
+                                <Image 
+                                    src={logoUrl} 
+                                    alt={orgName || "Organization logo"} 
+                                    fill 
+                                    className="object-contain" 
+                                />
+                            </div>
+                            {orgName && (
+                                <span className="text-sm font-black uppercase tracking-tighter truncate max-w-[120px]">
+                                    {orgName}
+                                </span>
+                            )}
+                        </div>
+                    ) : (
+                        <AfroTixLogo className="h-8 w-auto" />
+                    )}
                 </Link>
                 <button
                     type="button"

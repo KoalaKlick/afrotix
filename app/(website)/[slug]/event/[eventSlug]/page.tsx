@@ -9,7 +9,8 @@ import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
-import { Calendar, MapPin, Clock, Vote, Trophy, Users, ChevronRight, Share2, ExternalLink, Instagram, Facebook, Twitter, MessageCircle, Send, ImageIcon } from "lucide-react"
+import { format } from "date-fns"
+import { Globe, Mail, ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, Share2, ExternalLink, Instagram, Facebook, Twitter, MessageCircle, Send, Tag } from "lucide-react"
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
 
@@ -109,24 +110,47 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         <div className="inline-flex items-center bg-[#009A44] text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
                             {event.type.toUpperCase()}
                         </div>
-                        <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-4">
+                        <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-6">
                             {event.title}
                         </h1>
-                        <div className="flex flex-wrap gap-6 text-white/80 text-sm font-medium">
-                            <div className="flex items-center gap-2">
+                        
+                        {/* Event Schedule Bar */}
+                        <div className="flex flex-wrap gap-4 items-center">
+                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
                                 <Calendar className="w-4 h-4 text-[#FFCD00]" />
-                                {dateStr}
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Date</span>
+                                    <span className="text-xs font-bold leading-none">{dateStr}</span>
+                                </div>
                             </div>
+                            
                             {timeStr && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
                                     <Clock className="w-4 h-4 text-[#FFCD00]" />
-                                    {timeStr}
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Time</span>
+                                        <span className="text-xs font-bold leading-none">{timeStr}</span>
+                                    </div>
                                 </div>
                             )}
-                            <div className="flex items-center gap-2">
+
+                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
                                 <MapPin className="w-4 h-4 text-[#FFCD00]" />
-                                {event.venueName || "TBA"}
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Venue</span>
+                                    <span className="text-xs font-bold leading-none truncate max-w-[150px]">{event.venueName || "TBA"}</span>
+                                </div>
                             </div>
+
+                            {event.endDate && (
+                                <div className="flex items-center gap-3 bg-[#CE1126]/20 backdrop-blur-md border border-[#CE1126]/40 rounded-full px-4 py-2 text-white">
+                                    <Calendar className="w-4 h-4 text-[#FFCD00]" />
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Ends On</span>
+                                        <span className="text-xs font-bold leading-none">{format(new Date(event.endDate), "MMM d, yyyy")}</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -153,7 +177,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                         className="group flex flex-col rounded-md border bg-card shadow-sm hover:shadow-xl transition-all duration-300 relative"
                                     >
                                         {category.templateImage && (
-                                            <div className="relative w-full h-48 shrink-0 overflow-hidden bg-muted rounded-t-2xl">
+                                            <div className="relative w-full h-48 shrink-0 overflow-hidden bg-muted rounded-t-md">
                                                 <Image 
                                                     src={getEventImageUrl(category.templateImage) || ''}
                                                     alt={category.name}
@@ -220,17 +244,17 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                 </>
             )}
 
-            {/* Sponsors, Socials & Gallery Section */}
-            <Section className="py-20 bg-white">
+            {/* Event Details & Footer Section */}
+            <Section className="py-20 bg-white border-t">
                 <div className="max-w-6xl mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {/* Left Column: Description & Socials */}
-                        <div className="space-y-12">
-                            <div className="space-y-6">
-                                <h2 className="text-3xl font-bold uppercase tracking-tight flex items-center gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+                        {/* Left: About */}
+                        <div className="md:col-span-2 space-y-8">
+                            <div className="space-y-4">
+                                <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                     About the Event.
                                 </h2>
-                                <div className="prose prose-p:text-muted-foreground max-w-none">
+                                <div className="prose prose-p:text-muted-foreground max-w-none text-sm leading-relaxed">
                                     {event.description ? (
                                         <p className="whitespace-pre-wrap">{event.description}</p>
                                     ) : (
@@ -239,10 +263,10 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                 </div>
                             </div>
 
-                            {/* Social Links */}
+                            {/* Social Links nested here for mobile, but visible on all */}
                             {((event as any).socialLinks?.length > 0) && (
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-[#009A44]">Connect with us.</h3>
+                                <div className="space-y-4 pt-4 border-t border-dashed">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-[#009A44]">Organization Contacts.</h3>
                                     <div className="flex flex-wrap gap-3">
                                         {(event as any).socialLinks.map((link: any, idx: number) => (
                                             <a
@@ -250,40 +274,12 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="w-12 h-12 rounded-full border bg-white flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all"
+                                                className="w-10 h-10 rounded-full border bg-[#F8F7F1]/50 flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all"
                                                 title={link.url}
                                             >
-                                                {getSocialPlatform(link.url, "w-5 h-5").icon}
-                                            </a>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Gallery Links */}
-                            {((event as any).galleryLinks?.length > 0) && (
-                                <div className="space-y-6 pt-4">
-                                    <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                        <ImageIcon className="w-6 h-6 text-[#009A44]" />
-                                        Photo Gallery.
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {(event as any).galleryLinks.map((link: any, idx: number) => (
-                                            <a
-                                                key={idx}
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-4 p-4 rounded-xl border bg-[#F8F7F1] hover:bg-white hover:shadow-lg transition-all group"
-                                            >
-                                                <div className="w-12 h-12 rounded-lg bg-white border flex items-center justify-center shrink-0">
-                                                    {getGalleryProvider(link.url, "w-5 h-5").icon}
+                                                <div className="size-5 flex items-center justify-center">
+                                                    {getSocialPlatform(link.url, "size-full").icon}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-sm uppercase truncate">{link.name}</p>
-                                                    <p className="text-xs text-muted-foreground truncate">View photos</p>
-                                                </div>
-                                                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                                             </a>
                                         ))}
                                     </div>
@@ -291,48 +287,81 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             )}
                         </div>
 
-                        {/* Right Column: Sponsors */}
+                        {/* Right: Gallery & Official links */}
                         <div className="space-y-12">
-                            {((event as any).sponsors?.length > 0) ? (
-                                <div className="space-y-8">
-                                    <h2 className="text-2xl font-black uppercase tracking-tight text-center md:text-left bg-black text-white inline-block px-4 py-1">
-                                        Our Sponsors.
-                                    </h2>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 items-center">
-                                        {(event as any).sponsors.map((sponsor: any, idx: number) => (
-                                            <div key={idx} className="group relative aspect-square flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-500 border border-transparent hover:border-muted-foreground/10 hover:bg-muted/5 rounded-2xl">
-                                                {sponsor.logo ? (
-                                                    <div className="relative w-full h-full">
-                                                        <Image
-                                                            src={getEventImageUrl(sponsor.logo) || ""}
-                                                            alt={sponsor.name}
-                                                            fill
-                                                            className="object-contain"
-                                                        />
+                            {/* Gallery Links */}
+                            {((event as any).galleryLinks?.length > 0) && (
+                                <div className="space-y-6">
+                                    <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
+                                        <ImageIcon className="w-5 h-5 text-[#009A44]" />
+                                        Galleries.
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {(event as any).galleryLinks.map((link: any, idx: number) => (
+                                            <a
+                                                key={idx}
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-3 p-3 rounded-xl border bg-[#F8F7F1] hover:bg-white hover:shadow-lg transition-all group"
+                                            >
+                                                <div className="size-8 rounded-lg bg-white border flex items-center justify-center shrink-0">
+                                                    <div className="size-4 flex items-center justify-center">
+                                                        {getGalleryProvider(link.url, "size-full").icon}
                                                     </div>
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-muted/20 rounded-xl">
-                                                        <span className="text-[10px] font-bold uppercase text-muted-foreground/60 text-center px-1">
-                                                            {sponsor.name}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white border px-3 py-1 rounded-full shadow-sm">
-                                                    <p className="text-[10px] font-bold uppercase truncate whitespace-nowrap">
-                                                        {sponsor.name}
-                                                    </p>
                                                 </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-[11px] uppercase truncate">{link.name}</p>
+                                                </div>
+                                                <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Official Sponsors area (if small) */}
+                            {((event as any).sponsors?.length > 0) && (
+                                <div className="space-y-6">
+                                    <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
+                                        <Trophy className="w-5 h-5 text-[#009A44]" />
+                                        Sponsors.
+                                    </h3>
+                                    <div className="flex flex-wrap gap-4">
+                                        {(event as any).sponsors.slice(0, 6).map((sponsor: any, idx: number) => (
+                                            <div key={idx} className="size-12 p-2 border rounded-xl bg-white flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-help" title={sponsor.name}>
+                                                {sponsor.logo ? (
+                                                    <Image
+                                                        src={getEventImageUrl(sponsor.logo) || ""}
+                                                        alt={sponsor.name}
+                                                        width={32}
+                                                        height={32}
+                                                        className="object-contain max-h-full"
+                                                    />
+                                                ) : (
+                                                    <span className="text-[8px] font-bold text-center leading-tight truncate">{sponsor.name}</span>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="h-full flex flex-col items-center justify-center md:items-start text-center md:text-left text-muted-foreground p-12 bg-[#F8F7F1]/50 rounded-[40px] border border-dashed border-muted-foreground/20">
-                                    <Trophy className="w-12 h-12 mb-4 opacity-10" />
-                                    <h3 className="text-xl font-bold uppercase mb-2">Want to sponsor?</h3>
-                                    <p className="text-sm">Reach out to the organization to support this event and get featured here.</p>
-                                </div>
                             )}
+                        </div>
+                    </div>
+
+                    <div className="mt-20 pt-12 border-t border-dashed text-center space-y-4">
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="h-1 w-8 bg-red-600" />
+                            <div className="h-1 w-8 bg-yellow-400" />
+                            <div className="h-1 w-8 bg-green-600" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mb-1">
+                                Powered by Afrotix Event Management System
+                            </p>
+                            <p className="text-[9px] text-muted-foreground/60 italic">
+                                &copy; {new Date().getFullYear()} {PROJ_NAME}. All Rights Reserved.
+                            </p>
                         </div>
                     </div>
                 </div>
