@@ -107,9 +107,11 @@ interface NomineeGridProps {
     readonly isPublic?: boolean;
     readonly votingMode?: "internal" | "public";
     readonly showTotalVotesPublicly?: boolean;
+    readonly orgSlug?: string;
+    readonly eventSlug?: string;
 }
 
-export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPublic, votingMode = "public", showTotalVotesPublicly = true }: NomineeGridProps) {
+export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPublic, votingMode = "public", showTotalVotesPublicly = true, orgSlug, eventSlug }: NomineeGridProps) {
     const [selectedNominee, setSelectedNominee] = useState<VotingOption | null>(null);
     const [votingNominee, setVotingNominee] = useState<VotingOption | null>(null);
 
@@ -223,6 +225,8 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                 categoryId={categoryId}
                 isPublic={isPublic}
                 votingMode={votingMode}
+                orgSlug={orgSlug}
+                eventSlug={eventSlug}
             />
         </>
     );

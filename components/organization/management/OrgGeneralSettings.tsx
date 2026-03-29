@@ -270,7 +270,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                     {bannerDisplayUrl ? (
                         <>
                             <Image
-                                src={bannerDisplayUrl}
+                                src={bannerDisplayUrl ?? undefined}
                                 alt="Organization banner"
                                 fill
                                 className="object-cover"
@@ -326,7 +326,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                         {logoDisplayUrl ? (
                             <>
                                 <Image
-                                    src={logoDisplayUrl}
+                                    src={logoDisplayUrl ?? undefined}
                                     alt={name}
                                     fill
                                     className="object-cover border-white border-2 rounded-lg"

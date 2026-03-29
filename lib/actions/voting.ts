@@ -764,11 +764,44 @@ export async function castInternalVote(
             data: { votesCount: { increment: 1 } },
         });
 
+        // Revalidate admin paths
         revalidatePath(`/my-events/${data.eventId}`);
+        
+        // Revalidate public paths
+        const event = await prisma.event.findUnique({
+            where: { id: data.eventId },
+            include: { organization: { select: { slug: true } } },
+        });
+        
+        if (event) {
+            revalidatePath(`/${event.organization.slug}/event/${event.slug}`);
+            revalidatePath(`/${event.organization.slug}/event/${event.slug}/category/${data.categoryId}`);
+        }
+
         return { success: true, data: { id: vote.id } };
     } catch (error) {
         console.error("[Action] Error casting internal vote:", error);
         return { success: false, error: "Failed to cast vote" };
+    }
+}
+
+/**
+ * Revalidate public voting paths (e.g., after payment success)
+ */
+export async function revalidatePublicVoting(
+    slug: string,
+    eventSlug: string,
+    categoryId?: string
+): Promise<ActionResult> {
+    try {
+        revalidatePath(`/${slug}/event/${eventSlug}`);
+        if (categoryId) {
+            revalidatePath(`/${slug}/event/${eventSlug}/category/${categoryId}`);
+        }
+        return { success: true, data: undefined };
+    } catch (error) {
+        console.error("[Action] Error revalidating public paths:", error);
+        return { success: false, error: "Failed to revalidate" };
     }
 }
 

@@ -168,7 +168,7 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                                 {sponsor.logo ? (
                                     <>
                                         <img 
-                                            src={getEventImageUrl(sponsor.logo)} 
+                                            src={getEventImageUrl(sponsor.logo) ?? undefined} 
                                             alt={sponsor.name}
                                             className="size-full object-contain p-1"
                                         />

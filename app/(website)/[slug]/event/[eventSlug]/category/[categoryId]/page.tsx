@@ -207,6 +207,8 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                             categoryId={category.id}
                             isPublic={event.isPublic}
                             showTotalVotesPublicly={category.showTotalVotesPublicly}
+                            orgSlug={orgSlug}
+                            eventSlug={eventSlug}
                         />
                     ) : (
                         <div className="text-center py-16">

@@ -45,7 +45,7 @@ export function TicketPreview({
                             <div className="px-6 py-5 flex flex-col items-center gap-2" style={{ backgroundColor: `${secondaryColor}33` }}>
                                 {logoUrl ? (
                                     <div className="relative h-10 w-10 rounded-lg overflow-hidden">
-                                        <Image src={logoUrl} alt={organizationName} fill className="object-cover" />
+                                        <Image src={logoUrl ?? undefined} alt={organizationName} fill className="object-cover" />
                                     </div>
                                 ) : (
                                     <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
@@ -92,7 +92,7 @@ export function TicketPreview({
                         {logoUrl ? (
                             <div className="relative h-10 w-10 rounded-lg overflow-hidden">
                                 <Image
-                                    src={logoUrl}
+                                    src={logoUrl ?? undefined}
                                     alt={organizationName}
                                     fill
                                     className="object-cover"

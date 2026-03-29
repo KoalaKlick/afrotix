@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { VotingOption } from "@/lib/types/voting";
 import { usePaystack } from "@/hooks/usePaystack";
+import { revalidatePublicVoting } from "@/lib/actions/voting";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +42,8 @@ interface VotePaymentModalProps {
     readonly isPublic?: boolean;
     /** The event's voting mode: "internal" (free, org-only) or "public" (paid) */
     readonly votingMode?: "internal" | "public";
+    readonly orgSlug?: string;
+    readonly eventSlug?: string;
 }
 
 type ModalStep = "checkout" | "processing" | "success" | "error";
@@ -55,7 +59,10 @@ export function VotePaymentModal({
     categoryId,
     isPublic = true,
     votingMode = "public",
+    orgSlug,
+    eventSlug,
 }: VotePaymentModalProps) {
+    const router = useRouter();
     const [step, setStep] = useState<ModalStep>("checkout");
     const [voteCount, setVoteCount] = useState(1);
     const [phone, setPhone] = useState("");
@@ -144,6 +151,7 @@ export function VotePaymentModal({
             });
 
             if (result.success) {
+                router.refresh();
                 setStep("success");
             } else {
                 setErrorMsg(result.error || "Failed to cast vote");
@@ -226,8 +234,12 @@ export function VotePaymentModal({
             if (response?.accessCode) {
                 resumeTransaction(response.accessCode, {
                     phone: localPhone,
-                    onSuccess: (transaction: any) => {
+                    onSuccess: async (transaction: any) => {
                         console.log("Paystack Success:", transaction);
+                        if (orgSlug && eventSlug) {
+                            await revalidatePublicVoting(orgSlug, eventSlug, categoryId);
+                        }
+                        router.refresh();
                         setStep("success");
                     },
                     onCancel: () => {
