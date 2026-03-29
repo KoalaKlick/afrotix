@@ -11,7 +11,7 @@ interface EventCreationProgressProps {
     readonly totalSteps: number;
 }
 
-const stepLabels = ["Basic Info", "Date & Location", "Media & Settings"];
+const stepLabels = ["Basic Info", "Date & Location", "Media & Settings", "Extras"];
 
 export function EventCreationProgress({ currentStep, totalSteps }: EventCreationProgressProps) {
     return (

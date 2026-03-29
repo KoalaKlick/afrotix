@@ -126,6 +126,21 @@ export const createEventStep3Schema = z.object({
     isPublic: z.boolean().default(true),
 });
 
+// Step 4: Extras (Sponsors, Socials, Gallery)
+export const createEventStep4Schema = z.object({
+    sponsors: z.array(z.object({
+        name: z.string().min(1, "Sponsor name is required").max(100),
+        logo: z.string().optional().or(z.literal("")),
+    })).max(10, "Maximum 10 sponsors allowed").optional().default([]),
+    socialLinks: z.array(z.object({
+        url: z.string().url("Invalid social link URL"),
+    })).max(10, "Maximum 10 social links allowed").optional().default([]),
+    galleryLinks: z.array(z.object({
+        name: z.string().min(1, "Gallery name is required").max(100),
+        url: z.string().url("Invalid gallery link URL"),
+    })).max(10, "Maximum 10 gallery links allowed").optional().default([]),
+});
+
 // Complete event creation schema
 export const createEventSchema = z.object({
     title: eventTitleSchema,
@@ -146,16 +161,28 @@ export const createEventSchema = z.object({
     bannerImage: storagePathSchema,
     maxAttendees: z.coerce.number().int().min(1).max(100000).optional().nullable(),
     isPublic: z.boolean().default(true),
+    sponsors: z.array(z.object({
+        name: z.string(),
+        logo: z.string().optional().or(z.literal("")),
+    })).optional(),
+    socialLinks: z.array(z.object({
+        url: z.string(),
+    })).optional(),
+    galleryLinks: z.array(z.object({
+        name: z.string(),
+        url: z.string(),
+    })).optional(),
 });
 
 // Type exports
 export type CreateEventStep1Input = z.infer<typeof createEventStep1Schema>;
 export type CreateEventStep2Input = z.infer<typeof createEventStep2Schema>;
 export type CreateEventStep3Input = z.infer<typeof createEventStep3Schema>;
+export type CreateEventStep4Input = z.infer<typeof createEventStep4Schema>;
 export type CreateEventInput = z.infer<typeof createEventSchema>;
 
 // Constants
-export const TOTAL_EVENT_CREATION_STEPS = 3;
+export const TOTAL_EVENT_CREATION_STEPS = 4;
 
 // Event types for UI display
 export const EVENT_TYPES = [

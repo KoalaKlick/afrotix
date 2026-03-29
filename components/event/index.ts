@@ -8,6 +8,7 @@ export { EventCreationComplete } from "./EventCreationComplete";
 export { EventStep1BasicInfo } from "./EventStep1BasicInfo";
 export { EventStep2DateLocation } from "./EventStep2DateLocation";
 export { EventStep3MediaSettings } from "./EventStep3MediaSettings";
+export { EventStep4Extras } from "./EventStep4Extras";
 export { VotingManager } from "./voting-manager";
 export { NomineeCard } from "./NomineeCard";
 export {

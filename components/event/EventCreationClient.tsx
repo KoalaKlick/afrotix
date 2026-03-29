@@ -12,6 +12,7 @@ import {
     EventStep1BasicInfo,
     EventStep2DateLocation,
     EventStep3MediaSettings,
+    EventStep4Extras,
     EventCreationComplete,
 } from "@/components/event";
 import { createNewEvent } from "@/lib/actions/event";
@@ -37,6 +38,9 @@ type EventFormData = {
     bannerImage?: string;
     maxAttendees?: number | null;
     isPublic?: boolean;
+    sponsors?: { name: string; logo?: string }[];
+    socialLinks?: { url: string }[];
+    galleryLinks?: { name: string; url: string }[];
 };
 
 interface EventCreationClientProps {
@@ -81,20 +85,30 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
         setCurrentStep(2);
     }
 
-    // Step 3 success - create event
     function handleStep3Success(data: {
         coverImage?: string;
         bannerImage?: string;
         maxAttendees?: number | null;
         isPublic: boolean;
     }) {
-        const finalData = { ...formData, ...data };
-        setFormData(finalData);
-        createEvent(finalData as EventFormData);
+        setFormData((prev) => ({ ...prev, ...data }));
+        setCurrentStep(3);
     }
 
     function handleStep3Skip() {
-        createEvent({ ...formData, isPublic: true } as EventFormData);
+        setFormData((prev) => ({ ...prev, isPublic: true }));
+        setCurrentStep(3);
+    }
+
+    // Step 4 success - create event
+    function handleStep4Success(data: {
+        sponsors: { name: string; logo?: string }[];
+        socialLinks: { url: string }[];
+        galleryLinks: { name: string; url: string }[];
+    }) {
+        const finalData = { ...formData, ...data };
+        setFormData(finalData);
+        createEvent(finalData as EventFormData);
     }
 
     // Create the event
@@ -119,12 +133,17 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
             if (data.bannerImage) formDataObj.set("bannerImage", data.bannerImage);
             if (data.maxAttendees) formDataObj.set("maxAttendees", String(data.maxAttendees));
             formDataObj.set("isPublic", String(data.isPublic ?? true));
+            
+            // Add extras
+            if (data.sponsors) formDataObj.set("sponsors", JSON.stringify(data.sponsors));
+            if (data.socialLinks) formDataObj.set("socialLinks", JSON.stringify(data.socialLinks));
+            if (data.galleryLinks) formDataObj.set("galleryLinks", JSON.stringify(data.galleryLinks));
 
             const result = await createNewEvent(formDataObj);
 
             if (result.success) {
                 setCreatedEvent(result.data);
-                setCurrentStep(3); // Show completion screen
+                setCurrentStep(4); // Show completion screen
             } else {
                 setError(result.error);
             }
@@ -183,6 +202,15 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
                     onSuccess={handleStep3Success}
                     onBack={handleBack}
                     onSkip={handleStep3Skip}
+                />
+            )}
+
+            {currentStep === 3 && (
+                <EventStep4Extras
+                    initialData={formData as any}
+                    onSuccess={handleStep4Success}
+                    onBack={handleBack}
+                    isSubmitting={isPending}
                 />
             )}
         </div>

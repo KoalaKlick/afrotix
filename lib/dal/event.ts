@@ -33,6 +33,9 @@ export type EventCreateInput = {
     isVirtual?: boolean;
     virtualLink?: string;
     maxAttendees?: number;
+    sponsors?: { name: string; logo?: string | null }[];
+    socialLinks?: { url: string }[];
+    galleryLinks?: { name: string; url: string }[];
 };
 
 export type EventUpdateInput = Partial<Omit<EventCreateInput, "organizationId" | "creatorId">>;
@@ -51,6 +54,11 @@ export const getEventById = cache(async (id: string): Promise<Event | null> => {
     try {
         return await prisma.event.findUnique({
             where: { id },
+            include: {
+                sponsors: true,
+                socialLinks: true,
+                galleryLinks: true,
+            },
         });
     } catch (error) {
         logger.error(error, "[DAL] Error fetching event:");
@@ -66,6 +74,11 @@ export const getEventBySlug = cache(async (organizationId: string, slug: string)
         return await prisma.event.findUnique({
             where: {
                 organizationId_slug: { organizationId, slug },
+            },
+            include: {
+                sponsors: true,
+                socialLinks: true,
+                galleryLinks: true,
             },
         });
     } catch (error) {
@@ -264,6 +277,28 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
             virtualLink: virtualLink ?? null,
             maxAttendees: maxAttendees ?? null,
             status: "draft",
+            sponsors: data.sponsors ? {
+                create: data.sponsors.map(s => ({
+                    name: s.name,
+                    logo: s.logo,
+                }))
+            } : undefined,
+            socialLinks: data.socialLinks ? {
+                create: data.socialLinks.map(s => ({
+                    url: s.url,
+                }))
+            } : undefined,
+            galleryLinks: data.galleryLinks ? {
+                create: data.galleryLinks.map(g => ({
+                    name: g.name,
+                    url: g.url,
+                }))
+            } : undefined,
+        },
+        include: {
+            sponsors: true,
+            socialLinks: true,
+            galleryLinks: true,
         },
     });
 
@@ -283,6 +318,31 @@ export async function updateEvent(id: string, data: EventUpdateInput): Promise<E
                 ...data,
                 startDate: data.startDate ? new Date(data.startDate) : undefined,
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
+                sponsors: data.sponsors ? {
+                    deleteMany: {},
+                    create: data.sponsors.map(s => ({
+                        name: s.name,
+                        logo: s.logo,
+                    }))
+                } : undefined,
+                socialLinks: data.socialLinks ? {
+                    deleteMany: {},
+                    create: data.socialLinks.map(s => ({
+                        url: s.url,
+                    }))
+                } : undefined,
+                galleryLinks: data.galleryLinks ? {
+                    deleteMany: {},
+                    create: data.galleryLinks.map(g => ({
+                        name: g.name,
+                        url: g.url,
+                    }))
+                } : undefined,
+            },
+            include: {
+                sponsors: true,
+                socialLinks: true,
+                galleryLinks: true,
             },
         });
     } catch (error) {

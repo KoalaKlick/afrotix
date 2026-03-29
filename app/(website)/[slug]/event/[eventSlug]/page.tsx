@@ -9,9 +9,29 @@ import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
-import { Calendar, MapPin, Clock, Vote, Trophy, Users, ChevronRight } from "lucide-react"
+import { Calendar, MapPin, Clock, Vote, Trophy, Users, ChevronRight, Share2, ExternalLink, Instagram, Facebook, Twitter, MessageCircle, Send, ImageIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
+
+// Helper to get icon for social links
+const getSocialIcon = (url: string) => {
+    const lowercaseUrl = url.toLowerCase();
+    if (lowercaseUrl.includes("instagram.com")) return <Instagram className="w-5 h-5" />;
+    if (lowercaseUrl.includes("facebook.com")) return <Facebook className="w-5 h-5" />;
+    if (lowercaseUrl.includes("twitter.com") || lowercaseUrl.includes("x.com")) return <Twitter className="w-5 h-5" />;
+    if (lowercaseUrl.includes("wa.me") || lowercaseUrl.includes("whatsapp.com")) return <MessageCircle className="w-5 h-5" />;
+    if (lowercaseUrl.includes("t.me") || lowercaseUrl.includes("telegram.org")) return <Send className="w-5 h-5" />;
+    return <Share2 className="w-5 h-5" />;
+};
+
+// Helper to get icon for gallery links
+const getGalleryIcon = (url: string) => {
+    const lowercaseUrl = url.toLowerCase();
+    if (lowercaseUrl.includes("drive.google.com")) return <div className="w-6 h-6 flex items-center justify-center font-bold text-lg text-blue-500">Δ</div>; // Simple representation
+    if (lowercaseUrl.includes("pixieset.com")) return <ImageIcon className="w-5 h-5 text-purple-500" />;
+    if (lowercaseUrl.includes("dropbox.com")) return <div className="w-6 h-6 text-blue-600 font-bold">Db</div>;
+    return <ExternalLink className="w-5 h-5 text-muted-foreground" />;
+};
 
 interface EventDetailsPageProps {
     params: Promise<{
@@ -202,7 +222,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                             }))} 
                                                         />
                                                         {category.votingOptions.length > 5 && (
-                                                            <div className="relative w-10 h-10 ml-2 rounded-full border-2 border-white bg-[#009A44] flex items-center justify-center shrink-0 z-40">
+                                                            <div className="relative w-10 h-10 ml-2 rounded-full border-2 border-white bg-tertiary-600 flex items-center justify-center shrink-0 z-40">
                                                                 <span className="text-white text-xs font-bold">+{category.votingOptions.length - 5}</span>
                                                             </div>
                                                         )}
@@ -217,6 +237,124 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                     </Section>
                 </>
             )}
+
+            {/* Sponsors, Socials & Gallery Section */}
+            <Section className="py-20 bg-white">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        {/* Left Column: Description & Socials */}
+                        <div className="space-y-12">
+                            <div className="space-y-6">
+                                <h2 className="text-3xl font-bold uppercase tracking-tight flex items-center gap-3">
+                                    About the Event.
+                                </h2>
+                                <div className="prose prose-p:text-muted-foreground max-w-none">
+                                    {event.description ? (
+                                        <p className="whitespace-pre-wrap">{event.description}</p>
+                                    ) : (
+                                        <p className="italic">No description provided for this event.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Social Links */}
+                            {((event as any).socialLinks?.length > 0) && (
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-[#009A44]">Connect with us.</h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {(event as any).socialLinks.map((link: any, idx: number) => (
+                                            <a
+                                                key={idx}
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="w-12 h-12 rounded-full border bg-white flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all"
+                                                title={link.url}
+                                            >
+                                                {getSocialIcon(link.url)}
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Gallery Links */}
+                            {((event as any).galleryLinks?.length > 0) && (
+                                <div className="space-y-6 pt-4">
+                                    <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
+                                        <ImageIcon className="w-6 h-6 text-[#009A44]" />
+                                        Photo Gallery.
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {(event as any).galleryLinks.map((link: any, idx: number) => (
+                                            <a
+                                                key={idx}
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-4 p-4 rounded-xl border bg-[#F8F7F1] hover:bg-white hover:shadow-lg transition-all group"
+                                            >
+                                                <div className="w-12 h-12 rounded-lg bg-white border flex items-center justify-center shrink-0">
+                                                    {getGalleryIcon(link.url)}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-sm uppercase truncate">{link.name}</p>
+                                                    <p className="text-xs text-muted-foreground truncate">View photos</p>
+                                                </div>
+                                                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right Column: Sponsors */}
+                        <div className="space-y-12">
+                            {((event as any).sponsors?.length > 0) ? (
+                                <div className="space-y-8">
+                                    <h2 className="text-2xl font-black uppercase tracking-tight text-center md:text-left bg-black text-white inline-block px-4 py-1">
+                                        Our Sponsors.
+                                    </h2>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 items-center">
+                                        {(event as any).sponsors.map((sponsor: any, idx: number) => (
+                                            <div key={idx} className="group relative aspect-square flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition-all duration-500 border border-transparent hover:border-muted-foreground/10 hover:bg-muted/5 rounded-2xl">
+                                                {sponsor.logo ? (
+                                                    <div className="relative w-full h-full">
+                                                        <Image
+                                                            src={getEventImageUrl(sponsor.logo) || ""}
+                                                            alt={sponsor.name}
+                                                            fill
+                                                            className="object-contain"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-muted/20 rounded-xl">
+                                                        <span className="text-[10px] font-bold uppercase text-muted-foreground/60 text-center px-1">
+                                                            {sponsor.name}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white border px-3 py-1 rounded-full shadow-sm">
+                                                    <p className="text-[10px] font-bold uppercase truncate whitespace-nowrap">
+                                                        {sponsor.name}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center md:items-start text-center md:text-left text-muted-foreground p-12 bg-[#F8F7F1]/50 rounded-[40px] border border-dashed border-muted-foreground/20">
+                                    <Trophy className="w-12 h-12 mb-4 opacity-10" />
+                                    <h3 className="text-xl font-bold uppercase mb-2">Want to sponsor?</h3>
+                                    <p className="text-sm">Reach out to the organization to support this event and get featured here.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </Section>
         </main>
     )
 }

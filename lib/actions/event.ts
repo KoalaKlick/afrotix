@@ -11,10 +11,12 @@ import {
     createEventStep1Schema,
     createEventStep2Schema,
     createEventStep3Schema,
+    createEventStep4Schema,
     createEventSchema,
     type CreateEventStep1Input,
     type CreateEventStep2Input,
     type CreateEventStep3Input,
+    type CreateEventStep4Input,
 } from "@/lib/validations/event";
 import {
     createEvent,
@@ -162,6 +164,39 @@ export async function validateEventStep3(
 }
 
 /**
+ * Validate event step 4 (sponsors, socials, gallery)
+ */
+export async function validateEventStep4(
+    formData: FormData
+): Promise<ActionResult<CreateEventStep4Input>> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+
+    // Parse complex fields from JSON strings
+    const rawData = {
+        sponsors: JSON.parse(formData.get("sponsors") as string || "[]"),
+        socialLinks: JSON.parse(formData.get("socialLinks") as string || "[]"),
+        galleryLinks: JSON.parse(formData.get("galleryLinks") as string || "[]"),
+    };
+
+    // Validate
+    const result = createEventStep4Schema.safeParse(rawData);
+    if (!result.success) {
+        return {
+            success: false,
+            error: "Validation failed",
+            fieldErrors: result.error.flatten().fieldErrors as Record<string, string[]>,
+        };
+    }
+
+    return { success: true, data: result.data };
+}
+
+/**
  * Create a new event
  */
 export async function createNewEvent(
@@ -207,6 +242,9 @@ export async function createNewEvent(
         bannerImage: formData.get("bannerImage") as string || undefined,
         maxAttendees: maxAttendeesRaw ? Number.parseInt(maxAttendeesRaw, 10) : undefined,
         isPublic: formData.get("isPublic") !== "false",
+        sponsors: JSON.parse(formData.get("sponsors") as string || "[]"),
+        socialLinks: JSON.parse(formData.get("socialLinks") as string || "[]"),
+        galleryLinks: JSON.parse(formData.get("galleryLinks") as string || "[]"),
     };
 
     // Validate
@@ -257,6 +295,9 @@ export async function createNewEvent(
             bannerImage: result.data.bannerImage,
             maxAttendees: result.data.maxAttendees ?? undefined,
             isPublic: effectiveIsPublic,
+            sponsors: result.data.sponsors,
+            socialLinks: result.data.socialLinks,
+            galleryLinks: result.data.galleryLinks,
         });
 
         // Revalidate paths
