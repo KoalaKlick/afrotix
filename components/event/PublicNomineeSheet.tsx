@@ -166,9 +166,7 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                                         >
                                             <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
                                         </button>
-                                        <div className="w-8 h-8 rounded-full bg-[#009A44]/10 flex items-center justify-center group-hover:bg-[#009A44] transition-colors">
-                                            <Vote className="w-3.5 h-3.5 text-[#009A44] group-hover:text-white transition-colors" />
-                                        </div>
+
                                     </div>
                                 </div>
                                 {/* Vote Button */}
@@ -182,11 +180,13 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                                     }}
                                 >
                                     <Vote className="w-3.5 h-3.5" />
-                                    Vote {votingMode === "public" && votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}  
+                                    Vote {votingMode === "public" && votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}
                                 </Button>
                                 {showTotalVotesPublicly && (
-                                    <div className="mt-3 pt-3 border-t flex items-center justify-center gap-1.5 text-xs text-muted-foreground font-medium">
-                                        <Users className="w-3.5 h-3.5" />
+                                    <div className="mt-3 pt-3 border-t flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium">
+                                        <div className="w-7 h-7 rounded-full bg-[#009A44]/10 flex items-center justify-center shrink-0">
+                                            <Vote className="w-3.5 h-3.5 text-[#009A44]" />
+                                        </div>
                                         <span>{Number(nominee.votesCount).toLocaleString()} votes</span>
                                     </div>
                                 )}

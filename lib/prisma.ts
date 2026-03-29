@@ -26,7 +26,7 @@ const globalForPrisma = globalThis as unknown as {
     prismaVersion: string | undefined;
 };
 
-const PRISMA_VERSION = "v2_clean_logs";
+const PRISMA_VERSION = "v2_privacy_field_added";
 
 const poolMax = Number.parseInt(process.env.DATABASE_POOL_MAX ?? "15", 10);
 

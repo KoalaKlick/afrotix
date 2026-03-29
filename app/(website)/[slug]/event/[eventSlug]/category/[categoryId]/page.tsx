@@ -82,7 +82,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
     // Only voting/hybrid events have categories
     if (event.type !== "voting" && event.type !== "hybrid") notFound()
 
-    const category = await getVotingCategoryById(categoryId, true) as any;
+    const category = await getVotingCategoryById(categoryId, true);
     if (!category || category.eventId !== event.id) notFound()
     const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
 
