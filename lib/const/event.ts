@@ -4,7 +4,7 @@
  */
 
 export const MAX_SPONSORS = 10;
-export const MAX_GALLERY_LINKS = 10;
+export const MAX_GALLERY_LINKS = 3;
 
 export const SOCIAL_PLATFORMS = {
     WHATSAPP: "whatsapp",

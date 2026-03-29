@@ -312,28 +312,30 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
  */
 export async function updateEvent(id: string, data: EventUpdateInput): Promise<Event | null> {
     try {
+        const { sponsors, socialLinks, galleryLinks, startDate, endDate, ...rest } = data;
+        
         return await prisma.event.update({
             where: { id },
             data: {
-                ...data,
-                startDate: data.startDate ? new Date(data.startDate) : undefined,
-                endDate: data.endDate ? new Date(data.endDate) : undefined,
-                sponsors: data.sponsors ? {
+                ...rest,
+                startDate: startDate ? new Date(startDate) : undefined,
+                endDate: endDate ? new Date(endDate) : undefined,
+                sponsors: sponsors ? {
                     deleteMany: {},
-                    create: data.sponsors.map(s => ({
+                    create: sponsors.map(s => ({
                         name: s.name,
                         logo: s.logo,
                     }))
                 } : undefined,
-                socialLinks: data.socialLinks ? {
+                socialLinks: socialLinks ? {
                     deleteMany: {},
-                    create: data.socialLinks.map(s => ({
+                    create: socialLinks.map(s => ({
                         url: s.url,
                     }))
                 } : undefined,
-                galleryLinks: data.galleryLinks ? {
+                galleryLinks: galleryLinks ? {
                     deleteMany: {},
-                    create: data.galleryLinks.map(g => ({
+                    create: galleryLinks.map(g => ({
                         name: g.name,
                         url: g.url,
                     }))

@@ -82,6 +82,20 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         createdAt: event.createdAt.toISOString(),
                         updatedAt: event.updatedAt.toISOString(),
                         publishedAt: event.publishedAt?.toISOString() ?? null,
+                        sponsors: (event as any).sponsors?.map((s: any) => ({
+                            id: s.id,
+                            name: s.name,
+                            logo: s.logo,
+                        })),
+                        socialLinks: (event as any).socialLinks?.map((s: any) => ({
+                            id: s.id,
+                            url: s.url,
+                        })),
+                        galleryLinks: (event as any).galleryLinks?.map((g: any) => ({
+                            id: g.id,
+                            name: g.name,
+                            url: g.url,
+                        })),
                     }}
                     organizationSlug={organization?.slug}
                     userRole={role}

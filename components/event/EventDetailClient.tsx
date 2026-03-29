@@ -87,6 +87,9 @@ interface EventData {
     createdAt: string;
     updatedAt: string;
     publishedAt?: string | null;
+    sponsors?: { id: string; name: string; logo: string | null }[];
+    socialLinks?: { id: string; url: string }[];
+    galleryLinks?: { id: string; name: string; url: string }[];
 }
 
 
@@ -155,6 +158,9 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         bannerImage: event.bannerImage ?? "",
         maxAttendees: event.maxAttendees?.toString() ?? "",
         isPublic: event.isPublic,
+        sponsors: event.sponsors ?? [],
+        socialLinks: event.socialLinks ?? [],
+        galleryLinks: event.galleryLinks ?? [],
     });
     const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
     const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
@@ -182,7 +188,11 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         const formDataObj = new FormData();
         for (const [key, value] of Object.entries(fields)) {
             if (value !== undefined && value !== null) {
-                formDataObj.set(key, String(value));
+                if (typeof value === "object") {
+                    formDataObj.set(key, JSON.stringify(value));
+                } else {
+                    formDataObj.set(key, String(value));
+                }
             }
         }
 
@@ -204,7 +214,11 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
     // Save a single field
     async function saveField(fieldName: string, value: unknown) {
         const formDataObj = new FormData();
-        formDataObj.set(fieldName, String(value));
+        if (typeof value === "object" && value !== null) {
+            formDataObj.set(fieldName, JSON.stringify(value));
+        } else if (value !== null && value !== undefined) {
+            formDataObj.set(fieldName, String(value));
+        }
 
         startTransition(async () => {
             const result = await updateExistingEvent(event.id, formDataObj);
@@ -554,6 +568,9 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                 imageUrl: opt.imageUrl,
                             })),
                         }))}
+                        sponsors={formData.sponsors}
+                        socialLinks={formData.socialLinks}
+                        galleryLinks={formData.galleryLinks}
                     />
                 </TabsContent>
 
@@ -577,7 +594,8 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                             />
                         </div>
                     </TabsContent>
-                )}                {/* Settings Tab */}
+                )}
+                {/* Settings Tab */}
                 <TabsContent value="settings" className="space-y-6">
                     <EventSettingsTab
                         formData={formData}

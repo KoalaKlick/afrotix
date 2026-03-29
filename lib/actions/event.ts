@@ -351,13 +351,23 @@ export async function updateExistingEvent(
         "title", "description", "startDate", "endDate", "timezone",
         "venueName", "venueAddress", "venueCity", "venueCountry",
         "virtualLink", "coverImage", "bannerImage",
+        "sponsors", "socialLinks", "galleryLinks",
     ];
 
     for (const field of fields) {
         const value = formData.get(field);
         if (value !== null) {
-            // Convert empty string to null to allow clearing fields (Prisma uses null to clear)
-            updates[field] = value === "" ? null : value;
+            // Special handling for JSON fields
+            if (field === "sponsors" || field === "socialLinks" || field === "galleryLinks") {
+                try {
+                    updates[field] = JSON.parse(value as string);
+                } catch (e) {
+                    console.error(`Failed to parse ${field} JSON`, e);
+                }
+            } else {
+                // Convert empty string to null to allow clearing fields (Prisma uses null to clear)
+                updates[field] = value === "" ? null : value;
+            }
         }
     }
 

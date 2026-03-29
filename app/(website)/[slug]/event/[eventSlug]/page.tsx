@@ -13,25 +13,7 @@ import { Calendar, MapPin, Clock, Vote, Trophy, Users, ChevronRight, Share2, Ext
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
 
-// Helper to get icon for social links
-const getSocialIcon = (url: string) => {
-    const lowercaseUrl = url.toLowerCase();
-    if (lowercaseUrl.includes("instagram.com")) return <Instagram className="w-5 h-5" />;
-    if (lowercaseUrl.includes("facebook.com")) return <Facebook className="w-5 h-5" />;
-    if (lowercaseUrl.includes("twitter.com") || lowercaseUrl.includes("x.com")) return <Twitter className="w-5 h-5" />;
-    if (lowercaseUrl.includes("wa.me") || lowercaseUrl.includes("whatsapp.com")) return <MessageCircle className="w-5 h-5" />;
-    if (lowercaseUrl.includes("t.me") || lowercaseUrl.includes("telegram.org")) return <Send className="w-5 h-5" />;
-    return <Share2 className="w-5 h-5" />;
-};
-
-// Helper to get icon for gallery links
-const getGalleryIcon = (url: string) => {
-    const lowercaseUrl = url.toLowerCase();
-    if (lowercaseUrl.includes("drive.google.com")) return <div className="w-6 h-6 flex items-center justify-center font-bold text-lg text-blue-500">Δ</div>; // Simple representation
-    if (lowercaseUrl.includes("pixieset.com")) return <ImageIcon className="w-5 h-5 text-purple-500" />;
-    if (lowercaseUrl.includes("dropbox.com")) return <div className="w-6 h-6 text-blue-600 font-bold">Db</div>;
-    return <ExternalLink className="w-5 h-5 text-muted-foreground" />;
-};
+import { getSocialPlatform, getGalleryProvider } from "@/lib/utils/event-icons";
 
 interface EventDetailsPageProps {
     params: Promise<{
@@ -271,7 +253,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                 className="w-12 h-12 rounded-full border bg-white flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all"
                                                 title={link.url}
                                             >
-                                                {getSocialIcon(link.url)}
+                                                {getSocialPlatform(link.url, "w-5 h-5").icon}
                                             </a>
                                         ))}
                                     </div>
@@ -295,7 +277,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                 className="flex items-center gap-4 p-4 rounded-xl border bg-[#F8F7F1] hover:bg-white hover:shadow-lg transition-all group"
                                             >
                                                 <div className="w-12 h-12 rounded-lg bg-white border flex items-center justify-center shrink-0">
-                                                    {getGalleryIcon(link.url)}
+                                                    {getGalleryProvider(link.url, "w-5 h-5").icon}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-bold text-sm uppercase truncate">{link.name}</p>

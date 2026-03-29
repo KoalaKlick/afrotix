@@ -18,7 +18,7 @@ import {
     SheetDescription 
 } from "@/components/ui/sheet";
 import { getEventVoteTransactionsAction } from "@/lib/actions/event";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Plus, Share2, Image as ImageIcon } from "lucide-react";
 
 interface EventOverviewTabProps {
     readonly eventId: string;
@@ -27,6 +27,9 @@ interface EventOverviewTabProps {
     readonly votingMode?: string | null;
     readonly votingCategories: VotingChartCategory[];
     readonly voteTrend: VoteTrendPoint[];
+    readonly sponsors?: { name: string; logo: string | null }[];
+    readonly socialLinks?: { url: string }[];
+    readonly galleryLinks?: { name: string; url: string }[];
 }
 
 export function EventOverviewTab({
@@ -36,6 +39,9 @@ export function EventOverviewTab({
     votingMode,
     votingCategories,
     voteTrend,
+    sponsors = [],
+    socialLinks = [],
+    galleryLinks = [],
 }: EventOverviewTabProps) {
     const isVotingType = eventType === "voting" || eventType === "hybrid";
     const [selectedCategory, setSelectedCategory] = useState<VotingChartCategory | null>(null);
@@ -164,6 +170,39 @@ export function EventOverviewTab({
                     </Sheet>
                 </>
             )}
+
+            {/* Extras Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-card border rounded-xl p-6 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-muted-foreground uppercase font-bold tracking-wider mb-1">Sponsors</p>
+                        <p className="text-2xl font-black">{sponsors.length}</p>
+                    </div>
+                    <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Plus className="size-6 text-primary" />
+                    </div>
+                </div>
+
+                <div className="bg-card border rounded-xl p-6 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-muted-foreground uppercase font-bold tracking-wider mb-1">Social Links</p>
+                        <p className="text-2xl font-black">{socialLinks.length}</p>
+                    </div>
+                    <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Share2 className="size-6 text-primary" />
+                    </div>
+                </div>
+
+                <div className="bg-card border rounded-xl p-6 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-muted-foreground uppercase font-bold tracking-wider mb-1">Galleries</p>
+                        <p className="text-2xl font-black">{galleryLinks.length}</p>
+                    </div>
+                    <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <ImageIcon className="size-6 text-primary" />
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

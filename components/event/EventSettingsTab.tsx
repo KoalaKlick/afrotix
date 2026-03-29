@@ -1,9 +1,18 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import {
     Eye,
     EyeOff,
@@ -13,9 +22,18 @@ import {
     Pencil,
     Users,
     Video,
+    Plus,
+    Trash2,
+    Share2,
+    Image as ImageIcon,
+    Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isVotingEventType } from "@/lib/validations/event";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
+import { getEventImageUrl } from "@/lib/image-url-utils";
+import { MAX_SPONSORS, MAX_GALLERY_LINKS } from "@/lib/const/event";
+import { getSocialPlatform, getGalleryProvider } from "@/lib/utils/event-icons";
 
 interface EventFormData {
     title: string;
@@ -35,6 +53,9 @@ interface EventFormData {
     bannerImage: string;
     isPublic: boolean;
     maxAttendees: string;
+    sponsors: { id: string; name: string; logo: string | null }[];
+    socialLinks: { id: string; url: string }[];
+    galleryLinks: { id: string; name: string; url: string }[];
 }
 
 interface EventOriginalData {
@@ -51,6 +72,9 @@ interface EventOriginalData {
     isPublic: boolean;
     maxAttendees?: number | null;
     type?: string;
+    sponsors?: { id: string; name: string; logo: string | null }[];
+    socialLinks?: { id: string; url: string }[];
+    galleryLinks?: { id: string; name: string; url: string }[];
 }
 
 interface EventSettingsTabProps {
@@ -65,6 +89,7 @@ interface EventSettingsTabProps {
     readonly saveMultipleFields: (fields: Record<string, unknown>) => void;
 }
 
+
 export function EventSettingsTab({
     formData,
     setFormData,
@@ -78,6 +103,16 @@ export function EventSettingsTab({
 }: EventSettingsTabProps) {
     const isPrivate = !formData.isPublic;
     const isVotingEvent = isVotingEventType(event.type ?? "");
+
+    // Modal States
+    const [sponsorModalOpen, setSponsorModalOpen] = useState(false);
+    const [selectedSponsor, setSelectedSponsor] = useState<{ id: string; name: string; logo: string | null } | null>(null);
+
+    const [socialModalOpen, setSocialModalOpen] = useState(false);
+    const [selectedSocial, setSelectedSocial] = useState<{ id: string; url: string } | null>(null);
+
+    const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+    const [selectedGallery, setSelectedGallery] = useState<{ id: string; name: string; url: string } | null>(null);
 
     return (
         <div className="space-y-6">
@@ -551,7 +586,558 @@ export function EventSettingsTab({
                     </div>
                 )}
             </div>
+
+            {/* Sponsors Section */}
+            <div className="bg-card border rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="space-y-1">
+                        <h3 className="font-semibold flex items-center gap-2">
+                            <Plus className="size-4 text-primary" />
+                            Sponsors
+                        </h3>
+                        <p className="text-xs text-muted-foreground">Showcase organizations supporting your event</p>
+                    </div>
+                    {canEdit && (
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                                setSelectedSponsor(null);
+                                setSponsorModalOpen(true);
+                            }}
+                            disabled={isPending || formData.sponsors.length >= MAX_SPONSORS}
+                        >
+                            <Plus className="size-4 mr-2" />
+                            Add Sponsor
+                        </Button>
+                    )}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {formData.sponsors.map((sponsor) => (
+                        <div key={sponsor.id} className="group relative p-4 rounded-xl border bg-card hover:border-primary/50 transition-all flex flex-col items-center gap-4 text-center">
+                            <div className="size-16 rounded-xl border bg-muted flex items-center justify-center overflow-hidden">
+                                {sponsor.logo ? (
+                                    <img 
+                                        src={getEventImageUrl(sponsor.logo) ?? ""} 
+                                        alt={sponsor.name}
+                                        className="size-full object-contain p-2"
+                                    />
+                                ) : (
+                                    <ImageIcon className="size-6 text-muted-foreground opacity-20" />
+                                )}
+                            </div>
+                            <h4 className="text-sm font-bold truncate w-full">{sponsor.name}</h4>
+                            
+                            {canEdit && (
+                                <div className="flex gap-1 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button 
+                                        variant="outline" 
+                                        size="icon" 
+                                        className="size-7 rounded-full bg-background/80 backdrop-blur-sm"
+                                        onClick={() => {
+                                            setSelectedSponsor(sponsor);
+                                            setSponsorModalOpen(true);
+                                        }}
+                                    >
+                                        <Pencil className="size-3" />
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        size="icon" 
+                                        className="size-7 rounded-full bg-background/80 backdrop-blur-sm text-destructive hover:text-destructive"
+                                        onClick={() => {
+                                            const newSponsors = formData.sponsors.filter(s => s.id !== sponsor.id);
+                                            setFormData(prev => ({ ...prev, sponsors: newSponsors }));
+                                            saveField("sponsors", newSponsors);
+                                        }}
+                                    >
+                                        <Trash2 className="size-3" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {formData.sponsors.length === 0 && (
+                        <div className="col-span-full py-8 border border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground gap-2 bg-muted/20">
+                            <ImageIcon className="size-8 opacity-20" />
+                            <p className="text-sm">No sponsors added yet</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Social Links Section */}
+            <div className="bg-card border rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="space-y-1">
+                        <h3 className="font-semibold flex items-center gap-2">
+                            <Share2 className="size-4 text-primary" />
+                            Organization Socials
+                        </h3>
+                        <p className="text-xs text-muted-foreground">Keep your attendees connected</p>
+                    </div>
+                    {canEdit && (
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                                setSelectedSocial(null);
+                                setSocialModalOpen(true);
+                            }}
+                            disabled={isPending}
+                        >
+                            <Plus className="size-4 mr-2" />
+                            Add Link
+                        </Button>
+                    )}
+                </div>
+
+                <div className="space-y-3">
+                    {formData.socialLinks.map((link) => {
+                        const platform = getSocialPlatform(link.url, "size-4");
+                        return (
+                            <div key={link.id} className="flex gap-2 items-center p-3 border rounded-lg bg-muted/30 group">
+                                <div className="flex-1 flex items-center gap-3 min-w-0">
+                                    <div className="size-8 rounded-full bg-background flex items-center justify-center border shadow-sm shrink-0">
+                                        {platform.icon}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{platform.name}</p>
+                                        <p className="text-sm truncate">{link.url}</p>
+                                    </div>
+                                </div>
+                                {canEdit && (
+                                    <div className="flex gap-1">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="size-8"
+                                            onClick={() => {
+                                                setSelectedSocial(link);
+                                                setSocialModalOpen(true);
+                                            }}
+                                        >
+                                            <Pencil className="size-4" />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => {
+                                                const newLinks = formData.socialLinks.filter(l => l.id !== link.id);
+                                                setFormData(prev => ({ ...prev, socialLinks: newLinks }));
+                                                saveField("socialLinks", newLinks);
+                                            }}
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                    {formData.socialLinks.length === 0 && (
+                        <div className="py-4 text-center text-sm text-muted-foreground italic bg-muted/20 rounded-lg border border-dashed">
+                            No social links added yet
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Photo Gallery Section */}
+            <div className="bg-card border rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="space-y-1">
+                        <h3 className="font-semibold flex items-center gap-2">
+                            <ImageIcon className="size-4 text-primary" />
+                            Photo Gallery Links
+                        </h3>
+                        <p className="text-xs text-muted-foreground">Share links to event photos (Google Drive, Pixieset, etc.)</p>
+                    </div>
+                    {canEdit && (
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                                setSelectedGallery(null);
+                                setGalleryModalOpen(true);
+                            }}
+                            disabled={isPending || formData.galleryLinks.length >= MAX_GALLERY_LINKS}
+                        >
+                            <Plus className="size-4 mr-2" />
+                            Add Gallery
+                        </Button>
+                    )}
+                </div>
+
+                <div className="space-y-4">
+                    {formData.galleryLinks.map((link) => {
+                        const provider = getGalleryProvider(link.url, "size-4");
+                        return (
+                            <div key={link.id} className="flex gap-4 items-center p-4 rounded-xl border bg-primary/5 group">
+                                <div className="size-10 rounded-lg bg-background flex items-center justify-center border shadow-sm shrink-0">
+                                    {provider.icon}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <h5 className="font-bold text-sm truncate">{link.name}</h5>
+                                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">
+                                            {provider.name}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground truncate">{link.url}</p>
+                                </div>
+                                {canEdit && (
+                                    <div className="flex gap-1">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="size-8"
+                                            onClick={() => {
+                                                setSelectedGallery(link);
+                                                setGalleryModalOpen(true);
+                                            }}
+                                        >
+                                            <Pencil className="size-4" />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => {
+                                                const newLinks = formData.galleryLinks.filter(l => l.id !== link.id);
+                                                setFormData(prev => ({ ...prev, galleryLinks: newLinks }));
+                                                saveField("galleryLinks", newLinks);
+                                            }}
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                    {formData.galleryLinks.length === 0 && (
+                        <div className="py-4 text-center text-sm text-muted-foreground italic bg-muted/20 rounded-lg border border-dashed">
+                            No gallery links added yet
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* --- Modals --- */}
+            
+            <SponsorDialog 
+                open={sponsorModalOpen}
+                onOpenChange={setSponsorModalOpen}
+                sponsor={selectedSponsor}
+                onSave={(sponsorData) => {
+                    let newSponsors;
+                    if (selectedSponsor) {
+                        newSponsors = formData.sponsors.map(s => s.id === selectedSponsor.id ? { ...sponsorData, id: s.id } : s);
+                    } else {
+                        newSponsors = [...formData.sponsors, { ...sponsorData, id: `new-${Date.now()}` }];
+                    }
+                    setFormData(prev => ({ ...prev, sponsors: newSponsors }));
+                    saveField("sponsors", newSponsors);
+                    setSponsorModalOpen(false);
+                }}
+                isPending={isPending}
+            />
+
+            <SocialLinkDialog 
+                open={socialModalOpen}
+                onOpenChange={setSocialModalOpen}
+                link={selectedSocial}
+                onSave={(url) => {
+                    let newLinks;
+                    if (selectedSocial) {
+                        newLinks = formData.socialLinks.map(l => l.id === selectedSocial.id ? { id: l.id, url } : l);
+                    } else {
+                        newLinks = [...formData.socialLinks, { id: `new-${Date.now()}`, url }];
+                    }
+                    setFormData(prev => ({ ...prev, socialLinks: newLinks }));
+                    saveField("socialLinks", newLinks);
+                    setSocialModalOpen(false);
+                }}
+                isPending={isPending}
+            />
+
+            <GalleryLinkDialog 
+                open={galleryModalOpen}
+                onOpenChange={setGalleryModalOpen}
+                link={selectedGallery}
+                onSave={(galleryData) => {
+                    let newLinks;
+                    if (selectedGallery) {
+                        newLinks = formData.galleryLinks.map(l => l.id === selectedGallery.id ? { ...galleryData, id: l.id } : l);
+                    } else {
+                        newLinks = [...formData.galleryLinks, { ...galleryData, id: `new-${Date.now()}` }];
+                    }
+                    setFormData(prev => ({ ...prev, galleryLinks: newLinks }));
+                    saveField("galleryLinks", newLinks);
+                    setGalleryModalOpen(false);
+                }}
+                isPending={isPending}
+            />
         </div>
     );
 }
 
+// --- Dialog Components ---
+
+function SponsorDialog({ 
+    open, 
+    onOpenChange, 
+    sponsor, 
+    onSave,
+    isPending
+}: { 
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    sponsor: { id: string; name: string; logo: string | null } | null;
+    onSave: (data: { name: string; logo: string | null }) => void;
+    isPending: boolean;
+}) {
+    const [name, setName] = useState(sponsor?.name ?? "");
+    const [logo, setLogo] = useState(sponsor?.logo ?? null);
+    
+    // Sync with props when opening for edit
+    useEffect(() => {
+        if (open) {
+            setName(sponsor?.name ?? "");
+            setLogo(sponsor?.logo ?? null);
+        }
+    }, [open, sponsor]);
+
+    const { isUploading, upload } = useImageUpload({
+        bucket: "events",
+        folder: "sponsors",
+        convertOptions: { quality: 0.8, maxWidth: 400, maxHeight: 400, maxSizeMB: 1 },
+    });
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const path = await upload(file);
+            if (path) setLogo(path);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>{sponsor ? "Edit Sponsor" : "Add Sponsor"}</DialogTitle>
+                    <DialogDescription>
+                        Display the organization supporting your event.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="relative size-24 rounded-xl border bg-muted flex items-center justify-center overflow-hidden">
+                            {logo ? (
+                                <img 
+                                    src={getEventImageUrl(logo) ?? ""} 
+                                    alt="Preview"
+                                    className="size-full object-contain p-2"
+                                />
+                            ) : (
+                                <ImageIcon className="size-8 text-muted-foreground opacity-20" />
+                            )}
+                            <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
+                                {isUploading ? (
+                                    <Loader2 className="size-6 text-white animate-spin" />
+                                ) : (
+                                    <Upload className="size-6 text-white" />
+                                )}
+                                <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={isUploading || isPending} />
+                            </label>
+                        </div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Logo (Click to upload)</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Sponsor Name</Label>
+                        <Input 
+                            placeholder="e.g., Google" 
+                            value={name} 
+                            onChange={(e) => setName(e.target.value)} 
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button 
+                        onClick={() => onSave({ name, logo })}
+                        disabled={!name || isPending}
+                    >
+                        {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+                        Save Sponsor
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function SocialLinkDialog({ 
+    open, 
+    onOpenChange, 
+    link, 
+    onSave,
+    isPending
+}: { 
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    link: { id: string; url: string } | null;
+    onSave: (url: string) => void;
+    isPending: boolean;
+}) {
+    const [url, setUrl] = useState(link?.url ?? "");
+    
+    // Sync with props
+    useEffect(() => {
+        if (open) setUrl(link?.url ?? "");
+    }, [open, link]);
+
+    const platform = getSocialPlatform(url, "size-4");
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>{link ? "Edit Social Link" : "Add Social Link"}</DialogTitle>
+                    <DialogDescription>
+                        Add a link to your organization's social media.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                    <div className="space-y-2">
+                        <Label>Social URL</Label>
+                        <div className="relative">
+                            <Input 
+                                placeholder="https://t.me/organization" 
+                                value={url} 
+                                onChange={(e) => setUrl(e.target.value)} 
+                                className="pl-10"
+                            />
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                {platform.icon}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {url && (
+                        <div className="p-4 rounded-xl bg-muted/50 border flex items-center gap-3">
+                            <div className="size-10 rounded-full bg-background flex items-center justify-center border shadow-sm">
+                                {platform.icon}
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold uppercase text-muted-foreground">{platform.name} detected</p>
+                                <p className="text-sm truncate max-w-[200px]">{url}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button 
+                        onClick={() => onSave(url)}
+                        disabled={!url || isPending}
+                    >
+                        {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+                        Save Link
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function GalleryLinkDialog({ 
+    open, 
+    onOpenChange, 
+    link, 
+    onSave,
+    isPending
+}: { 
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    link: { id: string; name: string; url: string } | null;
+    onSave: (data: { name: string; url: string }) => void;
+    isPending: boolean;
+}) {
+    const [name, setName] = useState(link?.name ?? "");
+    const [url, setUrl] = useState(link?.url ?? "");
+    
+    // Sync with props
+    useEffect(() => {
+        if (open) {
+            setName(link?.name ?? "");
+            setUrl(link?.url ?? "");
+        }
+    }, [open, link]);
+
+    const provider = getGalleryProvider(url, "size-4");
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>{link ? "Edit Gallery" : "Add Gallery"}</DialogTitle>
+                    <DialogDescription>
+                        Link to photo albums from Google Drive, Pixieset, etc.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label>Display Label</Label>
+                        <Input 
+                            placeholder="e.g., Official Photos" 
+                            value={name} 
+                            onChange={(e) => setName(e.target.value)} 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Gallery URL</Label>
+                        <div className="relative">
+                            <Input 
+                                placeholder="https://drive.google.com/..." 
+                                value={url} 
+                                onChange={(e) => setUrl(e.target.value)} 
+                                className="pl-10"
+                            />
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                {provider.icon}
+                            </div>
+                        </div>
+                    </div>
+
+                    {url && (
+                        <div className="p-4 rounded-xl bg-muted/50 border flex items-center gap-3">
+                            <div className="size-10 rounded-lg bg-background flex items-center justify-center border shadow-sm">
+                                {provider.icon}
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold uppercase text-muted-foreground">{provider.name} detected</p>
+                                <p className="text-sm truncate max-w-[200px]">{url}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button 
+                        onClick={() => onSave({ name, url })}
+                        disabled={!name || !url || isPending}
+                    >
+                        {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+                        Save Gallery
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
