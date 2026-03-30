@@ -46,68 +46,7 @@ serve(async (req) => {
       });
     }
 
-    // --- Pre-flight Constraint Checks (Logged-in Only + Private Events) ---
-    if (user && relatedType === "vote") {
-      const categoryId = metadata?.category_id;
-      const eventId = metadata?.event_id;
-      const optionId = relatedId;
-
-      if (eventId && categoryId) {
-        // 1. Fetch Event Publicity & Category limits
-        const { data: eventData } = await supabase
-          .from("events")
-          .select("is_public")
-          .eq("id", eventId)
-          .single();
-
-        // ONLY enforce limits if the event is PRIVATE (is_public === false)
-        // If it is missing, null, or true, default to PUBLIC
-        if (eventData && eventData.Internal) {
-          const { data: category } = await supabase
-            .from("voting_categories")
-            .select("max_votes_per_user, max_nominees_per_user")
-            .eq("id", categoryId)
-            .single();
-
-          if (category) {
-            // 2. Check if already voted for this specific nominee (Duplicate Transaction)
-            const { data: existingNomineeVote } = await supabase
-              .from("votes")
-              .select("id")
-              .eq("option_id", optionId)
-              .eq("voter_id", user.id)
-              .single();
-
-            if (existingNomineeVote) {
-               return new Response(JSON.stringify({ 
-                 error: "Already Voted", 
-                 detail: "You have already cast your ballot for this nominee in this private event." 
-               }), {
-                 status: 403, 
-                 headers: { ...corsHeaders, "Content-Type": "application/json" },
-               });
-            }
-
-            // 3. Check if they've exceeded the 'max nominees' allowed in this category
-            const { count: nomineeCount } = await supabase
-              .from("votes")
-              .select("id", { count: "exact", head: true })
-              .eq("category_id", categoryId)
-              .eq("voter_id", user.id);
-
-            if (nomineeCount && nomineeCount >= category.max_nominees_per_user) {
-              return new Response(JSON.stringify({ 
-                error: "Nominee Limit Reached", 
-                detail: `You have already voted for the maximum allowed (${category.max_nominees_per_user}) nominees in this private category.` 
-              }), {
-                status: 403,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-              });
-            }
-          }
-        }
-      }
-    }
+    // No pre-flight constraint checks for general voting since it has no maximum limits and allows multiple votes.
 
     // 2. Generate a unique reference
     const reference = `PAY-${crypto.randomUUID().replace(/-/g, "").substring(0, 12).toUpperCase()}`;

@@ -105,13 +105,13 @@ interface NomineeGridProps {
     readonly eventId: string;
     readonly categoryId: string;
     readonly isPublic?: boolean;
-    readonly votingMode?: "internal" | "public";
+    readonly votingMode?: "internal" | "general";
     readonly showTotalVotesPublicly?: boolean;
     readonly orgSlug?: string;
     readonly eventSlug?: string;
 }
 
-export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPublic, votingMode = "public", showTotalVotesPublicly = true, orgSlug, eventSlug }: NomineeGridProps) {
+export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPublic, votingMode = "general", showTotalVotesPublicly = true, orgSlug, eventSlug }: NomineeGridProps) {
     const [selectedNominee, setSelectedNominee] = useState<VotingOption | null>(null);
     const [votingNominee, setVotingNominee] = useState<VotingOption | null>(null);
 
@@ -182,7 +182,7 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                                     }}
                                 >
                                     <Vote className="w-3.5 h-3.5" />
-                                    Vote {votingMode === "public" && votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}
+                                    Vote {votingMode === "general" && votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}
                                 </Button>
                                 {showTotalVotesPublicly && (
                                     <div className="mt-3 pt-3 border-t flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium">

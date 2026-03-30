@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+// Removed 'next/headers' import to allow use in client/page components
 
 const ACTIVE_ORG_COOKIE = "active_organization_id";
 

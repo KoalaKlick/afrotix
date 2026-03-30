@@ -36,48 +36,9 @@ import { MAX_SPONSORS, MAX_GALLERY_LINKS } from "@/lib/const/event";
 import { getSocialPlatform, getGalleryProvider } from "@/lib/utils/event-icons";
 import Link from "next/link";
 import { Card } from "../ui/card";
+import type { EventFormData, EventOriginalData } from "@/lib/types/event";
 
-interface EventFormData {
-    title: string;
-    slug: string;
-    status: string;
-    description: string;
-    startDate: string;
-    endDate: string;
-    timezone: string;
-    isVirtual: boolean;
-    virtualLink: string;
-    venueName: string;
-    venueAddress: string;
-    venueCity: string;
-    venueCountry: string;
-    coverImage: string;
-    bannerImage: string;
-    isPublic: boolean;
-    maxAttendees: string;
-    sponsors: { id: string; name: string; logo: string | null }[];
-    socialLinks: { id: string; url: string }[];
-    galleryLinks: { id: string; name: string; url: string }[];
-}
 
-interface EventOriginalData {
-    description?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
-    timezone: string;
-    isVirtual: boolean;
-    virtualLink?: string | null;
-    venueName?: string | null;
-    venueAddress?: string | null;
-    venueCity?: string | null;
-    venueCountry: string;
-    isPublic: boolean;
-    maxAttendees?: number | null;
-    type?: string;
-    sponsors?: { id: string; name: string; logo: string | null }[];
-    socialLinks?: { id: string; url: string }[];
-    galleryLinks?: { id: string; name: string; url: string }[];
-}
 
 interface EventSettingsTabProps {
     readonly formData: EventFormData;
@@ -108,13 +69,13 @@ export function EventSettingsTab({
 
     // Modal States
     const [sponsorModalOpen, setSponsorModalOpen] = useState(false);
-    const [selectedSponsor, setSelectedSponsor] = useState<{ id: string; name: string; logo: string | null } | null>(null);
+    const [selectedSponsor, setSelectedSponsor] = useState<EventFormData["sponsors"] extends Array<infer T> ? T : null>(null);
 
     const [socialModalOpen, setSocialModalOpen] = useState(false);
-    const [selectedSocial, setSelectedSocial] = useState<{ id: string; url: string } | null>(null);
+    const [selectedSocial, setSelectedSocial] = useState<EventFormData["socialLinks"] extends Array<infer T> ? T : null>(null);
 
     const [galleryModalOpen, setGalleryModalOpen] = useState(false);
-    const [selectedGallery, setSelectedGallery] = useState<{ id: string; name: string; url: string } | null>(null);
+    const [selectedGallery, setSelectedGallery] = useState<EventFormData["galleryLinks"] extends Array<infer T> ? T : null>(null);
 
     return (
         <div className="space-y-6">
@@ -439,7 +400,7 @@ export function EventSettingsTab({
             <Card className="rounded-md p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold">Visibility & Capacity</h3>
-                    {canEdit && editingField !== "settings" && !isVotingEvent && (
+                    {canEdit && editingField !== "settings" && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -451,29 +412,7 @@ export function EventSettingsTab({
                     )}
                 </div>
 
-                {/* Voting events: locked mode display */}
-                {isVotingEvent && (
-                    <div className="space-y-4 mb-4">
-                        <div className="flex items-start gap-3 p-4 rounded-md bg-blue-50/80 border border-blue-100">
-                            <Lock className="size-5 text-blue-600 mt-0.5 shrink-0" />
-                            <div>
-                                <p className="font-medium text-blue-900">
-                                    {formData.isPublic ? "Public Voting" : "Internal Voting"}
-                                </p>
-                                <p className="text-xs text-blue-700 mt-0.5">
-                                    {formData.isPublic
-                                        ? "Anyone can vote · Paid voting only (min GHS 0.10) · Vote counts shown publicly"
-                                        : "Organization members only · Can be free · Only participation status shown"}
-                                </p>
-                                <p className="text-[10px] text-blue-500 mt-1.5 font-medium">
-                                    Voting mode cannot be changed after event creation
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {editingField === "settings" && !isVotingEvent ? (
+                {editingField === "settings" ? (
                     <div className="space-y-6">
                         <div className="space-y-3">
                             <Label>Event Visibility</Label>
@@ -555,25 +494,23 @@ export function EventSettingsTab({
                     </div>
                 ) : editingField !== "settings" && (
                     <div className="space-y-4">
-                        {!isVotingEvent && (
-                            <div className="flex items-center gap-3">
-                                {formData.isPublic ? (
-                                    <Eye className="size-5 text-green-600" />
-                                ) : (
-                                    <EyeOff className="size-5 text-yellow-600" />
-                                )}
-                                <div>
-                                    <p className="font-medium">
-                                        {formData.isPublic ? "Public Event" : "Private Event"}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {formData.isPublic
-                                            ? "This event is visible to everyone"
-                                            : "This event is only visible to organization members"}
-                                    </p>
-                                </div>
+                        <div className="flex items-center gap-3">
+                            {formData.isPublic ? (
+                                <Eye className="size-5 text-green-600" />
+                            ) : (
+                                <EyeOff className="size-5 text-yellow-600" />
+                            )}
+                            <div>
+                                <p className="font-medium">
+                                    {formData.isPublic ? "Public Event" : "Private Event"}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    {formData.isPublic
+                                        ? "This event is visible to everyone"
+                                        : "This event is only visible to organization members"}
+                                </p>
                             </div>
-                        )}
+                        </div>
                         <div className="flex items-center gap-3">
                             <Users className="size-5 text-primary" />
                             <div>

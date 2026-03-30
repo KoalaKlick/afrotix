@@ -1,4 +1,4 @@
-# Sankofa
+# Afrotix
 
 A modern event management platform built with Next.js, featuring real-time voting, seamless ticket sales, and powerful analytics.
 

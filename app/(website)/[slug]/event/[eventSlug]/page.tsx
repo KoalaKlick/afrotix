@@ -10,11 +10,12 @@ import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { format } from "date-fns"
-import { Globe, Mail, ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, Share2, ExternalLink, Instagram, Facebook, Twitter, MessageCircle, Send, Tag } from "lucide-react"
+import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users } from "lucide-react"
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
 
 import { getSocialPlatform, getGalleryProvider } from "@/lib/utils/event-icons";
+// Types only used for type annotations
 
 interface EventDetailsPageProps {
     params: Promise<{
@@ -23,7 +24,7 @@ interface EventDetailsPageProps {
     }>
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN_URL || "https://sankofa-one.vercel.app"
+const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN_URL || "https://afrotix-one.vercel.app"
 
 export async function generateMetadata({ params }: EventDetailsPageProps): Promise<Metadata> {
     const { slug: orgSlug, eventSlug } = await params
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: EventDetailsPageProps): Promi
     const absoluteImage = coverImage.startsWith("http") ? coverImage : `${BASE_URL}${coverImage}`
     const pageUrl = `${BASE_URL}/${orgSlug}/event/${eventSlug}`
     const description = event.description
-        ? event.description.replace(/<[^>]*>/g, "").slice(0, 200)
+        ? event.description.replaceAll(/<[^>]*>/g, "").slice(0, 200)
         : `${event.title} — powered by ${PROJ_NAME}`
 
     return {
@@ -113,7 +114,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-6">
                             {event.title}
                         </h1>
-                        
+
                         {/* Event Schedule Bar */}
                         <div className="flex flex-wrap gap-4 items-center">
                             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
@@ -123,7 +124,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                     <span className="text-xs font-bold leading-none">{dateStr}</span>
                                 </div>
                             </div>
-                            
+
                             {timeStr && (
                                 <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
                                     <Clock className="w-4 h-4 text-[#FFCD00]" />
@@ -138,7 +139,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                 <MapPin className="w-4 h-4 text-[#FFCD00]" />
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Venue</span>
-                                    <span className="text-xs font-bold leading-none truncate max-w-[150px]">{event.venueName || "TBA"}</span>
+                                    <span className="text-xs font-bold leading-none truncate max-w-37.5">{event.venueName || "TBA"}</span>
                                 </div>
                             </div>
 
@@ -178,7 +179,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                     >
                                         {category.templateImage && (
                                             <div className="relative w-full h-48 shrink-0 overflow-hidden bg-muted rounded-t-md">
-                                                <Image 
+                                                <Image
                                                     src={getEventImageUrl(category.templateImage) || ''}
                                                     alt={category.name}
                                                     fill
@@ -207,7 +208,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                     {category.description}
                                                 </p>
                                             )}
-                                            
+
                                             <div className="mt-auto">
                                                 {!category.templateImage && (
                                                     <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -215,17 +216,17 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                         <span>{category.votingOptions.length} {category.votingOptions.length === 1 ? "nominee" : "nominees"}</span>
                                                     </div>
                                                 )}
-                                                
+
                                                 {/* Preview of nominees */}
                                                 {category.votingOptions.length > 0 && (
                                                     <div className="flex flex-row items-center mt-1 pt-1 mb-1">
-                                                        <AnimatedTooltip 
+                                                        <AnimatedTooltip
                                                             items={category.votingOptions.slice(0, 5).map((nominee) => ({
-                                                                id: nominee.id as string,
+                                                                id: nominee.id,
                                                                 name: nominee.optionText,
                                                                 designation: nominee.nomineeCode || "Nominee",
                                                                 image: getEventImageUrl(nominee.imageUrl),
-                                                            }))} 
+                                                            }))}
                                                         />
                                                         {category.votingOptions.length > 5 && (
                                                             <div className="relative w-10 h-10 ml-2 rounded-full border-2 border-white bg-tertiary-600 flex items-center justify-center shrink-0 z-40">
@@ -249,8 +250,8 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
                         {/* Left: About */}
-                        <div className="md:col-span-2 space-y-8">
-                            <div className="space-y-4">
+                        <div className="md:col-span-2 space-y-8" id="details">
+                            <div className="space-y-4" >
                                 <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                     About the Event.
                                 </h2>
@@ -264,13 +265,13 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             </div>
 
                             {/* Social Links nested here for mobile, but visible on all */}
-                            {((event as any).socialLinks?.length > 0) && (
+                            {(event.socialLinks?.length > 0) && (
                                 <div className="space-y-4 pt-4 border-t border-dashed">
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-[#009A44]">Organization Contacts.</h3>
                                     <div className="flex flex-wrap gap-3">
-                                        {(event as any).socialLinks.map((link: any, idx: number) => (
+                                        {event.socialLinks.map((link) => (
                                             <a
-                                                key={idx}
+                                                key={link.id}
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -290,16 +291,16 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         {/* Right: Gallery & Official links */}
                         <div className="space-y-12">
                             {/* Gallery Links */}
-                            {((event as any).galleryLinks?.length > 0) && (
+                            {(event.galleryLinks?.length > 0) && (
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
                                         <ImageIcon className="w-5 h-5 text-[#009A44]" />
                                         Galleries.
                                     </h3>
                                     <div className="space-y-3">
-                                        {(event as any).galleryLinks.map((link: any, idx: number) => (
+                                        {event.galleryLinks.map((link) => (
                                             <a
-                                                key={idx}
+                                                key={link.id}
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -321,15 +322,15 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             )}
 
                             {/* Official Sponsors area (if small) */}
-                            {((event as any).sponsors?.length > 0) && (
+                            {(event.sponsors?.length > 0) && (
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
                                         <Trophy className="w-5 h-5 text-[#009A44]" />
                                         Sponsors.
                                     </h3>
                                     <div className="flex flex-wrap gap-4">
-                                        {(event as any).sponsors.map((sponsor: any, idx: number) => (
-                                            <div key={idx} className="size-12 p-2 border rounded-xl bg-white flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-help" title={sponsor.name}>
+                                        {event.sponsors.map((sponsor) => (
+                                            <div key={sponsor.id} className="size-12 p-2 border rounded-xl bg-white flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-help" title={sponsor.name}>
                                                 {sponsor.logo ? (
                                                     <Image
                                                         src={getEventImageUrl(sponsor.logo) || ""}

@@ -17,31 +17,9 @@ import {
 } from "@/components/event";
 import { createNewEvent } from "@/lib/actions/event";
 import { TOTAL_EVENT_CREATION_STEPS } from "@/lib/validations/event";
+import type { EventFormData } from "@/lib/types/event";
 
-// Form state type
-type EventFormData = {
-    title: string;
-    slug: string;
-    type: string;
-    votingMode?: string;
-    description?: string;
-    startDate?: string;
-    endDate?: string;
-    timezone?: string;
-    isVirtual?: boolean;
-    virtualLink?: string;
-    venueName?: string;
-    venueAddress?: string;
-    venueCity?: string;
-    venueCountry?: string;
-    coverImage?: string;
-    bannerImage?: string;
-    maxAttendees?: number | null;
-    isPublic?: boolean;
-    sponsors?: { name: string; logo?: string }[];
-    socialLinks?: { url: string }[];
-    galleryLinks?: { name: string; url: string }[];
-};
+
 
 interface EventCreationClientProps {
     readonly organizationSlug?: string;

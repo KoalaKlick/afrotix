@@ -1,7 +1,7 @@
 const require_ = require;
 const fs = require_('fs');
 
-const path = 'd:/goals/do/Sankofa/sankofa/lib/actions/organization.ts';
+const path = 'd:/goals/do/Afrotix/Afrotix/lib/actions/organization.ts';
 let content = fs.readFileSync(path, 'utf8');
 
 if (content.indexOf('"use server";') !== -1 && content.indexOf('"use server";') > content.indexOf('import')) {

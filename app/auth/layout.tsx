@@ -24,7 +24,7 @@ export default function AuthLayout({
         {/* Hero copy (matches AfroTix-style layout) */}
         <div className="absolute top-1/2 left-6 right-6 lg:space-y-6 max-w-[12rem] sm:max-w-[15rem] md:max-w-xs pointer-events-none">
           <div className="flex items-center gap-2">
-            {/* <Image height={40} width={40} src="/logo.png" alt="Sankofa Logo" className="bg-black h-20 w-auto" /> */}
+            {/* <Image height={40} width={40} src="/logo.png" alt="Afrotix Logo" className="bg-black h-20 w-auto" /> */}
             <Link href="/" className="pointer-events-auto">
               <AfroTixLogo className="w-28 sm:w-32 md:w-36 lg:w-40 h-auto border p-2 border-black" />
             </Link>

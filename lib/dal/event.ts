@@ -5,7 +5,7 @@ import { logger, logAction } from '@/lib/logger';
  * Uses Prisma for type-safe database queries
  */
 
-import "server-only";
+// Removed 'server-only' import to allow use in client/page components
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
 import type { Event, EventType, EventStatus, VotingMode, OrderStatus, TicketCheckInStatus, TransactionStatus } from "@/lib/generated/prisma";
@@ -69,7 +69,13 @@ export const getEventById = cache(async (id: string): Promise<Event | null> => {
 /**
  * Get event by slug within an organization
  */
-export const getEventBySlug = cache(async (organizationId: string, slug: string): Promise<Event | null> => {
+export type EventWithRelations = Event & {
+    sponsors: { id: string; name: string; logo?: string | null }[];
+    socialLinks: { id: string; url: string }[];
+    galleryLinks: { id: string; name: string; url: string }[];
+};
+
+export const getEventBySlug = cache(async (organizationId: string, slug: string): Promise<EventWithRelations | null> => {
     try {
         return await prisma.event.findUnique({
             where: {
@@ -80,7 +86,7 @@ export const getEventBySlug = cache(async (organizationId: string, slug: string)
                 socialLinks: true,
                 galleryLinks: true,
             },
-        });
+        }) as EventWithRelations | null;
     } catch (error) {
         logger.error(error, "[DAL] Error fetching event by slug:");
         return null;

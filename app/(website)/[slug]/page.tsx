@@ -9,6 +9,8 @@ import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils";
 import { getSocialPlatform } from "@/lib/utils/event-icons";
 import type { Metadata } from "next";
 import Image from "next/image";
+import parse from 'html-react-parser';
+import { EventSocialLink, EventSponsor } from "@/lib/generated/prisma";
 
 interface OrgProfilePageProps {
     readonly params: Promise<{ slug: string }>;
@@ -98,8 +100,8 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                                     </h3>
                                     {uniqueSponsors.length > 0 ? (
                                         <div className="flex flex-wrap gap-2.5">
-                                            {uniqueSponsors.slice(0, 15).map((sponsor: any, idx: number) => (
-                                                <div key={idx} className="size-10 p-1.5 border rounded-lg bg-white flex items-center justify-center grayscale hover:grayscale-0 transition-all cursor-help" title={sponsor.name}>
+                                            {uniqueSponsors.slice(0, 15).map((sponsor: EventSponsor, idx: number) => (
+                                                <div key={sponsor.id} className="size-10 p-1.5 border rounded-lg bg-white flex items-center justify-center grayscale hover:grayscale-0 transition-all cursor-help" title={sponsor.name}>
                                                     {sponsor.logo ? (
                                                         <Image
                                                             src={getEventImageUrl(sponsor.logo) || ""}
@@ -125,11 +127,10 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                                         About {organization.name}.
                                     </h3>
                                     <div className="prose prose-sm prose-p:text-muted-foreground prose-headings:text-foreground prose-li:text-muted-foreground max-w-none text-xs leading-relaxed">
-                                        {organization.description ? (
-                                            <div 
-                                                dangerouslySetInnerHTML={{ __html: organization.description }} 
-                                                className="rich-text-content"
-                                            />
+                                            {organization.description ? (
+                                              <div className="">
+                                                {parse(organization.description)}
+                                              </div>
                                         ) : (
                                             <p className="italic text-muted-foreground/60">
                                                 Dedicated to delivering exceptional events and fostering community engagement through innovation and excellence.
@@ -171,9 +172,9 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                                     {/* Dedicated Social Links */}
                                     {(organization as any).socialLinks?.length > 0 && (
                                         <div className="pt-6 border-t border-dashed flex flex-wrap gap-2">
-                                            {(organization as any).socialLinks.map((link: any, idx: number) => (
+                                            {(organization as any).socialLinks.map((link: EventSocialLink, idx: number) => (
                                                 <a
-                                                    key={idx}
+                                                    key={link.id}
                                                     href={link.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"

@@ -27,7 +27,7 @@ enum EventType {
 
 enum VotingMode {
   internal
-  public
+  general
   @@map("voting_mode")
 }
 

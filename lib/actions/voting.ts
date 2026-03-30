@@ -30,6 +30,7 @@ import {
     rejectNomination,
     submitPublicNomination,
     generateNomineeCode,
+    hasUserVotedInCategory,
 } from "@/lib/dal/voting";
 import { getEventById } from "@/lib/dal/event";
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
@@ -836,5 +837,25 @@ export async function getInternalVoteParticipationAction(
     } catch (error) {
         console.error("[Action] Error fetching participation:", error);
         return { success: false, error: "Failed to fetch participation" };
+    }
+}
+
+/**
+ * Check if the current authenticated user has already voted in a category.
+ */
+export async function checkUserVoteStatus(categoryId: string): Promise<ActionResult<{ hasVoted: boolean }>> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+
+    try {
+        const hasVoted = await hasUserVotedInCategory(user.id, categoryId);
+        return { success: true, data: { hasVoted } };
+    } catch (error) {
+        console.error("[Action] Error checking user vote status:", error);
+        return { success: false, error: "Failed to check vote status" };
     }
 }

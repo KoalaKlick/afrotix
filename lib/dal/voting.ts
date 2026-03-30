@@ -794,3 +794,22 @@ export const getInternalVoteParticipation = cache(async (
         return [];
     }
 });
+
+/**
+ * Check if a user has already voted in an event category.
+ */
+export async function hasUserVotedInCategory(voterId: string, categoryId: string): Promise<boolean> {
+    try {
+        const vote = await prisma.vote.findFirst({
+            where: {
+                voterId,
+                categoryId,
+            },
+            select: { id: true },
+        });
+        return !!vote;
+    } catch (error) {
+        logger.error(error, "[DAL] Error checking user vote status:");
+        return false;
+    }
+}

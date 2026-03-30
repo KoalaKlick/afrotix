@@ -34,7 +34,7 @@ export const eventTypeSchema = z.enum(["voting", "ticketed", "advertisement", "h
 });
 
 // Voting mode enum — locked at creation
-export const votingModeSchema = z.enum(["internal", "public"], {
+export const votingModeSchema = z.enum(["internal", "general"], {
     error: "Please select a valid voting mode",
 }).optional();
 
@@ -214,9 +214,9 @@ export const EVENT_TYPES = [
 
 export const VOTING_MODES = [
     {
-        value: "public" as const,
-        label: "Public Voting",
-        description: "Anyone can vote. Paid voting only (min GHS 0.10). Vote counts shown publicly.",
+        value: "general" as const,
+        label: "General Voting",
+        description: "Anyone can vote. May require payment. Unlimited votes allowed. Vote counts shown publicly.",
     },
     {
         value: "internal" as const,

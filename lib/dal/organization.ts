@@ -4,7 +4,7 @@
  * Uses Prisma for type-safe database queries
  */
 
-import "server-only";
+// Removed 'server-only' import to allow use in client/page components
 import { prisma } from "@/lib/prisma";
 import { cache } from "react";
 import { logger, logAction } from "@/lib/logger";
@@ -252,7 +252,7 @@ export async function updateOrganization(
 ): Promise<Organization | null> {
     try {
         const { socialLinks, ...baseData } = data;
-        
+
         return await prisma.$transaction(async (tx) => {
             // Update base organization fields
             const org = await tx.organization.update({

@@ -10,7 +10,7 @@ const files = [
 
 files.forEach(file => {
     try {
-        const p = 'd:/goals/do/Sankofa/sankofa/' + file;
+        const p = 'd:/goals/do/Afrotix/Afrotix/' + file;
         let content = fs.readFileSync(p, 'utf8');
 
         if (!content.includes('logger')) {

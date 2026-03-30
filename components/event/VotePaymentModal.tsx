@@ -28,7 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { VotingOption } from "@/lib/types/voting";
 import { usePaystack } from "@/hooks/usePaystack";
-import { revalidatePublicVoting } from "@/lib/actions/voting";
+import { revalidatePublicVoting, checkUserVoteStatus } from "@/lib/actions/voting";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,7 +40,7 @@ interface VotePaymentModalProps {
     readonly eventId: string;
     readonly categoryId: string;
     readonly isPublic?: boolean;
-    readonly votingMode?: "internal" | "public";
+    readonly votingMode?: "internal" | "general";
     readonly orgSlug?: string;
     readonly eventSlug?: string;
 }
@@ -57,7 +57,7 @@ export function VotePaymentModal({
     eventId,
     categoryId,
     isPublic = true,
-    votingMode = "public",
+    votingMode = "general",
     orgSlug,
     eventSlug,
 }: VotePaymentModalProps) {
@@ -100,19 +100,9 @@ export function VotePaymentModal({
 
         setCheckingVoteStatus(true);
         try {
-            const { createClient } = await import("@/utils/supabase/client");
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (user) {
-                const { data: existingVote } = await supabase
-                    .from("votes")
-                    .select("id")
-                    .eq("category_id", categoryId)
-                    .eq("voter_id", user.id)
-                    .maybeSingle();
-
-                setHasAlreadyVoted(!!existingVote);
+            const result = await checkUserVoteStatus(categoryId);
+            if (result.success) {
+                setHasAlreadyVoted(result.data.hasVoted);
             }
         } catch (err) {
             console.error("Error checking vote status:", err);
@@ -193,7 +183,7 @@ export function VotePaymentModal({
 
             const finalEmail = email.includes("@")
                 ? email
-                : `${normalisedPhone}@voter.sankofa.app`;
+                : `${normalisedPhone}@voter.Afrotix.app`;
 
             const { data: response, error } = await supabase.functions.invoke(
                 "initiate-payment",

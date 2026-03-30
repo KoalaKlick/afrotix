@@ -102,7 +102,7 @@ export function CategorySheet({
                 showFinalImage: editingCategory.showFinalImage ?? true,
                 showTotalVotesPublicly: editingCategory.showTotalVotesPublicly ?? true,
                 nominationPrice: Number(editingCategory.nominationPrice) || 0,
-                votePrice: Number(editingCategory.votePrice) || (votingMode === "public" ? 0.1 : 0),
+                votePrice: Number(editingCategory.votePrice) || (votingMode === "general" ? 0.1 : 0),
             });
         } else if (!open) {
             resetForm();
@@ -144,8 +144,8 @@ export function CategorySheet({
             return;
         }
 
-        if (votingMode === "public" && form.votePrice < 0.1) {
-            toast.error("Public events require a minimum vote price of 0.10 GHS");
+        if (votingMode === "general" && form.votePrice < 0.1) {
+            toast.error("General events require a minimum vote price of 0.10 GHS");
             return;
         }
 
@@ -312,36 +312,40 @@ export function CategorySheet({
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="max-votes">Max Votes Per User</Label>
-                                <Input
-                                    id="max-votes"
-                                    type="number"
-                                    min={1}
-                                    value={form.maxVotesPerUser}
-                                    onChange={(e) =>
-                                        setForm((prev) => ({
-                                            ...prev,
-                                            maxVotesPerUser: Number.parseInt(e.target.value) || 1,
-                                        }))
-                                    }
-                                />
-                            </div>
+                            {votingMode === "internal" && (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="max-votes">Max Votes Per User</Label>
+                                        <Input
+                                            id="max-votes"
+                                            type="number"
+                                            min={1}
+                                            value={form.maxVotesPerUser}
+                                            onChange={(e) =>
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    maxVotesPerUser: Number.parseInt(e.target.value) || 1,
+                                                }))
+                                            }
+                                        />
+                                    </div>
 
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label>Allow Multiple Selections</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Users can vote for multiple nominees
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={form.allowMultiple}
-                                    onCheckedChange={(checked) =>
-                                        setForm((prev) => ({ ...prev, allowMultiple: checked }))
-                                    }
-                                />
-                            </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label>Allow Multiple Selections</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Users can vote for multiple nominees
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={form.allowMultiple}
+                                            onCheckedChange={(checked) =>
+                                                setForm((prev) => ({ ...prev, allowMultiple: checked }))
+                                            }
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
@@ -458,7 +462,7 @@ export function CategorySheet({
                                     <Input
                                         id="vote-price"
                                         type="number"
-                                        min={votingMode === "public" ? 0.1 : 0}
+                                        min={votingMode === "general" ? 0.1 : 0}
                                         step="0.01"
                                         value={form.votePrice}
                                         onChange={(e) =>
@@ -467,7 +471,7 @@ export function CategorySheet({
                                                 votePrice: Number.parseFloat(e.target.value) || 0,
                                             }))
                                         }
-                                        placeholder={votingMode === "public" ? "0.10" : "0.00"}
+                                        placeholder={votingMode === "general" ? "0.10" : "0.00"}
                                     />
                                     <p className="text-xs text-muted-foreground">
                                         Amount a voter pays for each vote cast in this category.

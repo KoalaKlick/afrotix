@@ -1,6 +1,6 @@
-# Sankofa Platform Pricing & Referral Policy
+# Afrotix Platform Pricing & Referral Policy
 
-This document outlines the core pricing tracks, communication costs, and referral incentives for the Sankofa platform.
+This document outlines the core pricing tracks, communication costs, and referral incentives for the Afrotix platform.
 
 ---
 

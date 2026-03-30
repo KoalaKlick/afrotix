@@ -269,11 +269,6 @@ export async function createNewEvent(
 
     try {
         // Create the event
-        // For voting events, derive isPublic from votingMode
-        const effectiveIsPublic = isVotingEventType(result.data.type)
-            ? result.data.votingMode === "public"
-            : result.data.isPublic;
-
         const event = await createEvent({
             organizationId,
             creatorId: user.id,
@@ -294,7 +289,7 @@ export async function createNewEvent(
             coverImage: result.data.coverImage,
             bannerImage: result.data.bannerImage,
             maxAttendees: result.data.maxAttendees ?? undefined,
-            isPublic: effectiveIsPublic,
+            isPublic: result.data.isPublic,
             sponsors: result.data.sponsors,
             socialLinks: result.data.socialLinks,
             galleryLinks: result.data.galleryLinks,
@@ -376,12 +371,7 @@ export async function updateExistingEvent(
         updates.isVirtual = formData.get("isVirtual") === "true";
     }
     if (formData.has("isPublic")) {
-        // For voting events, isPublic is derived from votingMode and cannot be changed
-        if (isVotingEventType(event.type)) {
-            // Block changes to isPublic for voting events
-        } else {
-            updates.isPublic = formData.get("isPublic") !== "false";
-        }
+        updates.isPublic = formData.get("isPublic") !== "false";
     }
     // Block votingMode changes after creation
     if (formData.has("votingMode")) {

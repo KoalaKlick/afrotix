@@ -44,7 +44,7 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
     const [title, setTitle] = useState(initialData?.title ?? "");
     const [slug, setSlug] = useState(initialData?.slug ?? "");
     const [type, setType] = useState(initialData?.type ?? "ticketed");
-    const [votingMode, setVotingMode] = useState(initialData?.votingMode ?? "public");
+    const [votingMode, setVotingMode] = useState(initialData?.votingMode ?? "general");
     const [description, setDescription] = useState(initialData?.description ?? "");
     const [errors, setErrors] = useState<Record<string, string[]>>({});
     const [generalError, setGeneralError] = useState<string | null>(null);
@@ -148,7 +148,7 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
                     <div className="grid grid-cols-2 gap-3">
                         {VOTING_MODES.map((mode) => {
                             const isSelected = votingMode === mode.value;
-                            const Icon = mode.value === "public" ? Globe : Users;
+                            const Icon = mode.value === "general" ? Globe : Users;
 
                             return (
                                 <button

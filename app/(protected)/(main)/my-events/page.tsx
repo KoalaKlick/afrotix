@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getEffectiveOrganizationId } from "@/lib/organization-utils";
-import { getUserRoleInOrganization, getOrganizationById } from "@/lib/dal/organization";
-import { getOrganizationEvents, getOrganizationEventStats } from "@/lib/dal/event";
+// Data fetching now handled via API route
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
@@ -29,24 +27,16 @@ export default function MyEventsPage() {
                 return;
             }
 
-            const orgId = await getEffectiveOrganizationId(user.id);
-            if (!orgId) {
+            const res = await fetch("/api/my-events", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.id }),
+            });
+            if (!res.ok) {
                 router.push("/dashboard");
                 return;
             }
-
-            const [role, events, stats, organization] = await Promise.all([
-                getUserRoleInOrganization(user.id, orgId),
-                getOrganizationEvents(orgId),
-                getOrganizationEventStats(orgId),
-                getOrganizationById(orgId),
-            ]);
-
-            if (!role) {
-                router.push("/dashboard");
-                return;
-            }
-
+            const { events, stats, organization } = await res.json();
             setData({ events, stats, organization, user });
             setLoading(false);
         }
@@ -72,9 +62,9 @@ export default function MyEventsPage() {
                             Manage your events and track performance
                         </p>
                     </div>
-                    <Button 
-                        variant='tertiary' 
-                        size='sm' 
+                    <Button
+                        variant='tertiary'
+                        size='sm'
                         onClick={() => setIsDrawerOpen(true)}
                     >
                         <Plus className="mr-2 size-4" />
@@ -105,8 +95,8 @@ export default function MyEventsPage() {
                 )}
             </div>
 
-            <CreateEventDrawer 
-                isOpen={isDrawerOpen} 
+            <CreateEventDrawer
+                isOpen={isDrawerOpen}
                 onOpenChange={setIsDrawerOpen}
                 organizationSlug={organization?.slug}
             />

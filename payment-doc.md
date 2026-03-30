@@ -1,5 +1,5 @@
 # Event & Voting Platform — Implementation Guide (Ghana Flow)
-### For AI Code Agent | Project: Sankofa | Ghana
+### For AI Code Agent | Project: Afrotix | Ghana
 ### Stack: Supabase · Paystack · Arkesel · WhatsApp Meta Cloud API
 
 ---
