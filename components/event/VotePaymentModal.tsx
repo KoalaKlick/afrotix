@@ -40,7 +40,6 @@ interface VotePaymentModalProps {
     readonly eventId: string;
     readonly categoryId: string;
     readonly isPublic?: boolean;
-    /** The event's voting mode: "internal" (free, org-only) or "public" (paid) */
     readonly votingMode?: "internal" | "public";
     readonly orgSlug?: string;
     readonly eventSlug?: string;
@@ -95,9 +94,9 @@ export function VotePaymentModal({
         [onOpenChange, resetModal]
     );
 
-    // --- Check Vote Status ---
+    // --- Check Vote Status (internal only) ---
     const checkVoteStatus = useCallback(async () => {
-        if (!nominee || !open) return;
+        if (!nominee || !open || !isInternalVoting) return;
 
         setCheckingVoteStatus(true);
         try {
@@ -120,9 +119,8 @@ export function VotePaymentModal({
         } finally {
             setCheckingVoteStatus(false);
         }
-    }, [nominee, open, categoryId]);
+    }, [nominee, open, categoryId, isInternalVoting]);
 
-    // Re-check status when modal opens
     useEffect(() => {
         if (open) checkVoteStatus();
     }, [open, checkVoteStatus]);
@@ -164,7 +162,7 @@ export function VotePaymentModal({
         } finally {
             setLoading(false);
         }
-    }, [nominee, eventId, categoryId]);
+    }, [nominee, eventId, categoryId, router]);
 
     // --- Public Vote (Paid) ---
     const handleSubmitPayment = useCallback(async () => {
@@ -179,23 +177,20 @@ export function VotePaymentModal({
 
             const callbackUrl = `${process.env.NEXT_PUBLIC_DOMAIN_URL || window.location.origin}/payment/callback`;
 
-            // Normalise phone to E.164 for internal records
             const normalisedPhone = phone.startsWith("0")
                 ? "233" + phone.slice(1)
                 : phone.startsWith("+")
                     ? phone.slice(1)
                     : phone;
 
-            // Local 10-digit format for Paystack MoMo pre-fill (e.g. 024...)
-            const localPhone = phone.startsWith("233") 
-                ? "0" + phone.slice(3) 
-                : phone.startsWith("+233") 
-                    ? "0" + phone.slice(4) 
-                    : phone.startsWith("0") 
-                        ? phone 
+            const localPhone = phone.startsWith("233")
+                ? "0" + phone.slice(3)
+                : phone.startsWith("+233")
+                    ? "0" + phone.slice(4)
+                    : phone.startsWith("0")
+                        ? phone
                         : "0" + phone;
 
-            // Use provided email or fallback to phone-derived (Paystack requires it)
             const finalEmail = email.includes("@")
                 ? email
                 : `${normalisedPhone}@voter.sankofa.app`;
@@ -227,8 +222,7 @@ export function VotePaymentModal({
             );
 
             if (error) {
-                const errorData = (error as any);
-                throw new Error(errorData.message || errorData.detail || "Payment initialization failed");
+                throw new Error((error as any).message || (error as any).detail || "Payment initialization failed");
             }
 
             if (response?.accessCode) {
@@ -245,7 +239,7 @@ export function VotePaymentModal({
                     onCancel: () => {
                         console.log("Paystack Cancelled");
                         setLoading(false);
-                    }
+                    },
                 });
             } else {
                 throw new Error(response?.error || response?.detail || "Failed to get access code from Paystack");
@@ -257,7 +251,7 @@ export function VotePaymentModal({
         } finally {
             setLoading(false);
         }
-    }, [nominee, phone, email, totalAmount, eventId, categoryId, voteCount, resumeTransaction]);
+    }, [nominee, phone, email, totalAmount, eventId, categoryId, voteCount, resumeTransaction, orgSlug, eventSlug, router]);
 
     if (!nominee) return null;
 
@@ -267,20 +261,12 @@ export function VotePaymentModal({
         <Dialog open={open} onOpenChange={handleClose} modal={false}>
             <DialogContent
                 className="sm:max-w-md p-0 overflow-hidden gap-0 border-0 rounded-2xl bg-white"
-                onOpenAutoFocus={(e) => {
-                    if (loading) e.preventDefault();
-                }}
-                onFocusOutside={(e) => {
-                    if (loading) e.preventDefault();
-                }}
-                onInteractOutside={(e) => {
-                    if (loading) e.preventDefault();
-                }}
+                onOpenAutoFocus={(e) => { if (loading) e.preventDefault(); }}
+                onFocusOutside={(e) => { if (loading) e.preventDefault(); }}
+                onInteractOutside={(e) => { if (loading) e.preventDefault(); }}
             >
                 {/* Hero Header */}
                 <div className="relative h-36 w-full bg-linear-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] overflow-hidden">
-                 
-
                     <div className="relative z-10 flex items-end h-full p-5">
                         <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl shrink-0 bg-white/10">
                             {displayImageUrl ? (
@@ -413,12 +399,10 @@ export function VotePaymentModal({
                                 <div className="flex items-center justify-between p-4 rounded-xl bg-linear-to-r from-[#009A44]/5 to-[#FFCD00]/5 border border-[#009A44]/10">
                                     <div className="flex items-center gap-2">
                                         <Coins className="w-4 h-4 text-[#009A44]" />
-                                        <span className="text-sm font-medium">
-                                            Total
-                                        </span>
+                                        <span className="text-sm font-medium">Total</span>
                                     </div>
                                     <span className="text-xl font-black text-[#009A44]">
-                                        GHS {(totalAmount).toFixed(2)}
+                                        GHS {totalAmount.toFixed(2)}
                                     </span>
                                 </div>
 
@@ -448,7 +432,8 @@ export function VotePaymentModal({
 
                                     <div className="space-y-1.5">
                                         <Label htmlFor="voter-email" className="text-sm font-semibold flex items-center gap-1.5">
-                                            Email Address <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span>
+                                            Email Address{" "}
+                                            <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span>
                                         </Label>
                                         <div className="relative">
                                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
@@ -474,7 +459,7 @@ export function VotePaymentModal({
                                     size="lg"
                                     className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
                                     onClick={handleSubmitPayment}
-                                    disabled={!phone || phone.length < 9 || loading || hasAlreadyVoted || checkingVoteStatus}
+                                    disabled={!phone || phone.length < 9 || loading || checkingVoteStatus}
                                 >
                                     {loading ? (
                                         <>
@@ -485,11 +470,6 @@ export function VotePaymentModal({
                                         <>
                                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                             Checking status...
-                                        </>
-                                    ) : hasAlreadyVoted ? (
-                                        <>
-                                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                                            Already Voted
                                         </>
                                     ) : (
                                         <>
@@ -512,9 +492,7 @@ export function VotePaymentModal({
                     <div className="p-8 flex flex-col items-center text-center space-y-4">
                         <Loader2 className="w-12 h-12 text-[#009A44] animate-spin" />
                         <div>
-                            <p className="font-bold text-lg">
-                                Opening checkout...
-                            </p>
+                            <p className="font-bold text-lg">Opening checkout...</p>
                             <p className="text-sm text-muted-foreground mt-1">
                                 Please complete the payment in the secure popup.
                             </p>
@@ -560,8 +538,15 @@ export function VotePaymentModal({
                                 Vote Confirmed! 🎉
                             </h2>
                             <p className="text-sm text-muted-foreground max-w-[280px]">
-                                Your {isInternalVoting ? "vote" : <><strong>{voteCount} vote{voteCount > 1 ? "s" : ""}</strong></>} for{" "}
-                                <span className="text-[#009A44] font-bold">{nominee.optionText}</span> {isInternalVoting ? "has" : "have"} been recorded successfully.
+                                Your{" "}
+                                {isInternalVoting ? (
+                                    "vote"
+                                ) : (
+                                    <strong>{voteCount} vote{voteCount > 1 ? "s" : ""}</strong>
+                                )}{" "}
+                                for{" "}
+                                <span className="text-[#009A44] font-bold">{nominee.optionText}</span>{" "}
+                                {isInternalVoting ? "has" : "have"} been recorded successfully.
                             </p>
                         </div>
                         <Button
