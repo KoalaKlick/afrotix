@@ -37,7 +37,7 @@ export interface EventFormData {
     venueCountry?: string;
     coverImage?: string;
     bannerImage?: string;
-    maxAttendees?: string | number | null;
+    maxAttendees?: number | null;
     isPublic?: boolean;
     sponsors?: EventSponsor[];
     socialLinks?: EventSocialLink[];
