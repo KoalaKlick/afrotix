@@ -17,22 +17,10 @@ import { getSocialPlatform } from "@/lib/utils/event-icons";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
+import type { OrganizationWithSocials } from "@/lib/dal/organization";
 
 interface OrgGeneralSettingsProps {
-    readonly organization: {
-        id: string;
-        name: string;
-        slug: string;
-        description: string | null;
-        logoUrl: string | null;
-        bannerUrl: string | null;
-        primaryColor: string;
-        secondaryColor: string;
-        websiteUrl: string | null;
-        contactEmail: string | null;
-        phone: string | null;
-        socialLinks: Array<{ url: string }>;
-    };
+    readonly organization: OrganizationWithSocials;
 }
 
 const PRESET_COLORS = [

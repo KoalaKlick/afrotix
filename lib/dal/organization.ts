@@ -63,16 +63,22 @@ export type OrganizationWithRole = Organization & {
     memberCount?: number;
 };
 
+export type OrganizationSocialLink = { url: string };
+
+export type OrganizationWithSocials = Organization & {
+    socialLinks: OrganizationSocialLink[];
+};
+
 /**
  * Get organization by ID
  * Uses React cache for request deduplication
  */
-export const getOrganizationById = cache(async (id: string) => {
+export const getOrganizationById = cache(async (id: string): Promise<OrganizationWithSocials | null> => {
     try {
         return await prisma.organization.findUnique({
             where: { id },
             include: { socialLinks: true },
-        });
+        }) as OrganizationWithSocials | null;
     } catch (error) {
         logger.error(error, "[DAL] Error fetching organization:");
         return null;
@@ -82,16 +88,17 @@ export const getOrganizationById = cache(async (id: string) => {
 /**
  * Get organization by slug
  */
-export const getOrganizationBySlug = cache(async (slug: string) => {
+export const getOrganizationBySlug = cache(async (slug: string): Promise<OrganizationWithSocials | null> => {
     try {
         return await prisma.organization.findUnique({
             where: { slug },
             include: { socialLinks: true },
-        });
+        }) as OrganizationWithSocials | null;
     } catch (error) {
         return await prisma.organization.findUnique({
             where: { slug },
-        });
+            include: { socialLinks: true },
+        }) as OrganizationWithSocials | null;
     }
 });
 

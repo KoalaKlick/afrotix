@@ -7,7 +7,8 @@ import { OrgGeneralSettings } from "@/components/organization/management/OrgGene
 import { OrgMembersSettings } from "@/components/organization/management/OrgMembersSettings";
 import { OrgJoinRequestsSettings } from "@/components/organization/management/OrgJoinRequestsSettings";
 import { OrgInvitationsSettings } from "@/components/organization/management/OrgInvitationsSettings";
-import type { Organization, OrganizationRole, InvitationStatus } from "@/lib/generated/prisma";
+import type { OrganizationRole, InvitationStatus } from "@/lib/generated/prisma";
+import type { OrganizationWithSocials } from "@/lib/dal/organization";
 
 interface Member {
     id: string;
@@ -53,7 +54,7 @@ interface SentInvitation {
 }
 
 interface OrgManageClientProps {
-    readonly organization: Organization;
+    readonly organization: OrganizationWithSocials;
     readonly members: Member[];
     readonly joinRequests: JoinRequest[];
     readonly invitations: SentInvitation[];
