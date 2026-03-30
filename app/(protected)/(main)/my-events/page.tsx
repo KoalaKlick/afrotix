@@ -1,37 +1,63 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+"use client";
+
+import { useState } from "react";
 import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import { getUserRoleInOrganization, getOrganizationById } from "@/lib/dal/organization";
 import { getOrganizationEvents, getOrganizationEventStats } from "@/lib/dal/event";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EventsList } from "@/components/event/EventsList";
 import { CustomizableEventStats } from "@/components/event";
+import { CreateEventDrawer } from "@/components/event/CreateEventDrawer";
+import { useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
-export default async function MyEventsPage() {
-    // Parent layout guarantees: authenticated, onboarding done, has org
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+export default function MyEventsPage() {
+    const router = useRouter();
+    const supabase = createClient();
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState<any>(null);
 
-    if (!user) redirect("/auth/login");
+    useEffect(() => {
+        async function fetchData() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                router.push("/auth/login");
+                return;
+            }
 
-    const organizationId = await getEffectiveOrganizationId(user.id);
-    if (!organizationId) {
-        redirect("/dashboard");
+            const orgId = await getEffectiveOrganizationId(user.id);
+            if (!orgId) {
+                router.push("/dashboard");
+                return;
+            }
+
+            const [role, events, stats, organization] = await Promise.all([
+                getUserRoleInOrganization(user.id, orgId),
+                getOrganizationEvents(orgId),
+                getOrganizationEventStats(orgId),
+                getOrganizationById(orgId),
+            ]);
+
+            if (!role) {
+                router.push("/dashboard");
+                return;
+            }
+
+            setData({ events, stats, organization, user });
+            setLoading(false);
+        }
+        fetchData();
+    }, [router, supabase]);
+
+    if (loading || !data) {
+        return <div className="p-8 text-center animate-pulse font-medium text-muted-foreground">Loading dashboard...</div>;
     }
 
-    const role = await getUserRoleInOrganization(user.id, organizationId);
-    if (!role) {
-        redirect("/dashboard");
-    }
-
-    const [events, stats, organization] = await Promise.all([
-        getOrganizationEvents(organizationId),
-        getOrganizationEventStats(organizationId),
-        getOrganizationById(organizationId),
-    ]);
+    const { events, stats, organization } = data;
 
     return (
         <>
@@ -46,11 +72,13 @@ export default async function MyEventsPage() {
                             Manage your events and track performance
                         </p>
                     </div>
-                    <Button variant='tertiary' size='sm' asChild>
-                        <Link href="/my-events/new">
-                            <Plus className="mr-2 size-4" />
-                            Create Event
-                        </Link>
+                    <Button 
+                        variant='tertiary' 
+                        size='sm' 
+                        onClick={() => setIsDrawerOpen(true)}
+                    >
+                        <Plus className="mr-2 size-4" />
+                        Create Event
                     </Button>
                 </div>
 
@@ -67,17 +95,21 @@ export default async function MyEventsPage() {
                         <p className="text-muted-foreground mb-6 max-w-sm">
                             Create your first event to start selling tickets and engaging your audience.
                         </p>
-                        <Button asChild size="lg">
-                            <Link href="/my-events/new">
-                                <Plus className="mr-2 size-4" />
-                                Create Your First Event
-                            </Link>
+                        <Button onClick={() => setIsDrawerOpen(true)} size="lg">
+                            <Plus className="mr-2 size-4" />
+                            Create Your First Event
                         </Button>
                     </div>
                 ) : (
                     <EventsList events={events} organizationSlug={organization?.slug} />
                 )}
             </div>
+
+            <CreateEventDrawer 
+                isOpen={isDrawerOpen} 
+                onOpenChange={setIsDrawerOpen}
+                organizationSlug={organization?.slug}
+            />
         </>
     );
 }

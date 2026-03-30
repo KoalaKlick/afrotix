@@ -615,7 +615,7 @@ export function EventSettingsTab({
                     )}
                 </div>
 
-                <div className="flex flex-wrap">
+                <div className="flex gap-4 flex-wrap">
                     {formData.sponsors.map((sponsor) => (
                         <div key={sponsor.id} className="group w-fit relative p-4 rounded-md border bg-card hover:border-primary/50 transition-all flex flex-col items-center gap-4 text-center">
                             <div className="size-16 rounded-md border bg-muted flex items-center justify-center overflow-hidden">
