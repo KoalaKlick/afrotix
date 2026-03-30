@@ -1,15 +1,9 @@
 
 "use client";
-
-
-import { useState, useTransition, useRef } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    changeEventStatus,
+    updateExistingEvent,
+} from "@/lib/actions/event";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -18,9 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
     Loader2,
-    Upload,
     Pencil,
-    Check,
     X,
     ChevronDown,
     ExternalLink,
@@ -30,38 +22,35 @@ import {
     Layers,
     Megaphone,
     Settings,
-
+    Check,
 } from "lucide-react";
+import { VotingManager, EventOverviewTab, DeleteEventDialog, EventSettingsTab, type VotingChartCategory } from "@/components/event";
+import type { VotingCategory } from "@/lib/types/voting";
+import type { EventDetailStatsData, VoteTrendPoint } from "@/lib/types/event-stats";
+import type { OrganizationRole } from "@/lib/generated/prisma";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import {
-    updateExistingEvent,
-    changeEventStatus
-} from "@/lib/actions/event";
+import { useState, useTransition } from "react";
+import type { EventFormData } from "@/lib/types/event";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Removed local interface EventData and EventDetailClientProps
+// Use imported types for props and state
+
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import {
     getEventPublicationStatus,
     getEventLifecycleStatus
 } from "@/lib/event-status";
-import { useImageUpload } from "@/lib/hooks/use-image-upload";
-import type { OrganizationRole } from "@/lib/generated/prisma";
-import type {
-    EventDetailStatsData,
-    VoteTrendPoint
-} from "@/lib/types/event-stats";
-import type {
-    CustomField,
-    VotingCategory
-} from "@/lib/types/voting";
-import {
-    VotingManager,
-    EventOverviewTab,
-    DeleteEventDialog,
-    EventSettingsTab,
-    type VotingChartCategory
-} from "@/components/event";
 
-// --- Types ---
+
+
 
 interface EventData {
     id: string;
@@ -92,12 +81,6 @@ interface EventData {
     galleryLinks?: { id: string; name: string; url: string }[];
 }
 
-
-type VotingOptionStatus = "pending" | "approved" | "rejected";
-
-
-
-
 interface EventDetailClientProps {
     readonly event: EventData;
     readonly organizationSlug?: string;
@@ -126,23 +109,12 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
-    const { isUploading: isUploadingCover, upload: uploadCover } = useImageUpload({
-        bucket: "events",
-        folder: "events",
-        convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
-    });
-    const { isUploading: isUploadingBanner, upload: uploadBanner } = useImageUpload({
-        bucket: "events",
-        folder: "events",
-        convertOptions: { quality: 0.85, maxWidth: 1920, maxHeight: 400, maxSizeMB: 2 },
-    });
-    const isUploading = isUploadingCover || isUploadingBanner;
-
     // Editable fields state
     const [editingField, setEditingField] = useState<string | null>(null);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<EventFormData>({
         title: event.title,
         slug: event.slug,
+        type: event.type,
         status: event.status,
         description: event.description ?? "",
         startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : "",
@@ -156,18 +128,12 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         venueCountry: event.venueCountry,
         coverImage: event.coverImage ?? "",
         bannerImage: event.bannerImage ?? "",
-        maxAttendees: event.maxAttendees?.toString() ?? "",
+        maxAttendees: event.maxAttendees ?? null,
         isPublic: event.isPublic,
         sponsors: event.sponsors ?? [],
         socialLinks: event.socialLinks ?? [],
         galleryLinks: event.galleryLinks ?? [],
     });
-    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
-    const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
-    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
-    const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
-    const bannerInputRef = useRef<HTMLInputElement>(null);
-    const coverInputRef = useRef<HTMLInputElement>(null);
 
     const canEdit = userRole === "owner" || userRole === "admin";
 
@@ -188,11 +154,20 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         const formDataObj = new FormData();
         for (const [key, value] of Object.entries(fields)) {
             if (value !== undefined && value !== null) {
-                if (typeof value === "object") {
-                    formDataObj.set(key, JSON.stringify(value));
-                } else {
+                const type = typeof value;
+                if (type === "string" || type === "number" || type === "boolean") {
                     formDataObj.set(key, String(value));
+                } else if (type === "object") {
+                    // Only serialize plain objects or arrays
+                    if (Array.isArray(value) || Object.prototype.toString.call(value) === "[object Object]") {
+                        try {
+                            formDataObj.set(key, JSON.stringify(value));
+                        } catch {
+                            // skip non-serializable values
+                        }
+                    }
                 }
+                // skip all other types (function, symbol, etc.)
             }
         }
 
@@ -207,17 +182,22 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         });
     }
 
-    // Generate display URLs from paths or previews
-    const coverDisplayUrl = coverPreviewUrl || getEventImageUrl(formData.coverImage);
-    const bannerDisplayUrl = bannerPreviewUrl || getEventImageUrl(formData.bannerImage);
+    // Generate display URLs from paths
+    const coverDisplayUrl = getEventImageUrl(formData.coverImage);
+    const bannerDisplayUrl = getEventImageUrl(formData.bannerImage);
 
     // Save a single field
     async function saveField(fieldName: string, value: unknown) {
         const formDataObj = new FormData();
-        if (typeof value === "object" && value !== null) {
-            formDataObj.set(fieldName, JSON.stringify(value));
-        } else if (value !== null && value !== undefined) {
+        const type = typeof value;
+        if (type === "string" || type === "number" || type === "boolean") {
             formDataObj.set(fieldName, String(value));
+        } else if (value !== null && value !== undefined) {
+            try {
+                formDataObj.set(fieldName, JSON.stringify(value));
+            } catch {
+                // skip non-serializable values
+            }
         }
 
         startTransition(async () => {
@@ -231,79 +211,12 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         });
     }
 
-    const handleFormSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        startTransition(async () => {
-            let finalCoverImage = formData.coverImage;
-            let finalBannerImage = formData.bannerImage;
-
-            // Upload pending cover if exists
-            if (pendingCoverFile) {
-                const path = await uploadCover(pendingCoverFile);
-                if (path) finalCoverImage = path;
-                else {
-                    toast.error("Failed to upload cover image");
-                    return;
-                }
-            }
-
-            // Upload pending banner if exists
-            if (pendingBannerFile) {
-                const path = await uploadBanner(pendingBannerFile);
-                if (path) finalBannerImage = path;
-                else {
-                    toast.error("Failed to upload banner image");
-                    return;
-                }
-            }
-
-            const submitData = new FormData();
-            Object.entries(formData).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    submitData.append(key, String(value));
-                }
-            });
-
-            // Update with final images
-            if (finalCoverImage) submitData.set("coverImage", finalCoverImage);
-            if (finalBannerImage) submitData.set("bannerImage", finalBannerImage);
-
-            const result = await updateExistingEvent(event.id, submitData);
-            if (result.success) {
-                toast.success("Event updated successfully");
-                setPendingCoverFile(null);
-                setPendingBannerFile(null);
-                setCoverPreviewUrl(null);
-                setBannerPreviewUrl(null);
-            } else {
-                toast.error(result.error || "Failed to update event");
-            }
-        });
-    };
+    // Removed unused handleFormSubmit
 
     // Image upload handler
-    async function handleImageUpload(file: File, type: "cover" | "banner") {
-        const url = URL.createObjectURL(file);
-        if (type === "cover") {
-            setPendingCoverFile(file);
-            if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
-            setCoverPreviewUrl(url);
-        } else {
-            setPendingBannerFile(file);
-            if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
-            setBannerPreviewUrl(url);
-        }
-        toast.success(`${type === "cover" ? "Cover" : "Banner"} image ready to save`);
-    }
+    // Removed unused handleImageUpload
 
-    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, type: "cover" | "banner") {
-        const file = e.target.files?.[0];
-        if (file) {
-            handleImageUpload(file, type);
-        }
-        // Reset input so same file can be selected again
-        e.target.value = "";
-    }
+    // Removed unused handleFileChange
 
     // Status change handler
     async function handleStatusChange(newStatus: string) {
@@ -312,7 +225,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
         startTransition(async () => {
             const result = await changeEventStatus(event.id, newStatus);
             if (result.success) {
-                setFormData(prev => ({ ...prev, status: newStatus }));
+                setFormData((prev: EventFormData) => ({ ...prev, status: newStatus }));
                 toast.success(`Status changed to ${newStatus}`);
                 router.refresh();
             } else {
@@ -338,30 +251,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                             unoptimized
                         />
                     )}
-                    {canEdit && (
-                        <>
-                            <input
-                                ref={bannerInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp,image/gif"
-                                onChange={(e) => handleFileChange(e, "banner")}
-                                className="hidden"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => bannerInputRef.current?.click()}
-                                disabled={isUploading || isPending}
-                                className="absolute bottom-3 right-3 z-10 px-3 py-1.5 rounded-lg bg-black/50 text-white text-sm hover:bg-black/70 transition-colors flex items-center gap-2"
-                            >
-                                {isUploading ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                    <Upload className="size-4" />
-                                )}
-                                Change Banner
-                            </button>
-                        </>
-                    )}
+                    {/* Image upload disabled: input and button removed */}
                 </div>
 
                 {/* Event Info */}
@@ -384,29 +274,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                     </div>
                                 )}
                             </div>
-                            {canEdit && (
-                                <>
-                                    <input
-                                        ref={coverInputRef}
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/webp,image/gif"
-                                        onChange={(e) => handleFileChange(e, "cover")}
-                                        className="hidden"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => coverInputRef.current?.click()}
-                                        disabled={isUploading || isPending}
-                                        className="absolute bottom-0 right-0 p-1.5 rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-colors"
-                                    >
-                                        {isUploading ? (
-                                            <Loader2 className="size-4 animate-spin" />
-                                        ) : (
-                                            <Pencil className="size-4" />
-                                        )}
-                                    </button>
-                                </>
-                            )}
+                            {/* Image upload disabled: input and button removed */}
                         </div>
 
                         {/* Title & Status */}
@@ -434,7 +302,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                 <div className="flex items-center gap-2 mt-2">
                                     <Input
                                         value={formData.title}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                                        onChange={(e) => setFormData((prev: EventFormData) => ({ ...prev, title: e.target.value }))}
                                         className="text-xl font-bold"
                                         autoFocus
                                     />
@@ -450,7 +318,7 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                                         size="icon"
                                         variant="ghost"
                                         onClick={() => {
-                                            setFormData(prev => ({ ...prev, title: event.title }));
+                                            setFormData((prev: EventFormData) => ({ ...prev, title: event.title }));
                                             setEditingField(null);
                                         }}
                                     >

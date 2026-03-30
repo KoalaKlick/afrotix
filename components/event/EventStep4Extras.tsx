@@ -5,18 +5,18 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-    ArrowLeft, 
-    Loader2, 
-    CheckCircle, 
-    Plus, 
-    Trash2, 
-    Upload, 
-    Globe, 
+import {
+    ArrowLeft,
+    Loader2,
+    CheckCircle,
+    Plus,
+    Trash2,
+    Upload,
+    // Globe,
     Image as ImageIcon,
     Share2,
     Link as LinkIcon,
@@ -25,10 +25,11 @@ import {
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { MAX_SPONSORS, MAX_GALLERY_LINKS } from "@/lib/const/event";
+import { Image } from "../shared/image/avatar";
 
 interface Sponsor {
     name: string;
-    logo?: string;
+    logo: string | null;
 }
 
 interface SocialLink {
@@ -42,12 +43,12 @@ interface GalleryLink {
 
 interface EventStep4Props {
     readonly initialData: {
-        sponsors?: Sponsor[];
+        sponsors?: { name: string; logo?: string | null }[];
         socialLinks?: SocialLink[];
         galleryLinks?: GalleryLink[];
     } | null;
     readonly onSuccess: (data: {
-        sponsors: Sponsor[];
+        sponsors: { name: string; logo?: string | null }[];
         socialLinks: SocialLink[];
         galleryLinks: GalleryLink[];
     }) => void;
@@ -56,7 +57,10 @@ interface EventStep4Props {
 }
 
 export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting }: EventStep4Props) {
-    const [sponsors, setSponsors] = useState<Sponsor[]>(initialData?.sponsors ?? []);
+    // Ensure all sponsors have logo: string | null
+    const normalizeSponsors = (arr?: { name: string; logo?: string | null }[]) =>
+        (arr ?? []).map(s => ({ ...s, logo: s.logo ?? null }));
+    const [sponsors, setSponsors] = useState<Sponsor[]>(normalizeSponsors(initialData?.sponsors));
     const [socialLinks, setSocialLinks] = useState<SocialLink[]>(initialData?.socialLinks ?? []);
     const [galleryLinks, setGalleryLinks] = useState<GalleryLink[]>(initialData?.galleryLinks ?? []);
     const [isUploading, setIsUploading] = useState<number | null>(null);
@@ -69,7 +73,7 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
 
     const addSponsor = () => {
         if (sponsors.length < MAX_SPONSORS) {
-            setSponsors([...sponsors, { name: "" }]);
+            setSponsors([...sponsors, { name: "", logo: null }]);
         }
     };
 
@@ -79,7 +83,11 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
 
     const updateSponsor = (index: number, field: keyof Sponsor, value: string) => {
         const newSponsors = [...sponsors];
-        newSponsors[index] = { ...newSponsors[index], [field]: value };
+        if (field === "logo") {
+            newSponsors[index] = { ...newSponsors[index], logo: value || null };
+        } else {
+            newSponsors[index] = { ...newSponsors[index], [field]: value, logo: newSponsors[index].logo ?? null };
+        }
         setSponsors(newSponsors);
     };
 
@@ -127,11 +135,13 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
         setGalleryLinks(newLinks);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         // Filter out empty name sponsors or empty url links
         onSuccess({
-            sponsors: sponsors.filter(s => s.name.trim() !== ""),
+            sponsors: sponsors
+                .filter(s => s.name.trim() !== "")
+                .map(s => ({ ...s, logo: s.logo ?? null })),
             socialLinks: socialLinks.filter(l => l.url.trim() !== ""),
             galleryLinks: galleryLinks.filter(g => g.name.trim() !== "" && g.url.trim() !== ""),
         });
@@ -149,10 +159,10 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                         </Label>
                         <p className="text-sm text-muted-foreground">Add event sponsors to showcase their logos</p>
                     </div>
-                    <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={addSponsor}
                         disabled={sponsors.length >= MAX_SPONSORS}
                     >
@@ -163,12 +173,14 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {sponsors.map((sponsor, index) => (
-                        <div key={index} className="relative p-4 rounded-xl border bg-card flex items-start gap-4">
+                        <div key={sponsor.name + (sponsor.logo ?? "")} className="relative p-4 rounded-xl border bg-card flex items-start gap-4">
                             <div className="relative group size-16 shrink-0 rounded-lg border bg-muted flex items-center justify-center overflow-hidden">
                                 {sponsor.logo ? (
                                     <>
-                                        <img 
-                                            src={getEventImageUrl(sponsor.logo) ?? undefined} 
+                                        <Image
+                                        height={64}
+                                        width={64}
+                                            src={getEventImageUrl(sponsor.logo) ?? ''}
                                             alt={sponsor.name}
                                             className="size-full object-contain p-1"
                                         />
@@ -190,9 +202,9 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                                                 <span className="text-[10px] text-muted-foreground">Logo</span>
                                             </>
                                         )}
-                                        <input 
-                                            type="file" 
-                                            className="hidden" 
+                                        <input
+                                            type="file"
+                                            className="hidden"
                                             accept="image/*"
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
@@ -203,16 +215,16 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                                 )}
                             </div>
                             <div className="flex-1 space-y-2">
-                                <Input 
+                                <Input
                                     placeholder="Sponsor Name"
                                     value={sponsor.name}
                                     onChange={(e) => updateSponsor(index, "name", e.target.value)}
                                     className="h-9"
                                 />
                             </div>
-                            <Button 
-                                type="button" 
-                                variant="ghost" 
+                            <Button
+                                type="button"
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => removeSponsor(index)}
                                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -242,10 +254,10 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                         </Label>
                         <p className="text-sm text-muted-foreground">Dynamic links to your social media profiles</p>
                     </div>
-                    <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={addSocialLink}
                         disabled={socialLinks.length >= 10}
                     >
@@ -256,19 +268,19 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
 
                 <div className="space-y-3">
                     {socialLinks.map((link, index) => (
-                        <div key={index} className="flex gap-2 items-center">
+                        <div key={link.url} className="flex gap-2 items-center">
                             <div className="bg-primary/5 p-2.5 rounded-lg">
                                 <LinkIcon className="size-4 text-primary" />
                             </div>
-                            <Input 
+                            <Input
                                 placeholder="Social Media URL (e.g., t.me/organization)"
                                 value={link.url}
                                 onChange={(e) => updateSocialLink(index, e.target.value)}
                                 className="flex-1"
                             />
-                            <Button 
-                                type="button" 
-                                variant="ghost" 
+                            <Button
+                                type="button"
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => removeSocialLink(index)}
                                 className="h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
@@ -297,10 +309,10 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                         </Label>
                         <p className="text-sm text-muted-foreground">Share links to event photos (Google Drive, Pixieset, etc.)</p>
                     </div>
-                    <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={addGalleryLink}
                         disabled={galleryLinks.length >= MAX_GALLERY_LINKS}
                     >
@@ -311,10 +323,10 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
 
                 <div className="space-y-3">
                     {galleryLinks.map((link, index) => (
-                        <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_auto] gap-3 items-end p-4 rounded-xl border bg-primary/5">
+                        <div key={link.name + link.url} className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_auto] gap-3 items-end p-4 rounded-xl border bg-primary/5">
                             <div className="space-y-2">
                                 <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Label</Label>
-                                <Input 
+                                <Input
                                     placeholder="e.g., Official Photos"
                                     value={link.name}
                                     onChange={(e) => updateGalleryLink(index, "name", e.target.value)}
@@ -322,15 +334,15 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Link URL</Label>
-                                <Input 
+                                <Input
                                     placeholder="e.g., https://pixieset.com/shared-album"
                                     value={link.url}
                                     onChange={(e) => updateGalleryLink(index, "url", e.target.value)}
                                 />
                             </div>
-                            <Button 
-                                type="button" 
-                                variant="ghost" 
+                            <Button
+                                type="button"
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => removeGalleryLink(index)}
                                 className="h-10 w-10 text-destructive hover:text-destructive"

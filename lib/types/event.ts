@@ -5,7 +5,7 @@
 export interface EventSponsor {
     id?: string;
     name: string;
-    logo?: string | null;
+    logo: string | null;
 }
 
 export interface EventSocialLink {
@@ -23,22 +23,22 @@ export interface EventFormData {
     title: string;
     slug: string;
     type: string;
-    status?: string;
+    status: string;
     votingMode?: string;
-    description?: string;
-    startDate?: string;
-    endDate?: string;
-    timezone?: string;
-    isVirtual?: boolean;
-    virtualLink?: string;
-    venueName?: string;
-    venueAddress?: string;
-    venueCity?: string;
-    venueCountry?: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    timezone: string;
+    isVirtual: boolean;
+    virtualLink: string;
+    venueName: string;
+    venueAddress: string;
+    venueCity: string;
+    venueCountry: string;
     coverImage?: string;
     bannerImage?: string;
-    maxAttendees?: number | null;
-    isPublic?: boolean;
+    maxAttendees: number | null;
+    isPublic: boolean;
     sponsors?: EventSponsor[];
     socialLinks?: EventSocialLink[];
     galleryLinks?: EventGalleryLink[];

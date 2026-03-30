@@ -5,30 +5,13 @@
 
 "use client";
 
-import { useState, useTransition, useMemo, useEffect } from "react";
-import {
+import { useState, useTransition, useEffect } from "react";
 
-    useSensor,
-    useSensors,
-    PointerSensor,
-    KeyboardSensor,
-    type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-    arrayMove,
-    sortableKeyboardCoordinates,
-
-    useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-    Card,
-    CardContent,
-} from "@/components/ui/card";
+
 import {
     Sheet,
     SheetBody,
@@ -37,7 +20,6 @@ import {
     SheetFooter,
     SheetHeader,
     SheetTitle,
-    SheetTrigger,
 } from "@/components/ui/sheet";
 import {
     AlertDialog,
@@ -50,18 +32,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs";
+
 import {
     Select,
     SelectContent,
@@ -75,38 +46,25 @@ import {
     Plus,
     Trash2,
     Pencil,
-    Users,
     Loader2,
-    GripVertical,
     Vote,
-    Globe,
-    Settings,
+
 } from "lucide-react";
 
 import { CategoryList } from "./voting-manager/CategoryList";
 
 import {
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    createOption,
-    updateOption,
+
     deleteOption,
     createCategoryField,
     updateCategoryField,
     deleteCategoryField,
     approveNominationAction,
     rejectNominationAction,
-    reorderCategories,
 } from "@/lib/actions/voting";
 
-import { useImageUpload } from "@/lib/hooks/use-image-upload";
-import { getEventImageUrl } from "@/lib/image-url-utils";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { NomineeCard } from "./NomineeCard";
-import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
-import { CategorySheet } from "./voting-manager/CategorySheet";
+
 import { OptionSheet } from "./voting-manager/OptionSheet";
 import { NominationRequestsSheet } from "./voting-manager/NominationRequestsSheet";
 import {
@@ -116,7 +74,6 @@ import {
     type VotingOptionStatus,
     type VotingOption,
     type VotingCategory,
-    getInputType,
 } from "@/lib/types/voting";
 
 interface VotingManagerProps {
@@ -125,66 +82,8 @@ interface VotingManagerProps {
     readonly canEdit: boolean;
 }
 
-// Sortable category item component
-interface SortableCategoryItemProps {
-    readonly category: VotingCategory;
-    readonly canEdit: boolean;
-    readonly children: React.ReactNode;
-    readonly dragHandleSlot: React.ReactNode;
-}
 
-function SortableCategoryItem({ category, canEdit, children, dragHandleSlot }: SortableCategoryItemProps) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: category.id });
 
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 20 : 0,
-        position: "relative" as const,
-    };
-
-    return (
-        <div ref={setNodeRef} style={style} {...attributes} className="inline-block">
-            <TabsTrigger
-                value={category.id}
-                className={cn(
-                    "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all relative overflow-hidden h-10 min-w-40 border-t-2 border-x-2 rounded-t-lg",
-                    "data-[state=active]:bg-background data-[state=active]:border-primary data-[state=active]:border-b-background",
-                    "data-[state=inactive]:bg-muted/30 data-[state=inactive]:border-transparent hover:bg-muted/50",
-                    isDragging && "shadow-lg cursor-grabbing"
-                )}
-            >
-                {canEdit && (
-                    <div
-                        {...listeners}
-                        className="cursor-grab active:cursor-grabbing p-1 -ml-2 hover:bg-muted/80 rounded transition-colors"
-                    >
-                        <GripVertical className="size-3 text-muted-foreground" />
-                    </div>
-                )}
-                <span className="truncate flex-1 text-left">{category.name}</span>
-                {category.votingOptions.filter(o => o.status === "pending").length > 0 && (
-                    <span className="flex h-2 w-2 rounded-full bg-destructive" />
-                )}
-
-                {/* Visual Excel Sheet indicator line */}
-                <div className={cn(
-                    "absolute bottom-0 left-0 right-0 h-1 transition-opacity",
-                    "data-[state=active]:opacity-0",
-                    "data-[state=inactive]:opacity-100 group-data-[orientation=horizontal]:bg-border"
-                )} />
-            </TabsTrigger>
-        </div>
-    );
-}
 
 export function VotingManager({ eventId, categories: initialCategories, canEdit }: VotingManagerProps) {
     const [categories, setCategories] = useState(initialCategories);
@@ -218,25 +117,9 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
     const [editingOption, setEditingOption] = useState<VotingOption | null>(null);
     const [optionCategoryId, setOptionCategoryId] = useState<string | null>(null);
 
-    // DnD sensors for category reordering
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
 
 
-    const handleCategoryCloseAttempt = (open: boolean) => {
-        setCategoryDialogOpen(open);
-        if (!open) {
-            setEditingCategory(null);
-        }
-    };
+ 
 
     const handleOptionCloseAttempt = (open: boolean) => {
         setOptionDialogOpen(open);
@@ -254,32 +137,8 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         }
     }, [initialCategories, activeCategoryId]);
 
-    const activeCategory = useMemo(() =>
-        categories.find(c => c.id === activeCategoryId),
-        [categories, activeCategoryId]);
+  
 
-    const handleDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event;
-
-        if (over && active.id !== over.id) {
-            const oldIndex = categories.findIndex((item) => item.id === active.id);
-            const newIndex = categories.findIndex((item) => item.id === over.id);
-            const newItems = arrayMove(categories, oldIndex, newIndex);
-
-            // Optimistically update UI
-            setCategories(newItems);
-
-            // Persist the new order
-            startTransition(async () => {
-                const result = await reorderCategories(eventId, newItems.map((c) => c.id));
-                if (!result.success) {
-                    toast.error("Failed to save category order");
-                    // Revert on error
-                    setCategories(categories);
-                }
-            });
-        }
-    }
 
 
     function handleEditCategory(category: VotingCategory) {
@@ -287,23 +146,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         setCategoryDialogOpen(true);
     }
 
-    function handleDeleteCategory(categoryId: string) {
-        startTransition(async () => {
-            const result = await deleteCategory(categoryId);
-            if (result.success) {
-                setCategories(prev => {
-                    const filtered = prev.filter(c => c.id !== categoryId);
-                    if (activeCategoryId === categoryId) {
-                        setActiveCategoryId(filtered[0]?.id);
-                    }
-                    return filtered;
-                });
-                toast.success("Category deleted");
-            } else {
-                toast.error(result.error);
-            }
-        });
-    }
+ 
 
     function handleOpenAddOption(categoryId: string) {
         setOptionCategoryId(categoryId);
@@ -507,8 +350,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit 
         });
     }
 
-    // Get current category for option dialog
-    const currentCategory = optionCategoryId ? categories.find(c => c.id === optionCategoryId) : null;
 
     return (
         <div className="space-y-4 @container">

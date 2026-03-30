@@ -1,4 +1,5 @@
 "use client";
+import { Image as SharedImage } from "@/components/shared/image/avatar";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,6 @@ import {
     Eye,
     EyeOff,
     Loader2,
-    Lock,
     MapPin,
     Pencil,
     Users,
@@ -29,14 +29,18 @@ import {
     Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isVotingEventType } from "@/lib/validations/event";
+
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { MAX_SPONSORS, MAX_GALLERY_LINKS } from "@/lib/const/event";
 import { getSocialPlatform, getGalleryProvider } from "@/lib/utils/event-icons";
 import Link from "next/link";
 import { Card } from "../ui/card";
-import type { EventFormData, EventOriginalData } from "@/lib/types/event";
+import type {
+    EventFormData,
+    EventOriginalData,
+    EventSponsor
+} from "@/lib/types/event";
 
 
 
@@ -65,168 +69,164 @@ export function EventSettingsTab({
     saveMultipleFields,
 }: EventSettingsTabProps) {
     const isPrivate = !formData.isPublic;
-    const isVotingEvent = isVotingEventType(event.type ?? "");
+
 
     // Modal States
     const [sponsorModalOpen, setSponsorModalOpen] = useState(false);
-    const [selectedSponsor, setSelectedSponsor] = useState<EventFormData["sponsors"] extends Array<infer T> ? T : null>(null);
+    const [selectedSponsor, setSelectedSponsor] = useState<EventSponsor | null>(null);
 
     const [socialModalOpen, setSocialModalOpen] = useState(false);
-    const [selectedSocial, setSelectedSocial] = useState<EventFormData["socialLinks"] extends Array<infer T> ? T : null>(null);
+    const [selectedSocial, setSelectedSocial] = useState<NonNullable<EventFormData["socialLinks"]>[number] | null>(null);
 
     const [galleryModalOpen, setGalleryModalOpen] = useState(false);
-    const [selectedGallery, setSelectedGallery] = useState<EventFormData["galleryLinks"] extends Array<infer T> ? T : null>(null);
+    const [selectedGallery, setSelectedGallery] = useState<NonNullable<EventFormData["galleryLinks"]>[number] | null>(null);
 
     return (
-        <div className="space-y-6">
-            {/* Description */}
-            <Card className="rounded-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">Description</h3>
-                    {canEdit && editingField !== "description" && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingField("description")}
-                        >
-                            <Pencil className="size-4 mr-2" />
-                            Edit
-                        </Button>
-                    )}
-                </div>
-
-                {editingField === "description" ? (
-                    <div className="space-y-4">
-                        <Textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Describe your event..."
-                            rows={6}
-                        />
-                        <div className="flex justify-end gap-2">
+            <div className="space-y-6">
+                {/* Description */}
+                <Card className="rounded-md p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold">Description</h3>
+                        {canEdit && editingField !== "description" && (
                             <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setFormData(prev => ({ ...prev, description: event.description ?? "" }));
-                                    setEditingField(null);
-                                }}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingField("description")}
                             >
-                                Cancel
+                                <Pencil className="size-4 mr-2" />
+                                Edit
                             </Button>
-                            <Button
-                                onClick={() => saveField("description", formData.description)}
-                                disabled={isPending}
-                            >
-                                {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                                Save
-                            </Button>
-                        </div>
+                        )}
                     </div>
-                ) : (
-                    <p className="text-muted-foreground whitespace-pre-wrap">
-                        {formData.description || "No description provided."}
-                    </p>
-                )}
-            </Card>
-
-            {/* Date & Time */}
-            <Card className="rounded-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">Date & Time</h3>
-                    {canEdit && editingField !== "datetime" && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingField("datetime")}
-                        >
-                            <Pencil className="size-4 mr-2" />
-                            Edit
-                        </Button>
-                    )}
-                </div>
-
-                {editingField === "datetime" ? (
-                    <div className="space-y-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label>Start Date & Time</Label>
-                                <Input
-                                    type="datetime-local"
-                                    value={formData.startDate}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>End Date & Time</Label>
-                                <Input
-                                    type="datetime-local"
-                                    value={formData.endDate}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Timezone</Label>
-                            <Input
-                                value={formData.timezone}
-                                onChange={(e) => setFormData(prev => ({ ...prev, timezone: e.target.value }))}
-                                placeholder="Africa/Accra"
+                    {editingField === "description" ? (
+                        <div className="space-y-4">
+                            <Textarea
+                                value={formData.description}
+                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                placeholder="Describe your event..."
+                                rows={6}
                             />
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setFormData(prev => ({ ...prev, description: event.description ?? "" }));
+                                        setEditingField(null);
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={() => saveField("description", formData.description)}
+                                    disabled={isPending}
+                                >
+                                    {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+                                    Save
+                                </Button>
+                            </div>
                         </div>
-                        <div className="flex justify-end gap-2">
+                    ) : (
+                        <p className="text-muted-foreground whitespace-pre-wrap">
+                            {formData.description || "No description provided."}
+                        </p>
+                    )}
+                </Card>
+                {/* Date & Time */}
+                <Card className="rounded-md p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold">Date & Time</h3>
+                        {canEdit && editingField !== "datetime" && (
                             <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : "",
-                                        endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "",
-                                        timezone: event.timezone,
-                                    }));
-                                    setEditingField(null);
-                                }}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingField("datetime")}
                             >
-                                Cancel
+                                <Pencil className="size-4 mr-2" />
+                                Edit
                             </Button>
-                            <Button
-                                onClick={() => saveMultipleFields({
-                                    startDate: formData.startDate || undefined,
-                                    endDate: formData.endDate || undefined,
-                                    timezone: formData.timezone,
-                                })}
-                                disabled={isPending}
-                            >
-                                {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                                Save
-                            </Button>
-                        </div>
+                        )}
                     </div>
-                ) : (
-                    <div className="grid gap-4 sm:grid-cols-3">
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-1">Starts</p>
-                            <p className="font-medium">
-                                {formData.startDate
-                                    ? new Date(formData.startDate).toLocaleString()
-                                    : "Not set"}
-                            </p>
+                    {editingField === "datetime" ? (
+                        <div className="space-y-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label>Start Date & Time</Label>
+                                    <Input
+                                        type="datetime-local"
+                                        value={formData.startDate}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>End Date & Time</Label>
+                                    <Input
+                                        type="datetime-local"
+                                        value={formData.endDate}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Timezone</Label>
+                                <Input
+                                    value={formData.timezone}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, timezone: e.target.value }))}
+                                    placeholder="Africa/Accra"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : "",
+                                            endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "",
+                                            timezone: event.timezone,
+                                        }));
+                                        setEditingField(null);
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={() => saveMultipleFields({
+                                        startDate: formData.startDate || undefined,
+                                        endDate: formData.endDate || undefined,
+                                        timezone: formData.timezone,
+                                    })}
+                                    disabled={isPending}
+                                >
+                                    {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+                                    Save
+                                </Button>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-1">Ends</p>
-                            <p className="font-medium">
-                                {formData.endDate
-                                    ? new Date(formData.endDate).toLocaleString()
-                                    : "Not set"}
-                            </p>
+                    ) : (
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            <div>
+                                <p className="text-sm text-muted-foreground mb-1">Starts</p>
+                                <p className="font-medium">
+                                    {formData.startDate
+                                        ? new Date(formData.startDate).toLocaleString()
+                                        : "Not set"}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground mb-1">Ends</p>
+                                <p className="font-medium">
+                                    {formData.endDate
+                                        ? new Date(formData.endDate).toLocaleString()
+                                        : "Not set"}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground mb-1">Timezone</p>
+                                <p className="font-medium">{formData.timezone}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-1">Timezone</p>
-                            <p className="font-medium">{formData.timezone}</p>
-                        </div>
-                    </div>
-                )}
-            </Card>
-
+                    )}
+                </Card>
             {/* Location */}
             <Card className="rounded-md p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -456,8 +456,14 @@ export function EventSettingsTab({
                             <Label>Maximum Attendees</Label>
                             <Input
                                 type="number"
-                                value={formData.maxAttendees}
-                                onChange={(e) => setFormData(prev => ({ ...prev, maxAttendees: e.target.value }))}
+                                value={formData.maxAttendees ?? ""}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        maxAttendees: val === "" ? null : Number(val)
+                                    }));
+                                }}
                                 placeholder="Leave empty for unlimited"
                                 min={1}
                             />
@@ -473,7 +479,7 @@ export function EventSettingsTab({
                                     setFormData(prev => ({
                                         ...prev,
                                         isPublic: event.isPublic,
-                                        maxAttendees: event.maxAttendees?.toString() ?? "",
+                                        maxAttendees: event.maxAttendees ?? null,
                                     }));
                                     setEditingField(null);
                                 }}
@@ -544,7 +550,7 @@ export function EventSettingsTab({
                                 setSelectedSponsor(null);
                                 setSponsorModalOpen(true);
                             }}
-                            disabled={isPending || formData.sponsors.length >= MAX_SPONSORS}
+                            disabled={isPending || (formData.sponsors?.length ?? 0) >= MAX_SPONSORS}
                         >
                             <Plus className="size-4 mr-2" />
                             Add Sponsor
@@ -553,14 +559,16 @@ export function EventSettingsTab({
                 </div>
 
                 <div className="flex gap-4 flex-wrap">
-                    {formData.sponsors.map((sponsor) => (
+                    {(formData.sponsors ?? []).map((sponsor) => (
                         <div key={sponsor.id} className="group w-fit relative p-4 rounded-md border bg-card hover:border-primary/50 transition-all flex flex-col items-center gap-4 text-center">
                             <div className="size-16 rounded-md border bg-muted flex items-center justify-center overflow-hidden">
                                 {sponsor.logo ? (
-                                    <img
+                                    <SharedImage
                                         src={getEventImageUrl(sponsor.logo) ?? ""}
                                         alt={sponsor.name}
-                                        className="size-full object-contain p-2"
+                                        width={64}
+                                        height={64}
+                                        className="object-contain p-2"
                                     />
                                 ) : (
                                     <ImageIcon className="size-6 text-muted-foreground opacity-20" />
@@ -575,7 +583,7 @@ export function EventSettingsTab({
                                         size="icon"
                                         className="size-7 rounded-md bg-background/80 backdrop-blur-sm"
                                         onClick={() => {
-                                            setSelectedSponsor(sponsor);
+                                            setSelectedSponsor(() => sponsor);
                                             setSponsorModalOpen(true);
                                         }}
                                     >
@@ -586,7 +594,7 @@ export function EventSettingsTab({
                                         size="icon"
                                         className="size-7 rounded-md bg-background/80 backdrop-blur-sm text-destructive hover:text-destructive"
                                         onClick={() => {
-                                            const newSponsors = formData.sponsors.filter(s => s.id !== sponsor.id);
+                                            const newSponsors = (formData.sponsors ?? []).filter(s => s.id !== sponsor.id);
                                             setFormData(prev => ({ ...prev, sponsors: newSponsors }));
                                             saveField("sponsors", newSponsors);
                                         }}
@@ -597,7 +605,7 @@ export function EventSettingsTab({
                             )}
                         </div>
                     ))}
-                    {formData.sponsors.length === 0 && (
+                    {(formData.sponsors?.length ?? 0) === 0 && (
                         <div className="col-span-full py-8 border border-dashed rounded-md flex flex-col items-center justify-center text-muted-foreground gap-2 bg-muted/20">
                             <ImageIcon className="size-8 opacity-20" />
                             <p className="text-sm">No sponsors added yet</p>
@@ -630,7 +638,7 @@ export function EventSettingsTab({
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    {formData.socialLinks.map((link) => {
+                    {(formData.socialLinks ?? []).map((link) => {
                         const platform = getSocialPlatform(link.url, "size-4");
                         return (
                             <Link
@@ -638,7 +646,7 @@ export function EventSettingsTab({
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 key={link.id}
-                                className="flex items-center gap-3 p-3 border rounded-md bg-muted/50 max-w-[280px]"
+                                className="flex items-center gap-3 p-3 border rounded-md bg-muted/50 max-w-70"
                             >
                                 <div className="size-9 rounded-md bg-background border flex items-center justify-center shrink-0">
                                     {platform.icon}
@@ -647,7 +655,7 @@ export function EventSettingsTab({
                                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                                         {platform.name}
                                     </p>
-                                    <p className="text-xs italic truncate max-w-[140px]">{link.url}</p>
+                                    <p className="text-xs italic truncate max-w-35">{link.url}</p>
                                 </div>
                                 {canEdit && (
                                     <div className="flex gap-1 ml-auto">
@@ -666,7 +674,7 @@ export function EventSettingsTab({
                                             className="size-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                                             onClick={(e) => {
                                                 e.preventDefault();
-                                                const newLinks = formData.socialLinks.filter(l => l.id !== link.id);
+                                                const newLinks = (formData.socialLinks ?? []).filter(l => l.id !== link.id);
                                                 setFormData(prev => ({ ...prev, socialLinks: newLinks }));
                                                 saveField("socialLinks", newLinks);
                                             }}
@@ -678,7 +686,7 @@ export function EventSettingsTab({
                             </Link>
                         );
                     })}
-                    {formData.socialLinks.length === 0 && (
+                    {(formData.socialLinks?.length ?? 0) === 0 && (
                         <div className="w-full py-4 text-center text-sm text-muted-foreground italic bg-muted/20 rounded-lg border border-dashed">
                             No social links added yet
                         </div>
@@ -701,7 +709,7 @@ export function EventSettingsTab({
                             variant="outline"
                             size="sm"
                             onClick={() => { setSelectedGallery(null); setGalleryModalOpen(true); }}
-                            disabled={isPending || formData.galleryLinks.length >= MAX_GALLERY_LINKS}
+                            disabled={isPending || (formData.galleryLinks?.length ?? 0) >= MAX_GALLERY_LINKS}
                         >
                             <Plus className="size-4 mr-2" />
                             Add Gallery
@@ -710,7 +718,7 @@ export function EventSettingsTab({
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    {formData.galleryLinks.map((link) => {
+                    {(formData.galleryLinks ?? []).map((link) => {
                         const provider = getGalleryProvider(link.url, "size-4");
                         return (
                             <Link
@@ -718,7 +726,7 @@ export function EventSettingsTab({
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 key={link.id}
-                                className="flex items-center gap-3 p-3 border rounded-md bg-muted/50 max-w-[280px]"
+                                className="flex items-center gap-3 p-3 border rounded-md bg-muted/50 max-w-70"
                             >
                                 <div className="size-9 rounded-md bg-background border flex items-center justify-center shrink-0">
                                     {provider.icon}
@@ -730,7 +738,7 @@ export function EventSettingsTab({
                                             {provider.name}
                                         </span>
                                     </p>
-                                    <p className="text-xs italic truncate max-w-[140px]">{link.url}</p>
+                                    <p className="text-xs italic truncate max-w-35">{link.url}</p>
                                 </div>
                                 {canEdit && (
                                     <div className="flex gap-1 ml-auto">
@@ -749,7 +757,7 @@ export function EventSettingsTab({
                                             className="size-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                                             onClick={(e) => {
                                                 e.preventDefault();
-                                                const newLinks = formData.galleryLinks.filter(l => l.id !== link.id);
+                                                const newLinks = (formData.galleryLinks ?? []).filter(l => l.id !== link.id);
                                                 setFormData(prev => ({ ...prev, galleryLinks: newLinks }));
                                                 saveField("galleryLinks", newLinks);
                                             }}
@@ -761,7 +769,7 @@ export function EventSettingsTab({
                             </Link>
                         );
                     })}
-                    {formData.galleryLinks.length === 0 && (
+                    {(formData.galleryLinks?.length ?? 0) === 0 && (
                         <div className="w-full py-4 text-center text-sm text-muted-foreground italic bg-muted/20 rounded-lg border border-dashed">
                             No gallery links added yet
                         </div>
@@ -774,13 +782,13 @@ export function EventSettingsTab({
             <SponsorDialog
                 open={sponsorModalOpen}
                 onOpenChange={setSponsorModalOpen}
-                sponsor={selectedSponsor}
+                sponsor={selectedSponsor ? { id: String(selectedSponsor.id ?? ''), name: selectedSponsor.name, logo: selectedSponsor.logo } : null}
                 onSave={(sponsorData) => {
-                    let newSponsors;
+                    let newSponsors: NonNullable<EventFormData["sponsors"]> = [];
                     if (selectedSponsor) {
-                        newSponsors = formData.sponsors.map(s => s.id === selectedSponsor.id ? { ...sponsorData, id: s.id } : s);
+                        newSponsors = (formData.sponsors ?? []).map(s => s.id === selectedSponsor.id ? { ...sponsorData, id: s.id } : s);
                     } else {
-                        newSponsors = [...formData.sponsors, { ...sponsorData, id: `new-${Date.now()}` }];
+                        newSponsors = [...(formData.sponsors ?? []), { ...sponsorData, id: `new-${Date.now()}` }];
                     }
                     setFormData(prev => ({ ...prev, sponsors: newSponsors }));
                     saveField("sponsors", newSponsors);
@@ -792,13 +800,13 @@ export function EventSettingsTab({
             <SocialLinkDialog
                 open={socialModalOpen}
                 onOpenChange={setSocialModalOpen}
-                link={selectedSocial}
+                link={selectedSocial ? { id: String(selectedSocial.id ?? ''), url: selectedSocial.url } : null}
                 onSave={(url) => {
-                    let newLinks;
+                    let newLinks: NonNullable<EventFormData["socialLinks"]> = [];
                     if (selectedSocial) {
-                        newLinks = formData.socialLinks.map(l => l.id === selectedSocial.id ? { id: l.id, url } : l);
+                        newLinks = (formData.socialLinks ?? []).map(l => l.id === selectedSocial?.id ? { id: l.id, url } : l);
                     } else {
-                        newLinks = [...formData.socialLinks, { id: `new-${Date.now()}`, url }];
+                        newLinks = [...(formData.socialLinks ?? []), { id: `new-${Date.now()}`, url }];
                     }
                     setFormData(prev => ({ ...prev, socialLinks: newLinks }));
                     saveField("socialLinks", newLinks);
@@ -810,13 +818,13 @@ export function EventSettingsTab({
             <GalleryLinkDialog
                 open={galleryModalOpen}
                 onOpenChange={setGalleryModalOpen}
-                link={selectedGallery}
+                link={selectedGallery ? { id: String(selectedGallery.id ?? ''), name: selectedGallery.name, url: selectedGallery.url } : null}
                 onSave={(galleryData) => {
-                    let newLinks;
+                    let newLinks: NonNullable<EventFormData["galleryLinks"]> = [];
                     if (selectedGallery) {
-                        newLinks = formData.galleryLinks.map(l => l.id === selectedGallery.id ? { ...galleryData, id: l.id } : l);
+                        newLinks = (formData.galleryLinks ?? []).map(l => l.id === selectedGallery?.id ? { ...galleryData, id: l.id } : l);
                     } else {
-                        newLinks = [...formData.galleryLinks, { ...galleryData, id: `new-${Date.now()}` }];
+                        newLinks = [...(formData.galleryLinks ?? []), { ...galleryData, id: `new-${Date.now()}` }];
                     }
                     setFormData(prev => ({ ...prev, galleryLinks: newLinks }));
                     saveField("galleryLinks", newLinks);
@@ -836,13 +844,13 @@ function SponsorDialog({
     sponsor,
     onSave,
     isPending
-}: {
+}: Readonly<{
     open: boolean;
     onOpenChange: (open: boolean) => void;
     sponsor: { id: string; name: string; logo: string | null } | null;
     onSave: (data: { name: string; logo: string | null }) => void;
     isPending: boolean;
-}) {
+}>) {
     const [name, setName] = useState(sponsor?.name ?? "");
     const [logo, setLogo] = useState(sponsor?.logo ?? null);
 
@@ -881,9 +889,11 @@ function SponsorDialog({
                     <div className="flex flex-col items-center gap-4">
                         <div className="relative size-24 rounded-md border bg-muted flex items-center justify-center overflow-hidden">
                             {logo ? (
-                                <img
+                                <SharedImage
                                     src={getEventImageUrl(logo) ?? ""}
                                     alt="Preview"
+                                    width={96}
+                                    height={96}
                                     className="size-full object-contain p-2"
                                 />
                             ) : (
@@ -925,32 +935,34 @@ function SponsorDialog({
     );
 }
 
+// Shared validation helper for URLs
+function validateSocial(val: string) {
+    if (/\s/.test(val)) return "URLs cannot contain spaces";
+    if (val.includes("...")) return "URLs cannot contain ellipses (...)";
+    return null;
+}
+
 function SocialLinkDialog({
     open,
     onOpenChange,
     link,
     onSave,
     isPending
-}: {
+}: Readonly<{
     open: boolean;
     onOpenChange: (open: boolean) => void;
     link: { id: string; url: string } | null;
     onSave: (url: string) => void;
     isPending: boolean;
-}) {
+}>) {
     const [url, setUrl] = useState(link?.url ?? "");
     const [error, setError] = useState<string | null>(null);
 
-    // Validation helper
-    const validate = (val: string) => {
-        if (/\s/.test(val)) return "URLs cannot contain spaces";
-        if (val.includes("...")) return "URLs cannot contain ellipses (...)";
-        return null;
-    };
+
 
     const handleUrlChange = (val: string) => {
         setUrl(val);
-        setError(validate(val));
+        setError(validateSocial(val));
     };
 
     // Sync with props
@@ -998,7 +1010,7 @@ function SocialLinkDialog({
                             </div>
                             <div>
                                 <p className="text-xs font-bold uppercase text-muted-foreground">{platform.name} detected</p>
-                                <p className="text-sm truncate max-w-[200px]">{url}</p>
+                                <p className="text-sm truncate max-w-50">{url}</p>
                             </div>
                         </div>
                     )}
@@ -1024,26 +1036,23 @@ function GalleryLinkDialog({
     link,
     onSave,
     isPending
-}: {
+}: Readonly<{
     open: boolean;
     onOpenChange: (open: boolean) => void;
     link: { id: string; name: string; url: string } | null;
     onSave: (data: { name: string; url: string }) => void;
     isPending: boolean;
-}) {
+}>) {
     const [name, setName] = useState(link?.name ?? "");
     const [url, setUrl] = useState(link?.url ?? "");
     const [error, setError] = useState<string | null>(null);
 
-    const validate = (val: string) => {
-        if (/\s/.test(val)) return "URLs cannot contain spaces";
-        if (val.includes("...")) return "URLs cannot contain ellipses (...)";
-        return null;
-    };
+    // Validation helper (reuse validateSocial logic)
+    const validateGallery = validateSocial;
 
     const handleUrlChange = (val: string) => {
         setUrl(val);
-        setError(validate(val));
+        setError(validateGallery(val));
     };
 
     // Sync with props
@@ -1100,7 +1109,7 @@ function GalleryLinkDialog({
                             </div>
                             <div>
                                 <p className="text-xs font-bold uppercase text-muted-foreground">{provider.name} detected</p>
-                                <p className="text-sm truncate max-w-[200px]">{url}</p>
+                                <p className="text-sm truncate max-w-50">{url}</p>
                             </div>
                         </div>
                     )}

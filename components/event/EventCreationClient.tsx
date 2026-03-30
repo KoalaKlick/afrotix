@@ -26,7 +26,7 @@ interface EventCreationClientProps {
 }
 
 export function EventCreationClient({ organizationSlug }: EventCreationClientProps) {
-    const router = useRouter();
+
     const [isPending, startTransition] = useTransition();
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<EventFormData>>({});
@@ -80,11 +80,17 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
 
     // Step 4 success - create event
     function handleStep4Success(data: {
-        sponsors: { name: string; logo?: string }[];
+        sponsors: { name: string; logo?: string | null }[];
         socialLinks: { url: string }[];
         galleryLinks: { name: string; url: string }[];
     }) {
-        const finalData = { ...formData, ...data };
+        // Normalize sponsors to always have logo: string | null
+        const { sponsors, ...rest } = data;
+        const normalizedSponsors = (sponsors ?? []).map(s => ({
+            ...s,
+            logo: s.logo ?? null,
+        }));
+        const finalData = { ...formData, ...rest, sponsors: normalizedSponsors };
         setFormData(finalData);
         createEvent(finalData as EventFormData);
     }
@@ -111,7 +117,7 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
             if (data.bannerImage) formDataObj.set("bannerImage", data.bannerImage);
             if (data.maxAttendees) formDataObj.set("maxAttendees", String(data.maxAttendees));
             formDataObj.set("isPublic", String(data.isPublic ?? true));
-            
+
             // Add extras
             if (data.sponsors) formDataObj.set("sponsors", JSON.stringify(data.sponsors));
             if (data.socialLinks) formDataObj.set("socialLinks", JSON.stringify(data.socialLinks));
@@ -185,7 +191,7 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
 
             {currentStep === 3 && (
                 <EventStep4Extras
-                    initialData={formData as any}
+                    initialData={formData}
                     onSuccess={handleStep4Success}
                     onBack={handleBack}
                     isSubmitting={isPending}

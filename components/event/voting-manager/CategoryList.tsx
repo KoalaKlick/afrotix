@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, type Dispatch, type SetStateAction, useMemo } from "react";
+import { useTransition, type Dispatch, type SetStateAction } from "react";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import {
     DndContext,
@@ -40,7 +40,6 @@ import {
     Vote,
     Globe,
     Settings,
-    Loader2,
 } from "lucide-react";
 import type { VotingCategory, VotingOption } from "@/lib/types/voting";
 import { NomineeCard } from "../NomineeCard";
@@ -48,12 +47,12 @@ import { SortableCategoryItem } from "./SortableCategoryItem";
 import {
     approveNominationAction,
     deleteCategory,
-    deleteOption,
     rejectNominationAction,
     reorderCategories,
 } from "@/lib/actions/voting";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface CategoryListProps {
     readonly eventId: string;
@@ -217,7 +216,7 @@ export function CategoryList({
             {categories.map((category) => {
                 const pendingCount = category.votingOptions.filter(o => o.status === "pending").length;
                 const approvedNominees = category.votingOptions.filter(o => o.status === "approved");
-                
+
                 return (
                     <TabsContent key={category.id} value={category.id} className="space-y-4 pt-2 mt-0">
                         {/* Category Info & Actions */}
@@ -225,8 +224,10 @@ export function CategoryList({
                             <div className="flex items-start gap-4 flex-1">
                                 {category.templateImage && (
                                     <div className="size-16 rounded-lg overflow-hidden shrink-0 border bg-background relative hidden sm:block">
-                                        <img 
-                                            src={getEventImageUrl(category.templateImage) || ''} 
+                                        <Image
+                                            width={64}
+                                            height={64}
+                                            src={getEventImageUrl(category.templateImage) || ''}
                                             alt={category.name}
                                             className="w-full h-full object-cover"
                                         />
@@ -291,7 +292,7 @@ export function CategoryList({
                                         <Plus className="size-4 mr-2" />
                                         Add Nominee
                                     </Button>
-                                    
+
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="ghost" size="sm" className="text-destructive h-8 px-2">
@@ -331,9 +332,9 @@ export function CategoryList({
                                         Add candidates to this category to start voting
                                     </p>
                                     {canEdit && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() => onAddOption(category.id)}
                                         >
                                             <Plus className="size-4 mr-2" />
