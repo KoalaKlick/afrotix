@@ -106,13 +106,13 @@ export async function validateEventStep2(
     const rawData = {
         startDate: formData.get("startDate") as string || undefined,
         endDate: formData.get("endDate") as string || undefined,
-        timezone: (formData.get("timezone") as string) || "Africa/Lagos",
+        timezone: (formData.get("timezone") as string) || "Africa/Accra",
         isVirtual: formData.get("isVirtual") === "true",
         virtualLink: formData.get("virtualLink") as string || undefined,
         venueName: formData.get("venueName") as string || undefined,
         venueAddress: formData.get("venueAddress") as string || undefined,
         venueCity: formData.get("venueCity") as string || undefined,
-        venueCountry: (formData.get("venueCountry") as string) || "Nigeria",
+        venueCountry: (formData.get("venueCountry") as string) || "Ghana",
     };
 
     // Validate
@@ -231,13 +231,13 @@ export async function createNewEvent(
         description: formData.get("description") as string || undefined,
         startDate: formData.get("startDate") as string || undefined,
         endDate: formData.get("endDate") as string || undefined,
-        timezone: (formData.get("timezone") as string) || "Africa/Lagos",
+        timezone: (formData.get("timezone") as string) || "Africa/Accra",
         isVirtual: formData.get("isVirtual") === "true",
         virtualLink: formData.get("virtualLink") as string || undefined,
         venueName: formData.get("venueName") as string || undefined,
         venueAddress: formData.get("venueAddress") as string || undefined,
         venueCity: formData.get("venueCity") as string || undefined,
-        venueCountry: (formData.get("venueCountry") as string) || "Nigeria",
+        venueCountry: (formData.get("venueCountry") as string) || "Ghana",
         coverImage: formData.get("coverImage") as string || undefined,
         bannerImage: formData.get("bannerImage") as string || undefined,
         maxAttendees: maxAttendeesRaw ? Number.parseInt(maxAttendeesRaw, 10) : undefined,
@@ -589,8 +589,8 @@ export async function deleteExistingEvent(eventId: string): Promise<ActionResult
         return { success: false, error: "Failed to delete event" };
     }
 }
-import { 
-    getEventVoteTransactions 
+import {
+    getEventVoteTransactions
 } from "@/lib/dal/event";
 
 /**

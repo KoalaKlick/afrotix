@@ -80,7 +80,7 @@ export const venueCitySchema = z
 export const venueCountrySchema = z
     .string()
     .max(100, "Country must be at most 100 characters")
-    .default("Nigeria");
+    .default("Ghana");
 
 // Max attendees validation
 export const maxAttendeesSchema = z
@@ -94,7 +94,7 @@ export const maxAttendeesSchema = z
 // Timezone validation
 export const timezoneSchema = z
     .string()
-    .default("Africa/Lagos");
+    .default("Africa/Accra");
 
 // Step 1: Basic info - Title, type, and slug
 export const createEventStep1Schema = z.object({

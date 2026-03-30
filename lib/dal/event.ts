@@ -239,14 +239,14 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
         description,
         startDate,
         endDate,
-        timezone = "Africa/Lagos",
+        timezone = "Africa/Accra",
         isPublic = true,
         coverImage,
         bannerImage,
         venueName,
         venueAddress,
         venueCity,
-        venueCountry = "Nigeria",
+        venueCountry = "Ghana",
         isVirtual = false,
         virtualLink,
         maxAttendees,
@@ -313,7 +313,7 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
 export async function updateEvent(id: string, data: EventUpdateInput): Promise<Event | null> {
     try {
         const { sponsors, socialLinks, galleryLinks, startDate, endDate, ...rest } = data;
-        
+
         return await prisma.event.update({
             where: { id },
             data: {
@@ -549,7 +549,7 @@ export const getOrganizationEventStats = cache(async (organizationId: string) =>
                         id: mostAttended.id,
                         title: mostAttended.title,
                         attendees: mostAttended._count.tickets,
-                      }
+                    }
                     : undefined,
             upcomingEvent: upcomingEventHighlight,
             recentEvent: recentEventHighlight,

@@ -42,7 +42,7 @@ interface EventStep2Props {
 
 // Common African timezones
 const TIMEZONES = [
-    { value: "Africa/Lagos", label: "West Africa Time (WAT)" },
+    { value: "Africa/Accra", label: "West Africa Time (WAT)" },
     { value: "Africa/Nairobi", label: "East Africa Time (EAT)" },
     { value: "Africa/Johannesburg", label: "South Africa Time (SAST)" },
     { value: "Africa/Cairo", label: "Egypt Time (EET)" },
@@ -55,12 +55,12 @@ export function EventStep2DateLocation({ initialData, onSuccess, onBack, onSkip 
     const [isVirtual, setIsVirtual] = useState(initialData?.isVirtual ?? false);
     const [startDate, setStartDate] = useState(initialData?.startDate ?? "");
     const [endDate, setEndDate] = useState(initialData?.endDate ?? "");
-    const [timezone, setTimezone] = useState(initialData?.timezone ?? "Africa/Lagos");
+    const [timezone, setTimezone] = useState(initialData?.timezone ?? "Africa/Accra");
     const [virtualLink, setVirtualLink] = useState(initialData?.virtualLink ?? "");
     const [venueName, setVenueName] = useState(initialData?.venueName ?? "");
     const [venueAddress, setVenueAddress] = useState(initialData?.venueAddress ?? "");
     const [venueCity, setVenueCity] = useState(initialData?.venueCity ?? "");
-    const [venueCountry, setVenueCountry] = useState(initialData?.venueCountry ?? "Nigeria");
+    const [venueCountry, setVenueCountry] = useState(initialData?.venueCountry ?? "Ghana");
     const [errors, setErrors] = useState<Record<string, string[]>>({});
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -241,7 +241,7 @@ export function EventStep2DateLocation({ initialData, onSuccess, onBack, onSkip 
                                 id="venueCity"
                                 value={venueCity}
                                 onChange={(e) => setVenueCity(e.target.value)}
-                                placeholder="e.g., Lagos"
+                                placeholder="e.g., Accra"
                                 className={errors.venueCity ? "border-destructive" : ""}
                             />
                             {errors.venueCity && (
@@ -255,7 +255,7 @@ export function EventStep2DateLocation({ initialData, onSuccess, onBack, onSkip 
                                 id="venueCountry"
                                 value={venueCountry}
                                 onChange={(e) => setVenueCountry(e.target.value)}
-                                placeholder="e.g., Nigeria"
+                                placeholder="e.g., Ghana"
                                 className={errors.venueCountry ? "border-destructive" : ""}
                             />
                             {errors.venueCountry && (

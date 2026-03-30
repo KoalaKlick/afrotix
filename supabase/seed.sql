@@ -60,8 +60,8 @@ SELECT
   '2026-06-15 23:00:00+01',
   TRUE,
   'Eko Convention Centre',
-  'Lagos',
-  'Nigeria'
+  'Accra',
+  'Ghana'
 FROM public.organizations o
 WHERE o.slug = 'afrotix-demo';
 
@@ -90,7 +90,7 @@ SELECT
   e.id,
   c.id,
   'Burna Boy',
-  'Nigerian Afrobeats and Afrofusion artist',
+  'Ghanan Afrobeats and Afrofusion artist',
   1
 FROM public.events e
 JOIN public.voting_categories c ON c.event_id = e.id
@@ -101,7 +101,7 @@ SELECT
   e.id,
   c.id,
   'Wizkid',
-  'Nigerian singer and songwriter',
+  'Ghanan singer and songwriter',
   2
 FROM public.events e
 JOIN public.voting_categories c ON c.event_id = e.id
