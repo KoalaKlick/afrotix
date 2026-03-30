@@ -1,3 +1,109 @@
+import { getUserOrganizations } from "@/lib/dal/organization";
+/**
+ * Get events visible to a user (public events, plus private events for orgs they are a member of)
+ * For landing page or events list with user context
+ */
+export const getVisibleEventsForUser = cache(async (options?: {
+    userId?: string;
+    limit?: number;
+    offset?: number;
+    type?: EventType;
+    query?: string;
+}): Promise<(Event & { organization: { slug: string; name: string } })[]> => {
+    try {
+        const { userId, limit = 6, offset = 0, type, query } = options ?? {};
+        // If not logged in, return only public events (same as getPublicEvents)
+        if (!userId) {
+            return await prisma.event.findMany({
+                where: {
+                    isPublic: true,
+                    status: { notIn: ["draft", "cancelled"] },
+                    ...(type && { type }),
+                    ...(query && {
+                        title: {
+                            contains: query,
+                            mode: 'insensitive',
+                        },
+                    }),
+                },
+                include: {
+                    organization: {
+                        select: {
+                            slug: true,
+                            name: true,
+                        }
+                    }
+                },
+                orderBy: { startDate: "asc" },
+                take: limit,
+                skip: offset,
+            }) as (Event & { organization: { slug: string; name: string } })[];
+        }
+
+        // If logged in, return public events and private events for orgs the user is a member of
+        const orgs = await getUserOrganizations(userId);
+        const orgIds = orgs.map(o => o.id);
+        if (orgIds.length === 0) {
+            // User is not a member of any org, so only public events
+            return await prisma.event.findMany({
+                where: {
+                    isPublic: true,
+                    status: { notIn: ["draft", "cancelled"] },
+                    ...(type && { type }),
+                    ...(query && {
+                        title: {
+                            contains: query,
+                            mode: 'insensitive',
+                        },
+                    }),
+                },
+                include: {
+                    organization: {
+                        select: {
+                            slug: true,
+                            name: true,
+                        }
+                    }
+                },
+                orderBy: { startDate: "asc" },
+                take: limit,
+                skip: offset,
+            }) as (Event & { organization: { slug: string; name: string } })[];
+        }
+
+        // User is a member of at least one org: show public events and private events for their orgs
+        return await prisma.event.findMany({
+            where: {
+                status: { notIn: ["draft", "cancelled"] },
+                ...(type && { type }),
+                ...(query && {
+                    title: {
+                        contains: query,
+                        mode: 'insensitive',
+                    },
+                }),
+                OR: [
+                    { isPublic: true },
+                    { isPublic: false, organizationId: { in: orgIds } }
+                ]
+            },
+            include: {
+                organization: {
+                    select: {
+                        slug: true,
+                        name: true,
+                    }
+                }
+            },
+            orderBy: { startDate: "asc" },
+            take: limit,
+            skip: offset,
+        }) as (Event & { organization: { slug: string; name: string } })[];
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching visible events for user:");
+        return [];
+    }
+});
 import { logger, logAction } from '@/lib/logger';
 /**
  * Event Data Access Layer (DAL)

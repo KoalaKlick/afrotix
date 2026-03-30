@@ -600,7 +600,9 @@ export async function completeInvitationAcceptance(
 export const getOrganizationProfile = cache(async (slug: string, viewerUserId?: string) => {
     try {
         return await prisma.organization.findUnique({
-            where: { slug },
+            where: {
+                slug, 
+            },
             include: {
                 socialLinks: true,
                 events: {

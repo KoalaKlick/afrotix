@@ -5,10 +5,16 @@ import { HowItWorksSection } from '@/components/Landing/sections/RevampWorksSect
 import { EventsSection } from '@/components/Landing/sections/revamp-events'
 import { FAQSection } from '@/components/Landing/sections/FAQSection'
 import { TestimonialsSection } from '@/components/Landing/sections/TestimonialsSection'
-import { getPublicEvents } from '@/lib/dal/event'
+import { getVisibleEventsForUser } from '@/lib/dal/event'
+import { createClient } from '@/utils/supabase/server'
 
 export default async function LandingPage() {
-  const events = await getPublicEvents({ limit: 7 })
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // TODO: Pass userId if available from session/auth context for personalized results
+  const events = await getVisibleEventsForUser({ limit: 7, userId: user?.id });
 
   return (
     <>

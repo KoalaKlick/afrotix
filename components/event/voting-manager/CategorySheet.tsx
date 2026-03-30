@@ -71,7 +71,7 @@ export function CategorySheet({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-    const { isUploading, upload } = useImageUpload({
+    const { upload } = useImageUpload({
         bucket: "events",
         folder: "templates",
         convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
@@ -82,22 +82,27 @@ export function CategorySheet({
         setPendingFile(null);
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
-    }, [previewUrl, votingMode]);
+    }, [previewUrl]);
 
     useEffect(() => {
         if (open && editingCategory) {
+            let nominationDeadlineStr = "";
+            if (editingCategory.nominationDeadline) {
+                if (typeof editingCategory.nominationDeadline === 'string') {
+                    nominationDeadlineStr = editingCategory.nominationDeadline.slice(0, 16);
+                } else {
+                    nominationDeadlineStr = editingCategory.nominationDeadline.toISOString().slice(0, 16);
+                }
+            }
             setForm({
                 name: editingCategory.name,
                 description: editingCategory.description ?? "",
                 maxVotesPerUser: editingCategory.maxVotesPerUser,
                 allowMultiple: editingCategory.allowMultiple,
                 allowPublicNomination: editingCategory.allowPublicNomination,
-                nominationDeadline: editingCategory.nominationDeadline
-                    ? (typeof editingCategory.nominationDeadline === 'string'
-                        ? editingCategory.nominationDeadline.slice(0, 16)
-                        : editingCategory.nominationDeadline.toISOString().slice(0, 16))
-                    : "",
+                nominationDeadline: nominationDeadlineStr,
                 requireApproval: editingCategory.requireApproval,
+                templateImage: editingCategory.templateImage ?? null,
                 templateConfig: editingCategory.templateConfig ?? null,
                 showFinalImage: editingCategory.showFinalImage ?? true,
                 showTotalVotesPublicly: editingCategory.showTotalVotesPublicly ?? true,
@@ -107,13 +112,16 @@ export function CategorySheet({
         } else if (!open) {
             resetForm();
         }
-    }, [open, editingCategory, resetForm]);
+    }, [open, editingCategory, resetForm, votingMode]);
 
-    const initialDeadline = editingCategory?.nominationDeadline
-        ? (typeof editingCategory.nominationDeadline === 'string'
-            ? editingCategory.nominationDeadline.slice(0, 16)
-            : editingCategory.nominationDeadline.toISOString().slice(0, 16))
-        : "";
+    let initialDeadline = "";
+    if (editingCategory?.nominationDeadline) {
+        if (typeof editingCategory.nominationDeadline === 'string') {
+            initialDeadline = editingCategory.nominationDeadline.slice(0, 16);
+        } else {
+            initialDeadline = editingCategory.nominationDeadline.toISOString().slice(0, 16);
+        }
+    }
 
     const isDirty =
         form.name !== (editingCategory?.name ?? "") ||
@@ -129,12 +137,17 @@ export function CategorySheet({
         form.votePrice !== (Number(editingCategory?.votePrice) || 0) ||
         pendingFile !== null;
 
-    const handleCloseAttempt = (newOpen: boolean) => {
-        if (!newOpen && isDirty) {
+    // Remove handleCloseAttempt and use explicit open/close logic inline
+    const handleOpen = () => {
+        onOpenChange(true);
+    };
+
+    const handleClose = () => {
+        if (isDirty) {
             setShowDiscardDialog(true);
         } else {
-            onOpenChange(newOpen);
-            if (!newOpen) resetForm();
+            onOpenChange(false);
+            resetForm();
         }
     };
 
@@ -228,17 +241,23 @@ export function CategorySheet({
     const templateDisplayUrl = getCategoryTemplateImageUrl(form.templateImage);
     const initialFiles =
         (previewUrl || (form.templateImage && templateDisplayUrl))
-            ? [{ 
-                id: pendingFile ? "pending" : (form.templateImage || "initial"), 
-                url: previewUrl || templateDisplayUrl || "", 
-                name: pendingFile ? pendingFile.name : "Template image" 
+            ? [{
+                id: pendingFile ? "pending" : (form.templateImage || "initial"),
+                url: previewUrl || templateDisplayUrl || "",
+                name: pendingFile ? pendingFile.name : "Template image"
             }]
             : [];
 
     return (
         <Sheet
             open={open}
-            onOpenChange={handleCloseAttempt}
+            onOpenChange={(open) => {
+                if (open) {
+                    handleOpen();
+                } else {
+                    handleClose();
+                }
+            }}
         >
             {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
 

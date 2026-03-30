@@ -16,8 +16,8 @@ import type { VotingCategoryWithOptions } from "@/lib/dal/voting";
 import { OptionCustomFieldInput } from "@/components/event/voting-manager/OptionCustomFieldInput";
 
 interface PublicNominationModalProps {
-    eventId: string;
-    category: VotingCategoryWithOptions;
+    readonly eventId: string;
+    readonly category: VotingCategoryWithOptions;
 }
 
 export function PublicNominationModal({ eventId, category }: PublicNominationModalProps) {
@@ -88,7 +88,7 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
                 // Secure Approach: Ensure anonymous sign-in before upload
                 const supabase = createClient();
                 const { data: { user } } = await supabase.auth.getUser();
-                
+
                 if (!user) {
                     const { error: authError } = await supabase.auth.signInAnonymously();
                     if (authError) {
@@ -271,7 +271,7 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
                         </div>
 
                     </div>
-                    
+
                     <div className="flex justify-end gap-2 pt-2">
                         <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                             Cancel
