@@ -5,7 +5,7 @@ import { Check, Loader2, Banknote, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { supportedCountries, getCurrencyByCountryCode } from "@/lib/dal/countries";
 import { fetchPaystackBanks } from "@/lib/dal/paystackBanks";
@@ -49,6 +49,9 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
 
     // Derived: which list to show in the dropdown
     const networks = bankType === "momo" ? momoNetworks : banks;
+    // For Combobox
+    const countryOptions = supportedCountries.map((c) => ({ value: c.code, label: c.name }));
+    const networkOptions = networks.map((n) => ({ value: n.code, label: n.label }));
 
     useEffect(() => {
         async function loadNetworks() {
@@ -174,51 +177,57 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                                 />
                                 Bank Account
                             </label>
-                            <label className="flex items-center gap-2 text-sm cursor-pointer">
-                                <span>Country:</span>
-                                <select
-                                    value={country}
-                                    onChange={(e) => setCountry(e.target.value)}
-                                    className="border rounded px-2 py-1 text-sm"
-                                >
-                                    {supportedCountries.map((c) => (
-                                        <option key={c.code} value={c.code}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </label>
+                            <div className="flex items-center gap-2 text-sm">
+                                <label htmlFor="country-combobox">Country:</label>
+                                <div className="min-w-45">
+                                    <Combobox
+                                        options={countryOptions}
+                                        value={country}
+                                        onChange={(val) => setCountry(val)}
+                                        placeholder="Select country"
+                                        disabled={isLoadingNetworks}
+                                        className=""
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-2">
-                                <Label>{bankType === "momo" ? "Network" : "Bank"}</Label>
-                                <Select value={bankCode} onValueChange={setBankCode} disabled={isLoadingNetworks}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={isLoadingNetworks ? "Loading..." : `Select ${bankType === "momo" ? "network" : "bank"}`} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {networks.length === 0 && !isLoadingNetworks && (
-                                            <div className="px-4 py-2 text-muted-foreground text-sm">No options available</div>
-                                        )}
-                                        {networks.map((net, idx) => (
-                                            <SelectItem key={net.code + "-" + idx} value={net.code}>
-                                                {net.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Label htmlFor="network-combobox">{bankType === "momo" ? "Network" : "Bank"}</Label>
+                                {
+                                    (() => {
+                                        let netPlaceholder = "";
+                                        if (isLoadingNetworks) {
+                                            netPlaceholder = "Loading...";
+                                        } else {
+                                            netPlaceholder = bankType === "momo" ? "Select network" : "Select bank";
+                                        }
+                                        return (
+                                            <Combobox
+                                                options={networkOptions}
+                                                value={bankCode}
+                                                onChange={setBankCode}
+                                                placeholder={netPlaceholder}
+                                                disabled={isLoadingNetworks}
+                                                className=""
+                                            />
+                                        );
+                                    })()
+                                }
                             </div>
                             <div className="space-y-2">
                                 <Label>Account Number</Label>
                                 <Input
                                     value={accountNumber}
                                     onChange={(e) => {
-                                        setAccountNumber(e.target.value.replace(/\D/g, ""));
+                                        setAccountNumber(e.target.value.replaceAll(/\D/g, ""));
                                         setVerifiedName(null);
                                     }}
                                     placeholder={bankType === "momo" ? "0240000000" : "Enter account number"}
                                 />
                                 {verifiedName && (
-                                    <p className="text-sm text-green-600 font-medium flex items-center mt-2">
+                                    <p className="text-sm text-tertiary-600 font-medium flex items-center mt-2">
                                         <Check className="h-4 w-4 mr-1" />
                                         Verified Name: {verifiedName}
                                     </p>
@@ -239,10 +248,6 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                         </Button>
                     ) : (
                         <div className="flex w-full justify-between items-center">
-                            <span className="text-sm text-green-600 font-medium flex items-center line-clamp-1 truncate max-w-[200px] sm:max-w-xs">
-                                <Check className="mr-1 min-w-4 h-4 w-4" />
-                                <span className="truncate">Verified: {verifiedName}</span>
-                            </span>
                             <Button
                                 type="button"
                                 onClick={handleSave}

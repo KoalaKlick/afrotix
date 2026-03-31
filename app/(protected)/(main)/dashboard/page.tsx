@@ -54,7 +54,7 @@ export default async function DashboardPage() {
     buyerName: o.buyerName,
     buyerEmail: (o as any).payment?.email || "",
     total: Number(o.subtotal || 0),
-    currency: (o as any).payment?.currency || "NGN",
+    currency: (o as any).payment?.currency || "GHS",
     status: o.status,
     createdAt: o.createdAt.toISOString(),
     event: { title: o.event.title },

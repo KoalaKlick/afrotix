@@ -63,7 +63,7 @@ model Commission {
   type             CommissionType
   status           CommissionStatus @default(pending)
   amount           Decimal          @db.Decimal(15, 2)
-  currency         String           @default("NGN")
+  currency         String           @default("GHS")
   sourceType       String?          @map("source_type")
   sourceId         String?          @map("source_id") @db.Uuid
   baseAmount       Decimal?         @map("base_amount") @db.Decimal(15, 2)

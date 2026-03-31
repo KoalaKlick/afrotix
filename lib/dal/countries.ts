@@ -2,8 +2,8 @@
 // This can be extended or fetched from a config/service if needed
 
 export const supportedCountries = [
-    { name: "Nigeria", code: "NG", currency: "NGN" },
-    { name: "Ghana", code: "GH", currency: "GHS" },
+       { name: "Ghana", code: "GH", currency: "GHS" },
+ { name: "Nigeria", code: "NG", currency: "NGN" },
     { name: "Kenya", code: "KE", currency: "KES" },
     { name: "United States", code: "US", currency: "USD" },
 ];

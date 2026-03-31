@@ -3,7 +3,7 @@ model Wallet {
   userId            String?       @map("user_id") @db.Uuid
   organizationId    String?       @map("organization_id") @db.Uuid
   balance           Decimal       @default(0) @db.Decimal(15, 2)
-  currency          CurrencyCode  @default(NGN)
+  currency          CurrencyCode  @default(GHS)
   pendingCredits    Decimal       @default(0) @map("pending_credits") @db.Decimal(15, 2)
   pendingDebits     Decimal       @default(0) @map("pending_debits") @db.Decimal(15, 2)
   totalCredits      Decimal       @default(0) @map("total_credits") @db.Decimal(15, 2)
@@ -73,7 +73,7 @@ model Payment {
   relatedType           String?           @map("related_type")
   relatedId             String?           @map("related_id") @db.Uuid
   amount                Decimal           @db.Decimal(15, 2)
-  currency              CurrencyCode      @default(NGN)
+  currency              CurrencyCode      @default(GHS)
   provider              PaymentProvider
   providerReference     String?           @map("provider_reference")
   paystackTransactionId String?           @map("paystack_transaction_id")
@@ -105,7 +105,7 @@ model Payout {
   accountNumber     String?          @map("account_number")
   accountName       String?          @map("account_name")
   amount            Decimal          @db.Decimal(15, 2)
-  currency          CurrencyCode     @default(NGN)
+  currency          CurrencyCode     @default(GHS)
   feeAmount         Decimal          @default(0) @map("fee_amount") @db.Decimal(15, 2)
   status            PayoutStatus     @default(pending)
   provider          PaymentProvider?
@@ -142,7 +142,7 @@ model FeeConfiguration {
   minFee              Decimal?             @map("min_fee") @db.Decimal(15, 2)
   maxFee              Decimal?             @map("max_fee") @db.Decimal(15, 2)
   tiers               Json?
-  currency            CurrencyCode         @default(NGN)
+  currency            CurrencyCode         @default(GHS)
   isActive            Boolean              @default(true) @map("is_active")
   description         String?
   effectiveFrom       DateTime             @default(now()) @map("effective_from") @db.Timestamptz(6)
