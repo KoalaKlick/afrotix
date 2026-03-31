@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { Check, Loader2, Banknote, ShieldCheck } from "lucide-react";
+import { Check, Loader2, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { supportedCountries, getCurrencyByCountryCode } from "@/lib/dal/countrie
 import { fetchPaystackBanks } from "@/lib/dal/paystackBanks";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
+import { PayoutAccountCard } from "@/components/organization/management/PayoutAccountCard";
 
 interface OrgPayoutSettingsProps {
     readonly organization: {
@@ -27,10 +28,16 @@ interface NetworkOption {
     label: string;
 }
 
+
 export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
     const [isPending, startTransition] = useTransition();
     const [bankType, setBankType] = useState<"momo" | "bank">("momo");
     const [country, setCountry] = useState(supportedCountries[0].code);
+
+    // Local payout state for reactivity
+    const [payoutBankCode, setPayoutBankCode] = useState(organization.paystackBankCode ?? "");
+    const [payoutAccountNumber, setPayoutAccountNumber] = useState(organization.paystackAccountNumber ?? "");
+    const [payoutAccountName, setPayoutAccountName] = useState(organization.paystackAccountName ?? "");
 
     // Form state
     const [bankCode, setBankCode] = useState(organization.paystackBankCode ?? "");
@@ -123,6 +130,11 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                     return;
                 }
 
+                // Update local payout state to trigger re-render of card
+                setPayoutBankCode(bankCode);
+                setPayoutAccountNumber(accountNumber);
+                setPayoutAccountName(verifiedName ?? "");
+
                 toast.success("Transaction account saved successfully!");
             } catch {
                 toast.error("An error occurred while saving the account.");
@@ -143,17 +155,17 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {verifiedName && organization.paystackAccountNumber === accountNumber && (
-                        <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 p-4 rounded-lg flex items-start gap-3">
-                            <ShieldCheck className="h-5 w-5 mt-0.5" />
-                            <div>
-                                <h4 className="font-semibold text-sm">Active Payout Account</h4>
-                                <p className="text-xs mt-1">
-                                    {verifiedName} ({accountNumber})
-                                </p>
-                            </div>
-                        </div>
+                    
+                    {payoutAccountNumber && payoutAccountName && payoutBankCode && (
+                        <PayoutAccountCard
+                            paystackBankCode={payoutBankCode}
+                            paystackAccountNumber={payoutAccountNumber}
+                            paystackAccountName={payoutAccountName}
+                            countryCode="GHS"
+                            // onEdit={() => { /* scroll to form / open modal */ }}
+                        />
                     )}
+
 
                     <div className="space-y-4">
                         <div className="flex flex-wrap gap-4 mb-4">
@@ -188,33 +200,25 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                                         disabled={isLoadingNetworks}
                                         className=""
                                     />
+                                    <></>
                                 </div>
                             </div>
                         </div>
-
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-2">
                                 <Label htmlFor="network-combobox">{bankType === "momo" ? "Network" : "Bank"}</Label>
-                                {
-                                    (() => {
-                                        let netPlaceholder = "";
-                                        if (isLoadingNetworks) {
-                                            netPlaceholder = "Loading...";
-                                        } else {
-                                            netPlaceholder = bankType === "momo" ? "Select network" : "Select bank";
-                                        }
-                                        return (
-                                            <Combobox
-                                                options={networkOptions}
-                                                value={bankCode}
-                                                onChange={setBankCode}
-                                                placeholder={netPlaceholder}
-                                                disabled={isLoadingNetworks}
-                                                className=""
-                                            />
-                                        );
-                                    })()
-                                }
+                                <Combobox
+                                    options={networkOptions}
+                                    value={bankCode || organization.paystackBankCode || "gggg"}
+                                    onChange={setBankCode}
+                                    disabled={isLoadingNetworks}
+                                    className=""
+                                    placeholder={(() => {
+                                        if (isLoadingNetworks) return "Loading...";
+                                        return bankType === "momo" ? "Select network" : "Select bank";
+                                    })()}
+                                />
+
                             </div>
                             <div className="space-y-2">
                                 <Label>Account Number</Label>
@@ -226,6 +230,8 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                                     }}
                                     placeholder={bankType === "momo" ? "0240000000" : "Enter account number"}
                                 />
+                                <></>
+
                                 {verifiedName && (
                                     <p className="text-sm text-tertiary-600 font-medium flex items-center mt-2">
                                         <Check className="h-4 w-4 mr-1" />
@@ -237,17 +243,8 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-4 border-t px-6 py-4 bg-muted/20">
-                    {!verifiedName ? (
-                        <Button
-                            type="button"
-                            onClick={handleVerify}
-                            disabled={isVerifying || !accountNumber || !bankCode}
-                        >
-                            {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Verify Account
-                        </Button>
-                    ) : (
-                        <div className="flex w-full justify-between items-center">
+                    {verifiedName ? (
+                        <div className="flex w-full justify-end items-center">
                             <Button
                                 type="button"
                                 onClick={handleSave}
@@ -257,6 +254,15 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                                 Save Payout Details
                             </Button>
                         </div>
+                    ) : (
+                        <Button
+                            type="button"
+                            onClick={handleVerify}
+                            disabled={isVerifying || !accountNumber || !bankCode}
+                        >
+                            {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Verify Account
+                        </Button>
                     )}
                 </CardFooter>
             </Card>

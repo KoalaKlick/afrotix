@@ -49,11 +49,11 @@ export const navMain: NavItem[] = [
             },
         ],
     },
-    {
-        title: "Promoter Hub",
-        url: "/promoter",
-        icon: TrendingUp,
-    },
+    // {
+    //     title: "Promoter Hub",
+    //     url: "/promoter",
+    //     icon: TrendingUp,
+    // },
     {
         title: "Billing",
         url: "/organization/billing",
