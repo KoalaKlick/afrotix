@@ -98,6 +98,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         })),
                     }}
                     organizationSlug={organization?.slug}
+                    hasPaymentAccount={!!organization?.paystackAccountNumber}
                     userRole={role}
                     eventStats={eventStats}
                     voteTrend={voteTrend}

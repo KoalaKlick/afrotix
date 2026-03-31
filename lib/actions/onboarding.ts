@@ -268,8 +268,6 @@ export async function saveOnboardingStep4(
  
     const rawData = {
         pricingPlan: formData.get("pricingPlan") as string,
-        momoNumber: formData.get("momoNumber") as string,
-        momoNetwork: formData.get("momoNetwork") as string,
     };
  
     const result = onboardingStep4Schema.safeParse(rawData);
@@ -282,8 +280,6 @@ export async function saveOnboardingStep4(
     // Mark onboarding as complete and save pricing
     const updated = await updateProfile(userId, {
         pricingPlan: result.data.pricingPlan,
-        momoNumber: result.data.momoNumber,
-        momoNetwork: result.data.momoNetwork,
         onboardingStep: TOTAL_ONBOARDING_STEPS,
         onboardingCompleted: true,
     });

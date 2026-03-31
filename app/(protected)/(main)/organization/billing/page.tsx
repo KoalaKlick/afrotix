@@ -31,7 +31,6 @@ export default async function BillingPage() {
             </div>
 
             <PaymentPlanSettings
-                currentPlan={paymentInfo?.pricingPlan ?? "essential"}
                 communicationCredits={Number(paymentInfo?.communicationCredits ?? 0)}
                 isVerifiedPartner={paymentInfo?.isVerifiedPartner ?? false}
             />

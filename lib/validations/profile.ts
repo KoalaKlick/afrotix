@@ -47,12 +47,6 @@ export const onboardingStep3Schema = z.object({
 // Step 4: Pricing & Payments
 export const onboardingStep4Schema = z.object({
     pricingPlan: z.enum(["essential", "professional"]),
-    momoNumber: z
-        .string()
-        .min(9, "Phone number must be at least 9 digits")
-        .max(15, "Phone number is too long")
-        .regex(/^\d+$/, "Phone number must contain only digits"),
-    momoNetwork: z.enum(["MTN", "VODAFONE", "AT"]),
 });
 
 // Complete onboarding schema (all steps combined)

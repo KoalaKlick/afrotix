@@ -1,83 +1,53 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
-    Crown,
-    Zap,
-    Check,
-    Loader2,
     Calculator,
     CreditCard,
     MessageSquare,
     Shield,
     ArrowRight,
+    Package,
+    Check,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updatePricingPlan } from "@/lib/actions/payment";
-import { PRICING_PLANS } from "@/lib/const/pricing";
+import {
+    PLATFORM_FEES,
+    COMMUNICATION_CREDITS,
+    CASHOUT_CONFIG,
+    calculateFee,
+    type TransactionType,
+} from "@/lib/const/pricing";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PaymentPlanSettingsProps {
-    readonly currentPlan: string;
     readonly communicationCredits: number;
     readonly isVerifiedPartner: boolean;
 }
 
-const PLAN_FEATURES = {
-    essential: [
-        "0 GHS / month subscription",
-        "3.5% + GHS 10 service fee per unit",
-        "Free events always free",
-        "Standard payouts (3-5 days)",
-        "Best for one-off events",
-    ],
-    professional: [
-        "500 GHS / month subscription",
-        "1.5% + GHS 5 service fee per unit",
-        "Free events always free",
-        "Instant payouts available",
-        "Best for recurring events",
-    ],
-} as const;
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function PaymentPlanSettings({
-    currentPlan,
     communicationCredits,
     isVerifiedPartner,
 }: PaymentPlanSettingsProps) {
     const [previewAmount, setPreviewAmount] = useState<string>("100");
-    const [isPending, startTransition] = useTransition();
+    const [previewType, setPreviewType] = useState<TransactionType>("ticket");
 
     const amount = parseFloat(previewAmount) || 0;
-
-    // Calculate fees for both plans
-    const essentialFee =
-        amount * PRICING_PLANS.essential.feePercentage +
-        PRICING_PLANS.essential.fixedFee;
-    const professionalFee =
-        amount * PRICING_PLANS.professional.feePercentage +
-        PRICING_PLANS.professional.fixedFee;
-
-    function handlePlanSwitch(plan: "essential" | "professional") {
-        if (plan === currentPlan) return;
-        startTransition(async () => {
-            await updatePricingPlan(plan);
-        });
-    }
+    const breakdown = amount > 0 ? calculateFee(amount, previewType) : null;
 
     return (
         <div className="space-y-6">
-            {/* ─── Plan Cards ──────────────────────────── */}
+            {/* ─── Essential Plan Card ──────────────────── */}
             <div className="bg-card border rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-6">
                     <CreditCard className="w-5 h-5 text-[#009A44]" />
-                    <h3 className="font-semibold text-lg">Pricing Plan</h3>
+                    <h3 className="font-semibold text-lg">Platform Fees</h3>
                     {isVerifiedPartner && (
                         <span className="ml-auto inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FFCD00]/10 text-[#b8960a] text-[10px] font-bold uppercase tracking-wider">
                             <Shield className="w-3 h-3" />
@@ -86,100 +56,43 @@ export function PaymentPlanSettings({
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Essential Card */}
-                    <button
-                        type="button"
-                        onClick={() => handlePlanSwitch("essential")}
-                        disabled={isPending}
-                        className={cn(
-                            "relative flex flex-col p-5 rounded-xl border-2 text-left transition-all duration-300",
-                            currentPlan === "essential"
-                                ? "border-[#009A44] bg-[#009A44]/3 shadow-sm shadow-[#009A44]/10"
-                                : "border-muted hover:border-muted-foreground/30"
-                        )}
-                    >
-                        {currentPlan === "essential" && (
-                            <span className="absolute -top-2.5 left-4 px-2 py-0.5 rounded-full bg-[#009A44] text-white text-[9px] font-bold uppercase tracking-wider">
-                                Current
-                            </span>
-                        )}
-                        <div className="flex items-center gap-2 mb-3">
-                            <Zap className="w-5 h-5 text-[#009A44]" />
-                            <span className="font-bold">Essential</span>
-                        </div>
-                        <p className="text-2xl font-black mb-1">
-                            Free
-                            <span className="text-xs font-normal text-muted-foreground ml-1">
-                                / month
-                            </span>
-                        </p>
-                        <p className="text-xs text-muted-foreground mb-4">
-                            Pay-as-you-go pricing
-                        </p>
-                        <ul className="space-y-2">
-                            {PLAN_FEATURES.essential.map((f) => (
-                                <li
-                                    key={f}
-                                    className="flex items-start gap-2 text-xs text-muted-foreground"
-                                >
-                                    <Check className="w-3.5 h-3.5 text-[#009A44] shrink-0 mt-0.5" />
-                                    {f}
-                                </li>
-                            ))}
-                        </ul>
-                    </button>
+                <div className="rounded-xl border-2 border-[#009A44] bg-[#009A44]/3 p-5">
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-[#009A44] text-white text-[9px] font-bold uppercase tracking-wider mb-3">
+                        Essential Plan
+                    </span>
+                    <p className="text-2xl font-black mb-1">
+                        Free
+                        <span className="text-xs font-normal text-muted-foreground ml-1">
+                            / no subscription
+                        </span>
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-4">
+                        Pay-as-you-go — we only earn when you do
+                    </p>
 
-                    {/* Professional Card */}
-                    <button
-                        type="button"
-                        onClick={() => handlePlanSwitch("professional")}
-                        disabled={isPending}
-                        className={cn(
-                            "relative flex flex-col p-5 rounded-xl border-2 text-left transition-all duration-300",
-                            currentPlan === "professional"
-                                ? "border-[#FFCD00] bg-[#FFCD00]/3 shadow-sm shadow-[#FFCD00]/10"
-                                : "border-muted hover:border-muted-foreground/30"
-                        )}
-                    >
-                        {currentPlan === "professional" && (
-                            <span className="absolute -top-2.5 left-4 px-2 py-0.5 rounded-full bg-[#FFCD00] text-[#1a1a2e] text-[9px] font-bold uppercase tracking-wider">
-                                Current
-                            </span>
-                        )}
-                        <div className="flex items-center gap-2 mb-3">
-                            <Crown className="w-5 h-5 text-[#FFCD00]" />
-                            <span className="font-bold">Professional</span>
-                        </div>
-                        <p className="text-2xl font-black mb-1">
-                            GHS 500
-                            <span className="text-xs font-normal text-muted-foreground ml-1">
-                                / month
-                            </span>
-                        </p>
-                        <p className="text-xs text-muted-foreground mb-4">
-                            Fixed monthly plan
-                        </p>
-                        <ul className="space-y-2">
-                            {PLAN_FEATURES.professional.map((f) => (
-                                <li
-                                    key={f}
-                                    className="flex items-start gap-2 text-xs text-muted-foreground"
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {(Object.entries(PLATFORM_FEES) as [TransactionType, typeof PLATFORM_FEES.vote][]).map(
+                            ([type, config]) => (
+                                <div
+                                    key={type}
+                                    className="rounded-lg bg-background/60 border p-3"
                                 >
-                                    <Check className="w-3.5 h-3.5 text-[#FFCD00] shrink-0 mt-0.5" />
-                                    {f}
-                                </li>
-                            ))}
-                        </ul>
-                    </button>
-                </div>
-
-                {isPending && (
-                    <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Updating plan...
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                                        {type === "vote" ? "Votes" : type === "nomination" ? "Nominations" : "Tickets"}
+                                    </p>
+                                    <p className="text-sm font-bold text-[#009A44]">
+                                        {config.percentage * 100}% {config.fixed > 0 ? `+ GHS ${config.fixed}` : ""}
+                                    </p>
+                                </div>
+                            )
+                        )}
                     </div>
-                )}
+
+                    <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Check className="w-3.5 h-3.5 text-[#009A44]" />
+                        Payouts settle {CASHOUT_CONFIG.settlementLabel.toLowerCase()} via MoMo
+                    </div>
+                </div>
             </div>
 
             {/* ─── Fee Calculator ──────────────────────── */}
@@ -189,11 +102,29 @@ export function PaymentPlanSettings({
                     <h3 className="font-semibold">Fee Calculator</h3>
                 </div>
                 <p className="text-xs text-muted-foreground mb-4">
-                    Preview how fees compare between plans for a given
-                    transaction amount.
+                    Preview how fees apply to different transaction types.
                 </p>
 
                 <div className="space-y-4">
+                    {/* Transaction type selector */}
+                    <div className="flex gap-2">
+                        {(["vote", "nomination", "ticket"] as TransactionType[]).map((type) => (
+                            <Button
+                                variant={previewType === type ? "tertiary" : "outline"}
+                                key={type}
+                                onClick={() => setPreviewType(type)}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all",
+                                    previewType === type
+                                        ? ""
+                                        : ""
+                                )}
+                            >
+                                {type}
+                            </Button>
+                        ))}
+                    </div>
+
                     <div className="space-y-2">
                         <Label className="text-sm">
                             Transaction Amount (GHS)
@@ -208,70 +139,29 @@ export function PaymentPlanSettings({
                         />
                     </div>
 
-                    {amount > 0 && (
-                        <div className="grid grid-cols-2 gap-3">
-                            <div
-                                className={cn(
-                                    "rounded-xl p-4 border",
-                                    currentPlan === "essential"
-                                        ? "border-[#009A44]/20 bg-[#009A44]/3"
-                                        : "border-muted"
-                                )}
-                            >
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                                    Essential
-                                </p>
-                                <p className="text-sm">
-                                    Fee:{" "}
+                    {breakdown && (
+                        <div className="rounded-xl p-4 border border-[#009A44]/20 bg-[#009A44]/3">
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Transaction Amount</span>
+                                    <span className="font-medium">GHS {breakdown.amount.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">
+                                        Platform Fee ({breakdown.feePercentage * 100}%{breakdown.fixedFee > 0 ? ` + GHS ${breakdown.fixedFee}` : ""})
+                                    </span>
                                     <span className="font-bold text-red-600">
-                                        GHS {essentialFee.toFixed(2)}
+                                        − GHS {breakdown.totalPlatformFee.toFixed(2)}
                                     </span>
-                                </p>
-                                <p className="text-sm mt-1">
-                                    You receive:{" "}
-                                    <span className="font-bold text-[#009A44]">
-                                        GHS{" "}
-                                        {(amount - essentialFee).toFixed(2)}
+                                </div>
+                                <div className="border-t pt-2 flex justify-between text-sm">
+                                    <span className="font-semibold">You Receive</span>
+                                    <span className="font-black text-[#009A44] text-base">
+                                        GHS {breakdown.organizerReceives.toFixed(2)}
                                     </span>
-                                </p>
-                            </div>
-                            <div
-                                className={cn(
-                                    "rounded-xl p-4 border",
-                                    currentPlan === "professional"
-                                        ? "border-[#FFCD00]/20 bg-[#FFCD00]/3"
-                                        : "border-muted"
-                                )}
-                            >
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                                    Professional
-                                </p>
-                                <p className="text-sm">
-                                    Fee:{" "}
-                                    <span className="font-bold text-red-600">
-                                        GHS {professionalFee.toFixed(2)}
-                                    </span>
-                                </p>
-                                <p className="text-sm mt-1">
-                                    You receive:{" "}
-                                    <span className="font-bold text-[#009A44]">
-                                        GHS{" "}
-                                        {(amount - professionalFee).toFixed(2)}
-                                    </span>
-                                </p>
+                                </div>
                             </div>
                         </div>
-                    )}
-
-                    {amount > 0 && (
-                        <p className="text-[10px] text-center text-muted-foreground">
-                            You save{" "}
-                            <strong className="text-[#009A44]">
-                                GHS{" "}
-                                {(essentialFee - professionalFee).toFixed(2)}
-                            </strong>{" "}
-                            per transaction on Professional
-                        </p>
                     )}
                 </div>
             </div>
@@ -297,7 +187,7 @@ export function PaymentPlanSettings({
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
                         <p className="text-xs text-muted-foreground">SMS</p>
                         <p className="text-sm font-bold mt-0.5">
-                            1 credit/msg
+                            {COMMUNICATION_CREDITS.perMessage.sms} credit/msg
                         </p>
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
@@ -305,7 +195,7 @@ export function PaymentPlanSettings({
                             WhatsApp
                         </p>
                         <p className="text-sm font-bold mt-0.5">
-                            1.5 credits/msg
+                            {COMMUNICATION_CREDITS.perMessage.whatsapp} credits/msg
                         </p>
                     </div>
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
@@ -315,10 +205,47 @@ export function PaymentPlanSettings({
                         </p>
                     </div>
                 </div>
+
+                {/* ─── Bundle Purchase Cards ──────────────── */}
+                <div className="space-y-2 mt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Package className="w-4 h-4 text-[#FFCD00]" />
+                        <h4 className="text-sm font-semibold">Purchase Bundles</h4>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {COMMUNICATION_CREDITS.bundles.map((bundle) => (
+                            <button
+                                key={bundle.id}
+                                type="button"
+                                className={cn(
+                                    "relative flex flex-col items-center p-3 rounded-lg border-2 transition-all hover:shadow-sm",
+                                    bundle.popular
+                                        ? "border-[#FFCD00] bg-[#FFCD00]/5"
+                                        : "border-muted hover:border-muted-foreground/30"
+                                )}
+                                disabled // Will be enabled when purchase flow is built
+                            >
+                                {bundle.popular && (
+                                    <span className="absolute -top-2 px-1.5 py-0.5 rounded-full bg-[#FFCD00] text-[#1a1a2e] text-[8px] font-bold uppercase tracking-wider">
+                                        Popular
+                                    </span>
+                                )}
+                                <p className="text-lg font-black">{bundle.credits}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                                    credits
+                                </p>
+                                <p className="text-sm font-bold text-[#009A44] mt-1">
+                                    GHS {bundle.price}
+                                </p>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <Button
                     variant="outline"
                     size="sm"
-                    className="w-full"
+                    className="w-full mt-4"
                     disabled
                 >
                     <ArrowRight className="w-4 h-4 mr-2" />

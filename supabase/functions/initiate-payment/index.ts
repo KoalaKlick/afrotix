@@ -1,6 +1,24 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ─── Pricing Constants (mirrored from lib/const/pricing.ts for Deno edge runtime) ─
+// These MUST stay in sync with the frontend constants file.
+// Edge functions can't import from the Next.js project directly.
+
+const PLATFORM_FEES = {
+  vote:       { percentage: 0.035, fixed: 0   },
+  nomination: { percentage: 0.035, fixed: 0   },
+  ticket:     { percentage: 0.035, fixed: 1.0 },
+} as const;
+
+type TxnType = keyof typeof PLATFORM_FEES;
+
+function toPesewas(ghs: number): number {
+  return Math.round(ghs * 100);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 const PAYSTACK_SECRET = Deno.env.get("PAYSTACK_SECRET_KEY")!;
 
 const corsHeaders = {
@@ -35,7 +53,8 @@ serve(async (req) => {
       currency = "GHS", 
       purpose, 
       relatedType, 
-      relatedId, 
+      relatedId,
+      organizationId,
       metadata = {} 
     } = await req.json();
 
@@ -45,8 +64,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // No pre-flight constraint checks for general voting since it has no maximum limits and allows multiple votes.
 
     // 2. Generate a unique reference
     const reference = `PAY-${crypto.randomUUID().replace(/-/g, "").substring(0, 12).toUpperCase()}`;
@@ -75,45 +92,79 @@ serve(async (req) => {
       throw paymentError;
     }
 
-    // 4. Initialize Paystack Transaction
+    // 4. Look up the organization's Paystack subaccount (if exists)
+    let subaccountCode: string | null = null;
+    if (organizationId) {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("subaccount_code")
+        .eq("id", organizationId)
+        .single();
+      
+      subaccountCode = org?.subaccount_code ?? null;
+    }
+
+    // 5. Calculate platform fee for the split
+    const txnType: TxnType = (purpose === "vote" || purpose === "nomination" || purpose === "ticket")
+      ? purpose 
+      : "ticket"; // Default to ticket fees for unknown types
+    
+    const feeConfig = PLATFORM_FEES[txnType];
+    const platformFee = (Number(amount) * feeConfig.percentage) + feeConfig.fixed;
+
+    // 6. Build Paystack payload
     const callbackUrl = metadata?.callback_url || Deno.env.get("APP_URL") 
       ? `${Deno.env.get("APP_URL")}/payment/callback` 
       : undefined;
 
+    const paystackPayload: Record<string, unknown> = {
+      email,
+      amount: toPesewas(Number(amount)),
+      currency,
+      reference,
+      phone: phone?.startsWith("0") ? "+233" + phone.slice(1) : phone,
+      customer: { email, phone },
+      ...(callbackUrl && { callback_url: callbackUrl }),
+      metadata: {
+        payment_id: payment.id,
+        phone,
+        mobile_number: phone,
+        related_type: relatedType,
+        related_id: relatedId,
+        platform_fee: platformFee,
+        txn_type: txnType,
+        ...metadata,
+        custom_fields: [
+          ...(metadata?.custom_fields || []),
+          {
+            display_name: "Payer Number",
+            variable_name: "phone",
+            value: phone
+          }
+        ]
+      },
+    };
+
+    // 7. If organization has a Paystack subaccount, add split params
+    if (subaccountCode) {
+      paystackPayload.subaccount = subaccountCode;
+      paystackPayload.bearer = "subaccount"; // Organizer absorbs Paystack processing fee
+      
+      // For percentage-based splits, Paystack uses percentage_charge on the subaccount.
+      // For fixed + percentage, we use transaction_charge for the fixed component.
+      if (feeConfig.fixed > 0) {
+        paystackPayload.transaction_charge = toPesewas(platformFee);
+      }
+    }
+
+    // 8. Initialize Paystack Transaction
     const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${PAYSTACK_SECRET}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        email,
-        amount: Math.round(Number(amount) * 100), // convert to subunits (pesewas/kobo)
-        currency,
-        reference,
-        phone: phone.startsWith("0") ? "+233" + phone.slice(1) : phone, // Root-level phone for V2 pre-fill
-        customer: {
-          email,
-          phone: phone, // Standard customer phone
-        },
-        ...(callbackUrl && { callback_url: callbackUrl }),
-        metadata: {
-          payment_id: payment.id,
-          phone: phone, // Standard pre-fill
-          mobile_number: phone, // Specific for some GH providers
-          related_type: relatedType,
-          related_id: relatedId,
-          ...metadata,
-          custom_fields: [
-            ...(metadata?.custom_fields || []),
-            {
-              display_name: "Payer Number",
-              variable_name: "phone",
-              value: phone
-            }
-          ]
-        },
-      }),
+      body: JSON.stringify(paystackPayload),
     });
 
     const paystackData = await paystackRes.json();
@@ -144,7 +195,7 @@ serve(async (req) => {
 
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: "Internal Server Error", message: err.message }), {
+    return new Response(JSON.stringify({ error: "Internal Server Error", message: (err as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

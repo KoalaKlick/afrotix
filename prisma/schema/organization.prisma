@@ -11,6 +11,13 @@ model Organization {
   websiteUrl     String?                  @map("website_url")
   contactEmail   String?                  @map("contact_email")
   phone          String?
+  
+  // Paystack subaccount for automated split payments
+  subaccountCode        String?  @map("subaccount_code")
+  paystackBankCode      String?  @map("paystack_bank_code")
+  paystackAccountNumber String?  @map("paystack_account_number")
+  paystackAccountName   String?  @map("paystack_account_name")
+  
   createdBy      String?                  @map("created_by") @db.Uuid
   createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

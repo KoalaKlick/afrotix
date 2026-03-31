@@ -7,6 +7,7 @@ import { OrgGeneralSettings } from "@/components/organization/management/OrgGene
 import { OrgMembersSettings } from "@/components/organization/management/OrgMembersSettings";
 import { OrgJoinRequestsSettings } from "@/components/organization/management/OrgJoinRequestsSettings";
 import { OrgInvitationsSettings } from "@/components/organization/management/OrgInvitationsSettings";
+import { OrgPayoutSettings } from "@/components/organization/management/OrgPayoutSettings";
 import type { OrganizationRole, InvitationStatus } from "@/lib/generated/prisma";
 import type { OrganizationWithSocials } from "@/lib/dal/organization";
 
@@ -98,7 +99,7 @@ export function OrgManageClient({
                     </div>
 
                     <Tabs defaultValue="general" className="space-y-6">
-                        <TabsList variant="afro" className="grid w-full grid-cols-4">
+                        <TabsList variant="afro" className="flex overflow-x-auto w-full">
                             <TabsTrigger value="general" className="gap-1.5">
                                 <Settings className="h-4 w-4" />
                                 <span className="hidden sm:inline">General</span>
@@ -124,6 +125,10 @@ export function OrgManageClient({
                                         {invitations.filter(i => i.status === "pending").length}
                                     </span>
                                 )}
+                            </TabsTrigger>
+                            <TabsTrigger value="payouts" className="gap-1.5 flex-1 min-w-[120px]">
+                                <Settings className="h-4 w-4" />
+                                <span className="hidden sm:inline">Payouts</span>
                             </TabsTrigger>
                         </TabsList>
 
@@ -151,6 +156,10 @@ export function OrgManageClient({
                                 organizationId={organization.id}
                                 invitations={invitations}
                             />
+                        </TabsContent>
+
+                        <TabsContent value="payouts">
+                            <OrgPayoutSettings organization={organization} />
                         </TabsContent>
                     </Tabs>
                 </div>

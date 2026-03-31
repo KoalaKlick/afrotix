@@ -5,7 +5,7 @@ import { OrgProfileHero } from "@/components/organization/OrgProfileHero";
 import { OrgEventList } from "@/components/organization/OrgEventList";
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider";
 import { Globe, Mail, Trophy, Phone } from "lucide-react";
-import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils";
+import { getEventImageUrl } from "@/lib/image-url-utils";
 import { getSocialPlatform } from "@/lib/utils/event-icons";
 import type { Metadata } from "next";
 import Image from "next/image";

@@ -10,15 +10,13 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
     ChevronLeft, 
-    ChevronRight, 
-    CheckCircle2, 
-    Clock, 
+    ChevronRight,
     Hash
 } from "lucide-react";
 import { format } from "date-fns";
+import { StatusBadge } from "../shared/status-badge";
 
 interface Transaction {
     id: string;
@@ -121,7 +119,6 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                                     <TableCell>
                                         <div className="flex flex-col text-xs text-muted-foreground">
                                             <span className="flex items-center gap-1">
-                                                <Clock className="size-3" />
                                                 {format(new Date(tx.createdAt), "MMM d, yyyy")}
                                             </span>
                                             <span>{format(new Date(tx.createdAt), "HH:mm")}</span>
@@ -152,13 +149,8 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge 
-                                            variant="secondary" 
-                                            className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 flex items-center gap-1 w-fit"
-                                        >
-                                            <CheckCircle2 className="size-3" />
-                                            Successful
-                                        </Badge>
+                                     
+                                        <StatusBadge variant="success" className=""/>
                                     </TableCell>
                                 </TableRow>
                             ))

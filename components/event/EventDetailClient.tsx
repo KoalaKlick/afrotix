@@ -11,6 +11,16 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
     Loader2,
     Pencil,
     X,
@@ -84,6 +94,7 @@ interface EventData {
 interface EventDetailClientProps {
     readonly event: EventData;
     readonly organizationSlug?: string;
+    readonly hasPaymentAccount?: boolean;
     readonly userRole: OrganizationRole;
     readonly votingCategories?: VotingCategory[];
     readonly eventStats: EventDetailStatsData;
@@ -105,9 +116,10 @@ const statusColors: Record<string, string> = {
     ended: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
 };
 
-export function EventDetailClient({ event, organizationSlug, userRole, votingCategories = [], eventStats, voteTrend = [] }: EventDetailClientProps) {
+export function EventDetailClient({ event, organizationSlug, hasPaymentAccount = true, userRole, votingCategories = [], eventStats, voteTrend = [] }: EventDetailClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
+    const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
 
     // Editable fields state
     const [editingField, setEditingField] = useState<string | null>(null);
@@ -221,6 +233,11 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
     // Status change handler
     async function handleStatusChange(newStatus: string) {
         if (newStatus === formData.status) return;
+
+        if (newStatus === "published" && !hasPaymentAccount) {
+            setShowPaymentPrompt(true);
+            return;
+        }
 
         startTransition(async () => {
             const result = await changeEventStatus(event.id, newStatus);
@@ -478,6 +495,23 @@ export function EventDetailClient({ event, organizationSlug, userRole, votingCat
                     />
                 </TabsContent>
             </Tabs>
+
+            <AlertDialog open={showPaymentPrompt} onOpenChange={setShowPaymentPrompt}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Payout Details Required</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You need to set up an organization payout account (Mobile Money or Bank Account) before you can publish an event. This ensures you can receive earnings from ticket sales or votes.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => router.push('/organization/manage')}>
+                            Setup Payout Account
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

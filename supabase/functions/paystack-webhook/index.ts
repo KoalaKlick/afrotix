@@ -2,6 +2,19 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 
+// ─── Pricing Constants (mirrored from lib/const/pricing.ts for Deno edge runtime) ─
+// These MUST stay in sync with the frontend constants file.
+
+const PLATFORM_FEES = {
+  vote:       { percentage: 0.035, fixed: 0   },
+  nomination: { percentage: 0.035, fixed: 0   },
+  ticket:     { percentage: 0.035, fixed: 1.0 },
+} as const;
+
+type TxnType = keyof typeof PLATFORM_FEES;
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 const PAYSTACK_SECRET = Deno.env.get("PAYSTACK_SECRET_KEY")!;
 
 serve(async (req) => {
@@ -51,24 +64,15 @@ serve(async (req) => {
   const paidAmount = event.data.amount / 100;
   if (Math.abs(paidAmount - Number(payment.amount)) > 0.01) {
     console.warn(`Amount mismatch: expected ${payment.amount}, got ${paidAmount}`);
-    // Optional: Log mismatch but continue or fail
   }
 
-  // 6. Confirm Payment & Calculate Fees
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("pricing_plan, referred_by")
-    .eq("id", payment.user_id)
-    .single();
-
-  const plan = profile?.pricing_plan || "essential";
+  // 6. Calculate Platform Fee using centralized constants
+  const txnType: TxnType = (payment.metadata?.txn_type as TxnType) || "ticket";
+  const feeConfig = PLATFORM_FEES[txnType];
   const amount = Number(payment.amount);
+  const platformFee = (amount * feeConfig.percentage) + feeConfig.fixed;
 
-  // Platform Fee Logic: Essential (3.5% + 10) | Professional (1.5% + 5)
-  const feePercentage = plan === "professional" ? 0.015 : 0.035;
-  const fixedFee = plan === "professional" ? 5 : 10;
-  const platformFee = (amount * feePercentage) + fixedFee;
-
+  // 7. Confirm Payment
   await supabase
     .from("payments")
     .update({
@@ -79,50 +83,59 @@ serve(async (req) => {
       metadata: {
         ...payment.metadata,
         platform_fee: platformFee,
-        organizer_plan: plan
+        fee_type: txnType,
+        fee_percentage: feeConfig.percentage,
+        fee_fixed: feeConfig.fixed,
       }
     })
     .eq("id", payment.id);
 
-  if (profile?.referred_by) {
-    const { data: promoter } = await supabase
-      .from("promoters")
-      .select("id, is_gold_tier")
-      .eq("user_id", profile.referred_by)
+  // 8. Referral Commission (if applicable)
+  if (payment.user_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("referred_by")
+      .eq("id", payment.user_id)
       .single();
 
-    if (promoter) {
-      // Reward is 10% or 15% of the Platform Fee
-      const commissionRate = promoter.is_gold_tier ? 0.15 : 0.10;
-      const commissionAmount = platformFee * commissionRate;
+    if (profile?.referred_by) {
+      const { data: promoter } = await supabase
+        .from("promoters")
+        .select("id, is_gold_tier")
+        .eq("user_id", profile.referred_by)
+        .single();
 
-      await supabase.from("commissions").insert({
-        promoter_id: promoter.id,
-        type: payment.related_type === "vote" ? "vote_purchase" : "ticket_purchase",
-        amount: commissionAmount,
-        base_amount: platformFee,
-        commission_rate: commissionRate * 100,
-        source_type: "payment",
-        source_id: payment.id,
-        status: "pending",
-        description: `Commission from ${payment.related_type} transaction`
-      });
+      if (promoter) {
+        const commissionRate = promoter.is_gold_tier ? 0.15 : 0.10;
+        const commissionAmount = platformFee * commissionRate;
 
-      // Update promoter's total revenue generated
-      await supabase.rpc("increment_promoter_revenue", {
-        p_id: promoter.id,
-        amt: amount
-      });
+        await supabase.from("commissions").insert({
+          promoter_id: promoter.id,
+          type: payment.related_type === "vote" ? "vote_purchase" : "ticket_purchase",
+          amount: commissionAmount,
+          base_amount: platformFee,
+          commission_rate: commissionRate * 100,
+          source_type: "payment",
+          source_id: payment.id,
+          status: "pending",
+          description: `Commission from ${payment.related_type} transaction`
+        });
+
+        await supabase.rpc("increment_promoter_revenue", {
+          p_id: promoter.id,
+          amt: amount
+        });
+      }
     }
   }
 
-  // 8. Update Related Entities (Normalized)
+  // 9. Update Related Entities
   if (payment.related_type === "ticket_order") {
     await supabase
       .from("ticket_orders")
       .update({ 
         status: "confirmed", 
-        payment_id: payment.id // link to the parent payment
+        payment_id: payment.id
       })
       .eq("id", payment.related_id);
   }
@@ -135,8 +148,8 @@ serve(async (req) => {
     const { data: vote, error: voteError } = await supabase
       .from("votes")
       .insert({
-        payment_id: payment.id, // Only use the link
-        vote_count: voteCount,  // Record actual quantity
+        payment_id: payment.id,
+        vote_count: voteCount,
         event_id: voteMetadata.event_id,
         option_id: optionId,
         category_id: voteMetadata.category_id,
@@ -153,8 +166,6 @@ serve(async (req) => {
         vote_count: voteCount,
         option_id: optionId,
       });
-      // Throw error to ensure Paystack webhook marks it as failed and retries, 
-      // preventing silent database insertion failures.
       throw new Error(`Failed to insert vote: ${JSON.stringify(voteError)}`);
     } else {
       await supabase.rpc("increment_vote_count", {
@@ -164,11 +175,7 @@ serve(async (req) => {
     }
   }
 
-  // 8. Trigger delivery (Arkesel/WhatsApp flow later)
-  // We use EdgeRuntime.waitUntil to avoid blocking the webhook response
-  // EdgeRuntime is only available in some environments, for Supabase we can use standard fetch
-  // but we don't need to wait for it.
-
+  // 10. Trigger delivery (Arkesel/WhatsApp)
   fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-delivery`, {
     method: "POST",
     headers: {
@@ -178,7 +185,7 @@ serve(async (req) => {
     body: JSON.stringify({ paymentId: payment.id })
   }).catch(err => console.error("Error triggering send-delivery:", err));
 
-  console.info(`Payment ${payment.id} processed successfully.`);
+  console.info(`Payment ${payment.id} processed successfully. Fee: ${platformFee} GHS (${txnType})`);
 
   return new Response("OK", { status: 200 });
 });
