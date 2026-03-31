@@ -256,7 +256,7 @@ export function VotePaymentModal({
                 onInteractOutside={(e) => { if (loading) e.preventDefault(); }}
             >
                 {/* Hero Header */}
-                <div className="relative h-36 w-full bg-linear-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] overflow-hidden">
+                <div className="relative h-36 w-full overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.14),transparent_26%)]">
                     <div className="relative z-10 flex items-end h-full p-5">
                         <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl shrink-0 bg-white/10">
                             {displayImageUrl ? (

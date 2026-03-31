@@ -48,7 +48,7 @@ export function PayoutAccountCard({
 
     return (
         <div
-            className="relative w-full max-w-sm overflow-hidden select-none rounded-[18px] h-[200px] font-serif"
+            className="relative w-full max-w-sm overflow-hidden select-none rounded-[12px] h-[200px] font-serif"
             style={{ fontFamily: "Georgia, serif" }}
         >
             {/* Background Gradient */}
