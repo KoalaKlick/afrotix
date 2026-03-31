@@ -147,7 +147,7 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                                         {organization.websiteUrl && (
                                             <div className="flex items-center gap-3 group">
                                                 <Globe className="size-4 text-[#009A44] group-hover:scale-110 transition-transform" />
-                                                <a href={organization.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-widest hover:text-[#009A44] transition-colors truncate">
+                                                <a href={organization.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold tracking-widest hover:text-[#009A44] transition-colors truncate">
                                                     {organization.websiteUrl}
                                                 </a>
                                             </div>
