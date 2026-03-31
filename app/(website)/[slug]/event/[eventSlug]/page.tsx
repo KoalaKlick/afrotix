@@ -7,6 +7,7 @@ import { getEventImageUrl } from "@/lib/image-url-utils"
 import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
+import { PoweredByFooter } from "@/components/shared/PoweredByFooter"
 import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { format } from "date-fns"
@@ -107,7 +108,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                 <div className="absolute inset-0 flex items-end pb-12">
-                    <div className="max-w-6xl mx-auto px-4 w-full">
+                    <div className="max-w-7xl mx-auto px-6 w-full">
                         <div className="inline-flex items-center bg-[#009A44] text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
                             {event.type.toUpperCase()}
                         </div>
@@ -163,8 +164,8 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             {votingCategories.length > 0 && (
                 <>
                     <PanAfricanDivider />
-                    <Section className="py-20 bg-[#F8F7F1]">
-                        <div className="max-w-6xl mx-auto px-4">
+                    <Section maxWidth="7xl" className="py-20 bg-[#F8F7F1]">
+                        <div className=" ">
                             <div className="flex items-center gap-3 mb-12">
                                 <Vote className="w-8 h-8 text-[#009A44]" />
                                 <h2 className="text-3xl font-bold uppercase tracking-tight">Vote Categories.</h2>
@@ -246,8 +247,8 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             )}
 
             {/* Event Details & Footer Section */}
-            <Section className="py-20 bg-white border-t">
-                <div className="max-w-6xl mx-auto px-4">
+            <Section maxWidth="7xl" className="py-20 bg-white border-t">
+                <div className=" mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
                         {/* Left: About */}
                         <div className="md:col-span-2 space-y-8" id="details">
@@ -349,24 +350,9 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             )}
                         </div>
                     </div>
-
-                    <div className="mt-20 pt-12 border-t border-dashed text-center space-y-4">
-                        <div className="flex items-center justify-center gap-2">
-                            <div className="h-1 w-8 bg-red-600" />
-                            <div className="h-1 w-8 bg-yellow-400" />
-                            <div className="h-1 w-8 bg-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mb-1">
-                                Powered by Afrotix Event Management System
-                            </p>
-                            <p className="text-[9px] text-muted-foreground/60 italic">
-                                &copy; {new Date().getFullYear()} {PROJ_NAME}. All Rights Reserved.
-                            </p>
-                        </div>
-                    </div>
                 </div>
-            </Section>
+            </Section>                    <PoweredByFooter />
+
         </main>
     )
 }

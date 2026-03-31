@@ -10,6 +10,7 @@ import { getEventImageUrl } from "@/lib/image-url-utils"
 import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
+import { PoweredByFooter } from "@/components/shared/PoweredByFooter"
 import { ArrowLeft, ChevronRight, Trophy, Users, Calendar, MapPin, Clock, ImageIcon, Info } from "lucide-react"
 import { PublicNominationModal } from "@/components/event/PublicNominationModal"
 import { NomineeGrid } from "@/components/event/PublicNomineeSheet"
@@ -134,7 +135,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
 
                 {/* Overlay content */}
                 <div className="absolute inset-0 flex flex-col justify-end pb-8">
-                    <div className="max-w-6xl mx-auto px-4 w-full">
+                    <div className="max-w-7xl mx-auto px-4 w-full">
                         {/* Back link */}
                         <Link
                             href={`/${orgSlug}/event/${eventSlug}`}
@@ -233,8 +234,8 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
             <PanAfricanDivider />
 
             {/* Nominees Section */}
-            <Section maxWidth="full" className="py-16 w-full bg-[#F8F7F1]">
-                <div className="max-w-360 mx-auto px-4 @container">
+            <Section maxWidth="7xl" className="py-16 w-full bg-[#F8F7F1]">
+                <div className="max-w-360 mx-auto @container">
                     <div className="flex items-center justify-between mb-10">
                         <div className="flex items-center gap-3">
                             <Users className="w-6 h-6 text-[#009A44]" />
@@ -269,8 +270,8 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
             </Section>
 
             {/* Category & Event Context Footer */}
-            <Section className="py-12 bg-white border-t">
-                <div className="max-w-6xl mx-auto px-4">
+            <Section maxWidth="7xl" className="py-12 bg-white border-t">
+                <div className=" mx-auto ">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 py-12">
                         {/* Left: About Category — anchor target */}
                         <div id="about-category" className="space-y-6 scroll-mt-24">
@@ -389,24 +390,9 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                         </div>
                     </div>
 
-                    {/* Footer bar */}
-                    <div className="mt-12 pt-12 border-t border-dashed text-center space-y-4">
-                        <div className="flex items-center justify-center gap-2">
-                            <div className="h-1 w-8 bg-red-600" />
-                            <div className="h-1 w-8 bg-yellow-400" />
-                            <div className="h-1 w-8 bg-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mb-1">
-                                Powered by Afrotix Event Management System
-                            </p>
-                            <p className="text-[9px] text-muted-foreground/60 italic">
-                                &copy; {new Date().getFullYear()} {PROJ_NAME}. All Rights Reserved.
-                            </p>
-                        </div>
-                    </div>
+               
                 </div>
-            </Section>
+            </Section>     <PoweredByFooter />
         </main>
     )
 }

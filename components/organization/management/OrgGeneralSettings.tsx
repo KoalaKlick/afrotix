@@ -99,7 +99,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
         setIsUploadingLogo(true);
         try {
             const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
+                quality: 1,
                 maxWidth: 400,
                 maxHeight: 400,
                 maxSizeMB: 0.5,
@@ -143,7 +143,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
         setIsUploadingBanner(true);
         try {
             const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
+                quality: 1,
                 maxWidth: 1920,
                 maxHeight: 600,
                 maxSizeMB: 1,

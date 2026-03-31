@@ -4,6 +4,7 @@ import { getOrganizationProfile, getMembershipRequest, getOrganizationBySlug } f
 import { OrgProfileHero } from "@/components/organization/OrgProfileHero";
 import { OrgEventList } from "@/components/organization/OrgEventList";
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider";
+import { PoweredByFooter } from "@/components/shared/PoweredByFooter";
 import { Globe, Mail, Trophy, Phone } from "lucide-react";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { getSocialPlatform } from "@/lib/utils/event-icons";
@@ -193,23 +194,10 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                         );
                     })()}
 
-                    <div className="pt-12 border-t border-dashed text-center space-y-4">
-                        <div className="flex items-center justify-center gap-2">
-                            <div className="h-1 w-8 bg-[#CE1126]" />
-                            <div className="h-1 w-8 bg-[#FFCD00]" />
-                            <div className="h-1 w-8 bg-[#009A44]" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mb-1">
-                                Powered by Afrotix Event Management System
-                            </p>
-                            <p className="text-[9px] text-muted-foreground/60 italic">
-                                &copy; {new Date().getFullYear()} {PROJ_NAME}. All Rights Reserved.
-                            </p>
-                        </div>
-                    </div>
                 </section>
             </div>
+         <PoweredByFooter />
+
         </main>
     );
 }

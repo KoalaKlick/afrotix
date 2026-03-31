@@ -77,7 +77,7 @@ export function OrgStep2Branding({
         try {
             // Convert to WebP for optimization
             const optimizedFile = await convertToWebP(file, {
-                quality: 0.85,
+                quality: 1,
                 maxWidth: 400,
                 maxHeight: 400,
                 maxSizeMB: 0.5,

@@ -14,7 +14,6 @@ export default function DashboardLayout({
                 <div className="flex flex-col ">
                     {children}
                 </div>
-                <FooterSection />
             </div>
         </OrgBrandingProvider>
     )

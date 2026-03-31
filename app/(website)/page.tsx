@@ -7,6 +7,7 @@ import { FAQSection } from '@/components/Landing/sections/FAQSection'
 import { TestimonialsSection } from '@/components/Landing/sections/TestimonialsSection'
 import { getVisibleEventsForUser } from '@/lib/dal/event'
 import { createClient } from '@/utils/supabase/server'
+import { FooterSection } from '@/components/Landing/sections/FooterSection'
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -29,6 +30,8 @@ export default async function LandingPage() {
       <FAQSection />
       <PanAfricanDivider />
       <TestimonialsSection />
+                      <FooterSection />
+
     </>
   )
 }

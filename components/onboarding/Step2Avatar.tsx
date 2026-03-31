@@ -67,7 +67,7 @@ export function Step2Avatar({
         try {
             // Convert to WebP with compression (avatars: 400x400, quality 0.85, max 500KB)
             const webpFile = await convertToWebP(file, {
-                quality: 0.85,
+                quality: 1,
                 maxWidth: 400,
                 maxHeight: 400,
                 maxSizeMB: 0.5,

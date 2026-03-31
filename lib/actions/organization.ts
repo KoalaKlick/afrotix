@@ -167,7 +167,7 @@ export async function uploadOrgLogo(
     let processedFile: File;
     try {
         processedFile = await convertToWebP(file, {
-            quality: 0.85,
+            quality: 1,
             maxWidth: 400,
             maxHeight: 400,
             maxSizeMB: 0.5,
@@ -235,7 +235,7 @@ export async function uploadOrgBanner(
     let processedFile: File;
     try {
         processedFile = await convertToWebP(file, {
-            quality: 0.85,
+            quality: 1,
             maxWidth: 1920,
             maxHeight: 600,
             maxSizeMB: 1,

@@ -16,7 +16,7 @@ export async function convertToWebP(
   } = {}
 ): Promise<File> {
   const {
-    quality = 0.8,
+    quality = 0.95,
     maxWidth,
     maxHeight,
     maxSizeMB,

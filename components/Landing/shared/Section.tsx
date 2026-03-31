@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 interface SectionProps {
     as?: 'section' | 'div' | 'article' | 'main' | 'header' | 'footer';
-    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl'|'full';
+    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl'|'8xl'|'full';
     className?: string;
     contentClassName?: string;
     id?: string;
@@ -18,6 +18,7 @@ const maxWidthClasses: Record<string, string> = {
     '4xl': 'max-w-4xl',
     '6xl': 'max-w-6xl',
     '7xl': 'max-w-7xl',
+    '8xl': 'max-w-[90rem]',
     full: 'max-w-full',
 };
 

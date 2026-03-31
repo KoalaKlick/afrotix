@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogHeader,
     DialogTitle,
@@ -255,6 +256,7 @@ export function VotePaymentModal({
                 onFocusOutside={(e) => { if (loading) e.preventDefault(); }}
                 onInteractOutside={(e) => { if (loading) e.preventDefault(); }}
             >
+                <DialogClose/>
                 {/* Hero Header */}
                 <div className="relative h-36 w-full overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.14),transparent_26%)]">
                     <div className="relative z-10 flex items-end h-full p-5">
@@ -277,7 +279,7 @@ export function VotePaymentModal({
                             <p className="text-[#FFCD00] text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">
                                 Voting for
                             </p>
-                            <h3 className="text-white font-black text-lg truncate leading-tight">
+                            <h3 className=" font-black text-lg truncate leading-tight">
                                 {nominee.optionText}
                             </h3>
                             {nominee.nomineeCode && (
