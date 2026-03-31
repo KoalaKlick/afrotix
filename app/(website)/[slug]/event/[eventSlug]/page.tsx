@@ -114,7 +114,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             className="flex items-center gap-2 text-white/80 hover:text-white text-sm mb-5 transition-colors"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            Back to {event.title}
+                            Back to {orgSlug}
                         </Link><br/>
                         <div className="inline-block items-center bg-[#009A44] text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
                             {event.type.toUpperCase()}
