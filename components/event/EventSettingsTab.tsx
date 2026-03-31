@@ -734,9 +734,9 @@ export function EventSettingsTab({
                                 <div className="min-w-0">
                                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                                         {link.name}
-                                        <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase">
+                                        {/* <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase">
                                             {provider.name}
-                                        </span>
+                                        </span> */}
                                     </p>
                                     <p className="text-xs italic truncate max-w-35">{link.url}</p>
                                 </div>

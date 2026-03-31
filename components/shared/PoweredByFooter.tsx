@@ -3,7 +3,7 @@ import { AfroTixLogo } from "./AfroTixLogo";
 
 export function PoweredByFooter() {
   return (
-    <div className="py-12 border-t border-dashed text-center space-y-4 bg-black">
+    <div className="py-12 border-t-2 border-dashed text-center space-y-4 bg-black">
       <div className="flex items-center justify-center gap-2">
         <Link href="/" className="flex items-center space-x-2 mb-4">
                             <AfroTixLogo className="h-10 w-auto" />

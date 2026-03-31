@@ -11,7 +11,7 @@ import { PoweredByFooter } from "@/components/shared/PoweredByFooter"
 import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { format } from "date-fns"
-import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users } from "lucide-react"
+import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
 
@@ -109,7 +109,14 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                 <div className="absolute inset-0 flex items-end pb-12">
                     <div className="max-w-7xl mx-auto px-6 w-full">
-                        <div className="inline-flex items-center bg-[#009A44] text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
+                        <Link
+                            href={`/${orgSlug}/`}
+                            className="flex items-center gap-2 text-white/80 hover:text-white text-sm mb-5 transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to {event.title}
+                        </Link><br/>
+                        <div className="inline-block items-center bg-[#009A44] text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
                             {event.type.toUpperCase()}
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-6">
