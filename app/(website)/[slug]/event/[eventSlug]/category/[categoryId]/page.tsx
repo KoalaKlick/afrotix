@@ -367,7 +367,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                             {Array.isArray(event.socialLinks) && event.socialLinks.length > 0 && (
                                 <div className="space-y-4 pt-4 border-t border-dashed">
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-[#009A44]">
-                                        Connect with Event.
+                                        Event Socials.
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
                                         {event.socialLinks.map((link) => (

@@ -275,7 +275,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             {/* Social Links nested here for mobile, but visible on all */}
                             {(event.socialLinks?.length > 0) && (
                                 <div className="space-y-4 pt-4 border-t border-dashed">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-[#009A44]">Organization Contacts.</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-[#009A44]">Event Socials.</h3>
                                     <div className="flex flex-wrap gap-3">
                                         {event.socialLinks.map((link) => (
                                             <a
