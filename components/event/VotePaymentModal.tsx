@@ -203,6 +203,12 @@ export function VotePaymentModal({
                             option_id: nominee.id,
                             vote_count: voteCount,
                             nominee_name: nominee.optionText,
+                            org_slug: orgSlug,
+                            event_slug: eventSlug,
+                            source_path:
+                                orgSlug && eventSlug
+                                    ? `/${orgSlug}/event/${eventSlug}/category/${categoryId}`
+                                    : undefined,
                             voter_phone: "+" + normalisedPhone,
                             voter_email: email,
                             phone: "+" + normalisedPhone,

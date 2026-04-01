@@ -429,8 +429,8 @@ export function EventSettingsTab({
                                 >
                                     <Eye className={cn("size-5", formData.isPublic ? "text-primary" : "text-muted-foreground")} />
                                     <div className="text-left">
-                                        <p className="font-medium">Public</p>
-                                        <p className="text-xs text-muted-foreground">Anyone can discover this event</p>
+                                        <p className="font-medium">External</p>
+                                        <p className="text-xs text-muted-foreground">Visible to everyone</p>
                                     </div>
                                 </button>
                                 <button
@@ -445,7 +445,7 @@ export function EventSettingsTab({
                                 >
                                     <EyeOff className={cn("size-5", isPrivate ? "text-primary" : "text-muted-foreground")} />
                                     <div className="text-left">
-                                        <p className="font-medium">Private</p>
+                                        <p className="font-medium">Internal</p>
                                         <p className="text-xs text-muted-foreground">Only organization members can view this event</p>
                                     </div>
                                 </button>
@@ -508,7 +508,7 @@ export function EventSettingsTab({
                             )}
                             <div>
                                 <p className="font-medium">
-                                    {formData.isPublic ? "Public Event" : "Private Event"}
+                                    {formData.isPublic ? "External Event" : "Internal Event"}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                     {formData.isPublic

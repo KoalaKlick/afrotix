@@ -5,13 +5,15 @@ import { getEventBySlug, getOrganizationBySlug, getVotingCategories } from "@/li
 import { canUserAccessEvent } from "@/lib/event-status"
 import { getEventImageUrl } from "@/lib/image-url-utils"
 import { isUserMemberOf } from "@/lib/dal/organization"
+import { getVisibleTicketTypesByEventId } from "@/lib/dal/ticket"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import { PoweredByFooter } from "@/components/shared/PoweredByFooter"
+import { PublicTicketGrid } from "@/components/event/PublicTicketGrid"
 import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { format } from "date-fns"
-import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, ArrowLeft } from "lucide-react"
+import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, ArrowLeft, Lock } from "lucide-react"
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
 
@@ -77,10 +79,14 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
     const isOrganizationMember = user ? await isUserMemberOf(user.id, organization.id) : false
     if (!canUserAccessEvent(event, isOrganizationMember)) notFound()
 
-    // Fetch voting categories for voting/hybrid events
-    const votingCategories = (event.type === "voting" || event.type === "hybrid")
-        ? await getVotingCategories(event.id)
-        : []
+    const [votingCategories, ticketTypes] = await Promise.all([
+        (event.type === "voting" || event.type === "hybrid")
+            ? getVotingCategories(event.id)
+            : Promise.resolve([]),
+        (event.type === "ticketed" || event.type === "hybrid")
+            ? getVisibleTicketTypesByEventId(event.id, isOrganizationMember)
+            : Promise.resolve([]),
+    ])
 
     const startDate = event.startDate ? new Date(event.startDate) : null
     const dateStr = startDate ? startDate.toLocaleDateString("en-US", {
@@ -94,7 +100,6 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
         minute: "2-digit",
     }) : ""
     const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
-
     return (
         <main className="min-h-screen">
             {/* Hero Section */}
@@ -248,6 +253,71 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                     </Link>
                                 ))}
                             </div>
+                        </div>
+                    </Section>
+                </>
+            )}
+
+            {ticketTypes.length > 0 && (
+                <>
+                    <PanAfricanDivider />
+                    <Section maxWidth="7xl" className="py-20 bg-white">
+                        <div className="space-y-10">
+                            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                                <div>
+                                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#009A44]/20 bg-[#009A44]/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-[#009A44]">
+                                        <span>Ticket Tiers</span>
+                                        {!event.isPublic && (
+                                            <>
+                                                <span className="text-[#009A44]/40">•</span>
+                                                <Lock className="size-3.5" />
+                                                <span>Internal Event</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <h2 className="text-3xl font-black uppercase tracking-tight">Choose Your Access.</h2>
+                                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                                        {isOrganizationMember
+                                            ? "You can also see member-only hidden tiers for internal events and organizer access."
+                                            : "Guests only see externally available ticket tiers here."}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <PublicTicketGrid
+                                tickets={ticketTypes.map((ticket) => ({
+                                    ...ticket,
+                                    price: Number(ticket.price),
+                                    salesEnd:
+                                        ticket.salesEnd instanceof Date
+                                            ? ticket.salesEnd.toISOString()
+                                            : ticket.salesEnd ?? null,
+                                }))}
+                                orgSlug={orgSlug}
+                                eventSlug={eventSlug}
+                                event={{
+                                    id: event.id,
+                                    organizationId: event.organizationId,
+                                    title: event.title,
+                                    coverImage: event.coverImage,
+                                    bannerImage: event.bannerImage,
+                                    isVirtual: event.isVirtual,
+                                    virtualLink: event.virtualLink,
+                                    venueName: event.venueName,
+                                    venueCity: event.venueCity,
+                                    venueCountry: event.venueCountry,
+                                    startDate:
+                                        event.startDate instanceof Date
+                                            ? event.startDate.toISOString()
+                                            : event.startDate ?? null,
+                                }}
+                                organization={{
+                                    name: organization.name,
+                                    logoUrl: organization.logoUrl,
+                                    primaryColor: organization.primaryColor,
+                                    secondaryColor: organization.secondaryColor,
+                                }}
+                            />
                         </div>
                     </Section>
                 </>

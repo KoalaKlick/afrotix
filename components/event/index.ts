@@ -12,13 +12,13 @@ export { EventStep4Extras } from "./EventStep4Extras";
 export { VotingManager } from "./voting-manager";
 export { NomineeCard } from "./NomineeCard";
 export {
-    EventStats,
-    StatCard,
-    StatsGrid,
-    StatsSection,
-    StatIcons,
-    type EventStatsData,
-    type StatCardProps,
+  EventStats,
+  StatCard,
+  StatsGrid,
+  StatsSection,
+  StatIcons,
+  type EventStatsData,
+  type StatCardProps,
 } from "./EventStats";
 export { EventsList } from "./EventsList";
 export { CustomizableEventStats } from "./CustomizableEventStats";
@@ -31,3 +31,5 @@ export { VotingBarChart, type VotingChartCategory } from "./VotingBarChart";
 export { VotingTrendChart } from "./VotingTrendChart";
 export { CategoryDetailModal } from "./CategoryDetailModal";
 export { VoteTransactionsTable } from "./VoteTransactionsTable";
+export { TicketManager } from "./ticket-manager/TicketManager";
+export { EventPayoutsTab } from "./EventPayoutsTab";
