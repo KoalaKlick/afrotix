@@ -68,7 +68,8 @@ export function useDataTable<T>({
         return;
     }
     loadData({ page: 1, search: debouncedSearch });
-  }, [debouncedSearch, loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   const handlePageChange = (newPage: number) => {
     const totalPages = Math.ceil(total / limit);

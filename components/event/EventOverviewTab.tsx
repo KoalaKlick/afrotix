@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { StatCard, StatsGrid, statIcons } from "@/components/event/EventStats";
 import { VotingBarChart } from "./VotingBarChart";
@@ -105,7 +105,7 @@ export function EventOverviewTab({
   const [ticketTxData, setTicketTxData] = useState<any>(initialTicketTransactions.total > 0 ? initialTicketTransactions : null);
   const [voteTxData, setVoteTxData] = useState<any>(initialVoteTransactions.total > 0 ? initialVoteTransactions : null);
 
-  async function loadVotes(options: any) {
+  const loadVotes = useCallback(async (options: any) => {
     setIsLoadingBreakdown(true);
     try {
         const data = await getEventVoteTransactionsAction(eventId, options);
@@ -114,9 +114,9 @@ export function EventOverviewTab({
     } finally {
         setIsLoadingBreakdown(false);
     }
-  }
+  }, [eventId]);
 
-  async function loadTickets(options: any) {
+  const loadTickets = useCallback(async (options: any) => {
     setIsLoadingBreakdown(true);
     try {
         const data = await getEventTicketTransactionsAction(eventId, options);
@@ -125,13 +125,19 @@ export function EventOverviewTab({
     } finally {
         setIsLoadingBreakdown(false);
     }
-  }
+  }, [eventId]);
 
 
-  // When breakdown opens, load the appropriate data
-  useState(() => {
-    // This is just to initialize, maybe use useEffect
-  });
+  // When breakdown opens, load the appropriate data if null
+  useEffect(() => {
+    if (!breakdownOpen) return;
+    
+    if (breakdownType === "votes" && !voteTxData) {
+        loadVotes({ page: 1 });
+    } else if (breakdownType === "tickets" && !ticketTxData) {
+        loadTickets({ page: 1 });
+    }
+  }, [breakdownOpen, breakdownType, voteTxData, ticketTxData, loadVotes, loadTickets]);
 
   // Removed hasLoaded logic as hooks handle it now
 
@@ -268,31 +274,31 @@ export function EventOverviewTab({
             </SheetDescription>
           </SheetHeader>
 
-          {isLoadingBreakdown ? (
-            <div className="h-[400px] flex flex-col items-center justify-center gap-4 text-muted-foreground">
-              <Loader2 className="size-8 animate-spin text-primary" />
-              <p className="text-sm font-medium animate-pulse">
-                Fetching transaction history...
-              </p>
-            </div>
-          ) : (
-            <>
-              {breakdownType === "votes" && voteTxData && (
-                <VoteTransactionsTable
-                  initialData={voteTxData}
-                  eventId={eventId}
-                  fetchPage={loadVotes}
-                />
-              )}
-              {breakdownType === "tickets" && ticketTxData && (
-                <TicketTransactionsTable
-                  initialData={ticketTxData}
-                  eventId={eventId}
-                  fetchPage={loadTickets}
-                />
-              )}
-            </>
-          )}
+          <div className="relative min-h-[400px]">
+            {isLoadingBreakdown && !voteTxData && !ticketTxData && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground bg-background/80 z-10">
+                <Loader2 className="size-8 animate-spin text-primary" />
+                <p className="text-sm font-medium animate-pulse">
+                  Fetching transaction history...
+                </p>
+              </div>
+            )}
+
+            {breakdownType === "votes" && voteTxData && (
+              <VoteTransactionsTable
+                initialData={voteTxData}
+                eventId={eventId}
+                fetchPage={loadVotes}
+              />
+            )}
+            {breakdownType === "tickets" && ticketTxData && (
+              <TicketTransactionsTable
+                initialData={ticketTxData}
+                eventId={eventId}
+                fetchPage={loadTickets}
+              />
+            )}
+          </div>
         </SheetContent>
       </Sheet>
 

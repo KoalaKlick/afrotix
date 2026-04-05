@@ -556,7 +556,8 @@ export const getOrganizationEventStats = cache(
         statusTypeGroups,
         activeEvents,
         ticketStats,
-        voteCount,
+        voteRevenueResult,
+        voteCountResult,
         mostAttended,
         nextUpcoming,
         recentEnded,
@@ -586,7 +587,15 @@ export const getOrganizationEventStats = cache(
           _sum: { subtotal: true },
           _count: true,
         }),
-        // 4. Total votes across all events (sum of voteCount)
+        // 4. Vote Revenue aggregation (from completed payments related to votes)
+        prisma.payment.aggregate({
+          where: {
+            status: "completed",
+            votes: { some: { event: { organizationId } } }
+          },
+          _sum: { amount: true },
+        }),
+        // 5. Total votes across all events (sum of voteCount)
         prisma.vote.aggregate({
           where: { event: { organizationId } },
           _sum: { voteCount: true },
@@ -636,6 +645,10 @@ export const getOrganizationEventStats = cache(
           },
         }),
       ]);
+
+      const ticketRevenue = Number(ticketStats._sum.subtotal ?? 0);
+      const voteRevenue = Number(voteRevenueResult._sum.amount ?? 0);
+      const totalRevenue = ticketRevenue + voteRevenue;
 
       // Process grouped counts in memory
       let total = 0;
@@ -699,9 +712,9 @@ export const getOrganizationEventStats = cache(
         upcoming,
         byType,
         totalTicketsSold,
-        totalRevenue: Number(ticketStats._sum.subtotal ?? 0),
+        totalRevenue,
         totalAttendees,
-        totalVotes: Number(voteCount._sum.voteCount ?? 0),
+        totalVotes: Number(voteCountResult._sum.voteCount ?? 0),
         mostAttendedEvent:
           mostAttended && mostAttended._count.tickets > 0
             ? {
@@ -871,7 +884,8 @@ export const getEventDetailStats = cache(async (eventId: string) => {
 
     const [
       ticketsSold,
-      revenueResult,
+      ticketRevenueResult,
+      voteRevenueResult,
       checkIns,
       totalVotes,
       totalOrders,
@@ -886,6 +900,13 @@ export const getEventDetailStats = cache(async (eventId: string) => {
       prisma.ticketOrder.aggregate({
         where: { eventId, status: { in: paidStatuses } },
         _sum: { subtotal: true },
+      }),
+      prisma.payment.aggregate({
+        where: { 
+            status: "completed",
+            votes: { some: { eventId } }
+        },
+        _sum: { amount: true },
       }),
       prisma.ticket.count({
         where: { eventId, checkInStatus: checkedIn },
@@ -907,6 +928,10 @@ export const getEventDetailStats = cache(async (eventId: string) => {
       }),
     ]);
 
+    const ticketRevenue = Number(ticketRevenueResult._sum.subtotal ?? 0);
+    const voteRevenue = Number(voteRevenueResult._sum.amount ?? 0);
+    const totalRevenue = ticketRevenue + voteRevenue;
+
     const totalVoteSum = Number((totalVotes as any)._sum.voteCount ?? 0);
     const totalVoteCount = (totalVotes as any)._count._all ?? 0;
 
@@ -918,7 +943,7 @@ export const getEventDetailStats = cache(async (eventId: string) => {
 
     return {
       ticketsSold,
-      revenue: Number(revenueResult._sum.subtotal ?? 0),
+      revenue: totalRevenue,
       checkIns,
       totalVotes: totalVoteSum,
       totalOrders,
