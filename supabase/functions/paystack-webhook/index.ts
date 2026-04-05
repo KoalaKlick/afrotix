@@ -138,6 +138,57 @@ serve(async (req) => {
         payment_id: payment.id
       })
       .eq("id", payment.related_id);
+  } else if (payment.related_type === "ticket") {
+    // Creating order on-the-fly from basic ticket purchase
+    const metadata = payment.metadata || {};
+    const quantity = Number(metadata.quantity || 1);
+    const eventId = metadata.event_id;
+    const ticketTypeId = metadata.ticket_type_id || payment.related_id;
+    
+    // Create the order
+    const { data: order, error: orderError } = await supabase
+      .from("ticket_orders")
+      .insert({
+        event_id: eventId,
+        order_number: `ORD-${crypto.randomUUID().split("-")[0].toUpperCase()}`,
+        buyer_name: metadata.buyer_name || null,
+        buyer_phone: metadata.buyer_phone || payment.email,
+        subtotal: Number(payment.amount),
+        status: "confirmed",
+        payment_id: payment.id,
+        user_id: payment.user_id,
+      })
+      .select()
+      .single();
+
+    if (orderError) {
+      console.error("Order creation error:", orderError);
+    } else if (order) {
+      // Create N tickets
+      const tickets = [];
+      for (let i = 0; i < quantity; i++) {
+        tickets.push({
+          order_id: order.id,
+          event_id: eventId,
+          ticket_type_id: ticketTypeId,
+          ticket_code: `TKT-${crypto.randomUUID().split("-")[0].toUpperCase()}-${i}`,
+          attendee_name: metadata.buyer_name || null,
+          attendee_email: metadata.buyer_email || payment.email,
+        });
+      }
+      
+      const { error: tktError } = await supabase
+        .from("tickets")
+        .insert(tickets);
+
+      if (tktError) console.error("Tickets creation error:", tktError);
+
+      // Increment ticket type quantity sold
+      await supabase.rpc("increment_ticket_count", {
+        type_id: ticketTypeId,
+        qty: quantity
+      });
+    }
   }
 
   if (payment.related_type === "vote") {

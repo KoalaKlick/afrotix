@@ -515,6 +515,8 @@ export function EventDetailClient({
             event={event}
             eventStats={eventStats}
             voteTrend={voteTrend}
+            ticketTrend={ticketTrend}
+            ticketTypeSales={ticketTypeSales}
             initialVoteTransactions={initialVoteTransactions}
             initialTicketTransactions={initialTicketTransactions}
             votingCategories={votingCategories.map(
