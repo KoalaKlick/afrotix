@@ -44,7 +44,7 @@ interface Event {
     status: string;
     isPublic: boolean;
     coverImage: string | null;
-    startDate: Date | null;
+    startDate: string | Date | null;
     venueName: string | null;
     isVirtual: boolean;
 }

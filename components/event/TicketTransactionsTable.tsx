@@ -13,30 +13,31 @@ import { Button } from "@/components/ui/button";
 import { 
     ChevronLeft, 
     ChevronRight,
-    Hash,
     ArrowUpDown,
-    Search
+    Search,
+    Ticket
 } from "lucide-react";
 import { format } from "date-fns";
 import { StatusBadge } from "../shared/status-badge";
-import { Input } from "@/components/ui/input";
 import { useDataTable } from "@/lib/hooks/use-data-table";
+import { Input } from "@/components/ui/input";
+import { formatAmount } from "@/lib/utils";
 
 interface Transaction {
     id: string;
-    voteCount: number;
+    orderNumber: string;
+    buyerName: string | null;
+    buyerEmail: string | null;
+    buyerPhone: string | null;
     amount: number;
+    fees: number;
     currency: string;
-    reference: string;
     status: string;
+    ticketCount: number;
     createdAt: string;
-    voterEmail?: string;
-    voterPhone?: string;
-    nomineeName?: string;
-    nomineeCode?: string;
 }
 
-interface VoteTransactionsTableProps {
+interface TicketTransactionsTableProps {
     readonly initialData: {
         transactions: Transaction[];
         total: number;
@@ -51,12 +52,7 @@ interface VoteTransactionsTableProps {
     }) => Promise<{ transactions: Transaction[]; total: number }>;
 }
 
-/**
- * Anonymized vote transactions table.
- * Shows payment info (amount, date, status) but NEVER reveals
- * voter identity or which nominee was voted for.
- */
-export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteTransactionsTableProps) {
+export function TicketTransactionsTable({ initialData, eventId, fetchPage }: TicketTransactionsTableProps) {
     const {
         data,
         total,
@@ -80,7 +76,7 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input 
-                        placeholder="Filter by voter, nominee or reference..." 
+                        placeholder="Filter by order # or buyer..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9 h-9"
@@ -92,12 +88,22 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
-                            <TableHead className="text-center w-20">
+                            <TableHead className="w-32">
                                 <button 
-                                    onClick={() => handleSort('voteCount')}
+                                    onClick={() => handleSort('orderNumber')}
+                                    className="flex items-center gap-1 hover:text-foreground transition-colors"
+                                >
+                                    Order #
+                                    <ArrowUpDown className="size-3" />
+                                </button>
+                            </TableHead>
+                            <TableHead>Buyer</TableHead>
+                            <TableHead className="text-center">
+                                <button 
+                                    onClick={() => handleSort('ticketCount')}
                                     className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
                                 >
-                                    Votes
+                                    Tickets
                                     <ArrowUpDown className="size-3" />
                                 </button>
                             </TableHead>
@@ -119,8 +125,6 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                                     <ArrowUpDown className="size-3" />
                                 </button>
                             </TableHead>
-                            <TableHead>Voter</TableHead>
-                            <TableHead>Nominee</TableHead>
                             <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -134,63 +138,41 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                         ) : data.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                    No matching transactions found.
+                                    No matching ticket transactions found.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             data.map((tx) => (
-                                <TableRow key={tx.id} className="hover:bg-muted/30 transition-colors">
-                                    <TableCell className="text-center">
-                                        <span className="inline-flex items-center justify-center size-7 rounded-full bg-primary-50 text-primary-700 font-bold text-xs ring-1 ring-primary-200">
-                                            {tx.voteCount}
-                                        </span>
+                                <TableRow key={tx.id} className="hover:bg-muted/30 transition-colors text-sm">
+                                    <TableCell className="font-medium font-mono text-xs">
+                                        {tx.orderNumber}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="font-mono text-sm font-semibold">
-                                                {tx.currency} {tx.amount.toLocaleString()}
-                                            </span>
-                                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                                <Hash className="size-2.5" />
-                                                {tx.reference.slice(0, 12)}...
+                                            <span className="font-semibold text-xs">{tx.buyerName || "Guest checkout"}</span>
+                                            <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                                                {tx.buyerEmail || tx.buyerPhone || "No contact"}
                                             </span>
                                         </div>
                                     </TableCell>
+                                    <TableCell className="text-center">
+                                        <span className="inline-flex items-center justify-center size-6 rounded bg-muted font-bold text-[10px]">
+                                            {tx.ticketCount}
+                                        </span>
+                                    </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col text-xs text-muted-foreground">
-                                            <span className="flex items-center gap-1">
-                                                {format(new Date(tx.createdAt), "MMM d, yyyy")}
-                                            </span>
+                                        <span className="font-mono text-xs font-semibold">
+                                            {formatAmount(tx.amount, tx.currency)}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col text-[10px] text-muted-foreground">
+                                            <span>{format(new Date(tx.createdAt), "MMM d, yyyy")}</span>
                                             <span>{format(new Date(tx.createdAt), "HH:mm")}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col text-sm">
-                                            {tx.voterEmail ? (
-                                                <span className="font-medium text-[13px]">{tx.voterEmail}</span>
-                                            ) : (
-                                                <span className="text-muted-foreground text-[13px]">No email</span>
-                                            )}
-                                            {tx.voterPhone && (
-                                                <span className="text-[10px] text-muted-foreground font-mono">
-                                                    {tx.voterPhone}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium">{tx.nomineeName || "N/A"}</span>
-                                            {tx.nomineeCode && (
-                                                <span className="text-[10px] text-muted-foreground">
-                                                    #{tx.nomineeCode}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                     
-                                        <StatusBadge variant="success" className=""/>
+                                        <StatusBadge variant="success" className="h-5 px-2 text-[10px]"/>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -210,11 +192,11 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                             size="sm"
                             onClick={() => handlePageChange(page - 1)}
                             disabled={page === 1 || isLoading}
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7 p-0"
                         >
-                            <ChevronLeft className="size-4" />
+                            <ChevronLeft className="size-3" />
                         </Button>
-                        <span className="text-xs font-medium">
+                        <span className="text-[10px] font-medium">
                             Page {page} of {totalPages}
                         </span>
                         <Button
@@ -222,9 +204,9 @@ export function VoteTransactionsTable({ initialData, eventId, fetchPage }: VoteT
                             size="sm"
                             onClick={() => handlePageChange(page + 1)}
                             disabled={page === totalPages || isLoading}
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7 p-0"
                         >
-                            <ChevronRight className="size-4" />
+                            <ChevronRight className="size-3" />
                         </Button>
                     </div>
                 </div>

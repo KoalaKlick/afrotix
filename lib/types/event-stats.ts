@@ -99,6 +99,13 @@ export interface VoteTrendPoint {
     votes: number;
 }
 
+// Ticket trend data point
+export interface TicketTrendPoint {
+    date: string;
+    sales: number;
+    revenue: number;
+}
+
 // Default empty stats
 export const defaultEventStats: EventStatsData = {
     total: 0,

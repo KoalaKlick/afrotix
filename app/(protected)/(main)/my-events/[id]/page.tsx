@@ -7,6 +7,8 @@ import {
   getEventTicketTransactions,
   getEventVoteTransactions,
   getVoteTrend,
+  getTicketTrend,
+  getTicketTypeSales,
 } from "@/lib/dal/event";
 import { getVotingCategories } from "@/lib/dal/voting";
 import { normalizeFieldType } from "@/lib/types/voting";
@@ -79,7 +81,7 @@ export default async function EventDetailPage({
   }
 
   // Get voting categories, event stats, and tickets in parallel
-  const [votingCategories, eventStats, voteTrend, ticketTypes, voteTransactions, ticketTransactions] =
+  const [votingCategories, eventStats, voteTrend, ticketTypes, voteTransactions, ticketTransactions, ticketTrend, ticketTypeSales] =
     await Promise.all([
       event.type === "voting" || event.type === "hybrid"
         ? getVotingCategories(event.id, true, true)
@@ -95,8 +97,14 @@ export default async function EventDetailPage({
         ? getEventVoteTransactions(event.id, { limit: 10, offset: 0 })
         : Promise.resolve({ transactions: [], total: 0 }),
       event.type === "ticketed" || event.type === "hybrid"
-        ? getEventTicketTransactions(event.id, 10)
-        : Promise.resolve({ transactions: [] }),
+        ? getEventTicketTransactions(event.id, { limit: 10, offset: 0 })
+        : Promise.resolve({ transactions: [], total: 0 }),
+      event.type === "ticketed" || event.type === "hybrid"
+        ? getTicketTrend(event.id)
+        : Promise.resolve([]),
+      event.type === "ticketed" || event.type === "hybrid"
+        ? getTicketTypeSales(event.id)
+        : Promise.resolve([]),
     ]);
 
   return (
@@ -127,8 +135,10 @@ export default async function EventDetailPage({
               votesCount: opt.votesCount.toString(), // Convert BigInt to string
             })),
           }))}
-          initialVoteTransactions={voteTransactions.transactions}
-          initialTicketTransactions={ticketTransactions.transactions}
+          initialVoteTransactions={voteTransactions}
+          initialTicketTransactions={ticketTransactions}
+          ticketTrend={ticketTrend}
+          ticketTypeSales={ticketTypeSales}
           ticketTypes={ticketTypes.map((t) => ({
             ...t,
             price: Number(t.price),

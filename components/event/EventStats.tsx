@@ -55,6 +55,7 @@ export interface StatCardProps {
     href?: string;
     variant?: "default" | "success" | "warning" | "danger" | "info";
     className?: string;
+    onClick?: () => void;
 }
 
 /**
@@ -121,6 +122,7 @@ export function StatCard({
     href,
     variant = "default",
     className,
+    onClick,
 }: StatCardProps) {
     const variantStyles = {
         default: "bg-card",
@@ -148,7 +150,16 @@ export function StatCard({
         const sizeClass = getValueSizeClass(String(display));
 
         return (
-            <Card className={cn("relative px-4 group overflow-hidden border transition-shadow ", cardStyle, className)} style={{ backgroundColor: 'transparent', ...cardInlineStyle }}>
+            <Card 
+                className={cn(
+                    "relative px-4 group overflow-hidden border transition-shadow ", 
+                    cardStyle, 
+                    className,
+                    onClick && "cursor-pointer active:scale-[0.98]"
+                )} 
+                style={{ backgroundColor: 'transparent', ...cardInlineStyle }}
+                onClick={onClick}
+            >
                 <CardContent className="p-0 !bg-transparent">
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">

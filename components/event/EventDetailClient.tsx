@@ -67,7 +67,7 @@ import {
   getEventPublicationStatus,
   getEventLifecycleStatus,
 } from "@/lib/event-status";
-import { EventPayoutsTab } from "./EventPayoutsTab";
+// Removed EventPayoutsTab import
 
 interface EventDetailClientProps {
   readonly event: EventDetailEvent;
@@ -82,32 +82,40 @@ interface EventDetailClientProps {
   readonly eventStats: EventDetailStatsData;
   readonly voteTrend?: VoteTrendPoint[];
   readonly ticketTypes?: TicketType[];
-  readonly initialVoteTransactions?: Array<{
-    id: string;
-    voteCount: number;
-    amount: number;
-    currency: string;
-    reference: string;
-    status: string;
-    voterEmail?: string;
-    voterPhone?: string;
-    nomineeName?: string;
-    nomineeCode?: string;
-    createdAt: string;
-  }>;
-  readonly initialTicketTransactions?: Array<{
-    id: string;
-    orderNumber: string;
-    buyerName: string | null;
-    buyerEmail: string | null;
-    buyerPhone: string | null;
-    amount: number;
-    fees: number;
-    currency: string;
-    status: string;
-    ticketCount: number;
-    createdAt: string;
-  }>;
+  readonly ticketTrend?: { date: string; sales: number; revenue: number }[];
+  readonly ticketTypeSales?: { id: string; name: string; sold: number; capacity: number }[];
+  readonly initialVoteTransactions?: {
+    transactions: Array<{
+      id: string;
+      voteCount: number;
+      amount: number;
+      currency: string;
+      reference: string;
+      status: string;
+      voterEmail?: string;
+      voterPhone?: string;
+      nomineeName?: string;
+      nomineeCode?: string;
+      createdAt: string;
+    }>;
+    total: number;
+  };
+  readonly initialTicketTransactions?: {
+    transactions: Array<{
+      id: string;
+      orderNumber: string;
+      buyerName: string | null;
+      buyerEmail: string | null;
+      buyerPhone: string | null;
+      amount: number;
+      fees: number;
+      currency: string;
+      status: string;
+      ticketCount: number;
+      createdAt: string;
+    }>;
+    total: number;
+  };
 }
 
 const typeIcons: Record<string, typeof Ticket> = {
@@ -133,9 +141,11 @@ export function EventDetailClient({
   votingCategories = [],
   eventStats,
   voteTrend = [],
+  ticketTrend = [],
+  ticketTypeSales = [],
   ticketTypes = [],
-  initialVoteTransactions = [],
-  initialTicketTransactions = [],
+  initialVoteTransactions = { transactions: [], total: 0 },
+  initialTicketTransactions = { transactions: [], total: 0 },
 }: EventDetailClientProps) {
   const { organization } = event;
   const organizationSlug = organization?.slug;
@@ -470,7 +480,7 @@ export function EventDetailClient({
           className={cn(
             "grid w-full",
             (() => {
-              let cols = 3; // Overview + Payouts + Settings
+              let cols = 2; // Overview + Settings
               if (event.type === "voting" || event.type === "hybrid") cols++;
               if (event.type === "ticketed" || event.type === "hybrid") cols++;
               return `grid-cols-${cols}`;
@@ -480,10 +490,6 @@ export function EventDetailClient({
           <TabsTrigger value="overview" className="gap-1.5">
             <LayoutDashboard className="size-4" />
             Overview
-          </TabsTrigger>
-          <TabsTrigger value="payouts" className="gap-1.5">
-            <Banknote className="size-4" />
-            Payouts
           </TabsTrigger>
           {(event.type === "voting" || event.type === "hybrid") && (
             <TabsTrigger value="voting" className="gap-1.5">
@@ -509,6 +515,8 @@ export function EventDetailClient({
             event={event}
             eventStats={eventStats}
             voteTrend={voteTrend}
+            initialVoteTransactions={initialVoteTransactions}
+            initialTicketTransactions={initialTicketTransactions}
             votingCategories={votingCategories.map(
               (cat): VotingChartCategory => ({
                 id: cat.id,
@@ -524,14 +532,7 @@ export function EventDetailClient({
           />
         </TabsContent>
 
-        <TabsContent value="payouts" className="space-y-4">
-          <EventPayoutsTab
-            event={event}
-            eventStats={eventStats}
-            initialVoteTransactions={initialVoteTransactions}
-            initialTicketTransactions={initialTicketTransactions}
-          />
-        </TabsContent>
+        {/* Removed Payouts TabContent */}
 
         {/* Voting Tab */}
         {(event.type === "voting" || event.type === "hybrid") && (

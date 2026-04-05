@@ -1,3 +1,16 @@
+// Removed 'server-only' import to allow use in client/page components
+import { prisma } from "@/lib/prisma";
+import { cache } from "react";
+import type {
+  Event,
+  EventType,
+  EventStatus,
+  VotingMode,
+  OrderStatus,
+  TicketCheckInStatus,
+  TransactionStatus,
+} from "@/lib/generated/prisma";
+import { normalizeEventStatus } from "@/lib/event-status";
 import { getUserOrganizations } from "@/lib/dal/organization";
 /**
  * Get events visible to a user (public events, plus private events for orgs they are a member of)
@@ -107,25 +120,6 @@ export const getVisibleEventsForUser = cache(
   },
 );
 import { logger, logAction } from "@/lib/logger";
-/**
- * Event Data Access Layer (DAL)
- * Server-side database operations for events
- * Uses Prisma for type-safe database queries
- */
-
-// Removed 'server-only' import to allow use in client/page components
-import { prisma } from "@/lib/prisma";
-import { cache } from "react";
-import type {
-  Event,
-  EventType,
-  EventStatus,
-  VotingMode,
-  OrderStatus,
-  TicketCheckInStatus,
-  TransactionStatus,
-} from "@/lib/generated/prisma";
-import { normalizeEventStatus } from "@/lib/event-status";
 
 // Types for DAL operations
 export type EventCreateInput = {
@@ -999,6 +993,93 @@ export const getVoteTrend = cache(
 );
 
 /**
+ * Get ticket sales timestamps for an event (for trend charts)
+ */
+export const getTicketTrend = cache(
+  async (eventId: string): Promise<{ date: string; sales: number; revenue: number }[]> => {
+    try {
+      const orders = await prisma.ticketOrder.findMany({
+        where: { eventId, status: { in: ["paid", "confirmed"] } },
+        select: { 
+          createdAt: true, 
+          subtotal: true, 
+          tickets: { select: { id: true } } 
+        },
+        orderBy: { createdAt: "asc" },
+      });
+
+      if (orders.length === 0) return [];
+
+      const grouped = new Map<string, { sales: number; revenue: number }>();
+      for (const order of orders) {
+        const dateKey = order.createdAt.toISOString().slice(0, 10);
+        const current = grouped.get(dateKey) ?? { sales: 0, revenue: 0 };
+        grouped.set(dateKey, {
+          sales: current.sales + order.tickets.length,
+          revenue: current.revenue + Number(order.subtotal),
+        });
+      }
+
+      const sortedDates = [...grouped.keys()].sort();
+      const start = new Date(sortedDates[0]);
+      const end = new Date(sortedDates[sortedDates.length - 1]);
+      const result: { date: string; sales: number; revenue: number }[] = [];
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().slice(0, 10);
+        const data = grouped.get(key) ?? { sales: 0, revenue: 0 };
+        result.push({ date: key, ...data });
+      }
+
+      return result;
+    } catch (error) {
+      logger.error(error, "[DAL] Error fetching ticket trend:");
+      return [];
+    }
+  },
+);
+
+/**
+ * Get ticket sales by type for an event
+ */
+export const getTicketTypeSales = cache(
+  async (eventId: string) => {
+    try {
+      const ticketTypes = await prisma.ticketType.findMany({
+        where: { eventId },
+        select: {
+          id: true,
+          name: true,
+          quantityTotal: true,
+          _count: {
+            select: {
+              tickets: {
+                where: {
+                  order: {
+                    status: { in: ["paid", "confirmed"] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        orderBy: { name: "asc" },
+      });
+
+      return ticketTypes.map(tt => ({
+        id: tt.id,
+        name: tt.name,
+        capacity: tt.quantityTotal ?? 0,
+        sold: tt._count.tickets
+      }));
+    } catch (error) {
+      logger.error(error, "[DAL] Error fetching ticket type sales:");
+      return [];
+    }
+  }
+);
+
+/**
  * Get paginated vote transactions for an event (ANONYMIZED)
  * Never returns voter identity or which nominee was voted for.
  */
@@ -1009,16 +1090,40 @@ export const getEventVoteTransactions = cache(
       limit?: number;
       offset?: number;
       status?: TransactionStatus;
+      search?: string;
+      sortBy?: string;
+      sortDir?: "asc" | "desc";
     },
   ) => {
     try {
-      const { limit = 10, offset = 0, status = "completed" } = options ?? {};
+      const { limit = 10, offset = 0, status = "completed", search, sortBy = "createdAt", sortDir = "desc" } = options ?? {};
+      
+      const where: any = {
+        eventId,
+        payment: { status },
+      };
+
+      if (search) {
+        where.OR = [
+          { voterEmail: { contains: search, mode: 'insensitive' } },
+          { voterPhone: { contains: search, mode: 'insensitive' } },
+          { payment: { reference: { contains: search, mode: 'insensitive' } } },
+          { option: { optionText: { contains: search, mode: 'insensitive' } } },
+          { option: { nomineeCode: { contains: search, mode: 'insensitive' } } },
+        ];
+      }
+
+      let orderBy: any = {};
+      if (sortBy === "amount") {
+        orderBy = { payment: { amount: sortDir } };
+      } else if (sortBy === "voteCount") {
+        orderBy = { voteCount: sortDir };
+      } else {
+        orderBy = { [sortBy]: sortDir };
+      }
 
       const votes = await prisma.vote.findMany({
-        where: {
-          eventId,
-          payment: { status },
-        },
+        where,
         select: {
           id: true,
           voteCount: true,
@@ -1041,17 +1146,12 @@ export const getEventVoteTransactions = cache(
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
         take: limit,
         skip: offset,
       });
 
-      const total = await prisma.vote.count({
-        where: {
-          eventId,
-          payment: { status },
-        },
-      });
+      const total = await prisma.vote.count({ where });
 
       return {
         transactions: votes.map((v) => ({
@@ -1080,13 +1180,43 @@ export const getEventVoteTransactions = cache(
  * Get recent successful ticket transactions for an event.
  */
 export const getEventTicketTransactions = cache(
-  async (eventId: string, limit = 10) => {
+  async (
+    eventId: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      status?: OrderStatus[];
+      search?: string;
+      sortBy?: string;
+      sortDir?: "asc" | "desc";
+    },
+  ) => {
     try {
+      const { limit = 10, offset = 0, status = ["paid", "confirmed"], search, sortBy = "createdAt", sortDir = "desc" } = options ?? {};
+      
+      const where: any = {
+        eventId,
+        status: { in: status },
+      };
+
+      if (search) {
+        where.OR = [
+          { orderNumber: { contains: search, mode: 'insensitive' } },
+          { buyerName: { contains: search, mode: 'insensitive' } },
+          { buyerPhone: { contains: search, mode: 'insensitive' } },
+          { payment: { email: { contains: search, mode: 'insensitive' } } },
+        ];
+      }
+
+      let orderBy: any = {};
+      if (sortBy === "amount" || sortBy === "subtotal") {
+        orderBy = { subtotal: sortDir };
+      } else {
+        orderBy = { [sortBy]: sortDir };
+      }
+
       const orders = await prisma.ticketOrder.findMany({
-        where: {
-          eventId,
-          status: { in: ["paid", "confirmed"] },
-        },
+        where,
         select: {
           id: true,
           orderNumber: true,
@@ -1106,9 +1236,12 @@ export const getEventTicketTransactions = cache(
             select: { id: true },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
         take: limit,
+        skip: offset,
       });
+
+      const total = await prisma.ticketOrder.count({ where });
 
       return {
         transactions: orders.map((order) => ({
@@ -1124,10 +1257,11 @@ export const getEventTicketTransactions = cache(
           ticketCount: order.tickets.length,
           createdAt: order.createdAt.toISOString(),
         })),
+        total,
       };
     } catch (error) {
       logger.error(error, "[DAL] Error fetching ticket transactions:");
-      return { transactions: [] };
+      return { transactions: [], total: 0 };
     }
   },
 );

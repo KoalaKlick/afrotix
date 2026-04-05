@@ -686,9 +686,15 @@ import {
  */
 export async function getEventVoteTransactionsAction(
   eventId: string,
-  page = 1,
-  limit = 10,
+  options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortDir?: "asc" | "desc";
+  } = {}
 ) {
+  const { page = 1, limit = 10, search, sortBy, sortDir } = options;
   const supabase = await createClient();
   const {
     data: { user },
@@ -710,7 +716,13 @@ export async function getEventVoteTransactionsAction(
   }
 
   const offset = (page - 1) * limit;
-  return await getEventVoteTransactions(eventId, { limit, offset });
+  return await getEventVoteTransactions(eventId, { 
+    limit, 
+    offset, 
+    search, 
+    sortBy, 
+    sortDir 
+  });
 }
 
 /**
@@ -718,8 +730,15 @@ export async function getEventVoteTransactionsAction(
  */
 export async function getEventTicketTransactionsAction(
   eventId: string,
-  limit = 10,
+  options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortDir?: "asc" | "desc";
+  } = {}
 ) {
+  const { page = 1, limit = 10, search, sortBy, sortDir } = options;
   const supabase = await createClient();
   const {
     data: { user },
@@ -739,5 +758,12 @@ export async function getEventTicketTransactionsAction(
     throw new Error("Not authorized");
   }
 
-  return await getEventTicketTransactions(eventId, limit);
+  const offset = (page - 1) * limit;
+  return await getEventTicketTransactions(eventId, { 
+    limit, 
+    offset, 
+    search, 
+    sortBy, 
+    sortDir 
+  });
 }
