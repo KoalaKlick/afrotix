@@ -121,7 +121,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             <ArrowLeft className="w-4 h-4" />
                             Back to {orgSlug}
                         </Link><br/>
-                        <div className="inline-block items-center bg-[#009A44] text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
+                        <div className="inline-block items-center bg-brand-primary-600 text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
                             {event.type.toUpperCase()}
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-6">
@@ -131,7 +131,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         {/* Event Schedule Bar */}
                         <div className="flex flex-wrap gap-4 items-center">
                             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                <Calendar className="w-4 h-4 text-[#FFCD00]" />
+                                <Calendar className="w-4 h-4 text-secondary" />
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Date</span>
                                     <span className="text-xs font-bold leading-none">{dateStr}</span>
@@ -140,7 +140,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
 
                             {timeStr && (
                                 <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                    <Clock className="w-4 h-4 text-[#FFCD00]" />
+                                    <Clock className="w-4 h-4 text-secondary" />
                                     <div className="flex flex-col">
                                         <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Time</span>
                                         <span className="text-xs font-bold leading-none">{timeStr}</span>
@@ -149,7 +149,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             )}
 
                             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                <MapPin className="w-4 h-4 text-[#FFCD00]" />
+                                <MapPin className="w-4 h-4 text-secondary" />
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Venue</span>
                                     <span className="text-xs font-bold leading-none truncate max-w-37.5">{event.venueName || "TBA"}</span>
@@ -157,8 +157,8 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             </div>
 
                             {event.endDate && (
-                                <div className="flex items-center gap-3 bg-[#CE1126]/20 backdrop-blur-md border border-[#CE1126]/40 rounded-full px-4 py-2 text-white">
-                                    <Calendar className="w-4 h-4 text-[#FFCD00]" />
+                                <div className="flex items-center gap-2.5 bg-brand-tertiary/20 backdrop-blur-md border border-brand-tertiary/40 rounded-full px-4 py-2 text-white">
+                                    <Calendar className="w-4 h-4 text-brand-tertiary" />
                                     <div className="flex flex-col">
                                         <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Ends On</span>
                                         <span className="text-xs font-bold leading-none">{format(new Date(event.endDate), "MMM d, yyyy")}</span>
@@ -176,10 +176,10 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             {votingCategories.length > 0 && (
                 <>
                     <PanAfricanDivider />
-                    <Section maxWidth="7xl" className="py-20 bg-[#F8F7F1]">
+                    <Section maxWidth="7xl" className="py-20 bg-[#F8F7F1  bg-secondary/5">
                         <div className=" ">
                             <div className="flex items-center gap-3 mb-12">
-                                <Vote className="w-8 h-8 text-[#009A44]" />
+                                <Vote className="w-8 h-8 text-secondary" />
                                 <h2 className="text-3xl font-bold uppercase tracking-tight">Vote Categories.</h2>
                             </div>
 
@@ -204,15 +204,15 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                         <div className={`p-6 flex flex-col flex-1 bg-white ${category.templateImage ? 'rounded-b-2xl' : 'rounded-2xl'}`}>
                                             <div className="flex items-start justify-between mb-2">
                                                 <div className="flex items-start gap-3 flex-1 min-w-0 pr-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-[#009A44]/10 flex items-center justify-center shrink-0">
-                                                        <Trophy className="w-5 h-5 text-[#009A44]" />
+                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                                        <Trophy className="w-5 h-5 text-primary" />
                                                     </div>
-                                                    <h3 className="text-xl font-bold uppercase tracking-tight group-hover:text-[#009A44] transition-colors line-clamp-2 mt-1">
+                                                    <h3 className="text-xl font-bold uppercase tracking-tight group-hover:text-primary transition-colors line-clamp-2 mt-1">
                                                         {category.name}
                                                     </h3>
                                                 </div>
-                                                <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 group-hover:bg-[#009A44]/10 transition-colors">
-                                                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-[#009A44] group-hover:translate-x-0.5 transition-all" />
+                                                <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                                                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                                                 </div>
                                             </div>
 
@@ -242,7 +242,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                             }))}
                                                         />
                                                         {category.votingOptions.length > 5 && (
-                                                            <div className="relative w-10 h-10 ml-2 rounded-full border-2 border-white bg-tertiary-600 flex items-center justify-center shrink-0 z-40">
+                                                            <div className="relative w-10 h-10 ml-2 rounded-full border-2 border-white bg-brand-secondary-500 flex items-center justify-center shrink-0 z-40">
                                                                 <span className="text-white text-xs font-bold">+{category.votingOptions.length - 5}</span>
                                                             </div>
                                                         )}
@@ -265,7 +265,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         <div className="space-y-10">
                             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                                 <div>
-                                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#009A44]/20 bg-[#009A44]/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-[#009A44]">
+                                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-primary/20 bg-brand-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-brand-primary">
                                         <span>Ticket Tiers</span>
                                         {!event.isPublic && (
                                             <>
@@ -345,7 +345,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             {/* Social Links nested here for mobile, but visible on all */}
                             {(event.socialLinks?.length > 0) && (
                                 <div className="space-y-4 pt-4 border-t border-dashed">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-[#009A44]">Event Socials.</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-brand-primary">Event Socials.</h3>
                                     <div className="flex flex-wrap gap-3">
                                         {event.socialLinks.map((link) => (
                                             <a
@@ -353,7 +353,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="w-10 h-10 rounded-full border bg-[#F8F7F1]/50 flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all"
+                                                className="w-10 h-10 rounded-full border bg-sepia-50/50 flex items-center justify-center hover:bg-brand-primary/10 hover:border-brand-primary hover:text-brand-primary transition-all"
                                                 title={link.url}
                                             >
                                                 <div className="size-5 flex items-center justify-center">
@@ -372,7 +372,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             {(event.galleryLinks?.length > 0) && (
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                        <ImageIcon className="w-5 h-5 text-[#009A44]" />
+                                        <ImageIcon className="w-5 h-5 text-brand-primary" />
                                         Galleries.
                                     </h3>
                                     <div className="space-y-3">
@@ -382,7 +382,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-3 p-3 rounded-xl border bg-[#F8F7F1] hover:bg-white hover:shadow-lg transition-all group"
+                                                className="flex items-center gap-3 p-3 rounded-xl border bg-sepia-50 hover:bg-white hover:shadow-lg transition-all group"
                                             >
                                                 <div className="size-8 rounded-lg bg-white border flex items-center justify-center shrink-0">
                                                     <div className="size-4 flex items-center justify-center">
@@ -403,7 +403,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             {(event.sponsors?.length > 0) && (
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                        <Trophy className="w-5 h-5 text-[#009A44]" />
+                                        <Trophy className="w-5 h-5 text-brand-primary" />
                                         Sponsors.
                                     </h3>
                                     <div className="flex flex-wrap gap-4">

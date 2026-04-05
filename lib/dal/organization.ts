@@ -47,6 +47,7 @@ export type OrganizationCreateInput = {
     bannerUrl?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    tertiaryColor?: string;
     faviconUrl?: string;
     websiteUrl?: string;
     contactEmail?: string;
@@ -216,8 +217,9 @@ export async function createOrganization(data: OrganizationCreateInput): Promise
                     description: data.description,
                     logoUrl: data.logoUrl,
                     bannerUrl: data.bannerUrl,
-                    primaryColor: data.primaryColor || "#6366f1",
-                    secondaryColor: data.secondaryColor || "#1e293b",
+                    primaryColor: data.primaryColor || "#02a605ff",
+                    secondaryColor: data.secondaryColor || "#ffe100ff",
+                    tertiaryColor: data.tertiaryColor || "#dc2626",
                     faviconUrl: data.faviconUrl,
                     websiteUrl: data.websiteUrl,
                     contactEmail: data.contactEmail,

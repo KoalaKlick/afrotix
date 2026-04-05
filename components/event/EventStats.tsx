@@ -68,16 +68,16 @@ function getIconColorStyles(iconSrc: string): { style: React.CSSProperties; clas
     const color = base.split("-").pop();
 
     const colorGlow: Record<string, string> = {
-        red: "radial-gradient(circle at bottom right,color-mix(in srgb, var(--color-primary-600) 28%, transparent),transparent 50%)",
+        red: "radial-gradient(circle at bottom right,color-mix(in srgb, var(--color-tertiary-600) 28%, transparent),transparent 50%)",
         yellow: "radial-gradient(circle at bottom right,color-mix(in srgb, var(--color-secondary-500) 28%, transparent),transparent 50%)",
-        green: "radial-gradient(circle at bottom right,color-mix(in srgb, var(--color-tertiary-600) 28%, transparent),transparent 50%)",
+        green: "radial-gradient(circle at bottom right,color-mix(in srgb, var(--color-primary-600) 28%, transparent),transparent 50%)",
         black: "radial-gradient(circle at bottom right,rgba(160,160,160,0.18),transparent 50%)",
     };
 
     const borderColor: Record<string, string> = {
-        red: "border-primary-900/10",
+        red: "border-tertiary-900/10",
         yellow: "border-secondary-900/10",
-        green: "border-tertiary-900/10",
+        green: "border-primary-900/10",
         black: "border-gray-800/10",
     };
 
@@ -126,17 +126,17 @@ export function StatCard({
 }: StatCardProps) {
     const variantStyles = {
         default: "bg-card",
-        success: "bg-tertiary-50 dark:bg-tertiary-950/20 border-tertiary-200 dark:border-tertiary-900",
+        success: "bg-tertiary-50 dark:bg-primary-950/20 border-primary-200 dark:border-primary-900",
         warning: "bg-secondary-50 dark:bg-secondary-950/20 border-secondary-200 dark:border-secondary-900",
-        danger: "bg-primary-50 dark:bg-primary-950/20 border-primary-200 dark:border-primary-900",
+        danger: "bg-tertiary-50 dark:bg-tertiary-950/20 border-tertiary-200 dark:border-tertiary-900",
         info: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900",
     };
 
     const iconStyles = {
-        default: "text-muted-foreground",
-        success: "text-tertiary-600 dark:text-tertiary-400",
+        default: "text-tertiary-600 dark:text-tertiary-400",
+        success: "text-primary-600 dark:text-primary-400",
         warning: "text-secondary-600 dark:text-secondary-400",
-        danger: "text-primary-600 dark:text-primary-400",
+        danger: "text-tertiary-600 dark:text-tertiary-400",
         info: "text-blue-600 dark:text-blue-400",
     };
 

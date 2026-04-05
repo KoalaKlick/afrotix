@@ -29,7 +29,7 @@ model TicketType {
 model TicketOrder {
   id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   eventId          String      @map("event_id") @db.Uuid
-  buyerId          String?     @map("buyer_id") @db.Uuid
+  buyerId          String?     @map("user_id") @db.Uuid
   orderNumber      String      @unique @map("order_number")
   buyerName        String?     @map("buyer_name")
   buyerPhone       String?     @map("buyer_phone")

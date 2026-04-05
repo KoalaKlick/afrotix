@@ -162,4 +162,4 @@ export function AfroTixLogo({
             </text>
         </motion.svg>
     )
-}
+}

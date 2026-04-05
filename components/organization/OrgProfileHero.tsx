@@ -125,7 +125,7 @@ export function OrgProfileHero({
                     <div className="pb-2">
                         <Button
                             size="lg"
-                            className="bg-[#009A44] hover:bg-[#007a36] text-white font-bold uppercase tracking-widest px-8"
+                            className="bg-tertiary hover:bg-tertiary/80 text-white font-bold uppercase tracking-widest px-8"
                             onClick={handleJoinRequest}
                             disabled={isPending || hasPendingRequest}
                         >

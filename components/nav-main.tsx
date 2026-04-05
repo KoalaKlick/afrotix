@@ -24,28 +24,28 @@ import { cn } from "@/lib/utils"
 // Pan-African color cycle: red → gold → green
 const afroColors = [
   {
+    hover: "hover:bg-[#02a605]/10",
+    active: "data-[active=true]:bg-[#02a605]/18 data-[active=true]:shadow-sm",
+    open: "data-[state=open]:bg-[#02a605]/10",
+    subHover: "hover:bg-[#02a605]/10",
+    subActive: "data-[active=true]:bg-[#02a605]/18 data-[active=true]:shadow-sm",
+    bar: "#02a605ff",
+  },
+  {
+    hover: "hover:bg-[#ffe100]/12",
+    active: "data-[active=true]:bg-[#ffe100]/20 data-[active=true]:shadow-sm",
+    open: "data-[state=open]:bg-[#ffe100]/12",
+    subHover: "hover:bg-[#ffe100]/12",
+    subActive: "data-[active=true]:bg-[#ffe100]/20 data-[active=true]:shadow-sm",
+    bar: "#ffe100ff",
+  },
+  {
     hover: "hover:bg-red-600/10",
     active: "data-[active=true]:bg-red-600/18 data-[active=true]:shadow-sm",
     open: "data-[state=open]:bg-red-600/10",
     subHover: "hover:bg-red-600/10",
     subActive: "data-[active=true]:bg-red-600/18 data-[active=true]:shadow-sm",
     bar: "#dc2626",
-  },
-  {
-    hover: "hover:bg-yellow-500/12",
-    active: "data-[active=true]:bg-yellow-500/20 data-[active=true]:shadow-sm",
-    open: "data-[state=open]:bg-yellow-500/12",
-    subHover: "hover:bg-yellow-500/12",
-    subActive: "data-[active=true]:bg-yellow-500/20 data-[active=true]:shadow-sm",
-    bar: "#eab308",
-  },
-  {
-    hover: "hover:bg-green-600/10",
-    active: "data-[active=true]:bg-green-600/18 data-[active=true]:shadow-sm",
-    open: "data-[state=open]:bg-green-600/10",
-    subHover: "hover:bg-green-600/10",
-    subActive: "data-[active=true]:bg-green-600/18 data-[active=true]:shadow-sm",
-    bar: "#16a34a",
   },
 ] as const
 

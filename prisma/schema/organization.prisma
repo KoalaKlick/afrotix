@@ -5,8 +5,9 @@ model Organization {
   description    String?
   logoUrl        String?                  @map("logo_url")
   bannerUrl      String?                  @map("banner_url")
-  primaryColor   String                   @default("#6366f1") @map("primary_color")
-  secondaryColor String                   @default("#1e293b") @map("secondary_color")
+  primaryColor   String                   @default("#02a605ff") @map("primary_color")
+  secondaryColor String                   @default("#ffe100ff") @map("secondary_color")
+  tertiaryColor  String                   @default("#dc2626") @map("tertiary_color")
   faviconUrl     String?                  @map("favicon_url")
   websiteUrl     String?                  @map("website_url")
   contactEmail   String?                  @map("contact_email")

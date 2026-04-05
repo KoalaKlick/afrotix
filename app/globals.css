@@ -58,6 +58,48 @@ body[style*="pointer-events: none"] [class*="paystack"] {
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* Organization Branding Colors */
+  --color-brand-primary: var(--color-primary);
+  --color-brand-secondary: var(--color-secondary);
+  --color-brand-tertiary: var(--color-tertiary);
+
+  --color-brand-primary-50: var(--brand-primary-50);
+  --color-brand-primary-100: var(--brand-primary-100);
+  --color-brand-primary-200: var(--brand-primary-200);
+  --color-brand-primary-300: var(--brand-primary-300);
+  --color-brand-primary-400: var(--brand-primary-400);
+  --color-brand-primary-500: var(--brand-primary-500);
+  --color-brand-primary-600: var(--brand-primary-600);
+  --color-brand-primary-700: var(--brand-primary-700);
+  --color-brand-primary-800: var(--brand-primary-800);
+  --color-brand-primary-900: var(--brand-primary-900);
+  --color-brand-primary-950: var(--brand-primary-950);
+
+  --color-brand-secondary-50: var(--secondary-50);
+  --color-brand-secondary-100: var(--secondary-100);
+  --color-brand-secondary-200: var(--secondary-200);
+  --color-brand-secondary-300: var(--secondary-300);
+  --color-brand-secondary-400: var(--secondary-400);
+  --color-brand-secondary-500: var(--secondary-500);
+  --color-brand-secondary-600: var(--secondary-600);
+  --color-brand-secondary-700: var(--secondary-700);
+  --color-brand-secondary-800: var(--secondary-800);
+  --color-brand-secondary-900: var(--secondary-900);
+  --color-brand-secondary-950: var(--secondary-950);
+
+  --color-brand-tertiary-50: var(--tertiary-50);
+  --color-brand-tertiary-100: var(--tertiary-100);
+  --color-brand-tertiary-200: var(--tertiary-200);
+  --color-brand-tertiary-300: var(--tertiary-300);
+  --color-brand-tertiary-400: var(--tertiary-400);
+  --color-brand-tertiary-500: var(--tertiary-500);
+  --color-brand-tertiary-600: var(--tertiary-600);
+  --color-brand-tertiary-700: var(--tertiary-700);
+  --color-brand-tertiary-800: var(--tertiary-800);
+  --color-brand-tertiary-900: var(--tertiary-900);
+  --color-brand-tertiary-950: var(--tertiary-950);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

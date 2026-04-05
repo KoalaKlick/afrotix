@@ -167,6 +167,7 @@ export const createOrgStep3Schema = z.object({
     websiteUrl: urlSchema,
     primaryColor: colorSchema,
     secondaryColor: colorSchema,
+    tertiaryColor: colorSchema,
 });
 
 // Complete organization creation schema (used during onboarding)
@@ -189,6 +190,7 @@ export const updateOrganizationSchema = z.object({
     websiteUrl: urlSchema,
     primaryColor: colorSchema,
     secondaryColor: colorSchema,
+    tertiaryColor: colorSchema,
     phone: z.string().optional().or(z.literal("")),
     socialLinks: z.array(z.string().url("Invalid social URL")).optional(),
 });

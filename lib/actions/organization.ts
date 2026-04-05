@@ -62,6 +62,7 @@ export type OrgCreationFormState = {
     websiteUrl?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    tertiaryColor?: string;
 };
 
 /**
@@ -299,6 +300,7 @@ export async function createNewOrganization(
         websiteUrl: (formData.get("websiteUrl") as string) || undefined,
         primaryColor: (formData.get("primaryColor") as string) || undefined,
         secondaryColor: (formData.get("secondaryColor") as string) || undefined,
+        tertiaryColor: (formData.get("tertiaryColor") as string) || undefined,
     };
 
     // Validate step 1 data (required)
@@ -382,6 +384,7 @@ export async function updateExistingOrganization(
         websiteUrl: formData.get("websiteUrl") as string,
         primaryColor: formData.get("primaryColor") as string,
         secondaryColor: formData.get("secondaryColor") as string,
+        tertiaryColor: formData.get("tertiaryColor") as string,
         phone: formData.get("phone") as string,
         socialLinks,
     };

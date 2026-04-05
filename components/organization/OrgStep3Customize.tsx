@@ -23,24 +23,19 @@ interface OrgStep3CustomizeProps {
         websiteUrl?: string;
         primaryColor?: string;
         secondaryColor?: string;
+        tertiaryColor?: string;
     };
     readonly onSuccess?: (data: {
         contactEmail?: string;
         websiteUrl?: string;
         primaryColor?: string;
         secondaryColor?: string;
+        tertiaryColor?: string;
     }) => void;
     readonly onSkip?: () => void;
 }
 
-const PRESET_COLORS = [
-    { name: "Pan-African Red", value: "#dc2626" },
-    { name: "Pan-African Gold", value: "#eab308" },
-    { name: "Pan-African Green", value: "#16a34a" },
-    { name: "Deep Black", value: "#111827" },
-    { name: "Forest", value: "#166534" },
-    { name: "Clay", value: "#b45309" },
-];
+import { PRESET_COLORS } from "@/utils/theme/constants";
 
 export function OrgStep3Customize({
     defaultValues,
@@ -52,9 +47,14 @@ export function OrgStep3Customize({
     const [contactEmail, setContactEmail] = useState(defaultValues?.contactEmail ?? "");
     const [websiteUrl, setWebsiteUrl] = useState(defaultValues?.websiteUrl ?? "");
     const [primaryColor, setPrimaryColor] = useState(
-        defaultValues?.primaryColor ?? "#dc2626"
+        defaultValues?.primaryColor ?? "#02a605ff"
     );
-    const secondaryColor = defaultValues?.secondaryColor ?? "#111827";
+    const [secondaryColor, setSecondaryColor] = useState(
+        defaultValues?.secondaryColor ?? "#ffe100ff"
+    );
+    const [tertiaryColor, setTertiaryColor] = useState(
+        defaultValues?.tertiaryColor ?? "#dc2626"
+    );
 
     async function handleSubmit() {
         startTransition(async () => {
@@ -75,6 +75,7 @@ export function OrgStep3Customize({
                 websiteUrl: websiteUrl || undefined,
                 primaryColor,
                 secondaryColor,
+                tertiaryColor,
             });
         });
     }
@@ -116,42 +117,28 @@ export function OrgStep3Customize({
 
                     {/* Brand Colors */}
                     <div className="space-y-4">
-                        <div>
-                            <Label>Brand Color</Label>
-                            <p className="text-xs text-muted-foreground mb-2">
-                                Used for buttons and accents on your event pages
+                        <div className="space-y-4">
+                            <Label>Brand Colors</Label>
+                            <p className="text-xs text-muted-foreground mb-4">
+                                Select a primary brand color. We&apos;ll automatically handle the rest to ensure your organization looks professional.
                             </p>
-                            <div className="flex flex-wrap gap-2 mb-3">
+                            <div className="flex flex-wrap gap-3">
                                 {PRESET_COLORS.map((color) => (
                                     <button
                                         key={color.value}
                                         type="button"
-                                        onClick={() => setPrimaryColor(color.value)}
-                                        className={`h-8 w-8 rounded-full transition-all ${primaryColor === color.value
-                                            ? "ring-2 ring-offset-2 ring-red-600 scale-110"
-                                            : "hover:scale-105"
+                                        onClick={() => {
+                                            setPrimaryColor(color.value);
+                                            // Optional: auto-assign secondary/tertiary for a cohesive theme if not set
+                                        }}
+                                        className={`h-10 w-10 rounded-xl transition-all border-2 ${primaryColor === color.value
+                                            ? "border-black scale-110 shadow-md"
+                                            : "border-transparent hover:scale-105"
                                             }`}
                                         style={{ backgroundColor: color.value }}
                                         title={color.name}
                                     />
                                 ))}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    type="color"
-                                    name="primaryColor"
-                                    value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
-                                    className="h-10 w-16 cursor-pointer bg-neutral-50 p-1 shadow-none"
-                                />
-                                <Input
-                                    type="text"
-                                    value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
-                                    placeholder="#6366f1"
-                                    className="bg-neutral-50 font-mono text-sm shadow-none"
-                                    maxLength={7}
-                                />
                             </div>
                         </div>
 

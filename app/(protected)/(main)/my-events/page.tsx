@@ -63,7 +63,7 @@ export default function MyEventsPage() {
                         </p>
                     </div>
                     <Button
-                        variant='tertiary'
+                        variant='primary'
                         size='sm'
                         onClick={() => setIsDrawerOpen(true)}
                     >

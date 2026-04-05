@@ -14,7 +14,11 @@ import {
   Inbox,
   Loader2,
   LogOut,
+  Moon,
   Settings,
+  Sun,
+  SunMoon,
+  Type,
   Wallet,
   X,
 } from "lucide-react"
@@ -31,7 +35,11 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -52,6 +60,8 @@ import {
 import { getAvatarUrl, getOrgImageUrl } from "@/lib/image-url-utils"
 import { createClient } from "@/utils/supabase/client"
 import { acceptOrgInvitation, declineOrgInvitation } from "@/lib/actions/organization"
+import { useTheme } from "next-themes"
+import { cn } from "@/lib/utils"
 
 
 
@@ -83,8 +93,32 @@ export function NavUser({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [notificationOpen, setNotificationOpen] = useState(false)
+  const { setTheme, theme } = useTheme()
   const [invitations, setInvitations] = useState(pendingInvitations)
   const [processingInviteId, setProcessingInviteId] = useState<string | null>(null)
+  
+  const [fontSize, setFontSize] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("font-size") || "16"
+    }
+    return "16"
+  })
+
+  const updateFontSize = (size: string) => {
+    setFontSize(size)
+    if (typeof window !== "undefined") {
+      document.documentElement.style.fontSize = `${size}px`
+      localStorage.setItem("font-size", size)
+    }
+  }
+
+  // Effect to apply font size on mount
+  useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("font-size") || "16"
+      document.documentElement.style.fontSize = `${saved}px`
+    }
+  })
 
 
 
@@ -207,6 +241,62 @@ export function NavUser({
                   Settings
                 </Link>
               </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Appearance Submenu */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <SunMoon className="mr-2 size-4" />
+                  Appearance
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="min-w-48">
+                    <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                    <DropdownMenuItem 
+                      onClick={() => setTheme("light")}
+                      className={cn(theme === "light" && "bg-accent text-accent-foreground")}
+                    >
+                      <Sun className="mr-2 size-4" />
+                      Light Mode
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setTheme("dark")}
+                      className={cn(theme === "dark" && "bg-accent text-accent-foreground")}
+                    >
+                      <Moon className="mr-2 size-4" />
+                      Dark Mode
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setTheme("system")}
+                      className={cn(theme === "system" && "bg-accent text-accent-foreground")}
+                    >
+                      <SunMoon className="mr-2 size-4" />
+                      System
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuSeparator />
+                    
+                    <DropdownMenuLabel>Font Size</DropdownMenuLabel>
+                    <div className="px-2 py-1.5 flex items-center justify-between gap-1">
+                      {["14", "16", "18", "20"].map((size) => (
+                        <Button
+                          key={size}
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "h-8 w-8 p-0 text-xs",
+                            fontSize === size ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-accent"
+                          )}
+                          onClick={() => updateFontSize(size)}
+                        >
+                          {size === "14" ? "S" : size === "16" ? "M" : size === "18" ? "L" : "XL"}
+                        </Button>
+                      ))}
+                    </div>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>

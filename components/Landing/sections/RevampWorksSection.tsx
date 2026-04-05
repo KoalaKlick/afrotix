@@ -41,7 +41,7 @@ export function HowItWorksSection() {
                     <p className="text-sm uppercase tracking-widest text-gray-500 mb-2">The Flow</p>
                     <h2 className="text-5xl lg:text-6xl font-black uppercase leading-none mb-4">
                         How It<br />
-                        <span className="text-primary-600">Works.</span>
+                        <span className="text-tertiary-600">Works.</span>
                     </h2>
                     <div className="w-12 h-1  bg-black mb-6" />
                     <p className="text-gray-500 cursor-pointer max-w-sm">

@@ -20,7 +20,6 @@ async function updateTicketOrderStatus(supabase, payment) {
     .update({ status: "confirmed", payment_id: payment.id })
     .eq("id", payment.related_id);
 }
-
 async function createTicketOrderAndTickets(supabase, payment) {
   const metadata = getPaymentMetadata(payment);
   const quantity = Number(metadata.quantity || 1);

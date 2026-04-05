@@ -172,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 </Link>
                                 <Link
                                     href="/auth/register"
-                                    className="bg-[#009A44] hover:bg-[#007a36] text-white text-sm font-semibold px-5 py-2.5 transition-colors duration-200"
+                                    className="bg-tertiary hover:bg-tertiary/80 text-white text-sm font-semibold px-5 py-2.5 transition-colors duration-200"
                                 >
                                     {ctaText}
                                 </Link>

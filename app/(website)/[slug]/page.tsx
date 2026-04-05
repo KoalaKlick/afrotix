@@ -96,7 +96,7 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                                 {/* Column 1: Our Partners (Aggregated from events) */}
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
-                                        <Trophy className="w-5 h-5 text-[#009A44]" />
+                                        <Trophy className="w-5 h-5 text-brand-primary" />
                                         Our Partners.
                                     </h3>
                                     {uniqueSponsors.length > 0 ? (
@@ -146,23 +146,23 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                                     <div className="space-y-4">
                                         {organization.websiteUrl && (
                                             <div className="flex items-center gap-3 group">
-                                                <Globe className="size-4 text-[#009A44] group-hover:scale-110 transition-transform" />
-                                                <a href={organization.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold tracking-widest hover:text-[#009A44] transition-colors truncate">
+                                                <Globe className="size-4 text-brand-primary group-hover:scale-110 transition-transform" />
+                                                <a href={organization.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold tracking-widest hover:text-brand-primary transition-colors truncate">
                                                     {organization.websiteUrl}
                                                 </a>
                                             </div>
                                         )}
                                         {organization.contactEmail && (
                                             <div className="flex items-center gap-3 group">
-                                                <Mail className="size-4 text-[#009A44] group-hover:scale-110 transition-transform" />
-                                                <a href={`mailto:${organization.contactEmail}`} className="text-xs font-bold tracking-widest hover:text-[#009A44] transition-colors truncate">
+                                                <Mail className="size-4 text-brand-primary group-hover:scale-110 transition-transform" />
+                                                <a href={`mailto:${organization.contactEmail}`} className="text-xs font-bold tracking-widest hover:text-brand-primary transition-colors truncate">
                                                     {organization.contactEmail}
                                                 </a>
                                             </div>
                                         )}
                                         {(organization as any).phone && (
                                             <div className="flex items-center gap-3 group">
-                                                <Phone className="size-4 text-[#009A44] group-hover:scale-110 transition-transform" />
+                                                <Phone className="size-4 text-brand-primary group-hover:scale-110 transition-transform" />
                                                 <span className="text-xs font-bold uppercase tracking-widest">
                                                     {(organization as any).phone}
                                                 </span>
@@ -179,7 +179,7 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                                                     href={link.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="w-10 h-10 rounded-full border bg-white flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all shadow-sm"
+                                                    className="w-10 h-10 rounded-full border bg-white flex items-center justify-center hover:bg-brand-primary/10 hover:border-brand-primary hover:text-brand-primary transition-all shadow-sm"
                                                     title={link.url}
                                                 >
                                                     <div className="size-5 flex items-center justify-center">

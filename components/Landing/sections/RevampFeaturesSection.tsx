@@ -5,8 +5,8 @@ import { Users, BarChart3, Ticket, Zap, Shield, Globe } from 'lucide-react'
 const features = [
     {
         icon: BarChart3,
-        iconClassName: 'bg-primary-500 ',
-        className: 'hover:bg-primary-50',
+        iconClassName: 'bg-tertiary-600 ',
+        className: 'hover:bg-tertiary-50',
         title: 'Real-Time Analytics',
         description: 'Track live views, votes, and ticket sales with detailed dashboards and instant insights.',
     },
@@ -19,8 +19,8 @@ const features = [
     },
     {
         icon: Ticket,
-        iconClassName: "bg-tertiary-700",
-        className: "hover:bg-tertiary-50",
+        iconClassName: "bg-primary-600",
+        className: "hover:bg-primary-50",
         title: 'Seamless Ticketing',
         description: 'Sell tickets effortlessly with integrated payment processing and automated check-ins.',
     },
@@ -33,8 +33,8 @@ const features = [
     },
        {
         icon: Zap,
-        iconClassName: "bg-primary-500",
-        className: "hover:bg-primary-50",
+        iconClassName: "bg-tertiary-600",
+        className: "hover:bg-tertiary-50",
         title: 'Multiple Event Types',
         description: 'From webinars to conferences, support all event formats in one unified platform.',
     },

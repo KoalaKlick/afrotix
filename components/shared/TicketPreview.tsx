@@ -6,6 +6,7 @@ import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils";
 interface TicketPreviewProps {
   readonly primaryColor: string;
   readonly secondaryColor: string;
+  readonly tertiaryColor?: string;
   readonly logoUrl?: string | null;
   readonly coverImage?: string | null;
   readonly bannerImage?: string | null;
@@ -22,6 +23,7 @@ interface TicketPreviewProps {
 export function TicketPreview({
   primaryColor,
   secondaryColor,
+  tertiaryColor = "#dc2626",
   logoUrl,
   coverImage,
   bannerImage,
@@ -168,7 +170,7 @@ export function TicketPreview({
                 <div
                   className="px-6 py-2.5 text-center"
                   style={{
-                    background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+                    background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor}, ${tertiaryColor})`,
                   }}
                 >
                   <span className="text-xs font-medium text-white/80">
@@ -322,7 +324,7 @@ export function TicketPreview({
           <div
             className="px-6 py-2.5 text-center"
             style={{
-              background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+              background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor}, ${tertiaryColor})`,
             }}
           >
             <span className="text-xs font-medium text-white/80">
