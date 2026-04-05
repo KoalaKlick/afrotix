@@ -147,8 +147,8 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
 
                         {/* Category label */}
                         <div className="flex items-center gap-2 mb-2">
-                            <Trophy className="w-5 h-5 text-[#FFCD00]" />
-                            <span className="text-[#FFCD00] text-xs font-bold uppercase tracking-widest">
+                            <Trophy className="w-5 h-5 text-brand-secondary" />
+                            <span className="text-brand-secondary text-xs font-bold uppercase tracking-widest">
                                 Category
                             </span>
                         </div>
@@ -162,7 +162,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                         <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
                             <div className="flex flex-wrap gap-3 items-center ">
                                 <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                    <Calendar className="w-3.5 h-3.5 text-[#FFCD00]" />
+                                    <Calendar className="w-3.5 h-3.5 text-brand-secondary" />
                                     <div className="flex flex-col">
                                         <span className="text-[9px] uppercase font-bold text-white/50 leading-none mb-0.5">
                                             Date
@@ -173,7 +173,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
 
                                 {timeStr && (
                                     <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                        <Clock className="w-3.5 h-3.5 text-[#FFCD00]" />
+                                        <Clock className="w-3.5 h-3.5 text-brand-secondary" />
                                         <div className="flex flex-col">
                                             <span className="text-[9px] uppercase font-bold text-white/50 leading-none mb-0.5">
                                                 Time
@@ -184,7 +184,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                 )}
 
                                 <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                    <MapPin className="w-3.5 h-3.5 text-[#FFCD00]" />
+                                    <MapPin className="w-3.5 h-3.5 text-brand-secondary" />
                                     <div className="flex flex-col">
                                         <span className="text-[9px] uppercase font-bold text-white/50 leading-none mb-0.5">
                                             Venue
@@ -196,8 +196,8 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                 </div>
 
                                 {event.endDate && (
-                                    <div className="flex items-center gap-2.5 bg-[#CE1126]/20 backdrop-blur-md border border-[#CE1126]/40 rounded-full px-4 py-2 text-white">
-                                        <Calendar className="w-3.5 h-3.5 text-[#FFCD00]" />
+                                    <div className="flex items-center gap-2.5 bg-brand-tertiary/20 backdrop-blur-md border border-brand-tertiary/40 rounded-full px-4 py-2 text-white">
+                                        <Calendar className="w-3.5 h-3.5 text-brand-secondary" />
                                         <div className="flex flex-col">
                                             <span className="text-[9px] uppercase font-bold text-white/50 leading-none mb-0.5">
                                                 Ends On
@@ -234,11 +234,11 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
             <PanAfricanDivider />
 
             {/* Nominees Section */}
-            <Section maxWidth="7xl" className="py-16 w-full bg-[#F8F7F1]">
+            <Section maxWidth="7xl" className="py-16 w-full bg-sepia-50">
                 <div className="max-w-360 mx-auto @container">
                     <div className="flex items-center justify-between mb-10">
                         <div className="flex items-center gap-3">
-                            <Users className="w-6 h-6 text-[#009A44]" />
+                            <Users className="w-6 h-6 text-brand-primary" />
                             <h2 className="text-2xl font-bold uppercase tracking-tight">Nominees</h2>
                         </div>
                         <span className="text-sm text-muted-foreground">
@@ -276,7 +276,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                         {/* Left: About Category — anchor target */}
                         <div id="about-category" className="space-y-6 scroll-mt-24">
                             <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                <Trophy className="w-5 h-5 text-[#009A44]" />
+                                <Trophy className="w-5 h-5 text-brand-primary" />
                                 About Category.
                             </h3>
                             <div className="prose prose-p:text-muted-foreground max-w-none text-sm leading-relaxed">
@@ -291,7 +291,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                             <div className="pt-4 border-t border-dashed">
                                 <Link
                                     href={`/${orgSlug}/event/${eventSlug}/#details`}
-                                    className="inline-flex items-center text-xs font-bold text-[#009A44] hover:underline"
+                                    className="inline-flex items-center text-xs font-bold text-brand-primary hover:underline"
                                 >
                                     View full event details <ChevronRight className="w-3 h-3 ml-1" />
                                 </Link>
@@ -301,7 +301,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                         {/* Center: Partners / Sponsors */}
                         <div className="space-y-6">
                             <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                <Trophy className="w-5 h-5 text-[#009A44]" />
+                                <Trophy className="w-5 h-5 text-brand-primary" />
                                 Sponsors.
                             </h3>
                             {Array.isArray(event.sponsors) && event.sponsors.length > 0 ? (
@@ -338,7 +338,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                             {Array.isArray(event.galleryLinks) && event.galleryLinks.length > 0 && (
                                 <div className="space-y-4">
                                     <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-3">
-                                        <ImageIcon className="w-5 h-5 text-[#009A44]" />
+                                        <ImageIcon className="w-5 h-5 text-brand-primary" />
                                         Galleries.
                                     </h3>
                                     <div className="space-y-2">
@@ -348,7 +348,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-3 p-3 rounded-xl border bg-[#F8F7F1]/50 hover:bg-white hover:border-[#009A44]/30 hover:shadow-sm transition-all group"
+                                                className="flex items-center gap-3 p-3 rounded-xl border bg-sepia-50/50 hover:bg-white hover:border-brand-primary/30 hover:shadow-sm transition-all group"
                                             >
                                                 <div className="size-8 rounded-lg bg-white border flex items-center justify-center shrink-0">
                                                     <div className="size-4 flex items-center justify-center">
@@ -366,7 +366,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                             {/* Socials */}
                             {Array.isArray(event.socialLinks) && event.socialLinks.length > 0 && (
                                 <div className="space-y-4 pt-4 border-t border-dashed">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-[#009A44]">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-brand-primary">
                                         Event Socials.
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
@@ -376,7 +376,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="w-10 h-10 rounded-full border bg-white flex items-center justify-center hover:bg-[#009A44]/10 hover:border-[#009A44] hover:text-[#009A44] transition-all"
+                                                className="w-10 h-10 rounded-full border bg-white flex items-center justify-center hover:bg-brand-primary/10 hover:border-brand-primary hover:text-brand-primary transition-all"
                                                 title={link.url}
                                             >
                                                 <div className="size-5 flex items-center justify-center">
