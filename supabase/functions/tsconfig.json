@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "lib": ["deno.window"],
-    "strict": true
+    "module": "esnext",
+    "target": "esnext",
+    "lib": ["esnext"],
+    "strict": true,
+    "noEmit": true,
+    "allowJs": true
   }
 }

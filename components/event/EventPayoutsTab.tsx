@@ -157,7 +157,7 @@ export function EventPayoutsTab({
     if (loadingTickets) return;
     setLoadingTickets(true);
     try {
-      const result = await getEventTicketTransactionsAction(event.id, 10);
+      const result = await getEventTicketTransactionsAction(event.id, { limit: 10 });
       setTicketTransactions(result.transactions as TicketTransaction[]);
     } finally {
       setLoadingTickets(false);
@@ -168,7 +168,7 @@ export function EventPayoutsTab({
     if (loadingVotes) return;
     setLoadingVotes(true);
     try {
-      const result = await getEventVoteTransactionsAction(event.id, 1, 10);
+      const result = await getEventVoteTransactionsAction(event.id, { page: 1, limit: 10 });
       setVoteTransactions(result.transactions as VoteTransaction[]);
     } finally {
       setLoadingVotes(false);
