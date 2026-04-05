@@ -28,7 +28,6 @@ import {
 import {
   getEventTicketTransactionsAction,
   getEventVoteTransactionsAction,
-  seedTicketPurchasesAction,
 } from "@/lib/actions/event";
 import {
   FileText,
@@ -128,20 +127,6 @@ export function EventOverviewTab({
     }
   }
 
-  async function handleSeedTickets() {
-    setIsLoadingBreakdown(true);
-    try {
-        const res = await seedTicketPurchasesAction(eventId, 25);
-        if (res.success) {
-            toast.success(`Successfully seeded ${res.count} ticket purchases. Please refresh to see the full impact on charts.`);
-            window.location.reload(); // Quick way to refresh everything
-        }
-    } catch (err: any) {
-        toast.error(err.message || "Failed to seed data");
-    } finally {
-        setIsLoadingBreakdown(false);
-    }
-  }
 
   // When breakdown opens, load the appropriate data
   useState(() => {
@@ -231,22 +216,6 @@ export function EventOverviewTab({
           />
         )}
 
-        {/* Development Seeding Card (Optional or Admin only) */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="bg-muted/30 border border-dashed rounded-xl p-4 flex flex-col justify-center items-center gap-2">
-            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Dev Tools</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={handleSeedTickets}
-              disabled={isLoadingBreakdown}
-            >
-              {isLoadingBreakdown ? <Loader2 className="size-3 mr-2 animate-spin" /> : <Plus className="size-3 mr-2" />}
-              Seed 25 Orders
-            </Button>
-          </div>
-        )}
       </StatsGrid>
 
       {/* Ticket Charts */}

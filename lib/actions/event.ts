@@ -37,7 +37,6 @@ import type {
 import { deleteStorageFile, STORAGE_BUCKETS } from "@/lib/storage-utils";
 import { isVotingEventType } from "@/lib/validations/event";
 import { prisma } from "@/lib/prisma";
-import { randomUUID } from "crypto";
 
 // Action result type
 type ActionResult<T = void> =
@@ -768,69 +767,4 @@ export async function getEventTicketTransactionsAction(
     sortBy, 
     sortDir 
   });
-}
-/**
- * Seed dummy ticket purchases for testing
- */
-export async function seedTicketPurchasesAction(eventId: string, count = 20) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    include: { ticketTypes: true }
-  });
-
-  if (!event) throw new Error("Event not found");
-
-  // Verify access
-  const role = await getUserRoleInOrganization(user.id, event.organizationId);
-  if (!role) throw new Error("Not authorized");
-
-  if (event.ticketTypes.length === 0) {
-    throw new Error("No ticket types found for this event. Create some first.");
-  }
-
-  const results = [];
-  const names = ["Kofi Arhin", "Ama Serwaa", "Kwame Nkrumah", "Yaa Asantewaa", "John Doe", "Jane Smith", "Akosua Mansa", "Yaw Berko"];
-  const phones = ["0244123456", "0555987654", "0200111222", "0277333444", "0544555666"];
-
-  for (let i = 0; i < count; i++) {
-    const randomType = event.ticketTypes[Math.floor(Math.random() * event.ticketTypes.length)];
-    const buyerName = names[Math.floor(Math.random() * names.length)];
-    const buyerPhone = phones[Math.floor(Math.random() * phones.length)];
-    const orderNumber = `SEED-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    
-    // Create random date in last 30 days
-    const createdAt = new Date();
-    createdAt.setDate(createdAt.getDate() - Math.floor(Math.random() * 30));
-    createdAt.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
-
-    const order = await prisma.ticketOrder.create({
-      data: {
-        eventId,
-        orderNumber,
-        buyerName,
-        buyerPhone,
-        subtotal: randomType.price,
-        status: "paid",
-        createdAt,
-        tickets: {
-          create: {
-            eventId,
-            ticketTypeId: randomType.id,
-            ticketCode: `TKT-${randomUUID().substring(0, 8).toUpperCase()}`,
-            attendeeName: buyerName,
-            attendeeEmail: `${buyerName.toLowerCase().replace(" ", ".")}@example.com`,
-            createdAt,
-          }
-        }
-      }
-    });
-    results.push(order.id);
-  }
-
-  revalidatePath(`/my-events/${eventId}`);
-  return { success: true, count: results.length };
 }

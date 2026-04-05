@@ -561,6 +561,7 @@ export const getOrganizationEventStats = cache(
         nextUpcoming,
         recentEnded,
         totalAttendees,
+        totalTicketsSold
       ] = await Promise.all([
         // 1. Consolidated counts by status and type
         prisma.event.groupBy({
@@ -627,6 +628,13 @@ export const getOrganizationEventStats = cache(
             checkInStatus: "checked_in",
           },
         }),
+        // 9. Total tickets sold (actual tickets, not orders)
+        prisma.ticket.count({
+          where: {
+            event: { organizationId },
+            order: { status: { in: ["paid", "confirmed"] } },
+          },
+        }),
       ]);
 
       // Process grouped counts in memory
@@ -690,7 +698,7 @@ export const getOrganizationEventStats = cache(
         cancelled,
         upcoming,
         byType,
-        totalTicketsSold: ticketStats._count,
+        totalTicketsSold,
         totalRevenue: Number(ticketStats._sum.subtotal ?? 0),
         totalAttendees,
         totalVotes: Number(voteCount._sum.voteCount ?? 0),
