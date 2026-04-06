@@ -16,12 +16,16 @@ export type DbEvent = Event & {
 const accentCycle3: ('red' | 'yellow' | 'green')[] = ['red', 'yellow', 'green']
 const accentCycle4: ('red' | 'yellow' | 'green' | 'black')[] = ['red', 'yellow', 'green', 'black']
 
+// Brand color cycle for org-context cards — uses CSS custom properties set by useBrandColors
+const brandCycle = ['primary', 'secondary', 'tertiary'] as const
+
 interface EventCardProps {
     readonly item: EventItem | DbEvent
     readonly index?: number
     readonly colorCount?: 3 | 4
     readonly className?: string
     readonly size?: 'default' | 'large'
+    readonly useBrand?: boolean
 }
 
 // Tailwind text color class per accent — SVG uses currentColor
@@ -45,10 +49,11 @@ const badgeColors: Record<string, string> = {
  * bulging left (convex) in the middle, tapering to near-points top & bottom.
  * We keep only the path and let it fill via currentColor.
  */
-function SideAccent({ colorClass }: { colorClass: string }) {
+function SideAccent({ colorClass, brandColor }: { colorClass?: string; brandColor?: string }) {
     return (
         <svg
-            className={cn("absolute right-0 top-0 h-full w-24 z-10", colorClass)}
+            className={cn("absolute right-0 top-0 h-full w-24 z-10", !brandColor && colorClass)}
+            style={brandColor ? { color: `var(--color-brand-${brandColor})` } : undefined}
             viewBox="0 0 210 297"
             preserveAspectRatio="none"
             aria-hidden="true"
@@ -65,7 +70,7 @@ function isDbEvent(item: EventItem | DbEvent): item is DbEvent {
     return typeof item.id === 'string';
 }
 
-export function EventCard({ item, index = 0, colorCount = 3, className, size = 'default' }: EventCardProps) {
+export function EventCard({ item, index = 0, colorCount = 3, className, size = 'default', useBrand = false }: EventCardProps) {
     // Determine if it's a DB event or a static landing item
     const isDb = isDbEvent(item);
 
@@ -73,6 +78,9 @@ export function EventCard({ item, index = 0, colorCount = 3, className, size = '
     const cycle = colorCount === 4 ? accentCycle4 : accentCycle3;
     const accentColor = !isDb ? (item as EventItem).accentColor : cycle[index % cycle.length];
     const colorClass = accentTextColors[accentColor] ?? 'text-[#009A44]';
+
+    // Brand color for org-context rendering
+    const brandColor = useBrand && isDb ? brandCycle[index % brandCycle.length] : undefined;
 
     const image = isDb ? getEventImageUrl((item as DbEvent).coverImage) : (item as EventItem).image;
     const subtitle = isDb ? (item as DbEvent).description : (item as EventItem).subtitle;
@@ -107,7 +115,7 @@ export function EventCard({ item, index = 0, colorCount = 3, className, size = '
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent transition-colors group-hover:from-black/75" />
 
                 {/* Side accent */}
-                <SideAccent colorClass={colorClass} />
+                <SideAccent colorClass={colorClass} brandColor={brandColor} />
 
                 {/* Content */}
                 <div className="absolute inset-0 p-4 pr-9 flex flex-col justify-end">
@@ -125,10 +133,13 @@ export function EventCard({ item, index = 0, colorCount = 3, className, size = '
                     )}
 
                     <div className="flex items-center justify-between gap-2">
-                        <span className={cn(
-                            "text-white text-[10px] font-bold uppercase px-2 py-1 rounded-sm tracking-wide",
-                            badgeColors[accentColor]
-                        )}>
+                        <span
+                            className={cn(
+                                "text-white text-[10px] font-bold uppercase px-2 py-1 rounded-sm tracking-wide",
+                                !brandColor && badgeColors[accentColor]
+                            )}
+                            style={brandColor ? { color: `var(--color-brand-${brandColor})` } : undefined}
+                        >
                             {categoryName}
                         </span>
                         <span className="text-white/55 text-[10px] shrink-0">

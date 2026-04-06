@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getOrganizationProfile, getMembershipRequest, getOrganizationBySlug } from "@/lib/dal/organization";
 import { OrgProfileHero } from "@/components/organization/OrgProfileHero";
-import { OrgEventList } from "@/components/organization/OrgEventList";
+import { EventsSection } from "@/components/Landing/sections/revamp-events";
 import { Section } from "@/components/Landing/shared/Section";
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider";
 import { PoweredByFooter } from "@/components/shared/PoweredByFooter";
@@ -79,14 +79,14 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
 
             <PanAfricanDivider />
 
-            <Section maxWidth="7xl" className="py-16 bg-sepia-50">
-                <div className="space-y-8">
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-center">
-                        Our Events.
-                    </h2>
-                    <OrgEventList events={organization.events} organizationSlug={slug} />
-                </div>
-            </Section>
+            <EventsSection
+                title="Our Events."
+                useBrand
+                items={organization.events.map((e) => ({
+                    ...e,
+                    organization: { slug, name: organization.name },
+                }))}
+            />
 
                 {/* Organization Details Footer */}
                 
