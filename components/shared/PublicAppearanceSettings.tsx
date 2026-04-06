@@ -57,14 +57,14 @@ export function PublicAppearanceSettings() {
             onClick={() => setTheme("light")}
             className={cn("rounded-xl mt-1 gap-3", theme === "light" && "bg-primary/10 text-primary")}
           >
-            <Sun className="h-4 w-4" />
+            <Sun className="size-4" />
             <span>Light</span>
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => setTheme("dark")}
             className={cn("rounded-xl gap-3", theme === "dark" && "bg-primary/10 text-primary")}
           >
-            <Moon className="h-4 w-4" />
+            <Moon className="size-4" />
             <span>Dark</span>
           </DropdownMenuItem>
           <DropdownMenuItem 

@@ -1,4 +1,6 @@
-import type {TenantConfig} from "@/types/common";
+interface TenantConfig {
+  [key: string]: unknown;
+}
 
 export const CACHE_KEY = "tenant-config-cache";
 export const CACHE_DOMAIN_KEY = "tenant-config-cache-domain";
