@@ -37,7 +37,7 @@ export function PublicAppearanceSettings() {
   return (
     <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Theme Toggle */}
-      <DropdownMenu>
+      {/* <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
@@ -75,7 +75,7 @@ export function PublicAppearanceSettings() {
             <span>System</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>
+      </DropdownMenu> */}
 
       {/* Font Size Toggle */}
       <DropdownMenu>
