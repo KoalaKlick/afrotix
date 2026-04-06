@@ -45,8 +45,8 @@ export function PublicAppearanceSettings() {
             className="rounded-full h-14 w-14 shadow-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-2 border-primary/20 hover:border-primary/50 hover:scale-110 transition-all duration-300 group"
           >
             <div className="relative h-6 w-6">
-              <Sun className="h-6 w-6 transition-all scale-100 rotate-0 dark:scale-0 dark:-rotate-90 text-yellow-500" />
-              <Moon className="absolute inset-0 h-6 w-6 transition-all scale-0 rotate-90 dark:scale-100 dark:rotate-0 text-blue-400" />
+              <Sun className="size-5 transition-all scale-100 rotate-0 dark:scale-0 dark:-rotate-90 text-yellow-500" />
+              <Moon className="absolute inset-0 size-5 transition-all scale-0 rotate-90 dark:scale-100 dark:rotate-0 text-blue-400" />
             </div>
             <span className="sr-only">Toggle theme</span>
           </Button>
