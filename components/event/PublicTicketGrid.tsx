@@ -97,8 +97,8 @@ export function PublicTicketGrid({
       })
     : "Date to be announced";
 
-  const orgPrimary = organization.primaryColor || "#009A44";
-  const orgSecondary = organization.secondaryColor || "#CE1126";
+  const orgPrimary = organization.primaryColor || "var(--color-brand-primary)";
+  const orgSecondary = organization.secondaryColor || "var(--color-brand-tertiary)";
 
   return (
     <>
@@ -264,7 +264,7 @@ export function PublicTicketGrid({
 
               <SheetFooter className="border-t bg-background p-6">
                 <Button
-                  variant="afro"
+                  variant="afro-cta"
                   size="lg"
                   className="w-full"
                   disabled={selectedTicket.status !== "available"}

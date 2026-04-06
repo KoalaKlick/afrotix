@@ -47,15 +47,7 @@ export function useBrandColors(initialColors?: BrandColors) {
     set("--color-secondary", brandColors.secondary);
     set("--color-tertiary", brandColors.tertiary);
 
-    // 2. RGB versions for opacity support
-    const pRgb = hexToRgb(brandColors.primary);
-    if (pRgb) set("--primary-rgb", `${pRgb.r}, ${pRgb.g}, ${pRgb.b}`);
-    const sRgb = hexToRgb(brandColors.secondary);
-    if (sRgb) set("--secondary-rgb", `${sRgb.r}, ${sRgb.g}, ${sRgb.b}`);
-    const tRgb = hexToRgb(brandColors.tertiary);
-    if (tRgb) set("--tertiary-rgb", `${tRgb.r}, ${tRgb.g}, ${tRgb.b}`);
-
-    // 3. All generated shades
+    // 2. All generated shades
     Object.entries(shades).forEach(([colorName, shadeMap]) => {
       Object.entries(shadeMap).forEach(([shade, value]) => {
         const colorValue = value as string;

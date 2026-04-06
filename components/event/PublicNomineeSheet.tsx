@@ -132,7 +132,7 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                             className="group bg-white rounded-md overflow-hidden border shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer"
                         >
                             {/* Image */}
-                            <div className="relative aspect-5/4 bg-linear-to-br from-[#009A44]/10 to-[#FFCD00]/10">
+                            <div className="relative aspect-5/4 bg-linear-to-br from-brand-primary/10 to-brand-secondary/10">
                                 {displayImageUrl ? (
                                     <Image
                                         src={displayImageUrl}
@@ -154,7 +154,7 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                                     <div className="min-w-0">
                                         <h3 className="font-bold text-base truncate">{nominee.optionText}</h3>
                                         {nominee.nomineeCode && (
-                                            <p className="text-xs text-[#009A44] font-mono font-semibold mt-0.5">
+                                            <p className="text-xs text-brand-primary font-mono font-semibold mt-0.5">
                                                 {nominee.nomineeCode}
                                             </p>
                                         )}
@@ -163,17 +163,17 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                                         <button
                                             type="button"
                                             onClick={(e) => handleShare(e, nominee)}
-                                            className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                                            className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 group/btn transition-colors"
                                             title="Share"
                                         >
-                                            <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                            <Share2 className="size-3.5 group-hover/btn:scale-110 transition-all duration-300 text-primary" />
                                         </button>
 
                                     </div>
                                 </div>
                                 {/* Vote Button */}
                                 <Button
-                                    variant="afro"
+                                    variant="afro-cta"
                                     size="sm"
                                     className="w-full"
                                     onClick={(e) => {
@@ -186,8 +186,8 @@ export function NomineeGrid({ nominees, votePrice = 0, eventId, categoryId, isPu
                                 </Button>
                                 {showTotalVotesPublicly && (
                                     <div className="mt-3 pt-3 border-t flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium">
-                                        <div className="w-7 h-7 rounded-full bg-[#009A44]/10 flex items-center justify-center shrink-0">
-                                            <Vote className="w-3.5 h-3.5 text-[#009A44]" />
+                                        <div className="w-7 h-7 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
+                                            <Vote className="w-3.5 h-3.5 text-brand-primary" />
                                         </div>
                                         <span>{Number(nominee.votesCount).toLocaleString()} votes</span>
                                     </div>
@@ -276,7 +276,7 @@ function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0, onVote
                         <div>
                             <h2 className="text-2xl font-black uppercase tracking-tight">{nominee.optionText}</h2>
                             {nominee.nomineeCode && (
-                                <p className="text-sm text-[#009A44] font-mono font-bold mt-1 flex items-center gap-1.5">
+                                <p className="text-sm text-brand-primary font-mono font-bold mt-1 flex items-center gap-1.5">
                                     <Hash className="w-3.5 h-3.5" />
                                     {nominee.nomineeCode}
                                 </p>
@@ -295,12 +295,12 @@ function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0, onVote
 
                         {/* Vote Count Stats (Public) */}
                         {showTotalVotesPublicly && (
-                            <div className="flex items-center gap-4 p-4 rounded-xl bg-[#009A44]/5 border border-[#009A44]/10">
-                                <div className="w-12 h-12 rounded-full bg-[#009A44]/10 flex items-center justify-center shrink-0">
-                                    <Users className="w-6 h-6 text-[#009A44]" />
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-brand-primary/5 border border-brand-primary/10">
+                                <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
+                                    <Users className="w-6 h-6 text-brand-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-black text-[#009A44] leading-none">
+                                    <p className="text-2xl font-black text-brand-primary leading-none">
                                         {Number(nominee.votesCount).toLocaleString()}
                                     </p>
                                     <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">
@@ -316,7 +316,7 @@ function PublicNomineeSheet({ nominee, open, onOpenChange, votePrice = 0, onVote
                 <div className="border-t p-6 shrink-0 flex gap-3">
                     <Button
                         className="grow"
-                        variant="afro"
+                        variant="afro-cta"
                         size="lg"
                         onClick={() => {
                             if (onVote) onVote(nominee);

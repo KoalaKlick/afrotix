@@ -9,7 +9,7 @@ export default function DashboardLayout({
 }) {
     return (
         <OrgBrandingProvider>
-            <div className="flex @container selection:bg-primary-500 selection:text-white  font-montserrat flex-col max-w-svw overflow-x-clip min-h-screen bg-[#F8F7F1]">
+            <div className="flex @container selection:bg-primary/80 selection:text-white  font-montserrat flex-col max-w-svw overflow-x-clip min-h-screen bg-[#F8F7F1]">
                 <Navbar />
                 <div className="flex flex-col ">
                     {children}

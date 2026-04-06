@@ -3,7 +3,7 @@ import Link from "next/link"
 import { createClient } from "@/utils/supabase/server"
 import { getEventBySlug, getOrganizationBySlug, getVotingCategories } from "@/lib/dal"
 import { canUserAccessEvent } from "@/lib/event-status"
-import { getEventImageUrl } from "@/lib/image-url-utils"
+import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils"
 import { isUserMemberOf } from "@/lib/dal/organization"
 import { getVisibleTicketTypesByEventId } from "@/lib/dal/ticket"
 import { Section } from "@/components/Landing/shared/Section"
@@ -100,6 +100,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
         minute: "2-digit",
     }) : ""
     const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
+    const orgLogoUrl = getOrgImageUrl(organization.logoUrl)
     return (
         <main className="min-h-screen">
             {/* Hero Section */}
@@ -118,9 +119,20 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             href={`/${orgSlug}/`}
                             className="flex items-center gap-2 text-white/80 hover:text-white text-sm mb-5 transition-colors"
                         >
-                            <ArrowLeft className="w-4 h-4" />
-                            Back to {orgSlug}
-                        </Link><br/>
+                            {orgLogoUrl ? (
+                                <Image
+                                    src={orgLogoUrl}
+                                    alt={organization.name}
+                                    width={28}
+                                    height={28}
+                                    className="rounded-md border border-white/20 object-cover"
+                                    unoptimized
+                                />
+                            ) : (
+                                <ArrowLeft className="w-4 h-4" />
+                            )}
+                            Back to {organization.name}
+                        </Link>
                         <div className="inline-block items-center bg-brand-primary-600 text-white text-xs font-bold uppercase py-1 px-3 rounded-sm mb-4 tracking-widest">
                             {event.type.toUpperCase()}
                         </div>
@@ -131,7 +143,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         {/* Event Schedule Bar */}
                         <div className="flex flex-wrap gap-4 items-center">
                             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                <Calendar className="w-4 h-4 text-secondary" />
+                                <Calendar className="w-4 h-4 text-brand-secondary" />
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Date</span>
                                     <span className="text-xs font-bold leading-none">{dateStr}</span>
@@ -140,7 +152,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
 
                             {timeStr && (
                                 <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                    <Clock className="w-4 h-4 text-secondary" />
+                                    <Clock className="w-4 h-4 text-brand-secondary" />
                                     <div className="flex flex-col">
                                         <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Time</span>
                                         <span className="text-xs font-bold leading-none">{timeStr}</span>
@@ -149,7 +161,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             )}
 
                             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                <MapPin className="w-4 h-4 text-secondary" />
+                                <MapPin className="w-4 h-4 text-brand-secondary" />
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Venue</span>
                                     <span className="text-xs font-bold leading-none truncate max-w-37.5">{event.venueName || "TBA"}</span>
@@ -158,7 +170,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
 
                             {event.endDate && (
                                 <div className="flex items-center gap-2.5 bg-brand-tertiary/20 backdrop-blur-md border border-brand-tertiary/40 rounded-full px-4 py-2 text-white">
-                                    <Calendar className="w-4 h-4 text-brand-tertiary" />
+                                    <Calendar className="w-4 h-4 text-brand-secondary" />
                                     <div className="flex flex-col">
                                         <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Ends On</span>
                                         <span className="text-xs font-bold leading-none">{format(new Date(event.endDate), "MMM d, yyyy")}</span>
@@ -170,16 +182,14 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                 </div>
             </div>
 
-            <PanAfricanDivider />
-
             {/* Voting Categories Section - Only for voting/hybrid events */}
             {votingCategories.length > 0 && (
                 <>
                     <PanAfricanDivider />
-                    <Section maxWidth="7xl" className="py-20 bg-[#F8F7F1  bg-secondary/5">
+                    <Section maxWidth="7xl" className="py-16 bg-sepia-50">
                         <div className=" ">
                             <div className="flex items-center gap-3 mb-12">
-                                <Vote className="w-8 h-8 text-secondary" />
+                                <Vote className="w-8 h-8 text-brand-secondary" />
                                 <h2 className="text-3xl font-bold uppercase tracking-tight">Vote Categories.</h2>
                             </div>
 
@@ -261,7 +271,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             {ticketTypes.length > 0 && (
                 <>
                     <PanAfricanDivider />
-                    <Section maxWidth="7xl" className="py-20 bg-white">
+                    <Section maxWidth="7xl" className="py-16 bg-white">
                         <div className="space-y-10">
                             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                                 <div>
@@ -269,7 +279,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                         <span>Ticket Tiers</span>
                                         {!event.isPublic && (
                                             <>
-                                                <span className="text-[#009A44]/40">•</span>
+                                                <span className="text-brand-primary/40">•</span>
                                                 <Lock className="size-3.5" />
                                                 <span>Internal Event</span>
                                             </>
@@ -323,8 +333,10 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                 </>
             )}
 
+            <PanAfricanDivider />
+
             {/* Event Details & Footer Section */}
-            <Section maxWidth="7xl" className="py-20 bg-white border-t">
+            <Section maxWidth="7xl" className="py-12 bg-white border-t">
                 <div className=" mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
                         {/* Left: About */}

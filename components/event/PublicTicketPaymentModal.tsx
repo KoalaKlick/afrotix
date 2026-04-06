@@ -314,7 +314,7 @@ export function PublicTicketPaymentModal({
             </div>
 
             <Button
-              variant="afro"
+              variant="afro-cta"
               size="lg"
               className="w-full"
               disabled={

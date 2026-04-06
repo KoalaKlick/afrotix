@@ -141,7 +141,7 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
                     <SheetDescription>
                         Submit a nomination for {category.name}. It will be reviewed by the organizers before appearing publicly.
                         {Number(category.nominationPrice) > 0 && (
-                            <span className="block mt-2 font-bold text-[#009A44]">
+                            <span className="block mt-2 font-bold text-brand-primary">
                                 Nomination Fee: GHS {Number(category.nominationPrice).toFixed(2)}
                             </span>
                         )}

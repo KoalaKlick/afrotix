@@ -6,7 +6,7 @@ import { getEventBySlug, getOrganizationBySlug, getVotingCategoryById } from "@/
 import type { EventSponsor, EventGalleryLink, EventSocialLink } from "@/lib/types/event"
 import type { Event } from "@/lib/generated/prisma"
 import { canUserAccessEvent } from "@/lib/event-status"
-import { getEventImageUrl } from "@/lib/image-url-utils"
+import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils"
 import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
@@ -97,6 +97,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
     if (!category || category.eventId !== event.id) notFound()
 
     const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
+    const orgLogoUrl = getOrgImageUrl(organization.logoUrl)
 
     // Check if nominations are currently open
     const isNominationOpen =
@@ -122,7 +123,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
     return (
         <main className="min-h-screen">
             {/* Hero Section — image fills the container, content overlays at the bottom */}
-            <div className="relative mt-20 h-[52vh] min-h-[380px] w-full overflow-hidden">
+            <div className="relative h-[52vh] min-h-[380px] w-full overflow-hidden">
                 <Image
                     src={coverImageUrl}
                     alt={event.title}
@@ -136,14 +137,28 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                 {/* Overlay content */}
                 <div className="absolute inset-0 flex flex-col justify-end pb-8">
                     <div className="max-w-7xl mx-auto px-4 w-full">
-                        {/* Back link */}
-                        <Link
-                            href={`/${orgSlug}/event/${eventSlug}`}
-                            className="inline-flex items-center gap-2 text-white/60 hover:text-white text-sm mb-5 transition-colors"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Back to {event.title}
-                        </Link>
+                        {/* Back link with org logo */}
+                        <div className="flex items-center gap-4 mb-5">
+                            {orgLogoUrl && (
+                                <Link href={`/${orgSlug}`}>
+                                    <Image
+                                        src={orgLogoUrl}
+                                        alt={organization.name}
+                                        width={32}
+                                        height={32}
+                                        className="rounded-md border border-white/20 object-cover"
+                                        unoptimized
+                                    />
+                                </Link>
+                            )}
+                            <Link
+                                href={`/${orgSlug}/event/${eventSlug}`}
+                                className="inline-flex items-center gap-2 text-white/60 hover:text-white text-sm transition-colors"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                Back to {event.title}
+                            </Link>
+                        </div>
 
                         {/* Category label */}
                         <div className="flex items-center gap-2 mb-2">
@@ -270,6 +285,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
             </Section>
 
             {/* Category & Event Context Footer */}
+                        <PanAfricanDivider />
             <Section maxWidth="7xl" className="py-12 bg-white border-t">
                 <div className=" mx-auto ">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 py-12">

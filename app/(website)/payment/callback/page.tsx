@@ -177,7 +177,7 @@ function PaymentCallbackContent() {
                       {primaryActionLabel}
                     </Link>
                   </Button>
-                  <Button asChild variant="afro" className="flex-1">
+                  <Button asChild variant="afro-cta" className="flex-1">
                     <Link href={destinationUrl}>
                       {isTicketPayment ? (
                         <Ticket className="w-4 h-4 mr-2" />
@@ -211,7 +211,7 @@ function PaymentCallbackContent() {
                       Go Back
                     </Link>
                   </Button>
-                  <Button asChild variant="afro" className="flex-1">
+                  <Button asChild variant="afro-cta" className="flex-1">
                     <Link href={destinationUrl}>Try Again</Link>
                   </Button>
                 </div>
@@ -229,7 +229,7 @@ function PaymentCallbackContent() {
                 <p className="text-muted-foreground text-sm max-w-xs mb-6">
                   We couldn't find a payment matching this reference. Please contact support if you believe this is an error.
                 </p>
-                <Button asChild variant="afro">
+                <Button asChild variant="afro-cta">
                   <Link href="/">
                     <Home className="w-4 h-4 mr-2" />
                     Return Home

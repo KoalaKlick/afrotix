@@ -9,9 +9,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary-600 text-primary-foreground hover:bg-primary-500",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
         primary:
-          "bg-primary-600 text-primary-foreground hover:bg-primary-600/80",
+          "bg-primary text-primary-foreground hover:bg-primary/80",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
@@ -25,7 +25,8 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        afro: "bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0),transparent_26%)] border border-[rgba(234,179,8,0.18)] text-foreground hover:bg-accent/10",
+        afro: "bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--color-brand-tertiary)_16%,transparent),transparent_28%),radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--color-brand-secondary)_14%,transparent),transparent_24%),radial-gradient(circle_at_bottom_left,color-mix(in_srgb,var(--color-brand-primary)_0%,transparent),transparent_26%)] border border-brand-secondary/18 text-foreground hover:bg-accent/10",
+        "afro-cta": "bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--color-brand-tertiary)_16%,transparent),transparent_28%),radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--color-brand-secondary)_14%,transparent),transparent_24%),radial-gradient(circle_at_bottom_left,color-mix(in_srgb,var(--color-brand-primary)_0%,transparent),transparent_26%)] border border-brand-secondary/18 text-foreground hover:bg-accent/10",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

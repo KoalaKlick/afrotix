@@ -52,7 +52,7 @@ export function EventsSection({
     })
 
     return (
-        <Section id="events" className="py-20 bg-[#F8F7F1] overflow-hidden">
+        <Section id="events" className="py-20 overflow-hidden">
             <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}

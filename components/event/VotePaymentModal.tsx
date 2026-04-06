@@ -318,7 +318,7 @@ export function VotePaymentModal({
                                 </div>
 
                                 <Button
-                                    variant="afro"
+                                    variant="afro-cta"
                                     size="lg"
                                     className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
                                     onClick={handleInternalVote}
@@ -453,7 +453,7 @@ export function VotePaymentModal({
                                 </div>
 
                                 <Button
-                                    variant="afro"
+                                    variant="afro-cta"
                                     size="lg"
                                     className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
                                     onClick={handleSubmitPayment}
@@ -548,7 +548,7 @@ export function VotePaymentModal({
                             </p>
                         </div>
                         <Button
-                            variant="afro"
+                            variant="afro-cta"
                             size="lg"
                             className="w-full h-12"
                             onClick={() => handleClose(false)}

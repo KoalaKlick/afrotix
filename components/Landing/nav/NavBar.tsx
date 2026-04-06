@@ -78,6 +78,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         return () => window.removeEventListener('scroll', handleScroll)
     }, [pathname]) // ← pathname only; variant/isHero are derived, not deps
 
+    // Hide header on org slug pages (customizable for premium in future)
+    if (!branding.showHeader) return null
+
     const isLinkActive = (href: string) => {
         if (href === '/' || href === '/#') return pathname === '/'
         if (href.startsWith('/#')) return false
@@ -172,7 +175,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 </Link>
                                 <Link
                                     href="/auth/register"
-                                    className="bg-tertiary hover:bg-tertiary/80 text-white text-sm font-semibold px-5 py-2.5 transition-colors duration-200"
+                                    className="bg-primary-600 hover:bg-primary/80 text-white text-sm font-semibold px-5 py-2.5 transition-colors duration-200"
                                 >
                                     {ctaText}
                                 </Link>

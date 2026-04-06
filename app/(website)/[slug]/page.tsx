@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getOrganizationProfile, getMembershipRequest, getOrganizationBySlug } from "@/lib/dal/organization";
 import { OrgProfileHero } from "@/components/organization/OrgProfileHero";
 import { OrgEventList } from "@/components/organization/OrgEventList";
+import { Section } from "@/components/Landing/shared/Section";
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider";
 import { PoweredByFooter } from "@/components/shared/PoweredByFooter";
 import { Globe, Mail, Trophy, Phone } from "lucide-react";
@@ -69,24 +70,29 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
     }
 
     return (
-        <main className="min-h-screen pt-16 bg-[#F8F7F1]">
+        <main className="min-h-screen">
             <OrgProfileHero
                 organization={organization}
                 isUserAuthenticated={!!user}
                 hasPendingRequest={hasPendingRequest}
             />
 
-            <div className="max-w-6xl mx-auto px-4 pb-20 space-y-16">
-                <section className="space-y-8">
+            <PanAfricanDivider />
+
+            <Section maxWidth="7xl" className="py-16 bg-sepia-50">
+                <div className="space-y-8">
                     <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-center">
                         Our Events.
                     </h2>
-                    <PanAfricanDivider />
                     <OrgEventList events={organization.events} organizationSlug={slug} />
-                </section>
+                </div>
+            </Section>
 
                 {/* Organization Details Footer */}
-                <section className="pt-20 border-t border-dashed space-y-12">
+                
+            <PanAfricanDivider />
+
+            <Section maxWidth="7xl" className="py-12 bg-white border-t">
                     {(() => {
                         const allSponsors = organization.events.flatMap((e: any) => e.sponsors || []);
                         const uniqueSponsors = Array.from(new Map(allSponsors.map((s: any) => [s.name, s])).values());
@@ -193,9 +199,8 @@ export default async function OrgProfilePage({ params }: OrgProfilePageProps) {
                             </div>
                         );
                     })()}
+            </Section>
 
-                </section>
-            </div>
          <PoweredByFooter />
 
         </main>

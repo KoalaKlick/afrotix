@@ -10,9 +10,11 @@ interface BrandingSyncProps {
     primaryColor?: string;
     secondaryColor?: string;
     tertiaryColor?: string;
+    /** Hide the global site header on org pages. Premium orgs can override in future. */
+    showHeader?: boolean;
 }
 
-export function BrandingSync({ logoUrl, name, primaryColor, secondaryColor, tertiaryColor }: BrandingSyncProps) {
+export function BrandingSync({ logoUrl, name, primaryColor, secondaryColor, tertiaryColor, showHeader = false }: BrandingSyncProps) {
     const { setBranding } = useOrgBranding();
     
     const brandColors = useMemo(() => (
@@ -27,13 +29,13 @@ export function BrandingSync({ logoUrl, name, primaryColor, secondaryColor, tert
     useBrandColors(brandColors);
 
     useEffect(() => {
-        setBranding({ logoUrl, name });
+        setBranding({ logoUrl, name, showHeader });
         
         // Cleanup when leaving the organization context
         return () => {
-            setBranding({ logoUrl: null, name: null });
+            setBranding({ logoUrl: null, name: null, showHeader: true });
         };
-    }, [logoUrl, name, setBranding]);
+    }, [logoUrl, name, showHeader, setBranding]);
 
     return null;
 }

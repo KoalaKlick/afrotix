@@ -15,13 +15,13 @@ interface PublicEventCardProps {
 export function PublicEventCard({ event, organizationSlug, className }: PublicEventCardProps) {
     // Generate an accent color based on event type
     const accentColors = {
-        voting: 'text-[#CE1126]',
-        ticketed: 'text-[#FFCD00]',
-        advertisement: 'text-[#009A44]',
-        hybrid: 'text-[#009A44]',
+        voting: 'text-brand-tertiary',
+        ticketed: 'text-brand-secondary',
+        advertisement: 'text-brand-primary',
+        hybrid: 'text-brand-primary',
     };
 
-    const colorClass = accentColors[event.type as keyof typeof accentColors] ?? 'text-[#009A44]';
+    const colorClass = accentColors[event.type as keyof typeof accentColors] ?? 'text-brand-primary';
     const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp";
     const eventDetailsHref = `/${organizationSlug}/event/${event.slug}`;
 

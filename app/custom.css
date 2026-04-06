@@ -146,10 +146,11 @@
   color: var(--icon-primary);
   --icon-secondary: orange;
   --animate-duration: 2000ms;
-  --icon-primary: var(--color-primary-500);
+  --icon-primary: var(--color-primary);
 }
 
 @layer base {
+
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
