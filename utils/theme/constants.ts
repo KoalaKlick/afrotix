@@ -1,4 +1,4 @@
-import type {BrandColors} from "./color-generator";
+import type { BrandColors } from "./color-generator";
 
 export const DEFAULT_BRAND_COLORS: BrandColors = {
   primary: "#02a605ff",
