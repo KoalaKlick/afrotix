@@ -23,5 +23,11 @@ export const PRESET_COLORS = [
   { name: "Goldenrod", value: "#f59e0b" },
   { name: "Sunset Orange", value: "#f97316" },
   { name: "Deep Rose", value: "#e11d48" },
+  { name: "Pink", value: "#ec4899" },
+  { name: "Fuchsia", value: "#d946ef" },
+  { name: "Cyan", value: "#06b6d4" },
+  { name: "Teal", value: "#14b8a6" },
+  { name: "Sky Blue", value: "#0ea5e9" },
+  { name: "Lime", value: "#84cc16" },
 ];
 
