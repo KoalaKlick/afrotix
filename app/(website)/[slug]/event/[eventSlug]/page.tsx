@@ -117,15 +117,15 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                     <div className="max-w-7xl mx-auto px-6 w-full">
                         <Link
                             href={`/${orgSlug}/`}
-                            className="flex items-center gap-2 text-white/80 hover:text-white text-sm mb-5 transition-colors"
+                            className="flex items-center gap-2  text-white/80 hover:text-white text-sm mb-5 transition-colors"
                         >
                             {orgLogoUrl ? (
                                 <Image
                                     src={orgLogoUrl}
                                     alt={organization.name}
-                                    width={28}
-                                    height={28}
-                                    className="rounded-md border border-white/20 object-cover"
+                                    width={40}
+                                    height={40}
+                                    className="rounded-md border bg-primary-50/20  border-white/20 object-cover"
                                     unoptimized
                                 />
                             ) : (

@@ -144,10 +144,10 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                     <Image
                                         src={orgLogoUrl}
                                         alt={organization.name}
-                                        width={32}
-                                        height={32}
-                                        className="rounded-md border border-white/20 object-cover"
-                                        unoptimized
+                                       width={40}
+                                    height={40}
+                                    className="rounded-md border bg-primary-50/20  border-white/20 object-cover"
+                                    unoptimized
                                     />
                                 </Link>
                             )}
