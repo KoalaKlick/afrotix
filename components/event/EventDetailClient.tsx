@@ -31,6 +31,7 @@ import {
   Check,
   LayoutDashboard,
   Banknote,
+  ImageIcon,
 } from "lucide-react";
 import {
   VotingManager,
@@ -49,7 +50,7 @@ import type {
 import type { OrganizationRole } from "@/lib/generated/prisma";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { EventDetailEvent, EventFormData } from "@/lib/types/event";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -63,6 +64,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Use imported types for props and state
 
 import { getEventImageUrl } from "@/lib/image-url-utils";
+import { convertToWebP } from "@/lib/image-utils";
+import { uploadImage } from "@/lib/actions/upload-image";
 import {
   getEventPublicationStatus,
   getEventLifecycleStatus,
@@ -153,6 +156,10 @@ export function EventDetailClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // Editable fields state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -293,24 +300,159 @@ export function EventDetailClient({
     });
   }
 
+  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Image must be less than 10MB"); return; }
+
+    setIsUploadingBanner(true);
+    try {
+      const optimizedFile = await convertToWebP(file, { quality: 1, maxWidth: 1920, maxHeight: 600, maxSizeMB: 1 });
+      const fd = new FormData();
+      fd.set("file", optimizedFile);
+      const result = await uploadImage(fd, {
+        bucket: "events",
+        folder: "banners",
+        oldPath: formData.bannerImage || null,
+      });
+      if (result.success && result.data) {
+        setFormData((prev: EventFormData) => ({ ...prev, bannerImage: result.data.path }));
+        await saveField("bannerImage", result.data.path);
+        toast.success("Banner uploaded!");
+      } else {
+        toast.error(result.success ? "Failed to upload banner" : result.error);
+      }
+    } catch {
+      toast.error("Failed to upload banner");
+    } finally {
+      setIsUploadingBanner(false);
+      if (bannerInputRef.current) bannerInputRef.current.value = "";
+    }
+  }
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be less than 5MB"); return; }
+
+    setIsUploadingCover(true);
+    try {
+      const optimizedFile = await convertToWebP(file, { quality: 1, maxWidth: 800, maxHeight: 800, maxSizeMB: 0.5 });
+      const fd = new FormData();
+      fd.set("file", optimizedFile);
+      const result = await uploadImage(fd, {
+        bucket: "events",
+        folder: "covers",
+        oldPath: formData.coverImage || null,
+      });
+      if (result.success && result.data) {
+        setFormData((prev: EventFormData) => ({ ...prev, coverImage: result.data.path }));
+        await saveField("coverImage", result.data.path);
+        toast.success("Cover image uploaded!");
+      } else {
+        toast.error(result.success ? "Failed to upload cover image" : result.error);
+      }
+    } catch {
+      toast.error("Failed to upload cover image");
+    } finally {
+      setIsUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = "";
+    }
+  }
+
+  function handleRemoveBanner() {
+    setFormData((prev: EventFormData) => ({ ...prev, bannerImage: "" }));
+    saveField("bannerImage", "");
+    if (bannerInputRef.current) bannerInputRef.current.value = "";
+  }
+
+  function handleRemoveCover() {
+    setFormData((prev: EventFormData) => ({ ...prev, coverImage: "" }));
+    saveField("coverImage", "");
+    if (coverInputRef.current) coverInputRef.current.value = "";
+  }
+
   const TypeIcon = typeIcons[event.type] ?? Ticket;
 
   return (
     <div className="space-y-6 @container">
       {/* Header Section */}
       <div className="bg-card border rounded-xl overflow-hidden">
+        {/* Hidden file inputs */}
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleBannerUpload}
+          className="hidden"
+        />
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleCoverUpload}
+          className="hidden"
+        />
+
         {/* Banner */}
-        <div className="relative h-32 sm:h-48 bg-linear-to-r from-primary/20 to-primary/5">
-          {formData.bannerImage && bannerDisplayUrl && (
-            <Image
-              src={bannerDisplayUrl}
-              alt="Banner"
-              fill
-              className="object-cover"
-              unoptimized
-            />
+        <div className="relative h-32 sm:h-48 bg-linear-to-r from-primary/20 to-primary/5 group/banner">
+          {formData.bannerImage && bannerDisplayUrl ? (
+            <>
+              <Image
+                src={bannerDisplayUrl}
+                alt="Banner"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+              {canEdit && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => bannerInputRef.current?.click()}
+                    disabled={isUploadingBanner}
+                    className="absolute inset-0 bg-black/50 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  >
+                    {isUploadingBanner ? (
+                      <Loader2 className="h-8 w-8 text-white animate-spin" />
+                    ) : (
+                      <div className="flex flex-col items-center text-white">
+                        <Pencil className="h-6 w-6 mb-1" />
+                        <span className="text-sm font-medium">Change Banner</span>
+                      </div>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRemoveBanner}
+                    className="absolute top-2 right-2 rounded-full bg-destructive p-1.5 text-destructive-foreground shadow-sm hover:bg-destructive/90 z-10 opacity-0 group-hover/banner:opacity-100 transition-opacity"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+            </>
+          ) : null}
+          {!formData.bannerImage && canEdit && (
+            <button
+              type="button"
+              className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 cursor-pointer hover:bg-muted/80 transition-colors"
+              onClick={() => bannerInputRef.current?.click()}
+              disabled={isUploadingBanner}
+            >
+              {isUploadingBanner ? (
+                <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+              ) : (
+                <>
+                  <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">Click to upload banner</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">Recommended 1920x600px</p>
+                </>
+              )}
+            </button>
           )}
-          {/* Image upload disabled: input and button removed */}
         </div>
 
         {/* Event Info */}
@@ -318,22 +460,61 @@ export function EventDetailClient({
           <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
             {/* Cover Image */}
             <div className="relative shrink-0">
-              <div className="size-24 sm:size-32 overflow-clip p-4  rounded-xl border-4 border-background bg-muted shadow-lg">
-                {formData.coverImage && coverDisplayUrl ? (
-                  <Image
-                    src={coverDisplayUrl}
-                    alt={event.title}
-                    fill
-                    className="object-cover rounded-xl"
-                    unoptimized
-                  />
-                ) : (
+              <div className="size-24 sm:size-32 overflow-clip p-4 rounded-xl border-4 border-background bg-muted shadow-lg group/cover">
+                {formData.coverImage && coverDisplayUrl && (
+                  <>
+                    <Image
+                      src={coverDisplayUrl}
+                      alt={event.title}
+                      fill
+                      className="object-cover rounded-xl"
+                      unoptimized
+                    />
+                    {canEdit && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => coverInputRef.current?.click()}
+                          disabled={isUploadingCover}
+                          className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                        >
+                          {isUploadingCover ? (
+                            <Loader2 className="h-5 w-5 text-white animate-spin" />
+                          ) : (
+                            <Pencil className="h-5 w-5 text-white" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCover}
+                          className="absolute -top-2 -right-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow-sm hover:bg-destructive/90 z-10 opacity-0 group-hover/cover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+                {!(formData.coverImage && coverDisplayUrl) && canEdit && (
+                  <button
+                    type="button"
+                    className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors rounded-xl"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={isUploadingCover}
+                  >
+                    {isUploadingCover ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    ) : (
+                      <TypeIcon className="size-10 text-muted-foreground" />
+                    )}
+                  </button>
+                )}
+                {!(formData.coverImage && coverDisplayUrl) && !canEdit && (
                   <div className="w-full h-full flex items-center justify-center">
                     <TypeIcon className="size-10 text-muted-foreground" />
                   </div>
                 )}
               </div>
-              {/* Image upload disabled: input and button removed */}
             </div>
 
             {/* Title & Status */}
