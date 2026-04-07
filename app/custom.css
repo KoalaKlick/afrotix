@@ -23,7 +23,7 @@
   --color-primary-800: #166534;
   --color-primary-900: #14532d;
   --color-primary-950: #052e16;
-  --color-primary: var(--color-primary-500);
+  --color-primary: var(--color-primary-600);
 
   /* Secondary - Pan-African Yellow/Gold */
   --color-secondary-50: #fefce8;

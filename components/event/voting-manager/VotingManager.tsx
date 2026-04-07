@@ -197,8 +197,6 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit,
                                         </>}
                                 </Button>
                             );
-
-                            return null;
                         })()}
                         <CategorySheet
                             eventId={eventId}
@@ -210,7 +208,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit,
                             onCategoryCreated={handleCategoryCreated}
                             onCategoryUpdated={handleCategoryUpdated}
                             trigger={
-                                <Button variant="tertiary" size="sm" onClick={() => setEditingCategory(null)}>
+                                <Button variant="primary" size="sm" onClick={() => setEditingCategory(null)}>
                                     <Plus className="size-4 mr-2" />
                                     Add Category
                                 </Button>

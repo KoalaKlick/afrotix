@@ -511,7 +511,7 @@ export function CategorySheet({
                     >
                         Cancel
                     </Button>
-                    <Button variant='tertiary' onClick={handleSave} disabled={isPending}>
+                    <Button variant='primary' onClick={handleSave} disabled={isPending}>
                         {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
                         {editingCategory ? "Save Changes" : "Add Category"}
                     </Button>
