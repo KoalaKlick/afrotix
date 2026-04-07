@@ -117,7 +117,7 @@ export function TicketList({
                   }
                   secondaryColor={ticket.secondaryColor || secondaryColor}
                   logoUrl={organization?.logoUrl}
-                  coverImage={event.coverImage}
+                  flierImage={event.flierImage}
                   bannerImage={event.bannerImage}
                   organizationName={organization?.name}
                   eventName={event.title}

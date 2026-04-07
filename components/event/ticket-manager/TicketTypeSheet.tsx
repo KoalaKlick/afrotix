@@ -198,7 +198,7 @@ export function TicketTypeSheet({
               primaryColor={previewPrimary}
               secondaryColor={previewSecondary}
               logoUrl={organization?.logoUrl}
-              coverImage={event.coverImage}
+              flierImage={event.flierImage}
               bannerImage={event.bannerImage}
               organizationName={organization?.name}
               eventName={event.title}

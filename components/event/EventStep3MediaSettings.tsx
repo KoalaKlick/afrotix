@@ -21,13 +21,13 @@ import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
 
 interface EventStep3Props {
     readonly initialData: {
-        coverImage?: string;
+        flierImage?: string;
         bannerImage?: string;
         maxAttendees?: number | null;
         isPublic?: boolean;
     } | null;
     readonly onSuccess: (data: {
-        coverImage?: string;
+        flierImage?: string;
         bannerImage?: string;
         maxAttendees?: number | null;
         isPublic: boolean;
@@ -38,25 +38,25 @@ interface EventStep3Props {
 
 export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip }: EventStep3Props) {
     const [isPending, startTransition] = useTransition();
-    const [coverImage, setCoverImage] = useState(initialData?.coverImage ?? "");
+    const [flierImage, setFlierImage] = useState(initialData?.flierImage ?? "");
     const [bannerImage, setBannerImage] = useState(initialData?.bannerImage ?? "");
     const [maxAttendees, setMaxAttendees] = useState<string>(
         initialData?.maxAttendees?.toString() ?? ""
     );
     const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
-    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+    const [pendingFlierFile, setPendingFlierFile] = useState<File | null>(null);
     const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
-    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+    const [flierPreviewUrl, setFlierPreviewUrl] = useState<string | null>(null);
     const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
     const [pendingAction, setPendingAction] = useState<"back" | "skip" | null>(null);
     const [errors, setErrors] = useState<Record<string, string[]>>({});
     const isPrivate = !isPublic;
 
-    const coverInputRef = useRef<HTMLInputElement>(null);
+    const flierInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
 
-    const { isUploading: isUploadingCover, upload: runUploadCover } = useImageUpload({
+    const { isUploading: isUploadingFlier, upload: runUploadFlier } = useImageUpload({
         bucket: "events",
         folder: "events",
         convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
@@ -66,22 +66,22 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
         folder: "events",
         convertOptions: { quality: 0.85, maxWidth: 1920, maxHeight: 400, maxSizeMB: 2 },
     });
-    const isUploading = isUploadingCover || isUploadingBanner;
+    const isUploading = isUploadingFlier || isUploadingBanner;
 
     // Generate display URLs from paths or previews
-    const coverDisplayPreview = coverPreviewUrl || getEventImageUrl(coverImage);
+    const flierDisplayPreview = flierPreviewUrl || getEventImageUrl(flierImage);
     const bannerDisplayPreview = bannerPreviewUrl || getEventImageUrl(bannerImage);
 
     const isDirty = useMemo(() => {
         return (
-            pendingCoverFile !== null ||
+            pendingFlierFile !== null ||
             pendingBannerFile !== null ||
             maxAttendees !== (initialData?.maxAttendees?.toString() ?? "") ||
             isPublic !== (initialData?.isPublic ?? true) ||
-            coverImage !== (initialData?.coverImage ?? "") ||
+            flierImage !== (initialData?.flierImage ?? "") ||
             bannerImage !== (initialData?.bannerImage ?? "")
         );
-    }, [pendingCoverFile, pendingBannerFile, maxAttendees, isPublic, coverImage, bannerImage, initialData]);
+    }, [pendingFlierFile, pendingBannerFile, maxAttendees, isPublic, flierImage, bannerImage, initialData]);
 
     const handleBack = () => {
         if (isDirty) {
@@ -101,13 +101,13 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
         }
     };
 
-    async function handleImageUpload(file: File, type: "cover" | "banner") {
+    async function handleImageUpload(file: File, type: "flier" | "banner") {
         setErrors({});
         const url = URL.createObjectURL(file);
-        if (type === "cover") {
-            setPendingCoverFile(file);
-            if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
-            setCoverPreviewUrl(url);
+        if (type === "flier") {
+            setPendingFlierFile(file);
+            if (flierPreviewUrl) URL.revokeObjectURL(flierPreviewUrl);
+            setFlierPreviewUrl(url);
         } else {
             setPendingBannerFile(file);
             if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
@@ -115,7 +115,7 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
         }
     }
 
-    function handleFileChange(e: ChangeEvent<HTMLInputElement>, type: "cover" | "banner") {
+    function handleFileChange(e: ChangeEvent<HTMLInputElement>, type: "flier" | "banner") {
         const file = e.target.files?.[0];
         if (file) {
             handleImageUpload(file, type);
@@ -127,13 +127,13 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
         setErrors({});
 
         startTransition(async () => {
-            let finalCoverImage = coverImage;
+            let finalFlierImage = flierImage;
             let finalBannerImage = bannerImage;
 
             // Upload pending images if they exist
-            if (pendingCoverFile) {
-                const path = await runUploadCover(pendingCoverFile);
-                if (path) finalCoverImage = path;
+            if (pendingFlierFile) {
+                const path = await runUploadFlier(pendingFlierFile);
+                if (path) finalFlierImage = path;
                 else return; // Error toast handled by hook
             }
 
@@ -144,17 +144,17 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
             }
 
             onSuccess({
-                coverImage: finalCoverImage,
+                flierImage: finalFlierImage,
                 bannerImage: finalBannerImage,
                 maxAttendees: maxAttendees ? parseInt(maxAttendees, 10) : null,
                 isPublic,
             });
 
-            setPendingCoverFile(null);
+            setPendingFlierFile(null);
             setPendingBannerFile(null);
-            if (coverPreviewUrl) {
-                URL.revokeObjectURL(coverPreviewUrl);
-                setCoverPreviewUrl(null);
+            if (flierPreviewUrl) {
+                URL.revokeObjectURL(flierPreviewUrl);
+                setFlierPreviewUrl(null);
             }
             if (bannerPreviewUrl) {
                 URL.revokeObjectURL(bannerPreviewUrl);
@@ -165,35 +165,35 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Cover Image */}
+            {/* Flier Image */}
             <div className="space-y-3">
-                <Label>Cover Image</Label>
+                <Label>Event Flier</Label>
                 <p className="text-sm text-muted-foreground">
                     This image will be displayed on your event page (recommended: 1200x630px)
                 </p>
 
                 <input
-                    ref={coverInputRef}
+                    ref={flierInputRef}
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={(e) => handleFileChange(e, "cover")}
+                    onChange={(e) => handleFileChange(e, "flier")}
                     className="hidden"
                 />
 
-                {(coverImage || coverPreviewUrl) ? (
+                {(flierImage || flierPreviewUrl) ? (
                     <div className="relative rounded-xl overflow-hidden border aspect-video">
                         <img
-                            src={(coverDisplayPreview || undefined) as string | undefined}
-                            alt="Cover"
+                            src={(flierDisplayPreview || undefined) as string | undefined}
+                            alt="Flier"
                             className="object-cover w-full h-full"
                         />
                         <button
                             type="button"
                             onClick={() => {
-                                setCoverImage("");
-                                setPendingCoverFile(null);
-                                if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
-                                setCoverPreviewUrl(null);
+                                setFlierImage("");
+                                setPendingFlierFile(null);
+                                if (flierPreviewUrl) URL.revokeObjectURL(flierPreviewUrl);
+                                setFlierPreviewUrl(null);
                             }}
                             className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
                         >
@@ -203,7 +203,7 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                 ) : (
                     <button
                         type="button"
-                        onClick={() => coverInputRef.current?.click()}
+                        onClick={() => flierInputRef.current?.click()}
                         disabled={isUploading}
                         className="w-full aspect-video rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-colors"
                     >
@@ -215,14 +215,14 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                         ) : (
                             <>
                                 <Upload className="size-8" />
-                                <span>Click to upload cover image</span>
+                                <span>Click to upload event flier</span>
                                 <span className="text-xs">JPEG, PNG, WebP or GIF (max 5MB)</span>
                             </>
                         )}
                     </button>
                 )}
-                {errors.cover && (
-                    <p className="text-sm text-destructive">{errors.cover[0]}</p>
+                {errors.flier && (
+                    <p className="text-sm text-destructive">{errors.flier[0]}</p>
                 )}
             </div>
 

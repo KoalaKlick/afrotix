@@ -64,7 +64,7 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
     }
 
     function handleStep3Success(data: {
-        coverImage?: string;
+        flierImage?: string;
         bannerImage?: string;
         maxAttendees?: number | null;
         isPublic: boolean;
@@ -113,7 +113,7 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
             if (data.venueAddress) formDataObj.set("venueAddress", data.venueAddress);
             if (data.venueCity) formDataObj.set("venueCity", data.venueCity);
             if (data.venueCountry) formDataObj.set("venueCountry", data.venueCountry);
-            if (data.coverImage) formDataObj.set("coverImage", data.coverImage);
+            if (data.flierImage) formDataObj.set("flierImage", data.flierImage);
             if (data.bannerImage) formDataObj.set("bannerImage", data.bannerImage);
             if (data.maxAttendees) formDataObj.set("maxAttendees", String(data.maxAttendees));
             formDataObj.set("isPublic", String(data.isPublic ?? true));

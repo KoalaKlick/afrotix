@@ -157,9 +157,9 @@ export function EventDetailClient({
   const [isPending, startTransition] = useTransition();
   const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingFlier, setIsUploadingFlier] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
+  const flierInputRef = useRef<HTMLInputElement>(null);
 
   // Editable fields state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -182,7 +182,7 @@ export function EventDetailClient({
     venueAddress: event.venueAddress ?? "",
     venueCity: event.venueCity ?? "",
     venueCountry: event.venueCountry,
-    coverImage: event.coverImage ?? "",
+    flierImage: event.flierImage ?? "",
     bannerImage: event.bannerImage ?? "",
     maxAttendees: event.maxAttendees ?? null,
     isPublic: event.isPublic,
@@ -244,7 +244,7 @@ export function EventDetailClient({
   }
 
   // Generate display URLs from paths
-  const coverDisplayUrl = getEventImageUrl(formData.coverImage);
+  const flierDisplayUrl = getEventImageUrl(formData.flierImage);
   const bannerDisplayUrl = getEventImageUrl(formData.bannerImage);
 
   // Save a single field
@@ -331,34 +331,34 @@ export function EventDetailClient({
     }
   }
 
-  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFlierUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error("Image must be less than 5MB"); return; }
 
-    setIsUploadingCover(true);
+    setIsUploadingFlier(true);
     try {
       const optimizedFile = await convertToWebP(file, { quality: 1, maxWidth: 800, maxHeight: 800, maxSizeMB: 0.5 });
       const fd = new FormData();
       fd.set("file", optimizedFile);
       const result = await uploadImage(fd, {
         bucket: "events",
-        folder: "covers",
-        oldPath: formData.coverImage || null,
+        folder: "fliers",
+        oldPath: formData.flierImage || null,
       });
       if (result.success && result.data) {
-        setFormData((prev: EventFormData) => ({ ...prev, coverImage: result.data.path }));
-        await saveField("coverImage", result.data.path);
-        toast.success("Cover image uploaded!");
+        setFormData((prev: EventFormData) => ({ ...prev, flierImage: result.data.path }));
+        await saveField("flierImage", result.data.path);
+        toast.success("Flier image uploaded!");
       } else {
-        toast.error(result.success ? "Failed to upload cover image" : result.error);
+        toast.error(result.success ? "Failed to upload flier image" : result.error);
       }
     } catch {
-      toast.error("Failed to upload cover image");
+      toast.error("Failed to upload flier image");
     } finally {
-      setIsUploadingCover(false);
-      if (coverInputRef.current) coverInputRef.current.value = "";
+      setIsUploadingFlier(false);
+      if (flierInputRef.current) flierInputRef.current.value = "";
     }
   }
 
@@ -368,10 +368,10 @@ export function EventDetailClient({
     if (bannerInputRef.current) bannerInputRef.current.value = "";
   }
 
-  function handleRemoveCover() {
-    setFormData((prev: EventFormData) => ({ ...prev, coverImage: "" }));
-    saveField("coverImage", "");
-    if (coverInputRef.current) coverInputRef.current.value = "";
+  function handleRemoveFlier() {
+    setFormData((prev: EventFormData) => ({ ...prev, flierImage: "" }));
+    saveField("flierImage", "");
+    if (flierInputRef.current) flierInputRef.current.value = "";
   }
 
   const TypeIcon = typeIcons[event.type] ?? Ticket;
@@ -389,10 +389,10 @@ export function EventDetailClient({
           className="hidden"
         />
         <input
-          ref={coverInputRef}
+          ref={flierInputRef}
           type="file"
           accept="image/*"
-          onChange={handleCoverUpload}
+          onChange={handleFlierUpload}
           className="hidden"
         />
 
@@ -458,13 +458,13 @@ export function EventDetailClient({
         {/* Event Info */}
         <div className="p-6 -mt-12 relative">
           <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
-            {/* Cover Image */}
+            {/* Flier Image */}
             <div className="relative shrink-0">
-              <div className="size-24 sm:size-32 overflow-clip p-4 rounded-xl border-4 border-background bg-muted shadow-lg group/cover">
-                {formData.coverImage && coverDisplayUrl && (
+              <div className="size-24 sm:size-32 overflow-clip p-4 rounded-xl border-4 border-background bg-muted shadow-lg group/flier">
+                {formData.flierImage && flierDisplayUrl && (
                   <>
                     <Image
-                      src={coverDisplayUrl}
+                      src={flierDisplayUrl}
                       alt={event.title}
                       fill
                       className="object-cover rounded-xl"
@@ -474,11 +474,11 @@ export function EventDetailClient({
                       <>
                         <button
                           type="button"
-                          onClick={() => coverInputRef.current?.click()}
-                          disabled={isUploadingCover}
-                          className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                          onClick={() => flierInputRef.current?.click()}
+                          disabled={isUploadingFlier}
+                          className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover/flier:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                         >
-                          {isUploadingCover ? (
+                          {isUploadingFlier ? (
                             <Loader2 className="h-5 w-5 text-white animate-spin" />
                           ) : (
                             <Pencil className="h-5 w-5 text-white" />
@@ -486,8 +486,8 @@ export function EventDetailClient({
                         </button>
                         <button
                           type="button"
-                          onClick={handleRemoveCover}
-                          className="absolute -top-2 -right-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow-sm hover:bg-destructive/90 z-10 opacity-0 group-hover/cover:opacity-100 transition-opacity"
+                          onClick={handleRemoveFlier}
+                          className="absolute -top-2 -right-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow-sm hover:bg-destructive/90 z-10 opacity-0 group-hover/flier:opacity-100 transition-opacity"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -495,21 +495,21 @@ export function EventDetailClient({
                     )}
                   </>
                 )}
-                {!(formData.coverImage && coverDisplayUrl) && canEdit && (
+                {!(formData.flierImage && flierDisplayUrl) && canEdit && (
                   <button
                     type="button"
                     className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors rounded-xl"
-                    onClick={() => coverInputRef.current?.click()}
-                    disabled={isUploadingCover}
+                    onClick={() => flierInputRef.current?.click()}
+                    disabled={isUploadingFlier}
                   >
-                    {isUploadingCover ? (
+                    {isUploadingFlier ? (
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     ) : (
                       <TypeIcon className="size-10 text-muted-foreground" />
                     )}
                   </button>
                 )}
-                {!(formData.coverImage && coverDisplayUrl) && !canEdit && (
+                {!(formData.flierImage && flierDisplayUrl) && !canEdit && (
                   <div className="w-full h-full flex items-center justify-center">
                     <TypeIcon className="size-10 text-muted-foreground" />
                   </div>

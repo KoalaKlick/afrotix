@@ -15,7 +15,7 @@ interface OngoingEvent {
     id: string;
     title: string;
     type: string;
-    coverImage: string | null;
+    flierImage: string | null;
     venueName: string | null;
     startDate: string | null;
 }

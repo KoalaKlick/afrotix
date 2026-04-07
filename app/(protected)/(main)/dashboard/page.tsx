@@ -64,7 +64,7 @@ export default async function DashboardPage() {
     id: e.id,
     title: e.title,
     type: e.type,
-    coverImage: e.coverImage,
+    flierImage: e.flierImage,
     venueName: e.venueName,
     startDate: e.startDate?.toISOString() ?? null,
   }));

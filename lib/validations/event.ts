@@ -120,7 +120,7 @@ export const createEventStep2Schema = z.object({
 
 // Step 3: Media & Settings
 export const createEventStep3Schema = z.object({
-    coverImage: storagePathSchema,
+    flierImage: storagePathSchema,
     bannerImage: storagePathSchema,
     maxAttendees: z.coerce.number().int().min(1).max(100000).optional().nullable(),
     isPublic: z.boolean().default(true),
@@ -157,7 +157,7 @@ export const createEventSchema = z.object({
     venueAddress: venueAddressSchema,
     venueCity: venueCitySchema,
     venueCountry: venueCountrySchema,
-    coverImage: storagePathSchema,
+    flierImage: storagePathSchema,
     bannerImage: storagePathSchema,
     maxAttendees: z.coerce.number().int().min(1).max(100000).optional().nullable(),
     isPublic: z.boolean().default(true),

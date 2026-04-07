@@ -37,7 +37,7 @@ interface PublicTicketGridProps {
     readonly id: string;
     readonly organizationId: string;
     readonly title: string;
-    readonly coverImage?: string | null;
+    readonly flierImage?: string | null;
     readonly bannerImage?: string | null;
     readonly isVirtual?: boolean;
     readonly virtualLink?: string | null;
@@ -120,7 +120,7 @@ export function PublicTicketGrid({
                   primaryColor={primaryColor}
                   secondaryColor={secondaryColor}
                   logoUrl={organization.logoUrl}
-                  coverImage={event.coverImage}
+                  flierImage={event.flierImage}
                   bannerImage={event.bannerImage}
                   organizationName={organization.name}
                   eventName={event.title}
@@ -190,7 +190,7 @@ export function PublicTicketGrid({
                       selectedTicket.secondaryColor || orgSecondary
                     }
                     logoUrl={organization.logoUrl}
-                    coverImage={event.coverImage}
+                    flierImage={event.flierImage}
                     bannerImage={event.bannerImage}
                     organizationName={organization.name}
                     eventName={event.title}

@@ -82,7 +82,7 @@ export function EventCard({ item, index = 0, colorCount = 3, className, size = '
     // Brand color for org-context rendering
     const brandColor = useBrand && isDb ? brandCycle[index % brandCycle.length] : undefined;
 
-    const image = isDb ? getEventImageUrl((item as DbEvent).coverImage) : (item as EventItem).image;
+    const image = isDb ? getEventImageUrl((item as DbEvent).flierImage) : (item as EventItem).image;
     const subtitle = isDb ? (item as DbEvent).description : (item as EventItem).subtitle;
     const categoryName = isDb ? (item as DbEvent).type.toUpperCase() : (item as EventItem).category;
 

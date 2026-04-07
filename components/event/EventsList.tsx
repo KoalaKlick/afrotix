@@ -43,7 +43,7 @@ interface Event {
     type: string;
     status: string;
     isPublic: boolean;
-    coverImage: string | null;
+    flierImage: string | null;
     startDate: string | Date | null;
     venueName: string | null;
     isVirtual: boolean;
@@ -76,7 +76,7 @@ export function EventsList({ events, organizationSlug }: EventsListProps) {
         <>
         <div className="grid gap-4">
             {events.map((event) => {
-                const coverImageUrl = getEventImageUrl(event.coverImage);
+                const coverImageUrl = getEventImageUrl(event.flierImage);
                 const lifecycleStatus = getEventLifecycleStatus(event);
                 const publicationStatus = getEventPublicationStatus(event.status);
                 const canViewPublicPage = Boolean(organizationSlug && event.isPublic && publicationStatus === "published");

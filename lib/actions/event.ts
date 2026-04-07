@@ -166,7 +166,7 @@ export async function validateEventStep3(
   // Parse form data
   const maxAttendeesRaw = formData.get("maxAttendees") as string;
   const rawData = {
-    coverImage: (formData.get("coverImage") as string) || undefined,
+    flierImage: (formData.get("flierImage") as string) || undefined,
     bannerImage: (formData.get("bannerImage") as string) || undefined,
     maxAttendees: maxAttendeesRaw
       ? Number.parseInt(maxAttendeesRaw, 10)
@@ -275,7 +275,7 @@ export async function createNewEvent(
     venueAddress: (formData.get("venueAddress") as string) || undefined,
     venueCity: (formData.get("venueCity") as string) || undefined,
     venueCountry: (formData.get("venueCountry") as string) || "Ghana",
-    coverImage: (formData.get("coverImage") as string) || undefined,
+    flierImage: (formData.get("flierImage") as string) || undefined,
     bannerImage: (formData.get("bannerImage") as string) || undefined,
     maxAttendees: maxAttendeesRaw
       ? Number.parseInt(maxAttendeesRaw, 10)
@@ -333,7 +333,7 @@ export async function createNewEvent(
       venueAddress: result.data.venueAddress,
       venueCity: result.data.venueCity,
       venueCountry: result.data.venueCountry,
-      coverImage: result.data.coverImage,
+      flierImage: result.data.flierImage,
       bannerImage: result.data.bannerImage,
       maxAttendees: result.data.maxAttendees ?? undefined,
       isPublic: result.data.isPublic,
@@ -402,7 +402,7 @@ export async function updateExistingEvent(
     "venueCity",
     "venueCountry",
     "virtualLink",
-    "coverImage",
+    "flierImage",
     "bannerImage",
     "sponsors",
     "socialLinks",
@@ -457,11 +457,11 @@ export async function updateExistingEvent(
 
     // Cleanup old images if they changed
     if (
-      updates.coverImage !== undefined &&
-      event.coverImage &&
-      event.coverImage !== updates.coverImage
+      updates.flierImage !== undefined &&
+      event.flierImage &&
+      event.flierImage !== updates.flierImage
     ) {
-      await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.coverImage);
+      await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.flierImage);
     }
     if (
       updates.bannerImage !== undefined &&
@@ -661,8 +661,8 @@ export async function deleteExistingEvent(
     }
 
     // Cleanup storage
-    if (event.coverImage) {
-      await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.coverImage);
+    if (event.flierImage) {
+      await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.flierImage);
     }
     if (event.bannerImage) {
       await deleteStorageFile(STORAGE_BUCKETS.EVENTS, event.bannerImage);

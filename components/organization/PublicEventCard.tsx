@@ -22,7 +22,7 @@ export function PublicEventCard({ event, organizationSlug, className }: PublicEv
     };
 
     const colorClass = accentColors[event.type as keyof typeof accentColors] ?? 'text-brand-primary';
-    const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp";
+    const coverImageUrl = getEventImageUrl(event.flierImage) ?? "/landing/a.webp";
     const eventDetailsHref = `/${organizationSlug}/event/${event.slug}`;
 
     return (

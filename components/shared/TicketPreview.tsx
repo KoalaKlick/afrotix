@@ -8,7 +8,7 @@ interface TicketPreviewProps {
   readonly secondaryColor: string;
   readonly tertiaryColor?: string;
   readonly logoUrl?: string | null;
-  readonly coverImage?: string | null;
+  readonly flierImage?: string | null;
   readonly bannerImage?: string | null;
   readonly organizationName?: string;
   readonly eventName?: string;
@@ -25,7 +25,7 @@ export function TicketPreview({
   secondaryColor,
   tertiaryColor = "#dc2626",
   logoUrl,
-  coverImage,
+  flierImage,
   bannerImage,
   organizationName = "Your Organization",
   eventName = "Sample Event 2026",
@@ -38,9 +38,9 @@ export function TicketPreview({
 }: TicketPreviewProps) {
   const logoDisplayUrl = getOrgImageUrl(logoUrl);
   const bannerDisplayUrl = getEventImageUrl(bannerImage);
-  const coverDisplayUrl = getEventImageUrl(coverImage);
-  const heroImageUrl = bannerDisplayUrl || coverDisplayUrl;
-  const watermarkImageUrl = coverDisplayUrl || bannerDisplayUrl;
+  const flierDisplayUrl = getEventImageUrl(flierImage);
+  const heroImageUrl = bannerDisplayUrl || flierDisplayUrl;
+  const watermarkImageUrl = flierDisplayUrl || bannerDisplayUrl;
   const watermarkLabel = ticketType.slice(0, 18).toUpperCase();
 
   return (

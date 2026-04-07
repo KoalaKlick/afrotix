@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: CategoryDetailPageProps): Pro
     const category = await getVotingCategoryById(categoryId, false)
     if (!category || category.eventId !== event.id) return {}
 
-    const coverImage = getEventImageUrl(category.templateImage || event.bannerImage || event.coverImage) ?? "/landing/a.webp"
+    const coverImage = getEventImageUrl(category.templateImage || event.bannerImage || event.flierImage) ?? "/landing/a.webp"
     const absoluteImage = coverImage.startsWith("http") ? coverImage : `${BASE_URL}${coverImage}`
     const pageUrl = `${BASE_URL}/${orgSlug}/event/${eventSlug}/category/${categoryId}`
 
@@ -96,7 +96,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
     const category = await getVotingCategoryById(categoryId, true)
     if (!category || category.eventId !== event.id) notFound()
 
-    const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
+    const heroImageUrl = getEventImageUrl(event.bannerImage) || getEventImageUrl(event.flierImage) || "/landing/a.webp"
     const orgLogoUrl = getOrgImageUrl(organization.logoUrl)
 
     // Check if nominations are currently open
@@ -125,7 +125,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
             {/* Hero Section — image fills the container, content overlays at the bottom */}
             <div className="relative h-[52vh] min-h-[380px] w-full overflow-hidden">
                 <Image
-                    src={coverImageUrl}
+                    src={heroImageUrl}
                     alt={event.title}
                     fill
                     className="object-cover"

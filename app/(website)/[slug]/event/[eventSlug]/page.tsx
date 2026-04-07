@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: EventDetailsPageProps): Promi
     const event = await getEventBySlug(organization.id, eventSlug)
     if (!event) return {}
 
-    const coverImage = getEventImageUrl(event.bannerImage || event.coverImage) ?? "/landing/a.webp"
+    const coverImage = getEventImageUrl(event.bannerImage || event.flierImage) ?? "/landing/a.webp"
     const absoluteImage = coverImage.startsWith("http") ? coverImage : `${BASE_URL}${coverImage}`
     const pageUrl = `${BASE_URL}/${orgSlug}/event/${eventSlug}`
     const description = event.description
@@ -99,14 +99,14 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
         hour: "2-digit",
         minute: "2-digit",
     }) : ""
-    const coverImageUrl = getEventImageUrl(event.coverImage) ?? "/landing/a.webp"
+    const heroImageUrl = getEventImageUrl(event.bannerImage) || getEventImageUrl(event.flierImage) || "/landing/a.webp"
     const orgLogoUrl = getOrgImageUrl(organization.logoUrl)
     return (
         <main className="min-h-screen">
             {/* Hero Section */}
             <div className="relative h-[60vh] w-full overflow-hidden">
                 <Image
-                    src={coverImageUrl}
+                    src={heroImageUrl}
                     alt={event.title}
                     fill
                     className="object-cover"
@@ -309,7 +309,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                     id: event.id,
                                     organizationId: event.organizationId,
                                     title: event.title,
-                                    coverImage: event.coverImage,
+                                    flierImage: event.flierImage,
                                     bannerImage: event.bannerImage,
                                     isVirtual: event.isVirtual,
                                     virtualLink: event.virtualLink,

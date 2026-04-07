@@ -12,7 +12,7 @@ model Event {
   endDate              DateTime?        @map("end_date") @db.Timestamptz(6)
   timezone             String           @default("Africa/Accra")
   isPublic             Boolean          @default(true) @map("is_public")
-  coverImage           String?          @map("cover_image")
+  flierImage           String?          @map("flier_image")
   bannerImage          String?          @map("banner_image")
   venueName            String?          @map("venue_name")
   venueAddress         String?          @map("venue_address")

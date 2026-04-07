@@ -11,7 +11,7 @@ interface OngoingEvent {
     id: string;
     title: string;
     type: string;
-    coverImage: string | null;
+    flierImage: string | null;
     venueName: string | null;
     startDate: string | null;
 }
@@ -41,7 +41,7 @@ export function OngoingEvents({ events }: OngoingEventsProps) {
             </div>
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin">
                 {events.map((event) => {
-                    const imageUrl = getEventImageUrl(event.coverImage);
+                    const imageUrl = getEventImageUrl(event.flierImage);
                     return (
                         <Link
                             key={event.id}

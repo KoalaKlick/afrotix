@@ -134,7 +134,7 @@ export type EventCreateInput = {
   timezone?: string;
   isPublic?: boolean;
   votingMode?: VotingMode;
-  coverImage?: string | null;
+  flierImage?: string | null;
   bannerImage?: string | null;
   venueName?: string;
   venueAddress?: string;
@@ -370,7 +370,7 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
     endDate,
     timezone = "Africa/Accra",
     isPublic = true,
-    coverImage,
+    flierImage,
     bannerImage,
     venueName,
     venueAddress,
@@ -396,7 +396,7 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
       timezone,
       isPublic,
       ...(votingMode && { votingMode }),
-      coverImage: coverImage ?? null,
+      flierImage: flierImage ?? null,
       bannerImage: bannerImage ?? null,
       venueName: venueName ?? null,
       venueAddress: venueAddress ?? null,

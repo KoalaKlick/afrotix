@@ -35,7 +35,7 @@ export interface EventFormData {
   venueAddress: string;
   venueCity: string;
   venueCountry: string;
-  coverImage?: string;
+  flierImage?: string;
   bannerImage?: string;
   maxAttendees: number | null;
   isPublic: boolean;
@@ -95,7 +95,7 @@ export interface EventDetailEvent {
   venueAddress: string | null;
   venueCity: string | null;
   venueCountry: string;
-  coverImage?: string | null;
+  flierImage?: string | null;
   bannerImage?: string | null;
   maxAttendees?: number | null;
   isPublic: boolean;
