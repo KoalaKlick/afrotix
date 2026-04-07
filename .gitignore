@@ -42,3 +42,5 @@ next-env.d.ts
 
 /lib/generated/prisma
 STACK-SETUP-GUIDE.md
+AUTH-FLOW-SETUP.md
+EDGE-FUNCTIONS-AND-AUTH-SETUP.md
