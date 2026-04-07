@@ -22,7 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         if (icon) {
             return (
                 <div className="relative">
-                    <span className="absolute  left-3 top-1/2 -translate-y-1/2 text-tertiary">
+                    <span className="absolute  left-3 top-1/2 -translate-y-1/2 text-primary-600">
                         {icon}
                     </span>
                     <input
