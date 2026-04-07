@@ -1,44 +1,44 @@
 model Event {
-  id                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId       String           @map("organization_id") @db.Uuid
-  creatorId            String?          @map("creator_id") @db.Uuid
+  id                   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId       String      @map("organization_id") @db.Uuid
+  creatorId            String?     @map("creator_id") @db.Uuid
   title                String
   description          String?
   slug                 String
   type                 EventType
-  votingMode           VotingMode       @default(general) @map("voting_mode")
-  status               EventStatus      @default(draft)
-  startDate            DateTime?        @map("start_date") @db.Timestamptz(6)
-  endDate              DateTime?        @map("end_date") @db.Timestamptz(6)
-  timezone             String           @default("Africa/Accra")
-  isPublic             Boolean          @default(true) @map("is_public")
-  flierImage           String?          @map("flier_image")
-  bannerImage          String?          @map("banner_image")
-  venueName            String?          @map("venue_name")
-  venueAddress         String?          @map("venue_address")
-  venueCity            String?          @map("venue_city")
-  venueCountry         String           @default("Ghana") @map("venue_country")
-  isVirtual            Boolean          @default(false) @map("is_virtual")
-  virtualLink          String?          @map("virtual_link")
-  maxAttendees         Int?             @map("max_attendees")
-  registrationDeadline DateTime?        @map("registration_deadline") @db.Timestamptz(6)
-  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  publishedAt          DateTime?        @map("published_at") @db.Timestamptz(6)
-  
+  votingMode           VotingMode  @default(general) @map("voting_mode")
+  status               EventStatus @default(draft)
+  startDate            DateTime?   @map("start_date") @db.Timestamptz(6)
+  endDate              DateTime?   @map("end_date") @db.Timestamptz(6)
+  timezone             String      @default("Africa/Accra")
+  isPublic             Boolean     @default(true) @map("is_public")
+  flierImage           String?     @map("flier_image")
+  bannerImage          String?     @map("banner_image")
+  venueName            String?     @map("venue_name")
+  venueAddress         String?     @map("venue_address")
+  venueCity            String?     @map("venue_city")
+  venueCountry         String      @default("Ghana") @map("venue_country")
+  isVirtual            Boolean     @default(false) @map("is_virtual")
+  virtualLink          String?     @map("virtual_link")
+  maxAttendees         Int?        @map("max_attendees")
+  registrationDeadline DateTime?   @map("registration_deadline") @db.Timestamptz(6)
+  createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  publishedAt          DateTime?   @map("published_at") @db.Timestamptz(6)
+
   // Link Relationships
-  sponsors             EventSponsor[]
-  galleryLinks         EventGalleryLink[]
-  socialLinks          EventSocialLink[]
-  
-  creator              Profile?         @relation("CreatedEvents", fields: [creatorId], references: [id])
-  organization         Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  ticketOrders         TicketOrder[]
-  ticketTypes          TicketType[]
-  tickets              Ticket[]
-  votes                Vote[]
-  votingCategories     VotingCategory[]
-  votingOptions        VotingOption[]
+  sponsors     EventSponsor[]
+  galleryLinks EventGalleryLink[]
+  socialLinks  EventSocialLink[]
+
+  creator          Profile?         @relation("CreatedEvents", fields: [creatorId], references: [id])
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ticketOrders     TicketOrder[]
+  ticketTypes      TicketType[]
+  tickets          Ticket[]
+  votes            Vote[]
+  votingCategories VotingCategory[]
+  votingOptions    VotingOption[]
 
   @@unique([organizationId, slug])
   @@index([organizationId], map: "idx_events_organization")
@@ -88,5 +88,3 @@ model EventSocialLink {
   @@index([eventId], map: "idx_event_social_event")
   @@map("event_social_links")
 }
-
-

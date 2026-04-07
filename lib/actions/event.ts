@@ -717,12 +717,12 @@ export async function getEventVoteTransactionsAction(
   }
 
   const offset = (page - 1) * limit;
-  return await getEventVoteTransactions(eventId, { 
-    limit, 
-    offset, 
-    search, 
-    sortBy, 
-    sortDir 
+  return await getEventVoteTransactions(eventId, {
+    limit,
+    offset,
+    search,
+    sortBy,
+    sortDir
   });
 }
 
@@ -760,11 +760,11 @@ export async function getEventTicketTransactionsAction(
   }
 
   const offset = (page - 1) * limit;
-  return await getEventTicketTransactions(eventId, { 
-    limit, 
-    offset, 
-    search, 
-    sortBy, 
-    sortDir 
+  return await getEventTicketTransactions(eventId, {
+    limit,
+    offset,
+    search,
+    sortBy,
+    sortDir
   });
 }

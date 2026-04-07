@@ -408,26 +408,26 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
       status: "draft",
       sponsors: data.sponsors
         ? {
-            create: data.sponsors.map((s) => ({
-              name: s.name,
-              logo: s.logo,
-            })),
-          }
+          create: data.sponsors.map((s) => ({
+            name: s.name,
+            logo: s.logo,
+          })),
+        }
         : undefined,
       socialLinks: data.socialLinks
         ? {
-            create: data.socialLinks.map((s) => ({
-              url: s.url,
-            })),
-          }
+          create: data.socialLinks.map((s) => ({
+            url: s.url,
+          })),
+        }
         : undefined,
       galleryLinks: data.galleryLinks
         ? {
-            create: data.galleryLinks.map((g) => ({
-              name: g.name,
-              url: g.url,
-            })),
-          }
+          create: data.galleryLinks.map((g) => ({
+            name: g.name,
+            url: g.url,
+          })),
+        }
         : undefined,
     },
     include: {
@@ -461,29 +461,29 @@ export async function updateEvent(
         endDate: endDate ? new Date(endDate) : undefined,
         sponsors: sponsors
           ? {
-              deleteMany: {},
-              create: sponsors.map((s) => ({
-                name: s.name,
-                logo: s.logo,
-              })),
-            }
+            deleteMany: {},
+            create: sponsors.map((s) => ({
+              name: s.name,
+              logo: s.logo,
+            })),
+          }
           : undefined,
         socialLinks: socialLinks
           ? {
-              deleteMany: {},
-              create: socialLinks.map((s) => ({
-                url: s.url,
-              })),
-            }
+            deleteMany: {},
+            create: socialLinks.map((s) => ({
+              url: s.url,
+            })),
+          }
           : undefined,
         galleryLinks: galleryLinks
           ? {
-              deleteMany: {},
-              create: galleryLinks.map((g) => ({
-                name: g.name,
-                url: g.url,
-              })),
-            }
+            deleteMany: {},
+            create: galleryLinks.map((g) => ({
+              name: g.name,
+              url: g.url,
+            })),
+          }
           : undefined,
       },
       include: {
@@ -688,18 +688,18 @@ export const getOrganizationEventStats = cache(
 
       const upcomingEventHighlight = nextUpcoming?.startDate
         ? {
-            id: nextUpcoming.id,
-            title: nextUpcoming.title,
-            startDate: nextUpcoming.startDate,
-          }
+          id: nextUpcoming.id,
+          title: nextUpcoming.title,
+          startDate: nextUpcoming.startDate,
+        }
         : undefined;
 
       const recentEventHighlight = recentEnded?.endDate
         ? {
-            id: recentEnded.id,
-            title: recentEnded.title,
-            endDate: recentEnded.endDate,
-          }
+          id: recentEnded.id,
+          title: recentEnded.title,
+          endDate: recentEnded.endDate,
+        }
         : undefined;
 
       const stats = {
@@ -718,10 +718,10 @@ export const getOrganizationEventStats = cache(
         mostAttendedEvent:
           mostAttended && mostAttended._count.tickets > 0
             ? {
-                id: mostAttended.id,
-                title: mostAttended.title,
-                attendees: mostAttended._count.tickets,
-              }
+              id: mostAttended.id,
+              title: mostAttended.title,
+              attendees: mostAttended._count.tickets,
+            }
             : undefined,
         upcomingEvent: upcomingEventHighlight,
         recentEvent: recentEventHighlight,
@@ -902,9 +902,9 @@ export const getEventDetailStats = cache(async (eventId: string) => {
         _sum: { subtotal: true },
       }),
       prisma.payment.aggregate({
-        where: { 
-            status: "completed",
-            votes: { some: { eventId } }
+        where: {
+          status: "completed",
+          votes: { some: { eventId } }
         },
         _sum: { amount: true },
       }),
@@ -1033,10 +1033,10 @@ export const getTicketTrend = cache(
     try {
       const orders = await prisma.ticketOrder.findMany({
         where: { eventId, status: { in: ["paid", "confirmed"] } },
-        select: { 
-          createdAt: true, 
-          subtotal: true, 
-          tickets: { select: { id: true } } 
+        select: {
+          createdAt: true,
+          subtotal: true,
+          tickets: { select: { id: true } }
         },
         orderBy: { createdAt: "asc" },
       });
@@ -1130,7 +1130,7 @@ export const getEventVoteTransactions = cache(
   ) => {
     try {
       const { limit = 10, offset = 0, status = "completed", search, sortBy = "createdAt", sortDir = "desc" } = options ?? {};
-      
+
       const where: any = {
         eventId,
         payment: { status },
@@ -1226,7 +1226,7 @@ export const getEventTicketTransactions = cache(
   ) => {
     try {
       const { limit = 10, offset = 0, status = ["paid", "confirmed"], search, sortBy = "createdAt", sortDir = "desc" } = options ?? {};
-      
+
       const where: any = {
         eventId,
         status: { in: status },
