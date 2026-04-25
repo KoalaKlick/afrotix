@@ -142,7 +142,7 @@ export function TestimonialsSection() {
     })
 
     return (
-        <Section as="section" contentClassName="py-20 mx-0" maxWidth="full" className="mx-0 px-0  overflow-clip">
+        <Section as="section" contentClassName="py-20 !px-0 !sm:px-0 !lg:px-0" maxWidth="full" className="mx-0 overflow-clip">
             <div className="text-center mb-12">
                 <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-gray-900 mb-4">
                     Trusted By Event Creators

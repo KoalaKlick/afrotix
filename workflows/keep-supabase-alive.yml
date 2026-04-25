@@ -1,0 +1,29 @@
+name: Keep Supabase Alive
+on:
+  schedule:
+    - cron: '0 9 * * 1,4'  # Runs every Monday & Thursday at 9AM UTC
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install Supabase client
+        run: npm install @supabase/supabase-js --force
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node -e "
+          (async () => {
+            const { createClient } = require('@supabase/supabase-js');
+            const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+            const { data, error } = await supabase.from('events').select('*').limit(1);
+            console.log(error ? 'Error: ' + error.message : 'Ping successful:', data);
+          })();
+          "
