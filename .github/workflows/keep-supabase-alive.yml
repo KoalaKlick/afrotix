@@ -13,12 +13,18 @@ jobs:
         with:
           node-version: '24'
       - name: Install Supabase client
-        run: npm install @supabase/supabase-js --force
+        run: |
+          mkdir supabase-ping
+          cd supabase-ping
+          npm init -y
+          npm install @supabase/supabase-js
+
       - name: Ping Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL}}
           SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY}}
         run: |
+          cd supabase-ping
           node -e "
           (async () => {
             const { createClient } = require('@supabase/supabase-js');
@@ -26,4 +32,4 @@ jobs:
             const { data, error } = await supabase.from('events').select('*').limit(1);
             console.log(error ? 'Error: ' + error.message : 'Ping successful:', data);
           })();
-          "
+        "
