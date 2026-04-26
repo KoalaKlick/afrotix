@@ -1,7 +1,8 @@
 name: Keep Supabase Alive
+
 on:
   schedule:
-    - cron: '0 9 * * 1,4'  # Runs every Monday & Thursday at 9AM UTC
+    - cron: '0 9 * * 1,4'
   workflow_dispatch:
 
 jobs:
@@ -9,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-node@v3
         with:
           node-version: '24'
+
       - name: Install Supabase client
         run: |
           mkdir supabase-ping
@@ -21,8 +24,8 @@ jobs:
 
       - name: Ping Supabase
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL}}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY}}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd supabase-ping
           node -e "
@@ -32,4 +35,4 @@ jobs:
             const { data, error } = await supabase.from('events').select('*').limit(1);
             console.log(error ? 'Error: ' + error.message : 'Ping successful:', data);
           })();
-        "
+          "
