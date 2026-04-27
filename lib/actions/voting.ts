@@ -859,3 +859,93 @@ export async function checkUserVoteStatus(categoryId: string): Promise<ActionRes
         return { success: false, error: "Failed to check vote status" };
     }
 }
+/**
+ * Cast a vote using an Event Member unique code.
+ */
+export async function castMemberVote(
+    data: {
+        eventId: string;
+        categoryId: string;
+        optionId: string;
+        uniqueCode: string;
+    }
+): Promise<ActionResult<{ id: string }>> {
+    try {
+        const { eventId, categoryId, optionId, uniqueCode } = data;
+
+        // Verify member code
+        const member = await prisma.eventMember.findFirst({
+            where: {
+                eventId,
+                uniqueCode,
+            },
+        });
+
+        if (!member) {
+            return { success: false, error: "Invalid unique code" };
+        }
+
+        // Get category to check maxVotesPerUser
+        const category = await getVotingCategoryById(categoryId);
+        if (!category) {
+            return { success: false, error: "Category not found" };
+        }
+
+        // Check how many times this member has voted in this category
+        const existingVoteCount = await prisma.vote.count({
+            where: {
+                categoryId,
+                eventMemberId: member.id,
+            },
+        });
+
+        if (existingVoteCount >= category.maxVotesPerUser) {
+            return { success: false, error: `This code has already been used for ${category.maxVotesPerUser} vote(s) in this category` };
+        }
+
+        // Create vote record
+        const vote = await prisma.vote.create({
+            data: {
+                eventId,
+                categoryId,
+                optionId,
+                eventMemberId: member.id,
+                voterEmail: member.email,
+                voteCount: 1,
+            },
+        });
+
+        // Increment the nominee's vote count
+        await prisma.votingOption.update({
+            where: { id: optionId },
+            data: { votesCount: { increment: 1 } },
+        });
+
+        // Update member status to 'voted' if not already
+        if (member.status !== "voted") {
+            await prisma.eventMember.update({
+                where: { id: member.id },
+                data: { status: "voted" },
+            });
+        }
+
+        // Revalidate admin paths
+        revalidatePath(`/dashboard/events/${eventId}`);
+        
+        // Revalidate public paths
+        const event = await prisma.event.findUnique({
+            where: { id: eventId },
+            include: { organization: { select: { slug: true } } },
+        });
+        
+        if (event) {
+            revalidatePath(`/${event.organization.slug}/event/${event.slug}`);
+            revalidatePath(`/${event.organization.slug}/event/${event.slug}/category/${categoryId}`);
+        }
+
+        return { success: true, data: { id: vote.id } };
+    } catch (error) {
+        console.error("[Action] Error casting member vote:", error);
+        return { success: false, error: "Failed to cast vote" };
+    }
+}

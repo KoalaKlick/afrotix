@@ -146,3 +146,9 @@ enum PayoutStatus {
   failed
   cancelled
 }
+
+enum EventMemberStatus {
+  invited
+  attended
+  voted
+}

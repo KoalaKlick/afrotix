@@ -69,7 +69,6 @@ export function HeroSection() {
                                 Log in
                             </Link>
                             {/* Africa map clip as CTA */}
-
                         </div>
                     </div>
 

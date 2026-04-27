@@ -39,6 +39,7 @@ model Event {
   votes            Vote[]
   votingCategories VotingCategory[]
   votingOptions    VotingOption[]
+  members          EventMember[]
 
   @@unique([organizationId, slug])
   @@index([organizationId], map: "idx_events_organization")

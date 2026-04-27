@@ -110,6 +110,8 @@ model Vote {
   option           VotingOption    @relation(fields: [optionId], references: [id], onDelete: Cascade)
   payment          Payment?        @relation(fields: [paymentId], references: [id])
   voter            Profile?        @relation(fields: [voterId], references: [id])
+  eventMemberId    String?         @map("event_member_id") @db.Uuid
+  eventMember      EventMember?    @relation(fields: [eventMemberId], references: [id])
 
   @@index([eventId], map: "idx_votes_event")
   @@index([optionId], map: "idx_votes_option")
