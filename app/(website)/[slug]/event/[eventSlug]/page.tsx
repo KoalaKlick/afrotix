@@ -365,7 +365,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                 <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                     About the Event.
                                 </h2>
-                                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-img:rounded-md prose-a:text-primary">
+                                <div className="prose prose-sm max-w-none text-justify dark:prose-invert prose-p:text-muted-foreground prose-a:text-primary md:[&_img]:max-w-[70%] [&_a]:text-brand-primary hover:[&_a]:text-brand-primary/70 [&_a]:italic [&_img]:rounded-md [&_img]:h-auto [&_blockquote]:border-l-4 [&_blockquote]:border-brand-primary [&_blockquote]:bg-brand-primary/5 [&_blockquote]:p-4 [&_blockquote]:my-4 [&_blockquote]:italic [&_blockquote]:rounded-r-md">
                                     {event.description ? (
                                         <div dangerouslySetInnerHTML={{ __html: event.description }} />
                                     ) : (

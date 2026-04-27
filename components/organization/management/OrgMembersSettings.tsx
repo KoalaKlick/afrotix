@@ -23,7 +23,7 @@ import {
 import type { OrganizationRole } from "@/lib/generated/prisma";
 import { getAvatarUrl } from "@/lib/image-url-utils";
 import { cn } from "@/lib/utils";
-import { OrgDataTable, type Column } from "./OrgDataTable";
+import { DataTable, type Column } from "@/components/shared/DataTable";
 
 interface Member {
     id: string;
@@ -179,7 +179,7 @@ export function OrgMembersSettings({ organizationId, members, currentUserId }: O
     ];
 
     return (
-        <OrgDataTable
+        <DataTable
             icon={<Users className="h-5 w-5" />}
             title={`Members (${members.length})`}
             columns={columns}

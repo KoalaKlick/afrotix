@@ -8,7 +8,7 @@ import { Avatar } from "@/components/shared/image/avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { cancelInvitation } from "@/lib/actions/organization";
 import type { InvitationStatus, OrganizationRole } from "@/lib/generated/prisma";
-import { OrgDataTable, type Column } from "./OrgDataTable";
+import { DataTable, type Column } from "@/components/shared/DataTable";
 
 interface SentInvitation {
     id: string;
@@ -149,7 +149,7 @@ export function OrgInvitationsSettings({ organizationId, invitations }: OrgInvit
         : "Sent Invitations";
 
     return (
-        <OrgDataTable
+        <DataTable
             icon={<Mail className="h-5 w-5" />}
             title={title}
             columns={columns}

@@ -40,10 +40,16 @@ export function RichTextEditor({ value = "", onChange, placeholder, minimal = fa
 
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                blockquote: {
+                    HTMLAttributes: {
+                        class: 'border-l-4 border-primary bg-primary/5 p-4 my-4 italic rounded-r-md',
+                    },
+                },
+            }),
             ImageExtension.configure({
                 HTMLAttributes: {
-                    class: 'rounded-md max-w-full h-auto my-4',
+                    class: 'rounded-md max-w-[60%] h-auto my-4',
                 },
             }),
             LinkExtension.configure({

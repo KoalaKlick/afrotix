@@ -282,12 +282,12 @@ export function PublicRegistrationForm({
                                     {/* Dynamic Fields */}
                                     {registrationFields.length > 0 && (
                                         <div className="pt-4 space-y-6 border-t border-dashed">
-                                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">Additional Information</h3>
+                                            <p className="font-semibold text-base uppercase text-brand-primary">Additional Information</p>
                                             <div className="space-y-4">
                                                 {registrationFields.map(field => (
                                                     <div key={field.id} className="space-y-2">
                                                         {field.type !== "checkbox" && (
-                                                            <Label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
+                                                            <Label className="">
                                                                 <ClipboardCheck className="size-3" /> 
                                                                 {field.label} {field.isRequired && <span className="text-destructive">*</span>}
                                                             </Label>

@@ -15,7 +15,7 @@ export interface Column<T> {
     className?: string;
 }
 
-interface OrgDataTableProps<T> {
+interface DataTableProps<T> {
     readonly icon: ReactNode;
     readonly title: string;
     readonly columns: Column<T>[];
@@ -25,7 +25,7 @@ interface OrgDataTableProps<T> {
     readonly emptyState?: ReactNode;
 }
 
-export function OrgDataTable<T>({
+export function DataTable<T>({
     icon,
     title,
     columns,
@@ -33,7 +33,7 @@ export function OrgDataTable<T>({
     keyExtractor,
     headerAction,
     emptyState,
-}: OrgDataTableProps<T>) {
+}: DataTableProps<T>) {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
