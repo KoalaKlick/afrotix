@@ -13,6 +13,7 @@ export type CreateEventMemberInput = {
   name: string;
   email?: string;
   phone?: string;
+  responses?: any;
 };
 
 /**
@@ -36,7 +37,11 @@ export async function addEventMember(data: CreateEventMemberInput) {
 
     return await prisma.eventMember.create({
       data: {
-        ...data,
+        eventId: data.eventId,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        responses: data.responses,
         uniqueCode,
         status: "invited",
       },
@@ -86,6 +91,21 @@ export const getEventMembers = cache(async (eventId: string) => {
     });
   } catch (error) {
     logger.error(error, "[DAL] Error fetching event members:");
+    return [];
+  }
+});
+
+/**
+ * Get registration fields for an event
+ */
+export const getRegistrationFields = cache(async (eventId: string) => {
+  try {
+    return await prisma.eventRegistrationField.findMany({
+      where: { eventId },
+      orderBy: { orderIdx: "asc" },
+    });
+  } catch (error) {
+    logger.error(error, "[DAL] Error fetching registration fields:");
     return [];
   }
 });

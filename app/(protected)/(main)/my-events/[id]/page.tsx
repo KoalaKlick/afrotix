@@ -13,6 +13,7 @@ import {
 import { getVotingCategories } from "@/lib/dal/voting";
 import { normalizeFieldType } from "@/lib/types/voting";
 import { getTicketTypesByEventId } from "@/lib/dal/ticket";
+import { getEventMembers, getRegistrationFields } from "@/lib/dal/event-member";
 import { EventDetailClient } from "@/components/event/EventDetailClient";
 import { PageHeader } from "@/components/shared/page-header";
 import type { EventDetailEvent } from "@/lib/types/event";
@@ -80,8 +81,8 @@ export default async function EventDetailPage({
     redirect("/my-events");
   }
 
-  // Get voting categories, event stats, and tickets in parallel
-  const [votingCategories, eventStats, voteTrend, ticketTypes, voteTransactions, ticketTransactions, ticketTrend, ticketTypeSales] =
+  // Get voting categories, event stats, tickets, and members in parallel
+  const [votingCategories, eventStats, voteTrend, ticketTypes, voteTransactions, ticketTransactions, ticketTrend, ticketTypeSales, members, registrationFields] =
     await Promise.all([
       event.type === "voting" || event.type === "hybrid"
         ? getVotingCategories(event.id, true, true)
@@ -105,6 +106,8 @@ export default async function EventDetailPage({
       event.type === "ticketed" || event.type === "hybrid"
         ? getTicketTypeSales(event.id)
         : Promise.resolve([]),
+      getEventMembers(event.id),
+      getRegistrationFields(event.id),
     ]);
 
   return (
@@ -146,6 +149,16 @@ export default async function EventDetailPage({
             updatedAt: t.updatedAt.toISOString(),
             salesStart: t.salesStart?.toISOString() ?? null,
             salesEnd: t.salesEnd?.toISOString() ?? null,
+          }))}
+          members={members.map(m => ({
+            ...m,
+            createdAt: m.createdAt.toISOString(),
+            updatedAt: m.updatedAt.toISOString(),
+          }))}
+          registrationFields={registrationFields.map(f => ({
+            ...f,
+            createdAt: f.createdAt.toISOString(),
+            updatedAt: f.updatedAt.toISOString(),
           }))}
         />
       </div>

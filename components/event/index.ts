@@ -33,3 +33,4 @@ export { CategoryDetailModal } from "./CategoryDetailModal";
 export { VoteTransactionsTable } from "./VoteTransactionsTable";
 export { TicketManager } from "./ticket-manager/TicketManager";
 export { EventPayoutsTab } from "./EventPayoutsTab";
+export { MemberManager } from "./MemberManager";

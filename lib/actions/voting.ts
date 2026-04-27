@@ -30,7 +30,7 @@ import {
     rejectNomination,
     submitPublicNomination,
     generateNomineeCode,
-    hasUserVotedInCategory,
+    hasVotedInCategory,
 } from "@/lib/dal/voting";
 import { getEventById } from "@/lib/dal/event";
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
@@ -689,102 +689,6 @@ export async function submitPublicNominationAction(
     };
 }
 
-// ===================
-// INTERNAL VOTE CASTING (FREE)
-// ===================
-
-/**
- * Cast a free internal vote (no payment required).
- * Only allowed for internal voting events, by authenticated org members.
- * Enforces maxVotesPerUser per category.
- * Never reveals who voted for whom — only tracks voter_id for dedup.
- */
-export async function castInternalVote(
-    data: {
-        eventId: string;
-        categoryId: string;
-        optionId: string;
-    }
-): Promise<ActionResult<{ id: string }>> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return { success: false, error: "Not authenticated" };
-    }
-
-    // Get event and verify it's an internal voting event
-    const event = await getEventById(data.eventId);
-    if (!event) {
-        return { success: false, error: "Event not found" };
-    }
-
-    if ((event as any).votingMode !== "internal") {
-        return { success: false, error: "This event requires payment to vote" };
-    }
-
-    // Verify user is org member
-    const role = await getUserRoleInOrganization(user.id, event.organizationId);
-    if (!role) {
-        return { success: false, error: "Only organization members can vote in internal events" };
-    }
-
-    // Get category to check maxVotesPerUser
-    const category = await getVotingCategoryById(data.categoryId);
-    if (!category) {
-        return { success: false, error: "Category not found" };
-    }
-
-    // Check how many times user has voted in this category
-    const existingVoteCount = await prisma.vote.count({
-        where: {
-            categoryId: data.categoryId,
-            voterId: user.id,
-        },
-    });
-
-    if (existingVoteCount >= category.maxVotesPerUser) {
-        return { success: false, error: `You have already used your ${category.maxVotesPerUser} vote(s) in this category` };
-    }
-
-    try {
-        // Create vote record (no payment)
-        const vote = await prisma.vote.create({
-            data: {
-                eventId: data.eventId,
-                categoryId: data.categoryId,
-                optionId: data.optionId,
-                voterId: user.id,
-                voteCount: 1,
-            },
-        });
-
-        // Increment the nominee's vote count  
-        await prisma.votingOption.update({
-            where: { id: data.optionId },
-            data: { votesCount: { increment: 1 } },
-        });
-
-        // Revalidate admin paths
-        revalidatePath(`/my-events/${data.eventId}`);
-        
-        // Revalidate public paths
-        const event = await prisma.event.findUnique({
-            where: { id: data.eventId },
-            include: { organization: { select: { slug: true } } },
-        });
-        
-        if (event) {
-            revalidatePath(`/${event.organization.slug}/event/${event.slug}`);
-            revalidatePath(`/${event.organization.slug}/event/${event.slug}/category/${data.categoryId}`);
-        }
-
-        return { success: true, data: { id: vote.id } };
-    } catch (error) {
-        console.error("[Action] Error casting internal vote:", error);
-        return { success: false, error: "Failed to cast vote" };
-    }
-}
 
 /**
  * Revalidate public voting paths (e.g., after payment success)
@@ -843,19 +747,31 @@ export async function getInternalVoteParticipationAction(
 /**
  * Check if the current authenticated user has already voted in a category.
  */
-export async function checkUserVoteStatus(categoryId: string): Promise<ActionResult<{ hasVoted: boolean }>> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return { success: false, error: "Not authenticated" };
-    }
-
+/**
+ * Check if a user or event member has already voted in a category.
+ */
+export async function checkVoteStatusAction(categoryId: string, uniqueCode?: string): Promise<ActionResult<{ hasVoted: boolean }>> {
     try {
-        const hasVoted = await hasUserVotedInCategory(user.id, categoryId);
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        let eventMemberId: string | undefined;
+        if (uniqueCode) {
+            const member = await prisma.eventMember.findUnique({
+                where: { uniqueCode },
+                select: { id: true }
+            });
+            eventMemberId = member?.id;
+        }
+
+        const hasVoted = await hasVotedInCategory(categoryId, { 
+            voterId: user?.id, 
+            eventMemberId 
+        });
+        
         return { success: true, data: { hasVoted } };
     } catch (error) {
-        console.error("[Action] Error checking user vote status:", error);
+        console.error("[Action] Error checking vote status:", error);
         return { success: false, error: "Failed to check vote status" };
     }
 }

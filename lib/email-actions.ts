@@ -24,7 +24,7 @@ export async function sendEventCodeEmail({
     );
 
     const options = {
-      from: process.env.SMTP_FROM || "noreply@afrotix.com",
+      from: `"${process.env.SMTP_FROM_NAME || "Afrotix"}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
       to: email,
       subject: `Your Unique Code for ${eventName}`,
       html: emailHtml,

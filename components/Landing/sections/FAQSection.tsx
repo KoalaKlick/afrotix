@@ -12,7 +12,7 @@ export function FAQSection() {
                     <AccordionItem value="item-1">
                         <AccordionTrigger>What types of events can I create?</AccordionTrigger>
                         <AccordionContent>
-                            You can create voting/polling events, ticketed events (paid or free), and advertisement/promotion events. Each type comes with tailored features for maximum engagement.
+                            You can create voting/polling events, ticketed events (paid or free), and standard showcase events. Each type comes with tailored features for maximum engagement.
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-2">

@@ -276,7 +276,7 @@ export function StatusBadge({
     showIcon = true,
     size = 'sm'
 }: StatusBadgeProps): React.ReactElement {
-    const normalizedVariant = variant.toLowerCase() as StatusVariant
+    const normalizedVariant = (variant || 'default').toLowerCase() as StatusVariant
     const config = statusConfigs[normalizedVariant] || statusConfigs.default
     const Icon = config.icon
     const displayText = text || config.defaultText || variant

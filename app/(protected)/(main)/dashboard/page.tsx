@@ -44,7 +44,7 @@ export default async function DashboardPage() {
 
   const stats: EventStatsData = eventStats ?? {
     total: 0, published: 0, draft: 0, ongoing: 0, ended: 0, cancelled: 0, upcoming: 0,
-    byType: { voting: 0, ticketed: 0, hybrid: 0, advertisement: 0 },
+    byType: { voting: 0, ticketed: 0, hybrid: 0, standard: 0 },
     totalTicketsSold: 0, totalRevenue: 0, totalAttendees: 0, totalVotes: 0,
   };
 

@@ -17,7 +17,7 @@ export function PublicEventCard({ event, organizationSlug, className }: PublicEv
     const accentColors = {
         voting: 'text-brand-tertiary',
         ticketed: 'text-brand-secondary',
-        advertisement: 'text-brand-primary',
+        standard: 'text-brand-primary',
         hybrid: 'text-brand-primary',
     };
 

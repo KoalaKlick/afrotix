@@ -41,7 +41,7 @@ export interface EventStatsData {
         voting: number;
         ticketed: number;
         hybrid: number;
-        advertisement: number;
+        standard: number;
     };
 
     // Engagement metrics
@@ -119,7 +119,7 @@ export const defaultEventStats: EventStatsData = {
         voting: 0,
         ticketed: 0,
         hybrid: 0,
-        advertisement: 0,
+        standard: 0,
     },
     totalTicketsSold: 0,
     totalRevenue: 0,

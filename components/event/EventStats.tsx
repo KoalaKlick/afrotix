@@ -249,7 +249,7 @@ export interface EventStatsData {
         voting: number;
         ticketed: number;
         hybrid: number;
-        advertisement: number;
+        standard: number;
     };
     totalTicketsSold: number;
     totalRevenue: number;
@@ -313,7 +313,7 @@ export function EventStats({ stats, showEngagement = true, showByType = false, c
                         <StatCard label="Voting" value={stats.byType.voting} iconSrc={statIcons.vote} />
                         <StatCard label="Ticketed" value={stats.byType.ticketed} iconSrc={statIcons.ticketRed} />
                         <StatCard label="Hybrid" value={stats.byType.hybrid} iconSrc={statIcons.ongoingGreen} />
-                        <StatCard label="Advertisement" value={stats.byType.advertisement} iconSrc={statIcons.plus} />
+                        <StatCard label="Standard" value={stats.byType.standard} iconSrc={statIcons.plus} />
                     </StatsGrid>
                 </StatsSection>
             )}

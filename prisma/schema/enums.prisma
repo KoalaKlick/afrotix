@@ -21,7 +21,7 @@ enum MembershipRequestStatus {
 enum EventType {
   voting
   ticketed
-  advertisement
+  standard
   hybrid
 }
 

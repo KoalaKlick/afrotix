@@ -20,7 +20,7 @@ interface EventTypePieChartProps {
         voting: number;
         ticketed: number;
         hybrid: number;
-        advertisement: number;
+        standard: number;
     };
 }
 
@@ -28,14 +28,14 @@ const COLORS = [
     "var(--color-primary-500)",     // red  → voting
     "var(--color-secondary-400)",   // gold → ticketed
     "var(--color-tertiary-500)",    // green → hybrid
-    "var(--color-sepia-500)",       // sepia → advertisement
+    "var(--color-sepia-500)",       // sepia → standard
 ];
 
 const chartConfig: ChartConfig = {
     voting: { label: "Voting", color: COLORS[0] },
     ticketed: { label: "Ticketed", color: COLORS[1] },
     hybrid: { label: "Hybrid", color: COLORS[2] },
-    advertisement: { label: "Promo", color: COLORS[3] },
+    standard: { label: "Standard", color: COLORS[3] },
 };
 
 export function EventTypePieChart({ byType }: EventTypePieChartProps) {
@@ -43,7 +43,7 @@ export function EventTypePieChart({ byType }: EventTypePieChartProps) {
         { name: "Voting", value: byType.voting, key: "voting" },
         { name: "Ticketed", value: byType.ticketed, key: "ticketed" },
         { name: "Hybrid", value: byType.hybrid, key: "hybrid" },
-        { name: "Promo", value: byType.advertisement, key: "advertisement" },
+        { name: "Standard", value: byType.standard, key: "standard" },
     ].filter((d) => d.value > 0);
 
     const total = data.reduce((sum, d) => sum + d.value, 0);
@@ -65,7 +65,7 @@ export function EventTypePieChart({ byType }: EventTypePieChartProps) {
                             <Pie
                                 data={data.map((entry) => ({
                                     ...entry,
-                                    fill: COLORS[["voting", "ticketed", "hybrid", "advertisement"].indexOf(entry.key)],
+                                    fill: COLORS[["voting", "ticketed", "hybrid", "standard"].indexOf(entry.key)],
                                 }))}
                                 cx="50%"
                                 cy="50%"

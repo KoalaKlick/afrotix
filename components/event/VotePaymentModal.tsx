@@ -29,7 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { VotingOption } from "@/lib/types/voting";
 import { usePaystack } from "@/hooks/usePaystack";
-import { revalidatePublicVoting, checkUserVoteStatus } from "@/lib/actions/voting";
+import { revalidatePublicVoting, checkVoteStatusAction, castMemberVote } from "@/lib/actions/voting";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,6 +71,7 @@ export function VotePaymentModal({
     const [errorMsg, setErrorMsg] = useState("");
     const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false);
     const [checkingVoteStatus, setCheckingVoteStatus] = useState(false);
+    const [uniqueCode, setUniqueCode] = useState("");
 
     const { resumeTransaction } = usePaystack();
 
@@ -85,6 +86,7 @@ export function VotePaymentModal({
         setLoading(false);
         setErrorMsg("");
         setHasAlreadyVoted(false);
+        setUniqueCode("");
     }, []);
 
     const handleClose = useCallback(
@@ -97,11 +99,11 @@ export function VotePaymentModal({
 
     // --- Check Vote Status (internal only) ---
     const checkVoteStatus = useCallback(async () => {
-        if (!nominee || !open || !isInternalVoting) return;
+        if (!nominee || !open || !isInternalVoting || uniqueCode.length < 4) return;
 
         setCheckingVoteStatus(true);
         try {
-            const result = await checkUserVoteStatus(categoryId);
+            const result = await checkVoteStatusAction(categoryId, uniqueCode);
             if (result.success) {
                 setHasAlreadyVoted(result.data.hasVoted);
             }
@@ -110,11 +112,11 @@ export function VotePaymentModal({
         } finally {
             setCheckingVoteStatus(false);
         }
-    }, [nominee, open, categoryId, isInternalVoting]);
+    }, [nominee, open, categoryId, isInternalVoting, uniqueCode]);
 
     useEffect(() => {
-        if (open) checkVoteStatus();
-    }, [open, checkVoteStatus]);
+        if (open && uniqueCode.length >= 8) checkVoteStatus();
+    }, [open, uniqueCode, checkVoteStatus]);
 
     const increment = useCallback(() => {
         setVoteCount((prev) => prev + 1);
@@ -126,17 +128,17 @@ export function VotePaymentModal({
 
     // --- Internal Vote (Free) ---
     const handleInternalVote = useCallback(async () => {
-        if (!nominee) return;
+        if (!nominee || !uniqueCode) return;
 
         setLoading(true);
         setErrorMsg("");
 
         try {
-            const { castInternalVote } = await import("@/lib/actions/voting");
-            const result = await castInternalVote({
+            const result = await castMemberVote({
                 eventId,
                 categoryId,
                 optionId: nominee.id,
+                uniqueCode: uniqueCode.trim().toUpperCase(),
             });
 
             if (result.success) {
@@ -153,7 +155,7 @@ export function VotePaymentModal({
         } finally {
             setLoading(false);
         }
-    }, [nominee, eventId, categoryId, router]);
+    }, [nominee, eventId, categoryId, uniqueCode, router]);
 
     // --- Public Vote (Paid) ---
     const handleSubmitPayment = useCallback(async () => {
@@ -310,11 +312,34 @@ export function VotePaymentModal({
                                 <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50/80 border border-blue-100">
                                     <Lock className="w-5 h-5 text-blue-600 shrink-0" />
                                     <div>
-                                        <p className="text-sm font-semibold text-blue-900">Internal Vote</p>
+                                        <p className="text-sm font-semibold text-blue-900">Member Access</p>
                                         <p className="text-xs text-blue-700">
-                                            Free vote — organization members only
+                                            Enter your unique access code to vote
                                         </p>
                                     </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="access-code" className="text-sm font-semibold">
+                                        Access Code
+                                    </Label>
+                                    <div className="relative">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                                            <Lock className="w-4 h-4" />
+                                        </div>
+                                        <Input
+                                            id="access-code"
+                                            placeholder="ABC-12345"
+                                            value={uniqueCode}
+                                            onChange={(e) => setUniqueCode(e.target.value.toUpperCase())}
+                                            className="h-11 pl-10 rounded-lg font-mono uppercase"
+                                            maxLength={8}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground pl-1">
+                                        Check your email for the 8-character code sent by the organizer
+                                    </p>
                                 </div>
 
                                 <Button
@@ -322,7 +347,7 @@ export function VotePaymentModal({
                                     size="lg"
                                     className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
                                     onClick={handleInternalVote}
-                                    disabled={loading || hasAlreadyVoted || checkingVoteStatus}
+                                    disabled={loading || hasAlreadyVoted || checkingVoteStatus || uniqueCode.length < 8}
                                 >
                                     {loading ? (
                                         <>
@@ -332,12 +357,12 @@ export function VotePaymentModal({
                                     ) : checkingVoteStatus ? (
                                         <>
                                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Checking status...
+                                            Checking code...
                                         </>
                                     ) : hasAlreadyVoted ? (
                                         <>
                                             <CheckCircle2 className="w-4 h-4 mr-2" />
-                                            Already Voted
+                                            Already Voted with this Code
                                         </>
                                     ) : (
                                         <>

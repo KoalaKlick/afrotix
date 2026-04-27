@@ -8,3 +8,4 @@ export * from "./promoter";
 export * from "./organization";
 export * from "./event";
 export * from "./voting";
+export * from "./event-member";

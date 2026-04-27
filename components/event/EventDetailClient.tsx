@@ -32,14 +32,17 @@ import {
   LayoutDashboard,
   Banknote,
   ImageIcon,
+  UserPlus,
+  Calendar,
 } from "lucide-react";
 import {
-  VotingManager,
-  EventOverviewTab,
-  DeleteEventDialog,
-  EventSettingsTab,
   TicketManager,
+  MemberManager,
   type VotingChartCategory,
+  EventOverviewTab,
+  VotingManager,
+  EventSettingsTab,
+  DeleteEventDialog,
 } from "@/components/event";
 import type { TicketType } from "@/lib/types/ticket";
 import type { VotingCategory, VotingOption } from "@/lib/types/voting";
@@ -119,13 +122,15 @@ interface EventDetailClientProps {
     }>;
     total: number;
   };
+  readonly members?: any[];
+  readonly registrationFields?: any[];
 }
 
 const typeIcons: Record<string, typeof Ticket> = {
   ticketed: Ticket,
   voting: Vote,
   hybrid: Layers,
-  advertisement: Megaphone,
+  standard: Calendar,
 };
 
 const statusColors: Record<string, string> = {
@@ -149,11 +154,14 @@ export function EventDetailClient({
   ticketTypes = [],
   initialVoteTransactions = { transactions: [], total: 0 },
   initialTicketTransactions = { transactions: [], total: 0 },
+  members = [],
+  registrationFields = [],
 }: EventDetailClientProps) {
   const { organization } = event;
   const organizationSlug = organization?.slug;
   const hasPaymentAccount = !!organization?.paystackAccountNumber;
   const router = useRouter();
+  const showMembers = event.type === "standard" || event.votingMode === "internal";
   const [isPending, startTransition] = useTransition();
   const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
@@ -659,32 +667,39 @@ export function EventDetailClient({
         <TabsList
           variant="afro"
           className={cn(
-            "grid w-full",
+            "grid w-full overflow-x-auto scrollbar-none",
             (() => {
-              let cols = 2; // Overview + Settings
+              let cols = 2;
               if (event.type === "voting" || event.type === "hybrid") cols++;
               if (event.type === "ticketed" || event.type === "hybrid") cols++;
+              if (showMembers) cols++;
               return `grid-cols-${cols}`;
             })(),
           )}
         >
-          <TabsTrigger value="overview" className="gap-1.5">
+          <TabsTrigger value="overview" className="gap-1.5 whitespace-nowrap">
             <LayoutDashboard className="size-4" />
             Overview
           </TabsTrigger>
+          {showMembers && (
+            <TabsTrigger value="members" className="gap-1.5 whitespace-nowrap">
+              <UserPlus className="size-4" />
+              Members
+            </TabsTrigger>
+          )}
           {(event.type === "voting" || event.type === "hybrid") && (
-            <TabsTrigger value="voting" className="gap-1.5">
+            <TabsTrigger value="voting" className="gap-1.5 whitespace-nowrap">
               <Vote className="size-4" />
               Voting
             </TabsTrigger>
           )}
           {(event.type === "ticketed" || event.type === "hybrid") && (
-            <TabsTrigger value="ticketing" className="gap-1.5">
+            <TabsTrigger value="ticketing" className="gap-1.5 whitespace-nowrap">
               <Ticket className="size-4" />
               Tickets
             </TabsTrigger>
           )}
-          <TabsTrigger value="settings" className="gap-1.5">
+          <TabsTrigger value="settings" className="gap-1.5 whitespace-nowrap">
             <Settings className="size-4" />
             Settings
           </TabsTrigger>
@@ -716,6 +731,20 @@ export function EventDetailClient({
         </TabsContent>
 
         {/* Removed Payouts TabContent */}
+
+        {/* Members Tab */}
+        {showMembers && (
+          <TabsContent value="members" className="space-y-4">
+            <div className="space-y-4">
+              <MemberManager 
+                eventId={event.id}
+                initialMembers={members}
+                registrationFields={registrationFields}
+                canEdit={canEdit}
+              />
+            </div>
+          </TabsContent>
+        )}
 
         {/* Voting Tab */}
         {(event.type === "voting" || event.type === "hybrid") && (

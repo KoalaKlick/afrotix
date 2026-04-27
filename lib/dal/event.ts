@@ -654,7 +654,7 @@ export const getOrganizationEventStats = cache(
       let total = 0;
       let draft = 0;
       let cancelled = 0;
-      const byType = { voting: 0, ticketed: 0, hybrid: 0, advertisement: 0 };
+      const byType = { voting: 0, ticketed: 0, hybrid: 0, standard: 0 };
 
       for (const group of statusTypeGroups) {
         const count = group._count;
@@ -740,7 +740,7 @@ export const getOrganizationEventStats = cache(
         ended: 0,
         cancelled: 0,
         upcoming: 0,
-        byType: { voting: 0, ticketed: 0, hybrid: 0, advertisement: 0 },
+        byType: { voting: 0, ticketed: 0, hybrid: 0, standard: 0 },
         totalTicketsSold: 0,
         totalRevenue: 0,
         totalAttendees: 0,

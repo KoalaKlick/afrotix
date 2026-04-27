@@ -752,42 +752,36 @@ export type VoteParticipant = {
 
 /**
  * Get internal vote participation for an event category.
- * Returns org members with hasVoted status.
+ * Returns Event Members with hasVoted status.
  * NEVER reveals which nominee they voted for.
  */
 export const getInternalVoteParticipation = cache(async (
     eventId: string,
-    categoryId: string,
-    organizationId: string
+    categoryId: string
 ): Promise<VoteParticipant[]> => {
     try {
-        // Get all org members
-        const members = await prisma.organizationMember.findMany({
-            where: { organizationId },
-            include: {
-                user: {
-                    select: { id: true, fullName: true },
-                },
-            },
+        // Get all event members
+        const members = await prisma.eventMember.findMany({
+            where: { eventId },
         });
 
-        // Get voter IDs who voted in this category (just IDs!)
-        const votedUserIds = await prisma.vote.findMany({
+        // Get member IDs who voted in this category
+        const votedMemberIds = await prisma.vote.findMany({
             where: {
                 eventId,
                 categoryId,
-                voterId: { not: null },
+                eventMemberId: { not: null },
             },
-            select: { voterId: true },
-            distinct: ["voterId"],
+            select: { eventMemberId: true },
+            distinct: ["eventMemberId"],
         });
 
-        const votedSet = new Set(votedUserIds.map(v => v.voterId));
+        const votedSet = new Set(votedMemberIds.map(v => v.eventMemberId));
 
         return members.map(m => ({
-            memberId: m.user.id,
-            fullName: m.user.fullName || "Unknown Member",
-            hasVoted: votedSet.has(m.user.id),
+            memberId: m.id,
+            fullName: m.name || "Unknown Member",
+            hasVoted: votedSet.has(m.id),
         }));
     } catch (error) {
         logger.error(error, "[DAL] Error fetching vote participation:");
@@ -796,20 +790,26 @@ export const getInternalVoteParticipation = cache(async (
 });
 
 /**
- * Check if a user has already voted in an event category.
+ * Check if a user or event member has already voted in an event category.
  */
-export async function hasUserVotedInCategory(voterId: string, categoryId: string): Promise<boolean> {
+export async function hasVotedInCategory(categoryId: string, options: { voterId?: string; eventMemberId?: string }): Promise<boolean> {
     try {
+        const { voterId, eventMemberId } = options;
+        if (!voterId && !eventMemberId) return false;
+
         const vote = await prisma.vote.findFirst({
             where: {
-                voterId,
                 categoryId,
+                OR: [
+                    ...(voterId ? [{ voterId }] : []),
+                    ...(eventMemberId ? [{ eventMemberId }] : []),
+                ],
             },
             select: { id: true },
         });
         return !!vote;
     } catch (error) {
-        logger.error(error, "[DAL] Error checking user vote status:");
+        logger.error(error, "[DAL] Error checking vote status:");
         return false;
     }
 }

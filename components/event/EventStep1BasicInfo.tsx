@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, Loader2, Ticket, Vote, Layers, Megaphone, Sparkles, Lock, Globe, Users } from "lucide-react";
+import { ArrowRight, Loader2, Ticket, Vote, Layers, Calendar, Sparkles, Lock, Globe, Users } from "lucide-react";
 import { validateEventStep1 } from "@/lib/actions/event";
 import { EVENT_TYPES, VOTING_MODES, isVotingEventType } from "@/lib/validations/event";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,7 @@ const typeIcons = {
     ticketed: Ticket,
     voting: Vote,
     hybrid: Layers,
-    advertisement: Megaphone,
+    standard: Calendar,
 };
 
 export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props) {

@@ -11,7 +11,7 @@ const EVENT_TYPES = [
     { label: "All", value: "" },
     { label: "Voting", value: "voting" },
     { label: "Ticketed", value: "ticketed" },
-    { label: "Advertisement", value: "advertisement" },
+    { label: "Standard", value: "standard" },
     { label: "Hybrid", value: "hybrid" },
 ]
 

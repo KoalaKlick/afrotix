@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/server"
-import { getEventBySlug, getOrganizationBySlug, getVotingCategories } from "@/lib/dal"
+import { getEventBySlug, getOrganizationBySlug, getVotingCategories, getRegistrationFields } from "@/lib/dal"
 import { canUserAccessEvent } from "@/lib/event-status"
 import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils"
 import { isUserMemberOf } from "@/lib/dal/organization"
@@ -12,8 +12,9 @@ import { PoweredByFooter } from "@/components/shared/PoweredByFooter"
 import { PublicTicketGrid } from "@/components/event/PublicTicketGrid"
 import Image from "next/image"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
+import { PublicRegistrationForm } from "@/components/event/PublicRegistrationForm"
 import { format } from "date-fns"
-import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, ArrowLeft, Lock } from "lucide-react"
+import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, ArrowLeft, Lock, Info } from "lucide-react"
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
 
@@ -79,13 +80,14 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
     const isOrganizationMember = user ? await isUserMemberOf(user.id, organization.id) : false
     if (!canUserAccessEvent(event, isOrganizationMember)) notFound()
 
-    const [votingCategories, ticketTypes] = await Promise.all([
+    const [votingCategories, ticketTypes, registrationFields] = await Promise.all([
         (event.type === "voting" || event.type === "hybrid")
             ? getVotingCategories(event.id)
             : Promise.resolve([]),
         (event.type === "ticketed" || event.type === "hybrid")
             ? getVisibleTicketTypesByEventId(event.id, isOrganizationMember)
             : Promise.resolve([]),
+        getRegistrationFields(event.id),
     ])
 
     const startDate = event.startDate ? new Date(event.startDate) : null
@@ -139,7 +141,6 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-6">
                             {event.title}
                         </h1>
-
                         {/* Event Schedule Bar */}
                         <div className="flex flex-wrap gap-4 items-center">
                             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
@@ -176,6 +177,25 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                         <span className="text-xs font-bold leading-none">{format(new Date(event.endDate), "MMM d, yyyy")}</span>
                                     </div>
                                 </div>
+                            )}
+                        </div>
+                        
+                        {/* Action row: Anchor + Registration button */}
+                        <div className="mt-8 flex items-center gap-3 justify-between">
+                            <a
+                                href="#details"
+                                className="inline-flex items-center gap-2 border border-white/30 hover:border-white/60 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded-full transition-all duration-200"
+                            >
+                                <Info className="w-3.5 h-3.5" />
+                                About Event
+                            </a>
+
+                            {(event.type === "standard" || (event.votingMode === "internal" && event.type !== "ticketed")) && (
+                                <PublicRegistrationForm 
+                                    eventId={event.id} 
+                                    eventName={event.title} 
+                                    registrationFields={registrationFields}
+                                />
                             )}
                         </div>
                     </div>

@@ -29,7 +29,7 @@ export const eventDescriptionSchema = z
     .or(z.literal(""));
 
 // Event type enum
-export const eventTypeSchema = z.enum(["voting", "ticketed", "advertisement", "hybrid"], {
+export const eventTypeSchema = z.enum(["voting", "ticketed", "standard", "hybrid"], {
     error: "Please select a valid event type",
 });
 
@@ -205,10 +205,10 @@ export const EVENT_TYPES = [
         icon: "Layers",
     },
     {
-        value: "advertisement" as const,
-        label: "Advertisement",
-        description: "Promote your event or business",
-        icon: "Megaphone",
+        value: "standard" as const,
+        label: "Standard Event",
+        description: "General event for showcase and attendance",
+        icon: "Calendar",
     },
 ] as const;
 

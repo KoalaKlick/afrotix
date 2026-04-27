@@ -24,7 +24,7 @@ const typeColors: Record<string, string> = {
     voting: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400",
     ticketed: "bg-secondary-100 text-secondary-700 dark:bg-secondary-900/30 dark:text-secondary-400",
     hybrid: "bg-tertiary-100 text-tertiary-700 dark:bg-tertiary-900/30 dark:text-tertiary-400",
-    advertisement: "bg-sepia-100 text-sepia-700 dark:bg-sepia-900/30 dark:text-sepia-400",
+    standard: "bg-sepia-100 text-sepia-700 dark:bg-sepia-900/30 dark:text-sepia-400",
 };
 
 export function OngoingEvents({ events }: OngoingEventsProps) {
