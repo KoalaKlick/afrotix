@@ -116,7 +116,7 @@ export function PublicRegistrationForm({
                         onValueChange={(val: string) => setResponses(prev => ({ ...prev, [field.id]: val }))}
                         required={field.isRequired}
                     >
-                        <SelectTrigger className="rounded-xl">
+                        <SelectTrigger >
                             <SelectValue placeholder={field.placeholder || "Select an option"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -147,7 +147,6 @@ export function PublicRegistrationForm({
                         type="number"
                         placeholder={field.placeholder || ""} 
                         onChange={(e) => setResponses(prev => ({ ...prev, [field.id]: e.target.value }))}
-                        className="rounded-xl"
                         required={field.isRequired}
                     />
                 );
@@ -156,7 +155,6 @@ export function PublicRegistrationForm({
                     <Input 
                         placeholder={field.placeholder || ""} 
                         onChange={(e) => setResponses(prev => ({ ...prev, [field.id]: e.target.value }))}
-                        className="rounded-xl"
                         required={field.isRequired}
                     />
                 );
@@ -172,16 +170,15 @@ export function PublicRegistrationForm({
                     // setIsSuccess(false);
                 }
             }}>
-                <SheetTrigger className="bg-green-500" asChild>
-                    <Button 
-                    >
+                <SheetTrigger asChild>
+                    <Button>
                         <span className="flex items-center gap-2">
                             Register for Entry
                             <ArrowRight className="size-3.5" />
                         </span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="sm:max-w-md w-full p-0 flex flex-col h-full border-l-0 sm:border-l">
+                <SheetContent side="right" className="sm:max-w-md w-full space-y-0  p-0 flex flex-col h-full border-l-0 sm:border-l">
                     <div className="h-2 bg-brand-secondary w-full" />
                     
                     {isSuccess && regData ? (
@@ -234,10 +231,6 @@ export function PublicRegistrationForm({
                     ) : (
                         <>
                             <SheetHeader className="p-6 text-left border-b bg-muted/20">
-                                <div className="flex items-center gap-2 text-brand-secondary mb-1">
-                                    <Sparkles className="size-4" />
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Attendance System</span>
-                                </div>
                                 <SheetTitle className="text-2xl font-black uppercase tracking-tight">Register for Access</SheetTitle>
                                 <SheetDescription className="text-xs">
                                     Provide your details below to receive a unique entry passcode.
@@ -249,7 +242,7 @@ export function PublicRegistrationForm({
                                     {/* Core Fields */}
                                     <div className="space-y-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
+                                            <Label htmlFor="name">
                                                 <User className="size-3" /> Full Name <span className="text-destructive">*</span>
                                             </Label>
                                             <Input 
@@ -261,7 +254,7 @@ export function PublicRegistrationForm({
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
+                                            <Label htmlFor="email"  >
                                                 <Mail className="size-3" /> Email Address <span className="text-destructive">*</span>
                                             </Label>
                                             <Input 
@@ -274,7 +267,7 @@ export function PublicRegistrationForm({
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
+                                            <Label htmlFor="phone">
                                                 <Phone className="size-3" /> Phone Number (Optional)
                                             </Label>
                                             <Input 
@@ -308,7 +301,7 @@ export function PublicRegistrationForm({
                                 </form>
                             </div>
 
-                            <SheetFooter className="p-6 border-t bg-muted/20">
+                            <SheetFooter className="p-6 bg-yellow-400 border-t bg-muted/20">
                                 <Button 
                                     form="reg-form"
                                     type="submit" 

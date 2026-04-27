@@ -400,6 +400,7 @@ export function OptionSheet({
                                     setForm(prev => ({ ...prev, description: val }))
                                 }
                                 placeholder="Brief description..."
+                                minimal
                             />
                         </div>
 

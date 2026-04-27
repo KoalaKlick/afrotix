@@ -225,6 +225,7 @@ export function PublicNominationModal({ eventId, category }: PublicNominationMod
                                 value={form.description}
                                 onChange={(val) => setForm(f => ({ ...f, description: val }))}
                                 placeholder="Tell us why..."
+                                minimal
                             />
                         </div>
 

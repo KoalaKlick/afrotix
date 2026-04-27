@@ -143,7 +143,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         </h1>
                         {/* Event Schedule Bar */}
                         <div className="flex flex-wrap gap-4 items-center">
-                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
+                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-4 py-2 text-white">
                                 <Calendar className="w-4 h-4 text-brand-secondary" />
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Date</span>
@@ -152,7 +152,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             </div>
 
                             {timeStr && (
-                                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
+                                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-4 py-2 text-white">
                                     <Clock className="w-4 h-4 text-brand-secondary" />
                                     <div className="flex flex-col">
                                         <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Time</span>
@@ -161,7 +161,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                 </div>
                             )}
 
-                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
+                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-4 py-2 text-white">
                                 <MapPin className="w-4 h-4 text-brand-secondary" />
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Venue</span>
@@ -170,7 +170,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                             </div>
 
                             {event.endDate && (
-                                <div className="flex items-center gap-2.5 bg-brand-tertiary/20 backdrop-blur-md border border-brand-tertiary/40 rounded-full px-4 py-2 text-white">
+                                <div className="flex items-center gap-2.5 bg-brand-tertiary/20 backdrop-blur-md border border-brand-tertiary/40 rounded-md px-4 py-2 text-white">
                                     <Calendar className="w-4 h-4 text-brand-secondary" />
                                     <div className="flex flex-col">
                                         <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Ends On</span>
@@ -184,7 +184,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         <div className="mt-8 flex items-center gap-3 justify-between">
                             <a
                                 href="#details"
-                                className="inline-flex items-center gap-2 border border-white/30 hover:border-white/60 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded-full transition-all duration-200"
+                                className="inline-flex items-center gap-2 border border-white/30 hover:border-white/60 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded-md transition-all duration-200"
                             >
                                 <Info className="w-3.5 h-3.5" />
                                 About Event
@@ -241,7 +241,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                         {category.name}
                                                     </h3>
                                                 </div>
-                                                <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                                                <div className="w-8 h-8 rounded-md bg-muted/50 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
                                                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                                                 </div>
                                             </div>
@@ -272,7 +272,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                             }))}
                                                         />
                                                         {category.votingOptions.length > 5 && (
-                                                            <div className="relative w-10 h-10 ml-2 rounded-full border-2 border-white bg-brand-secondary-500 flex items-center justify-center shrink-0 z-40">
+                                                            <div className="relative w-10 h-10 ml-2 rounded-md border-2 border-white bg-brand-secondary-500 flex items-center justify-center shrink-0 z-40">
                                                                 <span className="text-white text-xs font-bold">+{category.votingOptions.length - 5}</span>
                                                             </div>
                                                         )}
@@ -295,7 +295,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         <div className="space-y-10">
                             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                                 <div>
-                                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-primary/20 bg-brand-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-brand-primary">
+                                    <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-brand-primary/20 bg-brand-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-brand-primary">
                                         <span>Ticket Tiers</span>
                                         {!event.isPublic && (
                                             <>
@@ -365,11 +365,11 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                 <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                     About the Event.
                                 </h2>
-                                <div className="prose prose-p:text-muted-foreground max-w-none text-sm leading-relaxed">
+                                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:text-muted-foreground prose-img:rounded-md prose-a:text-primary">
                                     {event.description ? (
-                                        <p className="whitespace-pre-wrap">{event.description}</p>
+                                        <div dangerouslySetInnerHTML={{ __html: event.description }} />
                                     ) : (
-                                        <p className="italic">No description provided for this event.</p>
+                                        <p className="italic text-muted-foreground">No description provided for this event.</p>
                                     )}
                                 </div>
                             </div>
@@ -385,7 +385,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="w-10 h-10 rounded-full border bg-sepia-50/50 flex items-center justify-center hover:bg-brand-primary/10 hover:border-brand-primary hover:text-brand-primary transition-all"
+                                                className="w-10 h-10 rounded-md border bg-sepia-50/50 flex items-center justify-center hover:bg-brand-primary/10 hover:border-brand-primary hover:text-brand-primary transition-all"
                                                 title={link.url}
                                             >
                                                 <div className="size-5 flex items-center justify-center">

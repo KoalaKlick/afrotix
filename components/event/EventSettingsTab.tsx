@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
     Dialog,
     DialogContent,
@@ -100,11 +100,10 @@ export function EventSettingsTab({
                     </div>
                     {editingField === "description" ? (
                         <div className="space-y-4">
-                            <Textarea
+                            <RichTextEditor
                                 value={formData.description}
-                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                onChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
                                 placeholder="Describe your event..."
-                                rows={6}
                             />
                             <div className="flex justify-end gap-2">
                                 <Button
@@ -126,9 +125,13 @@ export function EventSettingsTab({
                             </div>
                         </div>
                     ) : (
-                        <p className="text-muted-foreground whitespace-pre-wrap">
-                            {formData.description || "No description provided."}
-                        </p>
+                        <div className="prose prose-sm max-w-none dark:prose-invert text-muted-foreground">
+                            {formData.description ? (
+                                <div dangerouslySetInnerHTML={{ __html: formData.description }} />
+                            ) : (
+                                <p className="italic">No description provided.</p>
+                            )}
+                        </div>
                     )}
                 </Card>
                 {/* Date & Time */}
