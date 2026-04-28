@@ -736,7 +736,7 @@ export async function getInternalVoteParticipationAction(
 
     try {
         const { getInternalVoteParticipation } = await import("@/lib/dal/voting");
-        const participants = await getInternalVoteParticipation(eventId, categoryId, event.organizationId);
+        const participants = await getInternalVoteParticipation(eventId, categoryId);
         return { success: true, data: participants };
     } catch (error) {
         console.error("[Action] Error fetching participation:", error);
