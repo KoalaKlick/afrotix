@@ -58,6 +58,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { toast } from "sonner";
 import {
     sendSingleCodeAction,
+    sendCodesAction,
     deleteEventMemberAction
 } from "@/lib/actions/event-member";
 import { cn } from "@/lib/utils";
@@ -297,6 +298,38 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
                                     router.refresh();
                                 }}
                             />
+
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm" className="gap-2 text-brand-primary border-brand-primary/20 hover:bg-brand-primary/5">
+                                        <Send className="size-4" />
+                                        Send Codes
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="rounded-2xl">
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight">Send Bulk Codes?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will send the access codes to ALL participants who have an email address. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            className="bg-brand-primary text-white hover:bg-brand-primary/90 rounded-xl"
+                                            onClick={() => {
+                                                startTransition(async () => {
+                                                    const result = await sendCodesAction(eventId);
+                                                    if (result.success) toast.success("Codes sent successfully");
+                                                    else toast.error(result.error);
+                                                });
+                                            }}
+                                        >
+                                            Send All
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
                     )
                 }
