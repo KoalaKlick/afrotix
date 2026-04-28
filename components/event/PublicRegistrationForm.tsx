@@ -231,7 +231,7 @@ export function PublicRegistrationForm({
                     ) : (
                         <>
                             <SheetHeader className="p-6 text-left border-b bg-muted/20">
-                                <SheetTitle className="text-2xl font-black uppercase tracking-tight">Register for Access</SheetTitle>
+                                <SheetTitle className="text-xl font-semibold">Register for Entry</SheetTitle>
                                 <SheetDescription className="text-xs">
                                     Provide your details below to receive a unique entry passcode.
                                 </SheetDescription>
