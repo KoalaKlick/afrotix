@@ -182,8 +182,8 @@ export function CategorySheet({
             const payload = {
                 name: form.name,
                 description: form.description || undefined,
-                maxVotesPerUser: form.maxVotesPerUser,
-                allowMultiple: form.allowMultiple,
+                maxVotesPerUser: votingMode === "internal" ? 1 : form.maxVotesPerUser,
+                allowMultiple: votingMode === "internal" ? false : form.allowMultiple,
                 allowPublicNomination: form.allowPublicNomination,
                 nominationDeadline: form.nominationDeadline || undefined,
                 templateImage: finalImageUrl,
@@ -331,10 +331,13 @@ export function CategorySheet({
                                 />
                             </div>
 
-                            {votingMode === "internal" && (
+                            {votingMode !== "internal" && (
                                 <>
                                     <div className="space-y-2">
-                                        <Label htmlFor="max-votes">Max Votes Per User</Label>
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="max-votes">Max Votes Per User</Label>
+                                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">Limit</span>
+                                        </div>
                                         <Input
                                             id="max-votes"
                                             type="number"
@@ -347,13 +350,16 @@ export function CategorySheet({
                                                 }))
                                             }
                                         />
+                                        <p className="text-[10px] text-muted-foreground">
+                                            The maximum number of votes a single user can cast in this category.
+                                        </p>
                                     </div>
 
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                                         <div className="space-y-0.5">
                                             <Label>Allow Multiple Selections</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Users can vote for multiple nominees
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Allow voting for different nominees
                                             </p>
                                         </div>
                                         <Switch

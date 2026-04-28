@@ -84,7 +84,7 @@ export function EventsList({ events, organizationSlug }: EventsListProps) {
                 return (
                     <div
                         key={event.id}
-                        className="bg-card border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                        className="bg-card border rounded-md p-4 "
                     >
                         <div className="flex items-start gap-4">
                             {/* Event Image */}

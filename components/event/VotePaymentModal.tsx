@@ -25,6 +25,7 @@ import {
     Plus,
     Mail,
     Lock,
+    Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VotingOption } from "@/lib/types/voting";
@@ -72,6 +73,8 @@ export function VotePaymentModal({
     const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false);
     const [checkingVoteStatus, setCheckingVoteStatus] = useState(false);
     const [uniqueCode, setUniqueCode] = useState("");
+    const [memberName, setMemberName] = useState<string | null>(null);
+    const [invalidCode, setInvalidCode] = useState(false);
 
     const { resumeTransaction } = usePaystack();
 
@@ -87,6 +90,8 @@ export function VotePaymentModal({
         setErrorMsg("");
         setHasAlreadyVoted(false);
         setUniqueCode("");
+        setMemberName(null);
+        setInvalidCode(false);
     }, []);
 
     const handleClose = useCallback(
@@ -106,9 +111,15 @@ export function VotePaymentModal({
             const result = await checkVoteStatusAction(categoryId, uniqueCode);
             if (result.success) {
                 setHasAlreadyVoted(result.data.hasVoted);
+                setMemberName(result.data.memberName || null);
+                setInvalidCode(!result.data.memberName);
+            } else {
+                setInvalidCode(true);
+                setMemberName(null);
             }
         } catch (err) {
             console.error("Error checking vote status:", err);
+            setInvalidCode(true);
         } finally {
             setCheckingVoteStatus(false);
         }
@@ -257,14 +268,13 @@ export function VotePaymentModal({
     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
 
     return (
-        <Dialog open={open} onOpenChange={handleClose} modal={false}>
+        <Dialog open={open} onOpenChange={handleClose} modal={true}>
             <DialogContent
                 className="sm:max-w-md p-0 overflow-hidden gap-0 border-0 rounded-2xl bg-white"
                 onOpenAutoFocus={(e) => { if (loading) e.preventDefault(); }}
                 onFocusOutside={(e) => { if (loading) e.preventDefault(); }}
                 onInteractOutside={(e) => { if (loading) e.preventDefault(); }}
             >
-                <DialogClose/>
                 {/* Hero Header */}
                 <div className="relative h-36 w-full overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0.14),transparent_26%)]">
                     <div className="relative z-10 flex items-end h-full p-5">
@@ -342,12 +352,46 @@ export function VotePaymentModal({
                                     </p>
                                 </div>
 
+                                {/* Member Identity Confirmation */}
+                                {uniqueCode.length >= 8 && (
+                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                        {checkingVoteStatus ? (
+                                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-muted/30 border border-dashed text-xs text-muted-foreground">
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                Verifying code...
+                                            </div>
+                                        ) : invalidCode ? (
+                                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/5 border border-destructive/20 text-xs text-destructive font-medium">
+                                                <XCircle className="w-3.5 h-3.5" />
+                                                Invalid access code. Please check and try again.
+                                            </div>
+                                        ) : memberName ? (
+                                            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-primary/5 border border-brand-primary/20">
+                                                <div className="w-8 h-8 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
+                                                    <Users className="w-4 h-4 text-brand-primary" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] text-brand-primary font-bold uppercase tracking-wider leading-none mb-1">
+                                                        Voting as:
+                                                    </p>
+                                                    <p className="text-sm font-black truncate leading-tight">
+                                                        {memberName}
+                                                    </p>
+                                                </div>
+                                                <div className="ml-auto">
+                                                    <CheckCircle2 className="w-4 h-4 text-brand-primary" />
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                )}
+
                                 <Button
                                     variant="afro-cta"
                                     size="lg"
                                     className="w-full h-12 text-sm font-bold shadow-lg shadow-[#009A44]/20"
                                     onClick={handleInternalVote}
-                                    disabled={loading || hasAlreadyVoted || checkingVoteStatus || uniqueCode.length < 8}
+                                    disabled={loading || hasAlreadyVoted || checkingVoteStatus || uniqueCode.length < 8 || invalidCode}
                                 >
                                     {loading ? (
                                         <>
