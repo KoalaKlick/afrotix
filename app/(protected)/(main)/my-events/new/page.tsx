@@ -4,6 +4,7 @@ import { getEffectiveOrganizationId } from "@/lib/organization-utils";
 import { getOrganizationById, getUserRoleInOrganization } from "@/lib/dal/organization";
 import { EventCreationClient } from "@/components/event/EventCreationClient";
 import { PageHeader } from "@/components/shared/page-header";
+import { Card } from "@/components/ui/card";
 
 export default async function NewEventPage() {
     // Parent layout guarantees: authenticated, onboarding done, has org
@@ -45,9 +46,9 @@ export default async function NewEventPage() {
                         </p>
                     </div>
 
-                    <div className="bg-card border rounded-xl p-6 shadow-sm">
+                    <Card className="  p-6 ">
                         <EventCreationClient organizationSlug={organization?.slug} />
-                    </div>
+                    </Card>
                 </div>
             </div>
         </>

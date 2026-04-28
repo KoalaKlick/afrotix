@@ -13,7 +13,7 @@ import {
     EventStep2DateLocation,
     EventStep3MediaSettings,
     EventStep4Extras,
-    EventCreationComplete,
+
 } from "@/components/event";
 import { createNewEvent } from "@/lib/actions/event";
 import { TOTAL_EVENT_CREATION_STEPS } from "@/lib/validations/event";
@@ -26,15 +26,11 @@ interface EventCreationClientProps {
 }
 
 export function EventCreationClient({ organizationSlug }: EventCreationClientProps) {
-
+    const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState<Partial<EventFormData>>({});
-    const [createdEvent, setCreatedEvent] = useState<{
-        id: string;
-        title: string;
-        slug: string;
-    } | null>(null);
+
     const [error, setError] = useState<string | null>(null);
 
     // Step 1 success - save basic info, move to step 2
@@ -126,8 +122,8 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
             const result = await createNewEvent(formDataObj);
 
             if (result.success) {
-                setCreatedEvent(result.data);
-                setCurrentStep(4); // Show completion screen
+                // Redirect immediately to manage the event
+                router.push(`/my-events/${result.data.id}`);
             } else {
                 setError(result.error);
             }
@@ -136,16 +132,6 @@ export function EventCreationClient({ organizationSlug }: EventCreationClientPro
 
     function handleBack() {
         setCurrentStep((prev) => Math.max(0, prev - 1));
-    }
-
-    // Show completion screen
-    if (createdEvent) {
-        return (
-            <EventCreationComplete
-                event={createdEvent}
-                organizationSlug={organizationSlug}
-            />
-        );
     }
 
     return (
