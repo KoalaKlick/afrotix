@@ -18,8 +18,8 @@ interface EventCreationCompleteProps {
 
 export function EventCreationComplete({ event, organizationSlug }: EventCreationCompleteProps) {
     const eventUrl = organizationSlug
-        ? `/${organizationSlug}/events/${event.slug}`
-        : `/events/${event.slug}`;
+        ? `/${organizationSlug}/${event.slug}`
+        : `/${event.slug}`;
 
     return (
         <div className="flex flex-col items-center text-center py-8">

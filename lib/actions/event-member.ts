@@ -47,7 +47,7 @@ export async function addEventMemberAction(data: {
 /**
  * Bulk add members from a list
  */
-export async function bulkAddEventMembersAction(eventId: string, members: { name: string; email?: string; phone?: string }[]) {
+export async function bulkAddEventMembersAction(eventId: string, members: { name: string; email?: string; phone?: string; responses?: any }[]) {
   try {
     await bulkAddEventMembers(eventId, members);
     revalidatePath(`/my-events/${eventId}`);

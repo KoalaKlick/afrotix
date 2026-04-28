@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
     UserPlus,
     Upload,
@@ -56,13 +57,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { toast } from "sonner";
 import {
-    bulkAddEventMembersAction,
     sendSingleCodeAction,
     deleteEventMemberAction
 } from "@/lib/actions/event-member";
 import { cn } from "@/lib/utils";
 import { RegistrationFieldManager } from "./RegistrationFieldManager";
 import { MemberSheet } from "./MemberSheet";
+import { MemberBulkImport } from "./MemberBulkImport";
 
 interface Member {
     id: string;
@@ -83,44 +84,21 @@ interface MemberManagerProps {
 }
 
 export function MemberManager({ eventId, initialMembers, registrationFields, canEdit }: MemberManagerProps) {
+    const router = useRouter();
     const [members, setMembers] = useState<Member[]>(initialMembers);
+
+    // Sync state with server data when props change (e.g. after router.refresh())
+    useEffect(() => {
+        setMembers(initialMembers);
+    }, [initialMembers]);
     const [searchQuery, setSearchQuery] = useState("");
     const [isPending, startTransition] = useTransition();
 
     // Sheets state
     const [isMemberSheetOpen, setIsMemberSheetOpen] = useState(false);
-    const [isBulkSheetOpen, setIsBulkSheetOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<Member | null>(null);
-    const [bulkData, setBulkData] = useState("");
 
-    const handleBulkAdd = async () => {
-        if (!bulkData) {
-            toast.error("Please enter member data");
-            return;
-        }
 
-        const lines = bulkData.split("\n").filter(l => l.trim());
-        const membersToadd = lines.map(line => {
-            const parts = line.split(",").map(p => p.trim());
-            return {
-                name: parts[0],
-                email: parts[1] || undefined,
-                phone: parts[2] || undefined,
-            };
-        });
-
-        startTransition(async () => {
-            const result = await bulkAddEventMembersAction(eventId, membersToadd);
-            if (result.success) {
-                toast.success(`Successfully imported members`);
-                setIsBulkSheetOpen(false);
-                setBulkData("");
-                // Real implementation would re-fetch or update list
-            } else {
-                toast.error(result.error);
-            }
-        });
-    };
 
     const handleDeleteMember = async (id: string) => {
         startTransition(async () => {
@@ -312,37 +290,13 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
                                 Add Member
                             </Button>
 
-                            <Sheet open={isBulkSheetOpen} onOpenChange={setIsBulkSheetOpen}>
-                                <SheetTrigger asChild>
-                                    <Button variant="outline" size="sm" className="gap-2">
-                                        <Upload className="size-4" />
-                                        Import
-                                    </Button>
-                                </SheetTrigger>
-                                <SheetContent side="right" variant="afro" className="sm:max-w-md w-full p-0 flex flex-col h-full">
-                                    <SheetHeader className="p-6 border-b">
-                                        <SheetTitle className="text-2xl font-black uppercase tracking-tight">Bulk Import</SheetTitle>
-                                        <SheetDescription>Paste a list: Name, Email, Phone (one per line).</SheetDescription>
-                                    </SheetHeader>
-                                    <SheetBody className="p-6 flex-1">
-                                        <Textarea
-                                            placeholder="Kofi Mensah, kofi@gmail.com, +233123456789&#10;Ama Serwaa, ama@gmail.com, +233987654321"
-                                            className="h-full min-h-[300px] resize-none rounded-2xl bg-muted/30 border-dashed"
-                                            value={bulkData}
-                                            onChange={(e) => setBulkData(e.target.value)}
-                                        />
-                                    </SheetBody>
-                                    <SheetFooter className="p-6 border-t bg-muted/20">
-                                        <Button
-                                            className="w-full h-14 bg-brand-primary font-black uppercase tracking-widest rounded-xl"
-                                            onClick={handleBulkAdd}
-                                            disabled={isPending}
-                                        >
-                                            {isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : "Import Members"}
-                                        </Button>
-                                    </SheetFooter>
-                                </SheetContent>
-                            </Sheet>
+                            <MemberBulkImport 
+                                eventId={eventId} 
+                                registrationFields={registrationFields}
+                                onSuccess={() => {
+                                    router.refresh();
+                                }}
+                            />
                         </div>
                     )
                 }
