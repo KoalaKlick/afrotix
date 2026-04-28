@@ -360,7 +360,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                 <div className=" mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
                         {/* Left: About */}
-                        <div className="md:col-span-2 space-y-8" id="details">
+                        <div className="md:col-span-2 space-y-8 scroll-mt-10" id="details">
                             <div className="space-y-4" >
                                 <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                     About the Event.

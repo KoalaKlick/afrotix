@@ -117,8 +117,7 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
 
     const filteredMembers = members.filter(m =>
         m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.uniqueCode.toLowerCase().includes(searchQuery.toLowerCase())
+        m.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const columns: Column<Member>[] = [
@@ -144,14 +143,7 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
                 </div>
             ),
         },
-        {
-            header: "Access Code",
-            cell: (member) => (
-                <Badge variant="outline" className="font-mono text-[10px] py-1 px-3 bg-muted/50 rounded-lg border-dashed">
-                    {member.uniqueCode}
-                </Badge>
-            ),
-        },
+
         {
             header: "Status",
             cell: (member) => (
