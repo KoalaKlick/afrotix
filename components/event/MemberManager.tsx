@@ -62,6 +62,7 @@ import {
     deleteEventMemberAction
 } from "@/lib/actions/event-member";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/common/ConfirmDiscardDialog";
 import { RegistrationFieldManager } from "./RegistrationFieldManager";
 import { MemberSheet } from "./MemberSheet";
 import { MemberBulkImport } from "./MemberBulkImport";
@@ -95,11 +96,12 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
     const [searchQuery, setSearchQuery] = useState("");
     const [isPending, startTransition] = useTransition();
 
-    // Sheets state
+    // Sheets and Dialogs state
     const [isMemberSheetOpen, setIsMemberSheetOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<Member | null>(null);
-
-
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
+    const [isSendAllConfirmOpen, setIsSendAllConfirmOpen] = useState(false);
 
     const handleDeleteMember = async (id: string) => {
         startTransition(async () => {
@@ -179,7 +181,7 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56 rounded-xl">
-                        <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest">Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-[10px] font-bold  tracking-widest">Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => {
                             setEditingMember(member);
@@ -199,34 +201,16 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
                             Send Access Code
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <DropdownMenuItem
-                                    className="text-destructive"
-                                    onSelect={(e) => e.preventDefault()}
-                                >
-                                    <Trash2 className="size-4 mr-2" />
-                                    Remove Member
-                                </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="rounded-2xl">
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight">Remove Participant?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will revoke their access code and delete all registration data.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
-                                        onClick={() => handleDeleteMember(member.id)}
-                                    >
-                                        Delete
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => {
+                                setMemberToDelete(member.id);
+                                setIsDeleteConfirmOpen(true);
+                            }}
+                        >
+                            <Trash2 className="size-4 mr-2" />
+                            Remove Member
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             ),
@@ -299,37 +283,15 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
                                 }}
                             />
 
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm" className="gap-2 text-brand-primary border-brand-primary/20 hover:bg-brand-primary/5">
-                                        <Send className="size-4" />
-                                        Send Codes
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="rounded-2xl">
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight">Send Bulk Codes?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will send the access codes to ALL participants who have an email address. This action cannot be undone.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            className="bg-brand-primary text-white hover:bg-brand-primary/90 rounded-xl"
-                                            onClick={() => {
-                                                startTransition(async () => {
-                                                    const result = await sendCodesAction(eventId);
-                                                    if (result.success) toast.success("Codes sent successfully");
-                                                    else toast.error(result.error);
-                                                });
-                                            }}
-                                        >
-                                            Send All
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-2 text-brand-primary border-brand-primary/20 hover:bg-brand-primary/5"
+                                onClick={() => setIsSendAllConfirmOpen(true)}
+                            >
+                                <Send className="size-4" />
+                                Send Codes
+                            </Button>
                         </div>
                     )
                 }
@@ -341,6 +303,32 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
                         </div>
                     </div>
                 }
+            />
+
+            <ConfirmDialog 
+                open={isDeleteConfirmOpen}
+                onOpenChange={setIsDeleteConfirmOpen}
+                onConfirm={() => memberToDelete && handleDeleteMember(memberToDelete)}
+                title="Remove Participant?"
+                description="This will revoke their access code and delete all registration data."
+                confirmText="Delete"
+                variant="destructive"
+            />
+
+            <ConfirmDialog 
+                open={isSendAllConfirmOpen}
+                onOpenChange={setIsSendAllConfirmOpen}
+                onConfirm={() => {
+                    startTransition(async () => {
+                        const result = await sendCodesAction(eventId);
+                        if (result.success) toast.success("Codes sent successfully");
+                        else toast.error(result.error);
+                    });
+                }}
+                title="Send Bulk Codes?"
+                description="This will send the access codes to ALL participants who have an email address. This action cannot be undone."
+                confirmText="Send All"
+                variant="primary"
             />
 
             <div className="bg-muted/30 border p-6 rounded-md flex items-start gap-4">
@@ -358,5 +346,3 @@ export function MemberManager({ eventId, initialMembers, registrationFields, can
         </div>
     );
 }
-
-
