@@ -108,7 +108,7 @@ export function VotePaymentModal({
 
         setCheckingVoteStatus(true);
         try {
-            const result = await checkVoteStatusAction(categoryId, uniqueCode);
+            const result = await checkVoteStatusAction(categoryId, eventId, uniqueCode);
             if (result.success) {
                 setHasAlreadyVoted(result.data.hasVoted);
                 setMemberName(result.data.memberName || null);

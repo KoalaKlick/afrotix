@@ -750,7 +750,7 @@ export async function getInternalVoteParticipationAction(
 /**
  * Check if a user or event member has already voted in a category.
  */
-export async function checkVoteStatusAction(categoryId: string, uniqueCode?: string): Promise<ActionResult<{ hasVoted: boolean; memberName?: string }>> {
+export async function checkVoteStatusAction(categoryId: string, eventId: string, uniqueCode?: string): Promise<ActionResult<{ hasVoted: boolean; memberName?: string }>> {
     try {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -758,8 +758,11 @@ export async function checkVoteStatusAction(categoryId: string, uniqueCode?: str
         let eventMemberId: string | undefined;
         let memberName: string | undefined;
         if (uniqueCode) {
-            const member = await prisma.eventMember.findUnique({
-                where: { uniqueCode },
+            const member = await prisma.eventMember.findFirst({
+                where: { 
+                    uniqueCode,
+                    eventId 
+                },
                 select: { id: true, name: true }
             });
             eventMemberId = member?.id;
