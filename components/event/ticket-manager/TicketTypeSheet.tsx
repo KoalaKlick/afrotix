@@ -36,7 +36,7 @@ import {
 } from "@/lib/actions/ticket";
 import type { TicketType, TicketStatus } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
-import { TicketPreview } from "@/components/shared/TicketPreview";
+import { TicketCard } from "@/components/shared/TicketPreview";
 
 interface TicketTypeSheetProps {
   readonly eventId: string;
@@ -193,7 +193,7 @@ export function TicketTypeSheet({
                 </p>
               </div>
             </div>
-            <TicketPreview
+            <TicketCard
               className="mx-auto max-w-xs"
               primaryColor={previewPrimary}
               secondaryColor={previewSecondary}

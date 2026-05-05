@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { updateExistingOrganization, uploadOrgLogo, uploadOrgBanner } from "@/lib/actions/organization";
 import { convertToWebP } from "@/lib/image-utils";
 import { getOrgImageUrl } from "@/lib/image-url-utils";
-import { TicketPreview } from "@/components/shared/TicketPreview";
+import { TicketCard } from "@/components/shared/TicketPreview";
 import { DOMAIN_NAME } from "@/lib/const/branding";
 import { getSocialPlatform } from "@/lib/utils/event-icons";
 import { PRESET_COLORS } from "@/utils/theme/constants";
@@ -491,7 +491,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                     </div>
 
                     <div className="mt-6 @lg:mt-0 flex justify-center @lg:sticky @lg:top-0 @lg:self-start">
-                        <TicketPreview
+                        <TicketCard
                             primaryColor={primaryColor}
                             secondaryColor={secondaryColor}
                             tertiaryColor={tertiaryColor}

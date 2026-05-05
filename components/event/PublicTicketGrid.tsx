@@ -155,6 +155,7 @@ export function PublicTicketGrid({
                         : ticket.status.replace("_", " ")}
                     </span>
                   )}
+                
                 </div>
               </div>
             </button>

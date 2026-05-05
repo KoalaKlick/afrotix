@@ -18,7 +18,7 @@ import { TicketTypeSheet } from "./TicketTypeSheet";
 import { deleteTicketTypeAction } from "@/lib/actions/ticket";
 import type { TicketType } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
-import { TicketPreview } from "@/components/shared/TicketPreview";
+import { TicketCard } from "@/components/shared/TicketPreview";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,7 +110,7 @@ export function TicketList({
           >
             <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-center">
               <div className="mx-auto lg:mx-0">
-                <TicketPreview
+                <TicketCard
                   className="max-w-xs"
                   primaryColor={
                     ticket.primaryColor || ticket.color || primaryColor

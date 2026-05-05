@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Building2, QrCode } from "lucide-react";
+import { QrCode } from "lucide-react";
 import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils";
 
 interface TicketCardProps {
@@ -25,10 +25,10 @@ interface TicketCardProps {
 function Notches({ side }: { side: "left" | "right" }) {
   const isLeft = side === "left";
   return (
-    <div className={`absolute inset-y-0 ${isLeft ? "left-0" : "right-0"} h-full gap-4 flex flex-col w-4 justify-center z-20`}>
-      {Array.from({ length: 2 }).map((_, i) => (
+    <div className={`absolute inset-y-0 ${isLeft ? "left-0" : "right-0"} h-full gap-4 flex flex-col w-6 justify-between z-20`}>
+      {Array.from({ length: 3 }).map((_, i) => (
          <div
-        className={`flex-1 max-h-6 bg-background  ${isLeft ? "rounded-r-full" : "rounded-l-full "}`}
+        className={`fle h-6 aspect-square bg-background  ${isLeft ? "rounded-r-full" : "rounded-l-full "}`}
         
       />
     ))}
