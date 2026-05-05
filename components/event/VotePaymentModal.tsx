@@ -268,7 +268,7 @@ export function VotePaymentModal({
     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
 
     return (
-        <Dialog open={open} onOpenChange={handleClose} modal={true}>
+        <Dialog open={open} onOpenChange={handleClose} modal={false}>
             <DialogContent
                 className="sm:max-w-md p-0 overflow-hidden gap-0 border-0 rounded-2xl bg-white"
                 onOpenAutoFocus={(e) => { if (loading) e.preventDefault(); }}
