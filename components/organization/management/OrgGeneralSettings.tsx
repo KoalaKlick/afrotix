@@ -490,13 +490,14 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
                     </div>
 
-                    <div className="mt-6 @lg:mt-0 flex justify-center @lg:sticky @lg:top-0 @lg:self-start">
+                    <div className="mt-6 @lg:mt-0 ">
                         <TicketCard
                             primaryColor={primaryColor}
                             secondaryColor={secondaryColor}
                             tertiaryColor={tertiaryColor}
                             logoUrl={logoDisplayUrl}
                             organizationName={name || undefined}
+                            stacked={true}
                         />
                     </div>
                     {/* Ticket Preview */}

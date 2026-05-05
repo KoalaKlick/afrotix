@@ -179,7 +179,7 @@ export function TicketList({
                     </p>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Tag className="size-3.5 text-primary" />
-                      <span className="font-bold text-foreground">
+                      <span className="font-semibold text-foreground">
                         {ticket.price === 0
                           ? "FREE"
                           : formatCurrency(ticket.price, ticket.currency)}
