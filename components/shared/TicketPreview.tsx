@@ -3,7 +3,9 @@
 import { useState, useId } from "react";
 import Image from "next/image";
 import { QrCode } from "lucide-react";
+import QRCode from "react-qr-code";
 import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils";
+
 
 interface TicketCardProps {
   readonly primaryColor: string;
@@ -18,8 +20,10 @@ interface TicketCardProps {
   readonly dateTime?: string;
   readonly venue?: string;
   readonly ticketCode?: string;
+  readonly qrPayload?: string;
   readonly className?: string;
   readonly stacked?: boolean;
+
 }
 
 /**
@@ -230,6 +234,7 @@ export function TicketCard({
   dateTime = "18 Mar 2026, 7:00 PM",
   venue = "Convention Center, Accra",
   ticketCode = "XXXX-XXXXXX",
+  qrPayload,
   className,
   stacked = false,
 }: TicketCardProps) {
@@ -408,10 +413,20 @@ export function TicketCard({
               <div className="flex-1 @min-md:flex items-center gap-6 px-6 py-4">
                 <div className="flex flex-col items-center gap-1.5 shrink-0">
                   <div
-                    className="size-12 @min-md:size-18 rounded-xl flex items-center justify-center"
+                    className="size-12 @min-md:size-18 rounded-xl flex items-center justify-center bg-white p-1"
                     style={{ backgroundColor: `${primaryColor}8` }}
                   >
-                    <QrCode className="size-6 lg:size-9" style={{ color: primaryColor }} />
+                    {qrPayload ? (
+                      <QRCode
+                        value={qrPayload}
+                        size={64}
+                        style={{ height: "100%", width: "100%" }}
+                        fgColor={primaryColor}
+                        bgColor="transparent"
+                      />
+                    ) : (
+                      <QrCode className="size-6 lg:size-9" style={{ color: primaryColor }} />
+                    )}
                   </div>
                   <div
                     className="text-[8px] font-black tracking-[0.1em] uppercase opacity-40 text-center"

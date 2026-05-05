@@ -102,7 +102,7 @@ function renderTicketLinks(ticketUrls: string[]): string {
         <tr>
           <td style="padding: 0 0 12px;">
             <a href="${safeUrl}" style="display: inline-block; background-color: #1a1a1a; color: #ffffff; text-decoration: none; padding: 12px 18px; border-radius: 10px; font-size: 14px; font-weight: 600;">
-              Download Ticket ${index + 1}
+              View & Download Ticket ${index + 1}
             </a>
           </td>
         </tr>

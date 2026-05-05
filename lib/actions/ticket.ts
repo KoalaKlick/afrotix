@@ -221,3 +221,37 @@ export async function reorderTicketTypesAction(
   revalidatePath(`/my-events/${eventId}`);
   return { success: true, data: undefined };
 }
+
+/**
+ * Resend ticket email delivery
+ */
+export async function resendTicketEmailAction(paymentId: string): Promise<ActionResult> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !serviceKey) {
+    return { success: false, error: "Missing Supabase configuration" };
+  }
+
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-delivery`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`
+      },
+      body: JSON.stringify({ paymentId })
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Resend error:", text);
+      return { success: false, error: "Failed to trigger email delivery" };
+    }
+
+    return { success: true, data: undefined };
+  } catch (err: any) {
+    console.error("Resend exception:", err);
+    return { success: false, error: err.message || "Failed to resend email" };
+  }
+}

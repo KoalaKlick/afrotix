@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "prisma generate && next build --webpack",
-    "edge-push":" npx supabase functions deploy initiate-payment --project-ref dekhbwnxmhgsvndwpiox",
+    "edge-push": " npx supabase functions deploy initiate-payment --project-ref dekhbwnxmhgsvndwpiox",
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write"
@@ -51,6 +51,7 @@
     "react-dom": "19.2.3",
     "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.71.1",
+    "react-qr-code": "^2.0.21",
     "recharts": "^3.8.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",

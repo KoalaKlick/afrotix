@@ -22,6 +22,9 @@ import { StatusBadge } from "../shared/status-badge";
 import { useDataTable } from "@/lib/hooks/use-data-table";
 import { Input } from "@/components/ui/input";
 import { formatAmount } from "@/lib/utils";
+import { resendTicketEmailAction } from "@/lib/actions/ticket";
+import { toast } from "sonner";
+import { Mail, Loader2 } from "lucide-react";
 
 interface Transaction {
     id: string;
@@ -35,6 +38,7 @@ interface Transaction {
     status: string;
     ticketCount: number;
     createdAt: string;
+    paymentId?: string | null;
 }
 
 interface TicketTransactionsTableProps {
@@ -69,6 +73,29 @@ export function TicketTransactionsTable({ initialData, eventId, fetchPage }: Tic
         initialTotal: initialData.total,
         fetchData: fetchPage,
     });
+
+    const [sendingId, setSendingId] = useState<string | null>(null);
+
+    async function handleResend(paymentId: string) {
+        if (sendingId) return;
+        setSendingId(paymentId);
+        toast.loading("Resending ticket email...");
+        
+        try {
+            const result = await resendTicketEmailAction(paymentId);
+            toast.dismiss();
+            if (result.success) {
+                toast.success("Email sent successfully!");
+            } else {
+                toast.error(result.error || "Failed to send email");
+            }
+        } catch (error) {
+            toast.dismiss();
+            toast.error("Failed to send email");
+        } finally {
+            setSendingId(null);
+        }
+    }
 
     return (
         <div className="space-y-4 px-0">
@@ -126,18 +153,19 @@ export function TicketTransactionsTable({ initialData, eventId, fetchPage }: Tic
                                 </button>
                             </TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead className="w-12"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             Array.from({ length: 5 }).map((_, i) => (
                                 <TableRow key={`skeleton-${i}`} className="animate-pulse">
-                                    <TableCell colSpan={6} className="h-16 bg-muted/20" />
+                                    <TableCell colSpan={7} className="h-16 bg-muted/20" />
                                 </TableRow>
                             ))
                         ) : data.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                                     No matching ticket transactions found.
                                 </TableCell>
                             </TableRow>
@@ -173,6 +201,20 @@ export function TicketTransactionsTable({ initialData, eventId, fetchPage }: Tic
                                     </TableCell>
                                     <TableCell>
                                         <StatusBadge variant="success" className="h-5 px-2 text-[10px]"/>
+                                    </TableCell>
+                                    <TableCell>
+                                        {tx.paymentId && (
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                                                onClick={() => handleResend(tx.paymentId!)}
+                                                disabled={sendingId === tx.paymentId}
+                                                title="Resend Ticket Email"
+                                            >
+                                                {sendingId === tx.paymentId ? <Loader2 className="size-3 animate-spin" /> : <Mail className="size-3" />}
+                                            </Button>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))

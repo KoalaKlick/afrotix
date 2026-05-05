@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 import { buildTicketPurchaseEmail } from "../_shared/email-templates.ts";
 
 type JsonRecord = Record<string, unknown>;
@@ -177,14 +178,18 @@ serve(async (req) => {
       }
 
       const appUrl = (Deno.env.get("APP_URL") ?? "").replace(/\/$/, "");
-      const fallbackSourcePath = asString(metadata.source_path);
-      const fallbackTicketUrl = appUrl && fallbackSourcePath ? `${appUrl}${fallbackSourcePath}` : null;
-      const ticketUrlsFromMetadata = asStringArray(metadata.ticket_urls);
-      const ticketUrls = ticketUrlsFromMetadata.length
-        ? ticketUrlsFromMetadata
-        : fallbackTicketUrl
-          ? (tickets ?? []).map(() => fallbackTicketUrl)
-          : [];
+      const secret = Deno.env.get("TICKET_SIGNING_SECRET");
+
+      const ticketUrls = (tickets ?? []).map((ticket) => {
+        if (!appUrl || !secret) return "";
+        const payload = `${ticket.id}:${ticket.ticket_code}`;
+        const sig = createHmac("sha256", secret).update(payload).digest("hex");
+        const tokenData = { tId: ticket.id, tCode: ticket.ticket_code, sig };
+        // Base64URL encode the JSON
+        const token = btoa(JSON.stringify(tokenData)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        return `${appUrl}/ticket/view?token=${token}`;
+      }).filter(Boolean);
+
 
       const buyerEmail = asString(payment.email) ?? asString(metadata.buyer_email);
 

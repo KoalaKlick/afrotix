@@ -1259,6 +1259,7 @@ export const getEventTicketTransactions = cache(
           fees: true,
           status: true,
           createdAt: true,
+          paymentId: true,
           payment: {
             select: {
               email: true,
@@ -1289,7 +1290,9 @@ export const getEventTicketTransactions = cache(
           status: order.status,
           ticketCount: order.tickets.length,
           createdAt: order.createdAt.toISOString(),
+          paymentId: order.paymentId,
         })),
+
         total,
       };
     } catch (error) {
