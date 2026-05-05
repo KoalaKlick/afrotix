@@ -399,7 +399,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
             {/* Colors */}
             <Card className="@container">
-                <CardContent className="pt-6 @lg:grid @2xl:grid-cols-[auto_560px] @lg:gap-6">
+                <CardContent className="pt-6 @lg:grid @3xl:grid-cols-[auto_480px] @5xl:grid-cols-[auto_560px] @lg:gap-6">
                     {/* Primary Color */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 text-lg font-semibold">
@@ -490,7 +490,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
                     </div>
 
-                    <div className="mt-6 @lg:mt-0 ">
+                    <div className=" @lg:mt-0 min-h-96 place-content-center">
                         <TicketCard
                             primaryColor={primaryColor}
                             secondaryColor={secondaryColor}
