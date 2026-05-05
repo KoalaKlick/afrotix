@@ -86,13 +86,13 @@ serve(async (req) => {
     if (paymentError || !payment) return new Response("Payment not found", { status: 404 });
 
     // 2. Ticket purchase emails
-    if (payment.related_type === "ticket_order" && payment.related_id) {
+    if (payment.related_type === "ticket_order" || payment.related_type === "ticket") {
       const metadata = asRecord(payment.metadata);
 
       const { data: order, error: orderError } = await supabase
         .from("ticket_orders")
         .select("id, event_id, order_number, buyer_name, buyer_phone, subtotal")
-        .eq("id", payment.related_id)
+        .eq("payment_id", paymentId)
         .single();
 
       if (orderError || !order) {
