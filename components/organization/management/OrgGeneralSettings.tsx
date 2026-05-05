@@ -399,7 +399,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
             {/* Colors */}
             <Card className="@container">
-                <CardContent className="pt-6 @lg:grid @2xl:grid-cols-[auto_360px] @lg:gap-6">
+                <CardContent className="pt-6 @lg:grid @2xl:grid-cols-[auto_560px] @lg:gap-6">
                     {/* Primary Color */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 text-lg font-semibold">
@@ -407,7 +407,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
                             Brand Colors
                         </div>
                         <p className="text-sm text-muted-foreground -mt-4">
-                            Customize your organization&apos;s color scheme
+                            Customize your organization's color scheme
                         </p>
 
                         <div className="space-y-3">
