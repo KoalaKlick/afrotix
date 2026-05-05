@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // The percentage_charge on the subaccount tells Paystack how much to keep for
 // the platform on every split transaction.
 
-const PLATFORM_PERCENTAGE_CHARGE = 5.4; // 3.5% — matches PLATFORM_FEES.*.percentage
+const PLATFORM_PERCENTAGE_CHARGE = 0; // We handle fees dynamically in the initialization hook
 
 
 // ──────────────────────────────────────────────────────────────────────────────

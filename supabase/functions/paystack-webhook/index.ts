@@ -3,9 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 
 // ─── Utility Functions ──────────────────────────────────────────────
-function getPaymentMetadata(payment) {
-  return payment?.metadata || {};
-}
 
 function getSupabaseClient() {
   return createClient(
@@ -20,11 +17,14 @@ async function updateTicketOrderStatus(supabase, payment) {
     .update({ status: "confirmed", payment_id: payment.id })
     .eq("id", payment.related_id);
 }
+
 async function createTicketOrderAndTickets(supabase, payment) {
-  const metadata = getPaymentMetadata(payment);
+  const metadata = payment?.metadata || {};
   const quantity = Number(metadata.quantity || 1);
   const eventId = metadata.event_id;
   const ticketTypeId = metadata.ticket_type_id || payment.related_id;
+
+  // Use base amount (product price) for the order subtotal
   const { data: order, error: orderError } = await supabase
     .from("ticket_orders")
     .insert({
@@ -46,12 +46,12 @@ async function createTicketOrderAndTickets(supabase, payment) {
       ticketTypeId,
       quantity,
       paymentId: payment.id,
-      metadata
     });
     return;
   }
 
   console.info("Order created successfully:", order);
+
   // Create N tickets
   const tickets = [];
   for (let i = 0; i < quantity; i++) {
@@ -64,6 +64,7 @@ async function createTicketOrderAndTickets(supabase, payment) {
       attendee_email: metadata.buyer_email || payment.email,
     });
   }
+
   console.info("Attempting to insert tickets:", tickets);
   const { error: tktError, data: insertedTickets } = await supabase
     .from("tickets")
@@ -89,7 +90,7 @@ async function createTicketOrderAndTickets(supabase, payment) {
 }
 
 async function createVote(supabase, payment) {
-  const voteMetadata = getPaymentMetadata(payment);
+  const voteMetadata = payment?.metadata || {};
   const voteCount = Number(voteMetadata.vote_count || 1);
   const optionId = payment.related_id;
   const { data: vote, error: voteError } = await supabase
@@ -121,17 +122,6 @@ async function createVote(supabase, payment) {
     });
   }
 }
-
-// ─── Pricing Constants (mirrored from lib/const/pricing.ts for Deno edge runtime) ─
-// These MUST stay in sync with the frontend constants file.
-
-const PLATFORM_FEES = {
-  vote: { percentage: 0.035, fixed: 0 },
-  nomination: { percentage: 0.035, fixed: 0 },
-  ticket: { percentage: 0.035, fixed: 1.0 },
-} as const;
-
-type TxnType = keyof typeof PLATFORM_FEES;
 
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -177,19 +167,13 @@ serve(async (req) => {
     return new Response("OK", { status: 200 });
   }
 
-  // 5. Verify amount (subunits to decimal)
-  const paidAmount = event.data.amount / 100;
-  if (Math.abs(paidAmount - Number(payment.amount)) > 0.01) {
-    console.warn(`Amount mismatch: expected ${payment.amount}, got ${paidAmount}`);
-  }
+  // 5. Read fee breakdown from the payment record (set during initiate-payment)
+  // No recalculation needed — fee_breakdown is the single source of truth.
+  const fees = payment.fee_breakdown || {};
+  const baseAmount = Number(fees.base_amount || payment.amount);
+  const platformFee = Number(fees.platform_fee || 0);
 
-  // 6. Calculate Platform Fee using centralized constants
-  const txnType: TxnType = (payment.metadata?.txn_type as TxnType) || "ticket";
-  const feeConfig = PLATFORM_FEES[txnType];
-  const amount = Number(payment.amount);
-  const platformFee = (amount * feeConfig.percentage) + feeConfig.fixed;
-
-  // 7. Confirm Payment
+  // 6. Confirm Payment — store Paystack's raw response for audit trail
   await supabase
     .from("payments")
     .update({
@@ -197,17 +181,10 @@ serve(async (req) => {
       verified_at: new Date().toISOString(),
       paystack_transaction_id: String(event.data.id ?? ""),
       provider_response: event,
-      metadata: {
-        ...payment.metadata,
-        platform_fee: platformFee,
-        fee_type: txnType,
-        fee_percentage: feeConfig.percentage,
-        fee_fixed: feeConfig.fixed,
-      }
     })
     .eq("id", payment.id);
 
-  // 8. Referral Commission (if applicable)
+  // 7. Referral Commission (funded from platform fee — never reduces organizer revenue)
   if (payment.user_id) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -240,13 +217,13 @@ serve(async (req) => {
 
         await supabase.rpc("increment_promoter_revenue", {
           p_id: promoter.id,
-          amt: amount
+          amt: baseAmount
         });
       }
     }
   }
 
-  // 9. Update Related Entities
+  // 8. Update Related Entities
   if (payment.related_type === "ticket_order") {
     await updateTicketOrderStatus(supabase, payment);
   } else if (payment.related_type === "ticket") {
@@ -255,7 +232,7 @@ serve(async (req) => {
     await createVote(supabase, payment);
   }
 
-  // 10. Trigger delivery (Arkesel/WhatsApp)
+  // 9. Trigger delivery (Arkesel/WhatsApp)
   fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-delivery`, {
     method: "POST",
     headers: {
@@ -265,7 +242,7 @@ serve(async (req) => {
     body: JSON.stringify({ paymentId: payment.id })
   }).catch(err => console.error("Error triggering send-delivery:", err));
 
-  console.info(`Payment ${payment.id} processed successfully. Fee: ${platformFee} GHS (${txnType})`);
+  console.info(`Payment ${payment.id} processed. Base: ${baseAmount}, Platform fee: ${platformFee}`);
 
   return new Response("OK", { status: 200 });
 });

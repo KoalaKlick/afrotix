@@ -1,23 +1,75 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ─── Pricing Constants (mirrored from lib/const/pricing.ts for Deno edge runtime) ─
-// These MUST stay in sync with the frontend constants file.
-// Edge functions can't import from the Next.js project directly.
-
+// ─── Pricing Constants (mirrored from lib/const/pricing.ts) ─────────────────
 const PLATFORM_FEES = {
-  vote:       { percentage: 0.035, fixed: 0   },
-  nomination: { percentage: 0.035, fixed: 0   },
-  ticket:     { percentage: 0.035, fixed: 1.0 },
+  vote:       { percentage: 0.15, fixed: 0   },
+  nomination: { percentage: 0.15, fixed: 0   },
+  ticket:     { percentage: 0.12, fixed: 0.50 },
 } as const;
 
 type TxnType = keyof typeof PLATFORM_FEES;
+
+// Paystack Ghana: 1.95%, capped at GHS 100 for local cards.
+// For international cards it's 3.9% + GHS 1 — but we target GHS only.
+const PAYSTACK_FEE_RATE = 0.0195;
+const PAYSTACK_FEE_CAP  = 100; // GHS
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function toPesewas(ghs: number): number {
   return Math.round(ghs * 100);
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/**
+ * Calculate the amount to charge the customer so that after Paystack deducts
+ * its own fee (1.95%, capped at GHS 100), we receive *exactly* baseAmount.
+ *
+ * Paystack fee on the charged amount X:
+ *   paystackFee = min(X * 0.0195, 100)
+ *
+ * We want:  X - paystackFee = baseAmount
+ *
+ * Case 1 — fee is NOT capped (most transactions):
+ *   X - X * 0.0195 = baseAmount
+ *   X = baseAmount / (1 - 0.0195)
+ *   → use this when X * 0.0195 < 100  (i.e. X < ~5128.21)
+ *
+ * Case 2 — fee IS capped at 100:
+ *   X - 100 = baseAmount
+ *   X = baseAmount + 100
+ *   → use when baseAmount > ~5028.21
+ *
+ * We compute both and pick the right branch.
+ */
+function computeChargeAmount(baseAmount: number): {
+  totalToCharge: number;
+  paystackFee: number;
+} {
+  // Case 1: uncapped
+  const uncappedCharge = baseAmount / (1 - PAYSTACK_FEE_RATE);
+  const uncappedFee    = round2(uncappedCharge * PAYSTACK_FEE_RATE);
+
+  if (uncappedFee <= PAYSTACK_FEE_CAP) {
+    // Normal path — fee is within cap
+    return {
+      totalToCharge: round2(uncappedCharge),
+      paystackFee:   uncappedFee,
+    };
+  }
+
+  // Case 2: fee would exceed cap, so Paystack only takes GHS 100
+  return {
+    totalToCharge: round2(baseAmount + PAYSTACK_FEE_CAP),
+    paystackFee:   PAYSTACK_FEE_CAP,
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 
 const PAYSTACK_SECRET = Deno.env.get("PAYSTACK_SECRET_KEY")!;
 
@@ -37,7 +89,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Authenticate user (optional but recommended)
+    // 1. Authenticate user (optional)
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
     let user = null;
@@ -46,16 +98,16 @@ serve(async (req) => {
       user = authUser;
     }
 
-    const { 
-      amount, 
-      email, 
+    const {
+      amount,
+      email,
       phone,
-      currency = "GHS", 
-      purpose, 
-      relatedType, 
+      currency = "GHS",
+      purpose,
+      relatedType,
       relatedId,
       organizationId,
-      metadata = {} 
+      metadata = {},
     } = await req.json();
 
     if (!amount || !email || !purpose) {
@@ -65,24 +117,61 @@ serve(async (req) => {
       });
     }
 
-    // 2. Generate a unique reference
+    // 2. Generate reference
     const reference = `PAY-${crypto.randomUUID().replace(/-/g, "").substring(0, 12).toUpperCase()}`;
 
-    // 3. Create PENDING payment record
+    // 3. Fee calculations
+    const txnType: TxnType = (purpose === "vote" || purpose === "nomination" || purpose === "ticket")
+      ? purpose
+      : "ticket";
+
+    const feeConfig  = PLATFORM_FEES[txnType];
+    const baseAmount = Number(amount);
+
+    // What the customer actually pays — inflated so Paystack's cut comes from
+    // the surcharge, leaving baseAmount intact on our side.
+    const { totalToCharge, paystackFee } = computeChargeAmount(baseAmount);
+
+    // Platform fee is taken from baseAmount (organizer's gross)
+    const platformFee       = round2((baseAmount * feeConfig.percentage) + feeConfig.fixed);
+    const organizerReceives = round2(baseAmount - platformFee);
+
+    const feeBreakdown = {
+      base_amount:       baseAmount,
+      platform_fee:      platformFee,
+      paystack_fee:      paystackFee,       // borne by customer via surcharge
+      total_charged:     totalToCharge,     // what customer sees
+      organizer_receives: organizerReceives,
+      txn_type:          txnType,
+    };
+
+    // 4. Look up org subaccount
+    let subaccountCode: string | null = null;
+    if (organizationId) {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("subaccount_code")
+        .eq("id", organizationId)
+        .single();
+      subaccountCode = org?.subaccount_code ?? null;
+    }
+
+    // 5. Create PENDING payment record — amount = base product price
     const { data: payment, error: paymentError } = await supabase
       .from("payments")
       .insert({
-        user_id: user?.id || null,
+        user_id:      user?.id || null,
         email,
-        amount,
+        amount:       baseAmount,
         currency,
         purpose,
         related_type: relatedType,
-        related_id: relatedId,
+        related_id:   relatedId,
         reference,
-        status: "pending",
-        provider: "paystack",
-        metadata: { ...metadata, reference }
+        status:       "pending",
+        provider:     "paystack",
+        fee_breakdown: feeBreakdown,
+        metadata:     { ...metadata, reference },
       })
       .select()
       .single();
@@ -92,72 +181,60 @@ serve(async (req) => {
       throw paymentError;
     }
 
-    // 4. Look up the organization's Paystack subaccount (if exists)
-    let subaccountCode: string | null = null;
-    if (organizationId) {
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("subaccount_code")
-        .eq("id", organizationId)
-        .single();
-      
-      subaccountCode = org?.subaccount_code ?? null;
-    }
-
-    // 5. Calculate platform fee for the split
-    const txnType: TxnType = (purpose === "vote" || purpose === "nomination" || purpose === "ticket")
-      ? purpose 
-      : "ticket"; // Default to ticket fees for unknown types
-    
-    const feeConfig = PLATFORM_FEES[txnType];
-    const platformFee = (Number(amount) * feeConfig.percentage) + feeConfig.fixed;
-
     // 6. Build Paystack payload
-    const callbackUrl = metadata?.callback_url || Deno.env.get("APP_URL") 
-      ? `${Deno.env.get("APP_URL")}/payment/callback` 
-      : undefined;
+    //    amount = totalToCharge (base + Paystack surcharge) — customer pays this.
+    const formattedPhone = phone?.startsWith("0") ? "+233" + phone.slice(1) : phone;
+    const callbackUrl    = Deno.env.get("APP_URL")
+      ? `${Deno.env.get("APP_URL")}/payment/callback`
+      : metadata?.callback_url;
 
     const paystackPayload: Record<string, unknown> = {
       email,
-      amount: toPesewas(Number(amount)),
+      amount:    toPesewas(totalToCharge), // customer-facing amount (includes surcharge)
       currency,
       reference,
-      phone: phone?.startsWith("0") ? "+233" + phone.slice(1) : phone,
-      customer: { email, phone },
-      ...(callbackUrl && { callback_url: callbackUrl }),
+      ...(formattedPhone && { phone: formattedPhone }),
+      ...(callbackUrl    && { callback_url: callbackUrl }),
       metadata: {
         payment_id: payment.id,
-        phone,
-        mobile_number: phone,
-        related_type: relatedType,
-        related_id: relatedId,
-        platform_fee: platformFee,
-        txn_type: txnType,
         ...metadata,
         custom_fields: [
           ...(metadata?.custom_fields || []),
-          {
-            display_name: "Payer Number",
-            variable_name: "phone",
-            value: phone
-          }
-        ]
+          ...(phone ? [{ display_name: "Payer Number", variable_name: "phone", value: phone }] : []),
+        ],
       },
     };
 
-    // 7. If organization has a Paystack subaccount, add split params
+    // 7. Split configuration (only when org has a subaccount)
+    //
+    //    We set bearer = "account" so Paystack deducts its fee from OUR
+    //    platform account's share — which is exactly the surcharge we collected.
+    //    The subaccount (organizer) receives: totalToCharge - platformFee - paystackFee
+    //                                       = baseAmount - platformFee
+    //                                       = organizerReceives  ✓
+    //
+    //    transaction_charge is what we keep for the platform (in pesewas).
+    //    Paystack computes: organizer gets totalToCharge - transaction_charge,
+    //    then deducts its fee from the platform's transaction_charge.
+    //
+    //    So we set transaction_charge = platformFee + paystackFee (pesewas),
+    //    and bearer = "account" (platform absorbs Paystack's cut from that amount).
+    //
+    //    Net to organizer  = totalToCharge - (platformFee + paystackFee)
+    //                      = (baseAmount + paystackFee) - platformFee - paystackFee
+    //                      = baseAmount - platformFee
+    //                      = organizerReceives  ✓
+    //
+    //    Net to platform   = platformFee + paystackFee - paystackFee
+    //                      = platformFee  ✓
+    //
     if (subaccountCode) {
-      paystackPayload.subaccount = subaccountCode;
-      paystackPayload.bearer = "subaccount"; // Organizer absorbs Paystack processing fee
-      
-      // For percentage-based splits, Paystack uses percentage_charge on the subaccount.
-      // For fixed + percentage, we use transaction_charge for the fixed component.
-      if (feeConfig.fixed > 0) {
-        paystackPayload.transaction_charge = toPesewas(platformFee);
-      }
+      paystackPayload.subaccount         = subaccountCode;
+      paystackPayload.bearer             = "account";                               // platform absorbs Paystack fee
+      paystackPayload.transaction_charge = toPesewas(platformFee + paystackFee);   // platform's gross take
     }
 
-    // 8. Initialize Paystack Transaction
+    // 8. Initialize Paystack transaction
     const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: {
@@ -175,29 +252,29 @@ serve(async (req) => {
         .from("payments")
         .update({ status: "failed", provider_response: paystackData })
         .eq("id", payment.id);
-        
-      return new Response(JSON.stringify({ error: "Paystack initialization failed", detail: paystackData.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+
+      return new Response(
+        JSON.stringify({ error: "Paystack initialization failed", detail: paystackData.message }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     return new Response(
       JSON.stringify({
-        success: true,
-        paymentId: payment.id,
+        success:          true,
+        paymentId:        payment.id,
         reference,
         authorizationUrl: paystackData.data.authorization_url,
-        accessCode: paystackData.data.access_code,
+        accessCode:       paystackData.data.access_code,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: "Internal Server Error", message: (err as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Internal Server Error", message: (err as Error).message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });

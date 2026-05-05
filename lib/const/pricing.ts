@@ -226,8 +226,8 @@ export interface FeeBreakdown {
  * @example
  * ```ts
  * const breakdown = calculateFee(100, "ticket");
- * // breakdown.totalPlatformFee = 4.50  (3.5% of 100 + GHS 1)
- * // breakdown.organizerReceives = 95.50
+ * // breakdown.totalPlatformFee = 6.40  (5.4% of 100 + GHS 1)
+ * // breakdown.organizerReceives = 93.60
  * ```
  */
 export function calculateFee(amount: number, type: TransactionType): FeeBreakdown {
