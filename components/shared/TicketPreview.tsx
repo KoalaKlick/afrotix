@@ -231,8 +231,8 @@ export function TicketCard({
                     {ticketType}
                   </span>
                   <div
-                    className="text-base font-bold truncate leading-tight"
-                    style={{ fontFamily: "Georgia, serif", color: `${primaryColor}e8` }}
+                    className="text-base @min-lg:text-lg uppercase  font-montserrat font-semibold truncate leading-tight"
+                    style={{ }}
                   >
                     {eventName}
                   </div>
