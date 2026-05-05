@@ -75,8 +75,8 @@ serve(async (req) => {
       .single();
 
     if (org?.subaccount_code) {
-      // Already has a subaccount — update it instead
-      return await updateSubaccount(supabase, {
+      // Already has a subaccount — try updating it
+      const updateResponse = await updateSubaccount(supabase, {
         subaccountCode: org.subaccount_code,
         organizationId,
         accountNumber,
@@ -84,6 +84,20 @@ serve(async (req) => {
         accountName,
         businessName,
       });
+
+      const updateData = await updateResponse.clone().json();
+
+      // If subaccount is not found on Paystack (stale data in DB), 
+      // proceed to create a new one instead of failing.
+      if (
+        updateData.code === "not_found" || 
+        updateData.detail?.toLowerCase().includes("not found") ||
+        updateData.message?.toLowerCase().includes("not found")
+      ) {
+        console.warn(`Subaccount ${org.subaccount_code} not found on Paystack. Falling back to creation.`);
+      } else {
+        return updateResponse;
+      }
     }
 
     // 4. Use account number exactly as passed
@@ -107,30 +121,46 @@ serve(async (req) => {
     });
 
     const paystackData = await paystackRes.json();
+    console.log("Paystack response:", paystackData);
 
-    if (!paystackData.status) {
+    if (!paystackRes.ok || !paystackData.status) {
       console.error("Paystack subaccount creation failed:", paystackData);
       return new Response(
         JSON.stringify({
+          success: false,
           error: "Failed to create payment account",
-          detail: paystackData.message,
+          detail: paystackData.message || "Unknown Paystack error",
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const subaccountCode = paystackData.data.subaccount_code;
+    const subaccountCode = paystackData.data?.subaccount_code;
+    if (!subaccountCode) {
+      return new Response(
+        JSON.stringify({ success: false, error: "No subaccount code returned from Paystack" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // 6. Store subaccount details on the organization
-    await supabase
+    const { error: dbError } = await supabase
       .from("organizations")
       .update({
         subaccount_code: subaccountCode,
         paystack_bank_code: bankCode,
         paystack_account_number: finalAccountNumber,
-        paystack_account_name: accountName || paystackData.data.settlement_bank,
+        paystack_account_name: accountName || paystackData.data.settlement_bank || "Verified Account",
       })
       .eq("id", organizationId);
+
+    if (dbError) {
+      console.error("Database update failed:", dbError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Subaccount created on Paystack but failed to save to database", detail: dbError.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.info(
       `Subaccount ${subaccountCode} created for org ${organizationId} (${businessName})`
@@ -188,20 +218,23 @@ async function updateSubaccount(
   );
 
   const paystackData = await paystackRes.json();
+  console.log("Paystack update response:", paystackData);
 
-  if (!paystackData.status) {
+  if (!paystackRes.ok || !paystackData.status) {
     console.error("Paystack subaccount update failed:", paystackData);
     return new Response(
       JSON.stringify({
+        success: false,
         error: "Failed to update payment account",
-        detail: paystackData.message,
+        detail: paystackData.message || "Unknown Paystack error",
+        code: paystackData.code,
       }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
   // Update locally
-  await supabase
+  const { error: dbError } = await supabase
     .from("organizations")
     .update({
       paystack_bank_code: params.bankCode,
@@ -209,6 +242,14 @@ async function updateSubaccount(
       paystack_account_name: params.accountName || null,
     })
     .eq("id", params.organizationId);
+
+  if (dbError) {
+    console.error("Database update failed (update flow):", dbError);
+    return new Response(
+      JSON.stringify({ success: false, error: "Subaccount updated on Paystack but failed to save to database", detail: dbError.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   console.info(
     `Subaccount ${params.subaccountCode} updated for org ${params.organizationId}`

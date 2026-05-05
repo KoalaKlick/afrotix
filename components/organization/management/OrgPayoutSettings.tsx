@@ -209,7 +209,7 @@ export function OrgPayoutSettings({ organization }: OrgPayoutSettingsProps) {
                                 <Label htmlFor="network-combobox">{bankType === "momo" ? "Network" : "Bank"}</Label>
                                 <Combobox
                                     options={networkOptions}
-                                    value={bankCode || organization.paystackBankCode || "gggg"}
+                                    value={bankCode}
                                     onChange={setBankCode}
                                     disabled={isLoadingNetworks}
                                     className=""
