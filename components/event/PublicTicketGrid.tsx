@@ -202,7 +202,7 @@ export function PublicTicketGrid({
                     stacked={false}
                   />
 
-                  <div className="rounded-2xl border bg-muted/20 p-4">
+                  <div className="rounded-md border bg-muted/20 p-4">
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                       Price
                     </p>
@@ -226,7 +226,7 @@ export function PublicTicketGrid({
                   )}
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border bg-card p-4">
+                    <div className="rounded-md border bg-card p-4">
                       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                         <Tag className="size-3.5" />
                         Status
@@ -238,7 +238,7 @@ export function PublicTicketGrid({
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border bg-card p-4">
+                    <div className="rounded-md border bg-card p-4">
                       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                         <TicketIcon className="size-3.5" />
                         Availability
@@ -250,7 +250,7 @@ export function PublicTicketGrid({
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border bg-card p-4 sm:col-span-2">
+                    <div className="rounded-md border bg-card p-4 sm:col-span-2">
                       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                         <Calendar className="size-3.5" />
                         Sales End

@@ -26,9 +26,9 @@ function Notches({ side }: { side: "left" | "right" }) {
   const isLeft = side === "left";
   return (
     <div className={`absolute inset-y-0 ${isLeft ? "left-0" : "right-0"} h-full gap-4 flex flex-col w-6 justify-between z-20`}>
-      {Array.from({ length: 3 }).map((_, i) => (
+      {Array.from({ length: 3}).map((_, i) => (
          <div
-        className={`fle h-6 aspect-square bg-background  ${isLeft ? "rounded-r-full" : "rounded-l-full "}`}
+        className={`fle h-6 aspect-square bg-background  ${isLeft ? "rounded-r-full nth-[2]:-translate-x-3 first:rounded-tr-none last:rounded-br-none" : "rounded-l-full last:rounded-bl-none nth-[2]:translate-x-3 first:rounded-tl-none"}`}
         
       />
     ))}
@@ -127,9 +127,11 @@ function GhostTicket({
 }
 
 function TicketShell({
+  secondaryColor,
   primaryColor,
   children,
 }: {
+  secondaryColor: string;
   primaryColor: string;
   children: React.ReactNode;
 }) {
@@ -137,7 +139,7 @@ function TicketShell({
     <div
       className="flex flex-row items-stretch w-full h-full rounded-xl overflow-visible relative"
       style={{
-        background: "#f5f0e8",
+        background: `${secondaryColor}10`,
         backgroundImage:
           "repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.025) 24px)",
       }}
@@ -183,7 +185,7 @@ export function TicketCard({
   ];
 
   return (
-    <div className={`cursor-pointer select-none  ${className ?? ""}`} style={{ perspective: 1200 }}>
+    <div className={`cursor-pointer select-none @container  ${className ?? ""}`} style={{ perspective: 1200 }}>
       {/* Wrapper gives space for the ghost offset on the right */}
       <div className="relative w-full max-w-[560px] h-[210px]" onClick={() => setFlipped((f) => !f)}>
 
@@ -205,8 +207,8 @@ export function TicketCard({
             className="absolute inset-0"
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
           >
-            <TicketShell primaryColor={primaryColor}>
-              <Stub side="left" primaryColor={primaryColor} label="Admit One" />
+            <TicketShell secondaryColor={secondaryColor} primaryColor={primaryColor}>
+              <Stub side="left" primaryColor={primaryColor} label={ticketType} />
 
               <div className="flex-1 flex items-center gap-3.5 px-5 py-4 overflow-hidden relative">
                 {/* Optional hero tint */}
@@ -283,17 +285,17 @@ export function TicketCard({
               transform: "rotateY(180deg)",
             }}
           >
-            <TicketShell primaryColor={primaryColor}>
+            <TicketShell secondaryColor={secondaryColor} primaryColor={primaryColor}>
               <Stub side="left" primaryColor={primaryColor} label="Admit One" />
 
-              <div className="flex-1 flex items-center gap-6 px-6 py-4">
+              <div className="flex-1 @min-md:flex :flex-col  items-center gap-6 px-6 py-4">
                 {/* QR code block */}
                 <div className="flex flex-col items-center gap-1.5 shrink-0">
                   <div
-                    className="w-[72px] h-[72px] rounded-xl flex items-center justify-center border"
-                    style={{ background: "rgba(255,255,255,0.65)", borderColor: `${primaryColor}22` }}
+                    className=" size-12 @min-md:size-18 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${primaryColor}8` }}
                   >
-                    <QrCode className="w-9 h-9" style={{ color: primaryColor }} />
+                    <QrCode className="size-6  lg:size-9" style={{ color: primaryColor }} />
                   </div>
                   <div
                     className="text-[8px] font-black tracking-[0.1em] uppercase opacity-40 text-center"
