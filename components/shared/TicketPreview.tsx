@@ -205,10 +205,9 @@ function TicketShell({
 }) {
   return (
     <div
-      className="flex flex-row items-stretch w-full h-full relative"
+      className="flex flex-row bg-background items-stretch w-full h-full relative"
       style={{
         clipPath: `url(#${clipId})`,
-        backgroundColor: "#ffffff",
         backgroundImage: `linear-gradient(${secondaryColor}12, ${secondaryColor}12), repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.025) 24px)`,
       }}
     >
