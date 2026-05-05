@@ -232,15 +232,17 @@ serve(async (req) => {
     await createVote(supabase, payment);
   }
 
-  // 9. Trigger delivery (Arkesel/WhatsApp)
-  fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-delivery`, {
+  // 9. Trigger delivery (Next.js API route)
+  const appUrl = (Deno.env.get("APP_URL") || "").replace(/\/$/, "");
+  fetch(`${appUrl}/api/webhooks/send-delivery`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
+      // We can pass a secret header here if needed to secure the API route in the future
     },
     body: JSON.stringify({ paymentId: payment.id })
-  }).catch(err => console.error("Error triggering send-delivery:", err));
+  }).catch(err => console.error("Error triggering send-delivery API:", err));
+
 
   console.info(`Payment ${payment.id} processed. Base: ${baseAmount}, Platform fee: ${platformFee}`);
 

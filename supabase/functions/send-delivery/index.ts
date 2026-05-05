@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 import { buildTicketPurchaseEmail } from "../_shared/email-templates.ts";
 
+import nodemailer from "npm:nodemailer";
+
 type JsonRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): JsonRecord {
@@ -35,37 +37,39 @@ async function sendEmail(params: {
   subject: string;
   html: string;
 }) {
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "tickets@updates.afrotix.co";
+  const host = Deno.env.get("SMTP_HOST");
+  const port = Deno.env.get("SMTP_PORT") || "587";
+  const user = Deno.env.get("SMTP_USER");
+  const pass = Deno.env.get("SMTP_PASS");
+  const fromName = Deno.env.get("SMTP_FROM_NAME") || "Afrotix";
+  const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") || user;
 
-  if (!resendApiKey) {
-    console.warn("RESEND_API_KEY not configured. Skipping email send.");
-    return { skipped: true, reason: "missing_resend_api_key" };
+  if (!host || !user || !pass) {
+    console.warn("SMTP credentials not configured. Skipping email send.");
+    return { skipped: true, reason: "missing_smtp_credentials" };
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [params.to],
-      subject: params.subject,
-      html: params.html,
-    }),
+  const transporter = nodemailer.createTransport({
+    host,
+    port: parseInt(port),
+    secure: port === "465" || Deno.env.get("SMTP_SECURE") === "true",
+    auth: { user, pass },
   });
 
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    console.error("Resend send failure:", payload);
-    throw new Error(`Email send failed: ${response.status}`);
+  try {
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+    });
+    return info;
+  } catch (error) {
+    console.error("Nodemailer send failure:", error);
+    throw new Error(`Email send failed: ${error.message}`);
   }
-
-  return payload;
 }
+
 
 serve(async (req) => {
   try {

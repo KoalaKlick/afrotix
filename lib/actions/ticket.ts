@@ -234,11 +234,11 @@ export async function resendTicketEmailAction(paymentId: string): Promise<Action
   }
 
   try {
-    const res = await fetch(`${supabaseUrl}/functions/v1/send-delivery`, {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_DOMAIN_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/webhooks/send-delivery`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${serviceKey}`
       },
       body: JSON.stringify({ paymentId })
     });
