@@ -32,50 +32,65 @@ interface TicketCardProps {
  * The path uses the SVG "even-odd" fill rule, so the semicircle sub-paths
  * act as holes (they are wound opposite to the outer rect).
  */
+// Using objectBoundingBox (0-1) coordinates for perfect responsiveness.
+// Values derived from: 560w x 210h. 
+// x-coords = val / 560, y-coords = val / 210
+const TICKET_PATH_RELATIVE = [
+  `M ${12 / 560} 0`,
+  // Top Edge
+  `L ${(72 - 12) / 560} 0 A ${12 / 560} ${12 / 210} 0 0 0 ${(72 + 12) / 560} 0`,
+  `L ${(560 - 72 - 12) / 560} 0 A ${12 / 560} ${12 / 210} 0 0 0 ${(560 - 72 + 12) / 560} 0`,
+  `L ${(560 - 12) / 560} 0`,
+  // Corner
+  `Q 1 0 1 ${12 / 210}`,
+  // Right Edge
+  `L 1 ${(105 - 12) / 210} A ${12 / 560} ${12 / 210} 0 0 0 1 ${(105 + 12) / 210}`,
+  `L 1 ${(210 - 12) / 210}`,
+  // Corner
+  `Q 1 1 ${(560 - 12) / 560} 1`,
+  // Bottom Edge
+  `L ${(560 - 72 + 12) / 560} 1 A ${12 / 560} ${12 / 210} 0 0 0 ${(560 - 72 - 12) / 560} 1`,
+  `L ${(72 + 12) / 560} 1 A ${12 / 560} ${12 / 210} 0 0 0 ${(72 - 12) / 560} 1`,
+  `L ${12 / 560} 1`,
+  // Corner
+  `Q 0 1 0 ${(210 - 12) / 210}`,
+  // Left Edge
+  `L 0 ${(105 + 12) / 210} A ${12 / 560} ${12 / 210} 0 0 0 0 ${(105 - 12) / 210}`,
+  `L 0 ${12 / 210}`,
+  // Corner
+  `Q 0 0 ${12 / 560} 0`,
+  `Z`,
+].join(" ");
+
 function TicketClipPath({ id }: { id: string }) {
-  const W = 560;
-  const H = 210;
-  const r = 12;   // outer corner radius
-  const nr = 12;  // notch semicircle radius
-  const stubW = 72;
-
-  const d = [
-    `M ${r} 0`,
-    // Top Edge
-    `L ${stubW - nr} 0 A ${nr} ${nr} 0 0 0 ${stubW + nr} 0`,
-    `L ${W - stubW - nr} 0 A ${nr} ${nr} 0 0 0 ${W - stubW + nr} 0`,
-    `L ${W - r} 0`,
-    // Corner
-    `Q ${W} 0 ${W} ${r}`,
-    // Right Edge
-    `L ${W} ${H / 2 - nr} A ${nr} ${nr} 0 0 0 ${W} ${H / 2 + nr}`,
-    `L ${W} ${H - r}`,
-    // Corner
-    `Q ${W} ${H} ${W - r} ${H}`,
-    // Bottom Edge
-    `L ${W - stubW + nr} ${H} A ${nr} ${nr} 0 0 0 ${W - stubW - nr} ${H}`,
-    `L ${stubW + nr} ${H} A ${nr} ${nr} 0 0 0 ${stubW - nr} ${H}`,
-    `L ${r} ${H}`,
-    // Corner
-    `Q 0 ${H} 0 ${H - r}`,
-    // Left Edge
-    `L 0 ${H / 2 + nr} A ${nr} ${nr} 0 0 0 0 ${H / 2 - nr}`,
-    `L 0 ${r}`,
-    // Corner
-    `Q 0 0 ${r} 0`,
-    `Z`,
-  ].join(" ");
-
   return (
     <svg
       style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}
       aria-hidden="true"
     >
       <defs>
-        <clipPath id={id} clipPathUnits="userSpaceOnUse">
-          <path d={d} />
+        <clipPath id={id} clipPathUnits="objectBoundingBox">
+          <path d={TICKET_PATH_RELATIVE} />
         </clipPath>
       </defs>
+    </svg>
+  );
+}
+
+function TicketOutline({ color }: { color: string }) {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none z-20"
+      viewBox="0 0 1 1"
+      preserveAspectRatio="none"
+    >
+      <path
+        d={TICKET_PATH_RELATIVE}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }
@@ -160,9 +175,9 @@ function GhostTicket({
         clipPath: `url(#${clipId})`,
         backgroundColor: "#ffffff",
         backgroundImage: `linear-gradient(${secondaryColor}14, ${secondaryColor}14), repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.02) 24px)`,
-        border: `1.5px solid ${primaryColor}22`,
       }}
     >
+      <TicketOutline color={`${primaryColor}44`} />
       {/* Left stub strip */}
       <div
         className="absolute left-0 top-0 bottom-0 w-[72px] rounded-l-xl"
@@ -197,6 +212,7 @@ function TicketShell({
         backgroundImage: `linear-gradient(${secondaryColor}12, ${secondaryColor}12), repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.025) 24px)`,
       }}
     >
+      <TicketOutline color={`${primaryColor}44`} />
       {children}
     </div>
   );
@@ -369,7 +385,8 @@ export function TicketCard({
                 </div>
               </div>
 
-              <Stub side="right" primaryColor={primaryColor} label={stubLabel} />
+
+              <Stub side="right"  primaryColor={primaryColor} label={stubLabel} />
             </TicketShell>
           </div>
 
