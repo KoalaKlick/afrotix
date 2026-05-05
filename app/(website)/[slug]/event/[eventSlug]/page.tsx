@@ -106,7 +106,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
     return (
         <main className="min-h-screen">
             {/* Hero Section */}
-            <div className="relative h-[60vh] w-full overflow-hidden">
+            <div className="relative h-[50vh] min-h-fit w-full overflow-hidden">
                 <Image
                     src={heroImageUrl}
                     alt={event.title}
@@ -291,7 +291,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             {ticketTypes.length > 0 && (
                 <>
                     <PanAfricanDivider />
-                    <Section maxWidth="7xl" className="py-16 bg-white">
+                    <Section maxWidth="7xl" className="py-16 bg-background">
                         <div className="space-y-10">
                             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                                 <div>

@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { TicketPreview } from "@/components/shared/TicketPreview";
+import { TicketCard } from "@/components/shared/TicketPreview";
 import { PublicTicketPaymentModal } from "@/components/event/PublicTicketPaymentModal";
 
 interface PublicTicket {
@@ -102,7 +102,7 @@ export function PublicTicketGrid({
 
   return (
     <>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 xl:">
         {tickets.map((ticket) => {
           const primaryColor = ticket.primaryColor || ticket.color || orgPrimary;
           const secondaryColor = ticket.secondaryColor || orgSecondary;
@@ -115,7 +115,7 @@ export function PublicTicketGrid({
               className="group text-left transition-all "
             >
               <div className="space-y-4">
-                <TicketPreview
+                <TicketCard
                   className="mx-auto"
                   primaryColor={primaryColor}
                   secondaryColor={secondaryColor}
@@ -179,7 +179,7 @@ export function PublicTicketGrid({
 
               <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="space-y-6">
-                  <TicketPreview
+                  <TicketCard
                     className="mx-auto"
                     primaryColor={
                       selectedTicket.primaryColor ||

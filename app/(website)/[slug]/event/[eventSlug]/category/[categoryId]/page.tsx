@@ -123,7 +123,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
     return (
         <main className="min-h-screen">
             {/* Hero Section — image fills the container, content overlays at the bottom */}
-            <div className="relative h-[52vh] min-h-[380px] w-full overflow-hidden">
+            <div className="relative h-[50vh] min-h-fit w-full overflow-hidden">
                 <Image
                     src={heroImageUrl}
                     alt={event.title}
