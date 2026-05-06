@@ -109,9 +109,9 @@ export function TicketList({
             className="group rounded-md border bg-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg"
           >
             <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-center">
-              <div className="mx-auto lg:mx-0">
+              <div className="mx-auto lg:mx-0  w-full">
                 <TicketCard
-                  className="max-w-xs"
+                  className="max-w-lg"
                   primaryColor={
                     ticket.primaryColor || ticket.color || primaryColor
                   }
