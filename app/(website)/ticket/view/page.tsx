@@ -89,7 +89,7 @@ async function TicketViewContent({ token }: { token: string }) {
 
 
   return (
-    <div className="min-h-screen bg-muted/20 py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+    <div className="min-h-screen bg-muted/20 mt-20 py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
       <div className="max-w-3xl w-full space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Your Ticket</h1>
