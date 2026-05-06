@@ -275,7 +275,7 @@ export function TicketCard({
     >
       <Stub side="left" primaryColor={primaryColor} label={ticketType} />
 
-      <div className="flex-1 @min-md:flex items-center gap-3.5 px-5 py-4 overflow-hidden relative">
+      <div className={`flex-1 ${exportMode ? "flex" : "@min-md:flex"} items-center gap-3.5 px-5 py-4 overflow-hidden relative`}>
         {heroImageUrl && (
           <>
             <Image
@@ -301,7 +301,7 @@ export function TicketCard({
           >
             {ticketType}
           </span>
-          <div className="text-base @min-lg:text-lg uppercase font-montserrat font-bold truncate leading-tight">
+          <div className={`text-base ${exportMode ? "text-lg" : "@min-lg:text-lg"} uppercase font-montserrat font-bold truncate leading-tight`}>
             {eventName}
           </div>
           <div className="flex flex-col gap-1 mt-1.5">
@@ -369,7 +369,7 @@ export function TicketCard({
     >
       <Stub side="left" primaryColor={primaryColor} label={buyerName.slice(0, 12)} />
 
-      <div className="flex-1 @min-md:flex items-center gap-6 px-6 py-4">
+      <div className={`flex-1 ${exportMode ? "flex" : "@min-md:flex"} items-center gap-6 px-6 py-4`}>
         <div className="flex flex-col items-center gap-1.5 shrink-0">
           <div
             className={`rounded-none flex items-center justify-center bg-white p-1 ${exportMode ? "size-32" : "size-12 @min-md:size-18"}`}
