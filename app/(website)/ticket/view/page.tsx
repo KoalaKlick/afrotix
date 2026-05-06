@@ -55,6 +55,9 @@ async function TicketViewContent({ token }: { token: string }) {
         primary_color,
         secondary_color,
         color
+      ),
+      order:ticket_orders (
+        buyer_name
       )
     `)
     .eq("id", verified.ticketId)
@@ -68,6 +71,7 @@ async function TicketViewContent({ token }: { token: string }) {
   const org = (Array.isArray(event?.organization) ? event.organization[0] : event?.organization) as any;
 
   const ticketType = (Array.isArray(ticket.ticket_type) ? ticket.ticket_type[0] : ticket.ticket_type) as any;
+  const order = (Array.isArray(ticket.order) ? ticket.order[0] : ticket.order) as any;
 
   const primaryColor = ticketType?.primary_color || ticketType?.color || org?.primary_color || "#009A44";
   const secondaryColor = ticketType?.secondary_color || org?.secondary_color || "#CE1126";
@@ -111,6 +115,7 @@ async function TicketViewContent({ token }: { token: string }) {
             dateTime={dateTime}
             venue={venue}
             ticketCode={ticket?.ticket_code}
+            buyerName={order?.buyer_name}
             qrPayload={verifyUrl}
             className="w-full max-w-lg hover:-translate-y-1 transition-transform"
           />
@@ -133,6 +138,7 @@ async function TicketViewContent({ token }: { token: string }) {
               dateTime={dateTime}
               venue={venue}
               ticketCode={ticket?.ticket_code}
+              buyerName={order?.buyer_name}
               qrPayload={verifyUrl}
               exportMode={true}
               exportSide="back"
@@ -153,6 +159,7 @@ async function TicketViewContent({ token }: { token: string }) {
               dateTime={dateTime}
               venue={venue}
               ticketCode={ticket?.ticket_code}
+              buyerName={order?.buyer_name}
               qrPayload={verifyUrl}
               exportMode={true}
               exportSide="both"

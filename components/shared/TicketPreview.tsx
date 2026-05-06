@@ -25,6 +25,7 @@ interface TicketCardProps {
   readonly stacked?: boolean;
   readonly exportMode?: boolean;
   readonly exportSide?: "front" | "back" | "both";
+  readonly buyerName?: string;
 }
 
 /**
@@ -241,6 +242,7 @@ export function TicketCard({
   stacked = false,
   exportMode = false,
   exportSide = "both",
+  buyerName = "Valued Guest",
 }: TicketCardProps) {
   const [flipped, setFlipped] = useState(false);
   // Stable unique ID so multiple tickets on the same page don't share clipPaths
@@ -365,7 +367,7 @@ export function TicketCard({
       primaryColor={primaryColor}
       clipId={clipId}
     >
-      <Stub side="left" primaryColor={primaryColor} label="Admit One" />
+      <Stub side="left" primaryColor={primaryColor} label={buyerName.slice(0, 12)} />
 
       <div className="flex-1 @min-md:flex items-center gap-6 px-6 py-4">
         <div className="flex flex-col items-center gap-1.5 shrink-0">
