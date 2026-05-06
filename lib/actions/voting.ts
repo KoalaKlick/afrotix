@@ -892,3 +892,53 @@ export async function castMemberVote(
         return { success: false, error: "Failed to cast vote" };
     }
 }
+
+/**
+ * Resend nomination confirmation email (only for approved nominations with a deletion code)
+ */
+export async function resendNominationEmailAction(optionId: string): Promise<ActionResult> {
+    const option = await getVotingOptionById(optionId);
+    if (!option) {
+        return { success: false, error: "Nomination not found" };
+    }
+
+    const deletionCode = (option as unknown as { deletionCode?: string | null }).deletionCode;
+    if (!deletionCode) {
+        return { success: false, error: "No exit key — email can only be resent for confirmed nominations" };
+    }
+
+    const recipientEmail =
+        (option as unknown as { nominatedByEmail?: string | null }).nominatedByEmail ?? option.email;
+    if (!recipientEmail) {
+        return { success: false, error: "No recipient email on this nomination" };
+    }
+
+    const recipientName =
+        (option as unknown as { nominatedByName?: string | null }).nominatedByName ?? recipientEmail;
+
+    let categoryName = "this category";
+    let eventName = "this event";
+
+    if (option.categoryId) {
+        const category = await getVotingCategoryById(option.categoryId);
+        if (category) categoryName = category.name;
+    }
+
+    const event = await prisma.event.findUnique({
+        where: { id: option.eventId },
+        select: { title: true },
+    });
+    if (event) eventName = event.title;
+
+    const { sendNominationConfirmationEmail } = await import("@/lib/email-actions");
+    await sendNominationConfirmationEmail({
+        email: recipientEmail,
+        recipientName,
+        nomineeName: option.optionText,
+        categoryName,
+        eventName,
+        deletionCode,
+    });
+
+    return { success: true, data: undefined };
+}

@@ -19,11 +19,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Check, X, Eye, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Check, X, Eye, Mail, Loader2 } from "lucide-react";
 import type { VotingCategory, VotingOption } from "@/lib/types/voting";
 import { NominationDetailsDialog } from "./NominationDetailsDialog";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { resendNominationEmailAction } from "@/lib/actions/voting";
+import { toast } from "sonner";
 
 interface NominationRequestsSheetProps {
     readonly open: boolean;
@@ -43,6 +45,27 @@ export function NominationRequestsSheet({
     isPending,
 }: NominationRequestsSheetProps) {
     const [selectedOption, setSelectedOption] = useState<{ option: VotingOption; category: VotingCategory } | null>(null);
+    const [sendingId, setSendingId] = useState<string | null>(null);
+
+    async function handleResendEmail(optionId: string) {
+        if (sendingId) return;
+        setSendingId(optionId);
+        toast.loading("Resending nomination email...");
+        try {
+            const result = await resendNominationEmailAction(optionId);
+            toast.dismiss();
+            if (result.success) {
+                toast.success("Email sent successfully!");
+            } else {
+                toast.error(result.error || "Failed to send email");
+            }
+        } catch {
+            toast.dismiss();
+            toast.error("Failed to send email");
+        } finally {
+            setSendingId(null);
+        }
+    }
 
     // Extract all public nominations across all categories
     const publicNominations = useMemo(() => {
@@ -131,6 +154,20 @@ export function NominationRequestsSheet({
                                                 >
                                                     <Eye className="size-4" />
                                                 </Button>
+                                                {option.deletionCode && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8 text-muted-foreground hover:text-primary"
+                                                        onClick={() => handleResendEmail(option.id)}
+                                                        disabled={sendingId === option.id}
+                                                        title="Resend Nomination Email"
+                                                    >
+                                                        {sendingId === option.id
+                                                            ? <Loader2 className="size-4 animate-spin" />
+                                                            : <Mail className="size-4" />}
+                                                    </Button>
+                                                )}
                                                 {option.status === 'pending' && (
                                                     <>
                                                         <Button

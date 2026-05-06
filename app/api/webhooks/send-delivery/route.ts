@@ -180,11 +180,21 @@ export async function POST(req: NextRequest) {
 
     // 2b. Paid nomination confirmation email
     if (payment.related_type === "nomination") {
+      if (!payment.related_id) {
+        console.error("send-delivery: nomination payment has no related_id yet", paymentId);
+        return NextResponse.json({ success: true, channel: "none", skipped: "no_related_id" });
+      }
+
       const { data: option } = await supabase
         .from("voting_options")
         .select("id, option_text, email, nominated_by_email, nominated_by_name, deletion_code, category_id, event_id")
         .eq("id", payment.related_id)
         .single();
+
+      if (!option) {
+        console.error("send-delivery: voting_option not found for nomination payment", { paymentId, relatedId: payment.related_id });
+        return NextResponse.json({ success: true, channel: "none", skipped: "option_not_found" });
+      }
 
       const recipientEmail = (option.nominated_by_email || option.email) as string | null;
       if (!recipientEmail) {
