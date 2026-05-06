@@ -3,9 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ─── Pricing Constants (mirrored from lib/const/pricing.ts) ─────────────────
 const PLATFORM_FEES = {
-  vote:       { percentage: 0.15, fixed: 0   },
-  nomination: { percentage: 0.15, fixed: 0   },
-  ticket:     { percentage: 0.12, fixed: 0.50 },
+  vote:       { percentage: 0.065, fixed: 0   },
+  nomination: { percentage: 0.0, fixed: 0.5   },
+  ticket:     { percentage: 0.05, fixed: 0.5   },
 } as const;
 
 type TxnType = keyof typeof PLATFORM_FEES;
@@ -13,7 +13,7 @@ type TxnType = keyof typeof PLATFORM_FEES;
 // Paystack Ghana: 1.95%, capped at GHS 100 for local cards.
 // For international cards it's 3.9% + GHS 1 — but we target GHS only.
 const PAYSTACK_FEE_RATE = 0.0195;
-const PAYSTACK_FEE_CAP  = 100; // GHS
+const PAYSTACK_FEE_CAP  = 999999999; // GHS
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

@@ -56,10 +56,8 @@ export function PaymentPlanSettings({
                     )}
                 </div>
 
-                <div className="rounded-md border-2 border-[#009A44] bg-[#009A44]/3 p-5">
-                    <span className="inline-block px-2 py-0.5 rounded-full bg-[#009A44] text-white text-[9px] font-bold uppercase tracking-wider mb-3">
-                        Essential Plan
-                    </span>
+                <div className="rounded-md border border-primary-200 bg-[#009A44]/3 p-5">
+                 
                     <p className="text-2xl font-black mb-1">
                         Free
                         <span className="text-xs font-normal text-muted-foreground ml-1">
@@ -90,7 +88,7 @@ export function PaymentPlanSettings({
 
                     <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
                         <Check className="w-3.5 h-3.5 text-[#009A44]" />
-                        Payouts settle {CASHOUT_CONFIG.settlementLabel.toLowerCase()} via MoMo
+                        Payouts settle {CASHOUT_CONFIG.settlementLabel.toLowerCase()} via your payout account
                     </div>
                 </div>
             </div>
@@ -114,7 +112,7 @@ export function PaymentPlanSettings({
                                 key={type}
                                 onClick={() => setPreviewType(type)}
                                 className={cn(
-                                    "px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all",
+                                    "px-3 py-1.5 text-xs font-bold uppercase tracking-wider border transition-all",
                                     previewType === type
                                         ? ""
                                         : ""

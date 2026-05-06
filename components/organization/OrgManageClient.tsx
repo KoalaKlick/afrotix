@@ -10,6 +10,7 @@ import { OrgInvitationsSettings } from "@/components/organization/management/Org
 import { OrgPayoutSettings } from "@/components/organization/management/OrgPayoutSettings";
 import type { OrganizationRole, InvitationStatus } from "@/lib/generated/prisma";
 import type { OrganizationWithSocials } from "@/lib/dal/organization";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface Member {
     id: string;
@@ -69,6 +70,16 @@ export function OrgManageClient({
     invitations,
     currentUserId,
 }: OrgManageClientProps) {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const defaultTab = searchParams.get("tab") || "general";
+
+    const handleTabChange = (value: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", value);
+        router.replace(`?${params.toString()}`);
+    };
+
     return (
         <>
             <PageHeader
@@ -98,7 +109,7 @@ export function OrgManageClient({
                         </p>
                     </div>
 
-                    <Tabs defaultValue="general" className="space-y-6">
+                    <Tabs defaultValue={defaultTab} onValueChange={handleTabChange} className="space-y-6">
                         <TabsList variant="afro" className="flex overflow-x-auto w-full">
                             <TabsTrigger value="general" className="gap-1.5">
                                 <Settings className="h-4 w-4" />

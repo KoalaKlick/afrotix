@@ -24,24 +24,24 @@ export function fromPesewas(pesewas: number): number {
 export const PLATFORM_FEES = {
     /** Fee applied to each vote transaction */
     vote: {
-        percentage: 0.054,    // 3.5%
+        percentage: 0.065,    // 3.5%
         fixed: 0,             // GHS 0 fixed fee per vote
-        label: "3.5%",
+        label: "6.5%",
         description: "Platform service fee on voting transactions",
     },
 
     /** Fee applied to each nomination transaction (public nomination by voters) */
     nomination: {
-        percentage: 0.054,    // 3.5%
-        fixed: 0,             // GHS 0 fixed fee per nomination
+        percentage: 0.0,    // 3.5%
+        fixed: 0.5,             // GHS 0 fixed fee per nomination
         label: "3.5%",
         description: "Platform service fee on nomination transactions",
     },
 
     /** Fee applied to each ticket purchase */
     ticket: {
-        percentage: 0.054,    // 3.5%
-        fixed: 1.0,           // GHS 1.00 fixed fee per ticket
+        percentage: 0.05,    // 3.5%
+        fixed: 0.50,           // GHS 1.00 fixed fee per ticket
         label: "3.5% + GHS 1",
         description: "Platform service fee on ticket sales",
     },

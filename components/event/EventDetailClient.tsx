@@ -807,7 +807,7 @@ export function EventDetailClient({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => router.push("/organization/manage")}
+              onClick={() => router.push("/organization/manage?tab=payouts")}
             >
               Setup Payout Account
             </AlertDialogAction>
