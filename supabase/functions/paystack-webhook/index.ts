@@ -184,6 +184,83 @@ serve(async (req) => {
     })
     .eq("id", payment.id);
 
+  // 6b. Wallet and Transaction Update
+  const orgId = payment.metadata?.organization_id;
+  if (orgId) {
+    let { data: wallet } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("organization_id", orgId)
+      .single();
+
+    if (!wallet) {
+      const { data: newWallet, error: newWalletError } = await supabase
+        .from("wallets")
+        .insert({
+          organization_id: orgId,
+          balance: 0,
+          total_credits: 0,
+          currency: payment.currency || "GHS",
+        })
+        .select()
+        .single();
+        
+      if (newWalletError) {
+        console.error("Wallet creation error:", newWalletError);
+      }
+      wallet = newWallet;
+    }
+
+    if (wallet) {
+      const isSplit = fees.is_split === true;
+      const organizerReceives = Number(fees.organizer_receives || baseAmount - platformFee);
+      
+      // If the payment was automatically split to a Paystack subaccount, 
+      // the funds don't sit in our wallet balance. We only update total_credits.
+      const balanceIncrement = isSplit ? 0 : organizerReceives;
+      
+      const newBalance = Number(wallet.balance) + balanceIncrement;
+      const newTotalCredits = Number(wallet.total_credits || 0) + organizerReceives;
+
+      const { data: txn, error: txnError } = await supabase
+        .from("transactions")
+        .insert({
+          reference: `TXN-${crypto.randomUUID().replace(/-/g, "").substring(0, 12).toUpperCase()}`,
+          wallet_id: wallet.id,
+          type: "credit",
+          category: payment.related_type === "vote" ? "vote_purchase" : "ticket_purchase",
+          status: "completed",
+          amount: organizerReceives,
+          currency: payment.currency || "GHS",
+          fee_amount: platformFee,
+          fee_breakdown: fees,
+          balance_before: wallet.balance,
+          balance_after: newBalance,
+          description: `Revenue from ${payment.related_type}`,
+          related_type: payment.related_type,
+          related_id: payment.related_id,
+          payment_id: payment.id,
+          provider_reference: String(event.data?.reference || payment.reference),
+          completed_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (txn) {
+        await supabase
+          .from("wallets")
+          .update({
+            balance: newBalance,
+            total_credits: newTotalCredits,
+            last_transaction_at: new Date().toISOString(),
+          })
+          .eq("id", wallet.id);
+      } else {
+        console.error("Transaction creation error:", txnError);
+      }
+    }
+  }
+
   // 7. Referral Commission (funded from platform fee — never reduces organizer revenue)
   if (payment.user_id) {
     const { data: profile } = await supabase

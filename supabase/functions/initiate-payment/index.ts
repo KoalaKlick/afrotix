@@ -136,6 +136,27 @@ serve(async (req) => {
     const platformFee       = round2((baseAmount * feeConfig.percentage) + feeConfig.fixed);
     const organizerReceives = round2(baseAmount - platformFee);
 
+    // 4. Look up org subaccount
+    let resolvedOrgId = organizationId;
+    if (!resolvedOrgId && metadata?.event_id) {
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("organization_id")
+        .eq("id", metadata.event_id)
+        .single();
+      if (eventData) resolvedOrgId = eventData.organization_id;
+    }
+
+    let subaccountCode: string | null = null;
+    if (resolvedOrgId) {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("subaccount_code")
+        .eq("id", resolvedOrgId)
+        .single();
+      subaccountCode = org?.subaccount_code ?? null;
+    }
+
     const feeBreakdown = {
       base_amount:       baseAmount,
       platform_fee:      platformFee,
@@ -143,18 +164,8 @@ serve(async (req) => {
       total_charged:     totalToCharge,     // what customer sees
       organizer_receives: organizerReceives,
       txn_type:          txnType,
+      is_split:          !!subaccountCode,
     };
-
-    // 4. Look up org subaccount
-    let subaccountCode: string | null = null;
-    if (organizationId) {
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("subaccount_code")
-        .eq("id", organizationId)
-        .single();
-      subaccountCode = org?.subaccount_code ?? null;
-    }
 
     // 5. Create PENDING payment record — amount = base product price
     const { data: payment, error: paymentError } = await supabase
@@ -171,7 +182,7 @@ serve(async (req) => {
         status:       "pending",
         provider:     "paystack",
         fee_breakdown: feeBreakdown,
-        metadata:     { ...metadata, reference },
+        metadata:     { ...metadata, reference, organization_id: resolvedOrgId },
       })
       .select()
       .single();

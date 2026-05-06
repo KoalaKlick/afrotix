@@ -507,6 +507,14 @@ export async function publishEvent(
     return { success: false, error: "Not authorized to publish events" };
   }
 
+  // Enforce verified payout account before publishing
+  if (!event.organization.subaccountCode) {
+    return { 
+      success: false, 
+      error: "Please verify and add a payout account in your organization settings before publishing an event." 
+    };
+  }
+
   try {
     const updated = await updateEventStatus(
       eventId,
@@ -602,6 +610,14 @@ export async function changeEventStatus(
   const role = await getUserRoleInOrganization(user.id, event.organizationId);
   if (!role || role === "member") {
     return { success: false, error: "Not authorized to change event status" };
+  }
+
+  // Enforce verified payout account before publishing
+  if (status === "published" && !event.organization.subaccountCode) {
+    return { 
+      success: false, 
+      error: "Please verify and add a payout account in your organization settings before publishing an event." 
+    };
   }
 
   try {

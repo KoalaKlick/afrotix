@@ -108,7 +108,7 @@ function PaymentCallbackContent() {
   return (
     <main className="min-h-screen bg-[#F8F7F1] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl border overflow-hidden">
+        <div className="bg-white rounded-md shadow-xl border overflow-hidden">
           <div className="h-1.5 bg-linear-to-r from-[#CE1126] via-[#FFCD00] to-[#009A44]" />
 
           <div className="p-8 flex flex-col items-center text-center">
