@@ -7,18 +7,26 @@ import * as htmlToImage from "html-to-image";
 
 interface TicketDownloadButtonProps {
   fileName?: string;
+  elementId?: string;
+  label?: string;
+  variant?: "default" | "outline" | "secondary" | "ghost" | "link";
 }
 
-export function TicketDownloadButton({ fileName = "afrotix-ticket" }: TicketDownloadButtonProps) {
+export function TicketDownloadButton({ 
+  fileName = "afrotix-ticket",
+  elementId = "ticket-container",
+  label = "Save Ticket Image",
+  variant = "default"
+}: TicketDownloadButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
-      const node = document.getElementById("ticket-container");
+      const node = document.getElementById(elementId);
       
       if (!node) {
-        console.error("Ticket container not found");
+        console.error(`Element with id ${elementId} not found`);
         return;
       }
 
@@ -45,6 +53,7 @@ export function TicketDownloadButton({ fileName = "afrotix-ticket" }: TicketDown
   return (
     <Button 
       size="lg" 
+      variant={variant}
       className="rounded-full px-8" 
       onClick={handleDownload}
       disabled={isDownloading}
@@ -54,7 +63,7 @@ export function TicketDownloadButton({ fileName = "afrotix-ticket" }: TicketDown
       ) : (
         <Download className="mr-2 size-5" />
       )}
-      {isDownloading ? "Generating Image..." : "Save Ticket Image"}
+      {isDownloading ? "Generating..." : label}
     </Button>
   );
 }

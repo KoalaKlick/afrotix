@@ -23,7 +23,8 @@ interface TicketCardProps {
   readonly qrPayload?: string;
   readonly className?: string;
   readonly stacked?: boolean;
-
+  readonly exportMode?: boolean;
+  readonly exportSide?: "front" | "back" | "both";
 }
 
 /**
@@ -141,8 +142,9 @@ function Stub({
         style={{
           fontFamily: "'Courier New', monospace",
           color: primaryColor,
-          writingMode: "vertical-lr",
+          writingMode: "vertical-rl",
           transform: side === "left" ? "rotate(180deg)" : "none",
+          whiteSpace: "nowrap",
         }}
       >
         {label}
@@ -237,6 +239,8 @@ export function TicketCard({
   qrPayload,
   className,
   stacked = false,
+  exportMode = false,
+  exportSide = "both",
 }: TicketCardProps) {
   const [flipped, setFlipped] = useState(false);
   // Stable unique ID so multiple tickets on the same page don't share clipPaths
@@ -250,7 +254,7 @@ export function TicketCard({
   const flierDisplayUrl = getEventImageUrl(flierImage);
   const heroImageUrl = bannerDisplayUrl || flierDisplayUrl;
 
-  const stubLabel = organizationName.slice(0, 10);
+  const stubLabel = (organizationName || "").slice(0, 10);
 
   const barWidths = [3, 1.5, 1.5, 3, 1.5, 2, 1.5, 3, 1.5, 1.5, 3, 2, 1.5, 3, 1.5, 2, 3, 1.5, 3, 1.5, 2, 3, 1.5, 1.5, 3, 2, 3, 1.5, 1.5, 3];
   const barHeights = [38, 26, 26, 38, 26, 38, 26, 26, 38, 26, 26, 38, 26, 38, 26, 26, 38, 26, 38, 26, 26, 38, 26, 26, 38, 26, 38, 26, 26, 38];
@@ -260,6 +264,193 @@ export function TicketCard({
     { translateX: 14, translateY: 2, rotate: 13, zIndex: 2 },
     { translateX: 6, translateY: 1, rotate: 5, zIndex: 3 },
   ];
+
+  const renderFront = () => (
+    <TicketShell
+      secondaryColor={secondaryColor}
+      primaryColor={primaryColor}
+      clipId={clipId}
+    >
+      <Stub side="left" primaryColor={primaryColor} label={ticketType} />
+
+      <div className="flex-1 @min-md:flex items-center gap-3.5 px-5 py-4 overflow-hidden relative">
+        {heroImageUrl && (
+          <>
+            <Image
+              src={heroImageUrl}
+              alt={eventName}
+              fill
+              className="object-cover opacity-10"
+              unoptimized
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(135deg, ${primaryColor}18 0%, transparent 100%)`,
+              }}
+            />
+          </>
+        )}
+
+        <div className="flex-1 min-w-0 relative z-10">
+          <span
+            className="block text-[9px] font-black tracking-[0.22em] uppercase opacity-60 mb-0.5"
+            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+          >
+            {ticketType}
+          </span>
+          <div className="text-base @min-lg:text-lg uppercase font-montserrat font-bold truncate leading-tight">
+            {eventName}
+          </div>
+          <div className="flex flex-col gap-1 mt-1.5">
+            <div>
+              <div
+                className="text-[8px] font-bold tracking-[0.15em] uppercase opacity-50"
+                style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+              >
+                Date &amp; Time
+              </div>
+              <div
+                className="text-[11px] text-[#3d3530]"
+                style={{ fontFamily: "Georgia, serif" }}
+              >
+                {dateTime}
+              </div>
+            </div>
+            <div>
+              <div
+                className="text-[8px] font-bold tracking-[0.15em] uppercase opacity-50"
+                style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+              >
+                Venue
+              </div>
+              <div
+                className="text-[11px] text-[#3d3530] truncate"
+                style={{ fontFamily: "Georgia, serif" }}
+              >
+                {venue}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="self-stretch w-px shrink-0 relative z-10"
+          style={{ background: `${primaryColor}18` }}
+        />
+
+        <div className="shrink-0 flex flex-col items-center gap-1 relative z-10">
+          <div
+            className="text-[9px] font-black tracking-[0.15em] uppercase text-center opacity-60"
+            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+          >
+            Organizer
+          </div>
+          <div
+            className="text-[11px] font-bold text-center"
+            style={{ fontFamily: "Georgia, serif", color: `${primaryColor}cc` }}
+          >
+            {organizationName}
+          </div>
+        </div>
+      </div>
+
+      <Stub side="right" primaryColor={primaryColor} label={stubLabel} />
+    </TicketShell>
+  );
+
+  const renderBack = () => (
+    <TicketShell
+      secondaryColor={secondaryColor}
+      primaryColor={primaryColor}
+      clipId={clipId}
+    >
+      <Stub side="left" primaryColor={primaryColor} label="Admit One" />
+
+      <div className="flex-1 @min-md:flex items-center gap-6 px-6 py-4">
+        <div className="flex flex-col items-center gap-1.5 shrink-0">
+          <div
+            className="size-12 @min-md:size-18 rounded-none flex items-center justify-center bg-white p-1"
+            style={{ backgroundColor: `${primaryColor}8` }}
+          >
+            {qrPayload ? (
+              <QRCode
+                value={qrPayload}
+                size={64}
+                style={{ height: "100%", width: "100%" }}
+                fgColor={primaryColor}
+                bgColor="transparent"
+              />
+            ) : (
+              <QrCode className="size-6 lg:size-9" style={{ color: primaryColor }} />
+            )}
+          </div>
+          <div
+            className="text-[8px] font-black tracking-[0.1em] uppercase opacity-40 text-center"
+            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+          >
+            Scan to verify
+          </div>
+        </div>
+
+        <div
+          className="self-stretch w-px shrink-0"
+          style={{ background: `${primaryColor}18` }}
+        />
+
+        <div className="flex flex-col items-center gap-2 flex-1">
+          <div
+            className="text-[9px] font-black tracking-[0.3em] uppercase opacity-50"
+            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+          >
+            Ticket No.
+          </div>
+          <div
+            className="text-xl font-black tracking-[0.15em] opacity-85"
+            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+          >
+            {ticketCode}
+          </div>
+          <div className="flex items-center gap-0.5">
+            {barWidths.map((w, i) => (
+              <div
+                key={i}
+                className="rounded-[1px] opacity-60"
+                style={{ width: w, height: barHeights[i], background: primaryColor }}
+              />
+            ))}
+          </div>
+          <div
+            className="text-[8px] opacity-40"
+            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+          >
+            {organizationName}
+          </div>
+        </div>
+      </div>
+
+      <Stub side="right" primaryColor={primaryColor} label={stubLabel} />
+    </TicketShell>
+  );
+
+  if (exportMode) {
+    return (
+      <div className="flex flex-col gap-6 p-4 bg-white">
+        {(exportSide === "both" || exportSide === "front") && (
+          <div className="relative w-[560px] h-[210px] shrink-0">
+            <TicketClipPath id={clipId} />
+            {renderFront()}
+          </div>
+        )}
+        {(exportSide === "both" || exportSide === "back") && (
+          <div className="relative w-[560px] h-[210px] shrink-0">
+            <TicketClipPath id={clipId} />
+            {renderBack()}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -300,98 +491,7 @@ export function TicketCard({
             className="absolute inset-0"
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
           >
-            <TicketShell
-              secondaryColor={secondaryColor}
-              primaryColor={primaryColor}
-              clipId={clipId}
-            >
-              <Stub side="left" primaryColor={primaryColor} label={ticketType} />
-
-              <div className="flex-1 @min-md:flex items-center gap-3.5 px-5 py-4 overflow-hidden relative">
-                {heroImageUrl && (
-                  <>
-                    <Image
-                      src={heroImageUrl}
-                      alt={eventName}
-                      fill
-                      className="object-cover opacity-10"
-                      unoptimized
-                    />
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: `linear-gradient(135deg, ${primaryColor}18 0%, transparent 100%)`,
-                      }}
-                    />
-                  </>
-                )}
-
-                <div className="flex-1 min-w-0 relative z-10">
-                  <span
-                    className="block text-[9px] font-black tracking-[0.22em] uppercase opacity-60 mb-0.5"
-                    style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
-                  >
-                    {ticketType}
-                  </span>
-                  <div className="text-base @min-lg:text-lg uppercase font-montserrat font-bold truncate leading-tight">
-                    {eventName}
-                  </div>
-                  <div className="flex flex-col gap-1 mt-1.5">
-                    <div>
-                      <div
-                        className="text-[8px] font-bold tracking-[0.15em] uppercase opacity-50"
-                        style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
-                      >
-                        Date &amp; Time
-                      </div>
-                      <div
-                        className="text-[11px] text-[#3d3530]"
-                        style={{ fontFamily: "Georgia, serif" }}
-                      >
-                        {dateTime}
-                      </div>
-                    </div>
-                    <div>
-                      <div
-                        className="text-[8px] font-bold tracking-[0.15em] uppercase opacity-50"
-                        style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
-                      >
-                        Venue
-                      </div>
-                      <div
-                        className="text-[11px] text-[#3d3530] truncate"
-                        style={{ fontFamily: "Georgia, serif" }}
-                      >
-                        {venue}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  className="self-stretch w-px shrink-0 relative z-10"
-                  style={{ background: `${primaryColor}18` }}
-                />
-
-                <div className="shrink-0 flex flex-col items-center gap-1 relative z-10">
-                  <div
-                    className="text-[9px] font-black tracking-[0.15em] uppercase text-center opacity-60"
-                    style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
-                  >
-                    Organizer
-                  </div>
-                  <div
-                    className="text-[11px] font-bold text-center"
-                    style={{ fontFamily: "Georgia, serif", color: `${primaryColor}cc` }}
-                  >
-                    {organizationName}
-                  </div>
-                </div>
-              </div>
-
-
-              <Stub side="right"  primaryColor={primaryColor} label={stubLabel} />
-            </TicketShell>
+            {renderFront()}
           </div>
 
           {/* ── BACK ── */}
@@ -403,77 +503,7 @@ export function TicketCard({
               transform: "rotateY(180deg)",
             }}
           >
-            <TicketShell
-              secondaryColor={secondaryColor}
-              primaryColor={primaryColor}
-              clipId={clipId}
-            >
-              <Stub side="left" primaryColor={primaryColor} label="Admit One" />
-
-              <div className="flex-1 @min-md:flex items-center gap-6 px-6 py-4">
-                <div className="flex flex-col items-center gap-1.5 shrink-0">
-                  <div
-                    className="size-12 @min-md:size-18 rounded-xl flex items-center justify-center bg-white p-1"
-                    style={{ backgroundColor: `${primaryColor}8` }}
-                  >
-                    {qrPayload ? (
-                      <QRCode
-                        value={qrPayload}
-                        size={64}
-                        style={{ height: "100%", width: "100%" }}
-                        fgColor={primaryColor}
-                        bgColor="transparent"
-                      />
-                    ) : (
-                      <QrCode className="size-6 lg:size-9" style={{ color: primaryColor }} />
-                    )}
-                  </div>
-                  <div
-                    className="text-[8px] font-black tracking-[0.1em] uppercase opacity-40 text-center"
-                    style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
-                  >
-                    Scan to verify
-                  </div>
-                </div>
-
-                <div
-                  className="self-stretch w-px shrink-0"
-                  style={{ background: `${primaryColor}18` }}
-                />
-
-                <div className="flex flex-col items-center gap-2 flex-1">
-                  <div
-                    className="text-[9px] font-black tracking-[0.3em] uppercase opacity-50"
-                    style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
-                  >
-                    Ticket No.
-                  </div>
-                  <div
-                    className="text-xl font-black tracking-[0.15em] opacity-85"
-                    style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
-                  >
-                    {ticketCode}
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    {barWidths.map((w, i) => (
-                      <div
-                        key={i}
-                        className="rounded-[1px] opacity-60"
-                        style={{ width: w, height: barHeights[i], background: primaryColor }}
-                      />
-                    ))}
-                  </div>
-                  <div
-                    className="text-[8px] opacity-40"
-                    style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
-                  >
-                    {organizationName}
-                  </div>
-                </div>
-              </div>
-
-              <Stub side="right" primaryColor={primaryColor} label={stubLabel} />
-            </TicketShell>
+            {renderBack()}
           </div>
         </div>
       </div>

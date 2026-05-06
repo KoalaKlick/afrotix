@@ -117,9 +117,62 @@ async function TicketViewContent({ token }: { token: string }) {
 
         </div>
 
+        {/* Hidden Export Containers for High-Res PNG Downloads */}
+        <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none" aria-hidden="true">
+          {/* Back Only (QR Code side) */}
+          <div id="ticket-export-back" className="bg-white p-8">
+            <TicketCard
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              logoUrl={org?.logo_url}
+              flierImage={event?.flier_image}
+              bannerImage={event?.banner_image}
+              organizationName={org?.name || "Afrotix Event"}
+              eventName={event?.title || "Afrotix Event"}
+              ticketType={ticketType?.name || "General Admission"}
+              dateTime={dateTime}
+              venue={venue}
+              ticketCode={ticket?.ticket_code}
+              qrPayload={verifyUrl}
+              exportMode={true}
+              exportSide="back"
+            />
+          </div>
 
-        <div className="flex justify-center mt-8">
-          <TicketDownloadButton fileName={`Afrotix-Ticket-${ticket?.ticket_code || "Download"}`} />
+          {/* Both Sides */}
+          <div id="ticket-export-both" className="bg-white p-8">
+            <TicketCard
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              logoUrl={org?.logo_url}
+              flierImage={event?.flier_image}
+              bannerImage={event?.banner_image}
+              organizationName={org?.name || "Afrotix Event"}
+              eventName={event?.title || "Afrotix Event"}
+              ticketType={ticketType?.name || "General Admission"}
+              dateTime={dateTime}
+              venue={venue}
+              ticketCode={ticket?.ticket_code}
+              qrPayload={verifyUrl}
+              exportMode={true}
+              exportSide="both"
+            />
+          </div>
+        </div>
+
+
+        <div className="flex flex-wrap justify-center gap-4 mt-8">
+          <TicketDownloadButton 
+            label="Download Back"
+            fileName={`Afrotix-Ticket-Back-${ticket?.ticket_code || "Download"}`} 
+            elementId="ticket-export-back"
+          />
+          <TicketDownloadButton 
+            label="Download Full Ticket"
+            fileName={`Afrotix-Ticket-Full-${ticket?.ticket_code || "Download"}`} 
+            elementId="ticket-export-both"
+            variant="outline"
+          />
         </div>
 
       </div>
