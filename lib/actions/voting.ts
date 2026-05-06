@@ -702,6 +702,27 @@ export async function submitPublicNominationAction(
         return { success: false, error: "Failed to submit nomination" };
     }
 
+    // Send confirmation email (fire-and-forget)
+    const recipientEmail =
+        data.nominatorEmail?.trim() || data.email?.trim() || user?.email;
+    if (recipientEmail) {
+        const event = await prisma.event.findUnique({
+            where: { id: data.eventId },
+            select: { title: true },
+        });
+        const { sendNominationConfirmationEmail } = await import("@/lib/email-actions");
+        sendNominationConfirmationEmail({
+            email: recipientEmail,
+            recipientName: data.nominatorName?.trim() || recipientEmail,
+            nomineeName: data.optionText.trim(),
+            categoryName: category.name,
+            eventName: event?.title ?? "this event",
+            deletionCode: null,
+        }).catch((err: unknown) =>
+            console.error("[voting] Failed to send free nomination email:", err)
+        );
+    }
+
     return {
         success: true,
         data: {
