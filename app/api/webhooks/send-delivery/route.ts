@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import transporter from "@/lib/mail";
 import { render } from "@react-email/render";
 import React from "react";
 import { TicketDeliveryEmail } from "@/emails/ticket-delivery";
-import crypto from "crypto";
+import crypto from "node:crypto";
+
+// Use service role key — this route is only called server-to-server
+// (webhook edge function or server actions). The anon key + RLS would block reads.
+function createClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Missing Supabase env vars");
+  return createSupabaseClient(url, key, { auth: { persistSession: false } });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing paymentId" }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // 1. Fetch Payment
     const { data: payment, error: paymentError } = await supabase

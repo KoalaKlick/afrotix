@@ -240,6 +240,85 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, channel: "email" }), { status: 200 });
     }
 
+    // 2b. Nomination confirmation email
+    if (payment.related_type === "nomination") {
+      if (!payment.related_id) {
+        console.error("send-delivery: nomination payment has no related_id yet", paymentId);
+        return new Response(JSON.stringify({ success: true, channel: "none", skipped: "no_related_id" }), { status: 200 });
+      }
+
+      const { data: option, error: optionError } = await supabase
+        .from("voting_options")
+        .select("id, option_text, email, nominated_by_email, nominated_by_name, deletion_code, category_id, event_id")
+        .eq("id", payment.related_id)
+        .single();
+
+      if (optionError || !option) {
+        console.error("send-delivery: voting_option not found", { paymentId, relatedId: payment.related_id, optionError });
+        return new Response(JSON.stringify({ success: true, channel: "none", skipped: "option_not_found" }), { status: 200 });
+      }
+
+      const recipientEmail = asString(option.nominated_by_email) ?? asString(option.email);
+      if (!recipientEmail) {
+        return new Response(JSON.stringify({ success: true, channel: "none", skipped: "no_recipient_email" }), { status: 200 });
+      }
+
+      const [{ data: category }, { data: event }] = await Promise.all([
+        supabase.from("voting_categories").select("name").eq("id", option.category_id).single(),
+        supabase.from("events").select("title").eq("id", option.event_id).single(),
+      ]);
+
+      const deletionCode = asString(option.deletion_code);
+      const recipientName = asString(option.nominated_by_name) ?? recipientEmail;
+      const nomineeName = asString(option.option_text) ?? "Nominee";
+      const categoryName = asString(category?.name) ?? "this category";
+      const eventName = asString(event?.title) ?? "this event";
+
+      const subject = deletionCode
+        ? `Your nomination for ${eventName} is live — exit key inside`
+        : `Nomination received for ${eventName} — pending review`;
+
+      const previewText = deletionCode
+        ? `Nomination confirmed — keep your exit key safe`
+        : `Nomination received — pending review`;
+
+      const exitKeySection = deletionCode
+        ? `<div style="background:#f4f4f5;border-radius:8px;padding:16px 20px;margin:24px 0;text-align:center;">
+            <p style="margin:0 0 8px;font-size:12px;color:#71717a;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;">Your Exit Key (keep this safe)</p>
+            <p style="margin:0;font-size:28px;font-weight:700;font-family:monospace;letter-spacing:0.15em;color:#18181b;">${deletionCode}</p>
+          </div>
+          <p style="color:#52525b;font-size:14px;">This 6-digit exit key is required if you ever need the nomination removed. Keep it safe — the event organizer will ask for it before they can delete the nomination.</p>`
+        : `<p style="color:#52525b;font-size:14px;">Once approved, the nominee will appear in the public list. You will be notified if further action is needed.</p>`;
+
+      const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"/></head>
+<body style="background:#f9fafb;font-family:sans-serif;margin:0;padding:40px 0;">
+  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;padding:40px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+    <h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 8px;">Nomination ${deletionCode ? "Confirmed!" : "Received!"}</h1>
+    <p style="color:#52525b;font-size:14px;">Hi ${recipientName},</p>
+    <p style="color:#52525b;font-size:14px;">Your nomination of <strong>${nomineeName}</strong> for the <strong>${categoryName}</strong> category at <strong>${eventName}</strong> has been ${deletionCode ? "confirmed and is now live!" : "received and is pending review by the organizers."}</p>
+    ${exitKeySection}
+    <p style="color:#a1a1aa;font-size:12px;margin-top:32px;border-top:1px solid #f4f4f5;padding-top:16px;">Afrotix - Empowering African Events</p>
+  </div>
+</body></html>`;
+
+      const deliveryResult = await sendEmail({ to: recipientEmail, subject, html });
+
+      await supabase
+        .from("payments")
+        .update({
+          metadata: {
+            ...asRecord(payment.metadata),
+            nomination_email_sent_at: new Date().toISOString(),
+            nomination_email_to: recipientEmail,
+          },
+        })
+        .eq("id", paymentId);
+
+      console.info(`Nomination email sent to ${recipientEmail} for payment ${paymentId}`, deliveryResult);
+      return new Response(JSON.stringify({ success: true, channel: "email" }), { status: 200 });
+    }
+
     // 3. Legacy credit-based delivery path for other payment types
     const { data: organizer, error: organizerError } = payment.user_id
       ? await supabase
