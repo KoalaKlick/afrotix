@@ -441,15 +441,15 @@ export function TicketCard({
 
   if (exportMode) {
     return (
-      <div className="flex flex-col gap-6 p-0 bg-transparent">
+      <div className="flex flex-col gap-8 p-0 bg-transparent w-[560px]">
         {(exportSide === "both" || exportSide === "front") && (
-          <div className="relative w-[560px] h-[210px] shrink-0">
+          <div className="relative w-[560px] h-[210px] shrink-0 overflow-hidden">
             <TicketClipPath id={clipId} />
             {renderFront()}
           </div>
         )}
         {(exportSide === "both" || exportSide === "back") && (
-          <div className="relative w-[560px] h-[210px] shrink-0">
+          <div className="relative w-[560px] h-[210px] shrink-0 overflow-hidden">
             <TicketClipPath id={clipId} />
             {renderBack()}
           </div>

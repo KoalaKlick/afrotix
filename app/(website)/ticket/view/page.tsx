@@ -125,7 +125,7 @@ async function TicketViewContent({ token }: { token: string }) {
         {/* Hidden Export Containers for High-Res PNG Downloads */}
         <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none" aria-hidden="true">
           {/* Back Only (QR Code side) */}
-          <div id="ticket-export-back" className="bg-transparent p-0">
+          <div id="ticket-export-back" className="bg-transparent p-0 w-[560px] min-w-[560px]">
             <TicketCard
               primaryColor={primaryColor}
               secondaryColor={secondaryColor}
@@ -146,7 +146,7 @@ async function TicketViewContent({ token }: { token: string }) {
           </div>
 
           {/* Both Sides */}
-          <div id="ticket-export-both" className="bg-transparent p-0">
+          <div id="ticket-export-both" className="bg-transparent p-0 w-[560px] min-w-[560px]">
             <TicketCard
               primaryColor={primaryColor}
               secondaryColor={secondaryColor}
