@@ -23,6 +23,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { usePaystack } from "@/hooks/usePaystack";
 
@@ -188,18 +189,20 @@ export function PublicTicketPaymentModal({
     <>
       {open && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm animate-in fade-in-0" 
+          className="fixed inset-0 z-50 bg-black/50 animate-in fade-in-0" 
           aria-hidden="true" 
           onClick={() => handleClose(false)} 
         />
       )}
       <Dialog open={open} onOpenChange={handleClose} modal={false}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-black uppercase tracking-tight">
             Purchase {selectedTicket.name}
           </DialogTitle>
         </DialogHeader>
+
+        <DialogBody>
 
         {step === "checkout" && (
           <div className="space-y-6">
@@ -306,7 +309,7 @@ export function PublicTicketPaymentModal({
                 <Calendar className="size-3.5" />
                 Total
               </div>
-              <p className="mt-2 text-3xl font-black">
+              <p className="mt-2 text-xl font-black">
                 {totalAmount === 0
                   ? "Free"
                   : new Intl.NumberFormat("en-GH", {
@@ -379,6 +382,7 @@ export function PublicTicketPaymentModal({
             <p className="text-lg font-black">Payment Confirmed</p>
           </div>
         )}
+        </DialogBody>
       </DialogContent>
     </Dialog>
     </>

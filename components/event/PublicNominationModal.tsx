@@ -429,7 +429,7 @@ export function PublicNominationModal({ eventId, category, orgSlug, eventSlug }:
             {/* ── Confirmation Dialog (free + paid) ───────────────────────── */}
             {showPayDialog && (
                 <div 
-                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm animate-in fade-in-0" 
+                    className="fixed inset-0 z-50 bg-black/50 animate-in fade-in-0" 
                     aria-hidden="true" 
                     onClick={() => handlePayDialogOpenChange(false)} 
                 />
