@@ -89,6 +89,139 @@ async function createTicketOrderAndTickets(supabase, payment) {
   }
 }
 
+async function handleNominationPayment(supabase, payment) {
+  const optionId = payment.related_id;
+
+  if (optionId) {
+    // ── Legacy / pre-existing record path: just update status ─────────────
+    const { data: option } = await supabase
+      .from("voting_options")
+      .select("id, category_id")
+      .eq("id", optionId)
+      .single();
+
+    if (!option) {
+      console.error("Nomination option not found:", optionId);
+      return;
+    }
+
+    const { data: category } = await supabase
+      .from("voting_categories")
+      .select("require_approval")
+      .eq("id", option.category_id)
+      .single();
+
+    const newStatus = category?.require_approval === false ? "approved" : "pending";
+    const deletionCode = newStatus === "approved"
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : null;
+
+    const updatePayload: Record<string, string> = { status: newStatus };
+    if (deletionCode) updatePayload.deletion_code = deletionCode;
+
+    const { error } = await supabase
+      .from("voting_options")
+      .update(updatePayload)
+      .eq("id", optionId);
+
+    if (error) {
+      console.error("Failed to update nomination status:", error, { optionId, newStatus });
+    } else {
+      console.info(`Nomination ${optionId} status set to ${newStatus} after payment ${payment.id}`);
+    }
+    return;
+  }
+
+  // ── New path: create nomination record from payment metadata ─────────────
+  // This is the correct flow: form → payment dialog → Paystack → webhook creates record
+  const metadata = payment?.metadata || {};
+  const categoryId = metadata.category_id;
+  const eventId = metadata.event_id;
+
+  if (!categoryId || !eventId || !metadata.nominee_name) {
+    console.error("Missing required nomination metadata:", { categoryId, eventId, nomineeName: metadata.nominee_name });
+    return;
+  }
+
+  const { data: category } = await supabase
+    .from("voting_categories")
+    .select("require_approval")
+    .eq("id", categoryId)
+    .single();
+
+  const newStatus = category?.require_approval === false ? "approved" : "pending";
+  const deletionCode = newStatus === "approved"
+    ? Math.floor(100000 + Math.random() * 900000).toString()
+    : null;
+
+  // Generate a nominee code: first 3 consonant/alpha chars of name + 3-digit sequence
+  async function generateCode(): Promise<string> {
+    const raw = String(metadata.nominee_name).trim().toUpperCase().replace(/[^A-Z]/g, "");
+    const prefix = raw.substring(0, 3).padEnd(3, "X");
+    const { data: existing } = await supabase
+      .from("voting_options")
+      .select("nominee_code")
+      .eq("event_id", eventId)
+      .ilike("nominee_code", `${prefix}%`);
+    let max = 0;
+    const re = new RegExp(`^${prefix}(\\d+)$`);
+    for (const row of (existing || [])) {
+      if (row.nominee_code) {
+        const m = re.exec(row.nominee_code);
+        if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+      }
+    }
+    return `${prefix}${String(max + 1).padStart(3, "0")}`;
+  }
+
+  const nomineeCode = await generateCode().catch(() => `NOM${Date.now().toString().slice(-6)}`);
+
+  const insertData: Record<string, unknown> = {
+    event_id: eventId,
+    category_id: categoryId,
+    option_text: metadata.nominee_name,
+    email: metadata.nominee_email ?? null,
+    description: metadata.nominee_description ?? null,
+    image_url: metadata.nominee_image_url ?? null,
+    nominated_by_email: metadata.nominator_email ?? null,
+    nominated_by_name: metadata.nominator_name ?? null,
+    status: newStatus,
+    is_public_nomination: true,
+    nominee_code: nomineeCode,
+  };
+  if (deletionCode) insertData.deletion_code = deletionCode;
+
+  const { data: newOption, error: insertError } = await supabase
+    .from("voting_options")
+    .insert(insertData)
+    .select("id")
+    .single();
+
+  if (insertError || !newOption) {
+    console.error("Failed to create nomination from payment metadata:", insertError);
+    return;
+  }
+
+  console.info(`Nomination created from payment ${payment.id}: optionId=${newOption.id}, status=${newStatus}`);
+
+  // Insert custom field values if any
+  const fieldValues: { fieldId: string; value: string }[] = metadata.field_values ?? [];
+  if (fieldValues.length > 0) {
+    const rows = fieldValues.map((fv) => ({
+      option_id: newOption.id,
+      field_id: fv.fieldId,
+      value: fv.value,
+    }));
+    const { error: fvError } = await supabase.from("voting_option_field_values").insert(rows);
+    if (fvError) console.error("Failed to insert field values:", fvError);
+  }
+
+  // Link the payment record to the new option so send-delivery can look it up
+  await supabase.from("payments").update({ related_id: newOption.id }).eq("id", payment.id);
+  // Also update in-memory so the delivery call below sees the correct related_id
+  payment.related_id = newOption.id;
+}
+
 async function createVote(supabase, payment) {
   const voteMetadata = payment?.metadata || {};
   const voteCount = Number(voteMetadata.vote_count || 1);
@@ -307,6 +440,8 @@ serve(async (req) => {
     await createTicketOrderAndTickets(supabase, payment);
   } else if (payment.related_type === "vote") {
     await createVote(supabase, payment);
+  } else if (payment.related_type === "nomination") {
+    await handleNominationPayment(supabase, payment);
   }
 
   // 9. Trigger delivery (Next.js API route)

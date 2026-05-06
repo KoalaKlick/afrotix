@@ -178,6 +178,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, channel: "email", messageId: info.messageId });
     }
 
+    // 2b. Paid nomination confirmation email
+    if (payment.related_type === "nomination") {
+      const { data: option } = await supabase
+        .from("voting_options")
+        .select("id, option_text, email, nominated_by_email, nominated_by_name, deletion_code, category_id, event_id")
+        .eq("id", payment.related_id)
+        .single();
+
+      const recipientEmail = (option.nominated_by_email || option.email) as string | null;
+      if (!recipientEmail) {
+        return NextResponse.json({ success: true, channel: "none", skipped: "no_recipient_email" });
+      }
+
+      const [{ data: category }, { data: event }] = await Promise.all([
+        supabase.from("voting_categories").select("name").eq("id", option.category_id).single(),
+        supabase.from("events").select("title").eq("id", option.event_id).single(),
+      ]);
+
+      const { sendNominationConfirmationEmail } = await import("@/lib/email-actions");
+      const result = await sendNominationConfirmationEmail({
+        email: recipientEmail,
+        recipientName: option.nominated_by_name || recipientEmail,
+        nomineeName: option.option_text,
+        categoryName: category?.name || "this category",
+        eventName: event?.title || "this event",
+        deletionCode: option.deletion_code,
+      });
+
+      await supabase
+        .from("payments")
+        .update({
+          metadata: {
+            ...(typeof payment.metadata === "object" && payment.metadata !== null ? payment.metadata : {}),
+            nomination_email_sent_at: new Date().toISOString(),
+            nomination_email_to: recipientEmail,
+            ...(result.success ? { nomination_email_message_id: (result as { messageId?: string }).messageId } : {}),
+          },
+        })
+        .eq("id", paymentId);
+
+      return NextResponse.json({ success: true, channel: "email" });
+    }
+
     // 3. Legacy credit-based delivery path for other payment types (Votes etc)
     const { data: organizer, error: organizerError } = payment.user_id
       ? await supabase

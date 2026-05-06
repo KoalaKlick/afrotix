@@ -579,12 +579,14 @@ export async function approveNominationAction(
     }
 
     // Check if category has a price
-    let deletionCode = undefined;
+    let deletionCode: string | undefined;
+    let categoryName = "this category";
     if (option.categoryId) {
         const category = await getVotingCategoryById(option.categoryId);
         if (category && Number(category.nominationPrice) > 0) {
             deletionCode = generateDeletionCode();
         }
+        if (category) categoryName = category.name;
     }
 
     const approved = await updateVotingOption(optionId, { 
@@ -594,6 +596,26 @@ export async function approveNominationAction(
     
     if (!approved) {
         return { success: false, error: "Failed to approve nomination" };
+    }
+
+    // Send confirmation email with exit key if this was a paid nomination
+    if (deletionCode) {
+        const recipientEmail = (option as unknown as { nominatedByEmail?: string }).nominatedByEmail ?? option.email;
+        if (recipientEmail) {
+            const event = await prisma.event.findUnique({
+                where: { id: option.eventId },
+                select: { title: true },
+            });
+            const { sendNominationConfirmationEmail } = await import("@/lib/email-actions");
+            sendNominationConfirmationEmail({
+                email: recipientEmail,
+                recipientName: (option as unknown as { nominatedByName?: string }).nominatedByName ?? recipientEmail,
+                nomineeName: option.optionText,
+                categoryName,
+                eventName: event?.title ?? "this event",
+                deletionCode,
+            }).catch((err: unknown) => console.error("[voting] Failed to send nomination email:", err));
+        }
     }
 
     revalidatePath(`/my-events/${option.eventId}`);

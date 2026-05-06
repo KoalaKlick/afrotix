@@ -237,7 +237,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                 </a>
 
                                 {isNominationOpen && (
-                                    <PublicNominationModal eventId={event.id} category={category} />
+                                    <PublicNominationModal eventId={event.id} category={category} orgSlug={orgSlug} eventSlug={eventSlug} />
                                 )}
                             </div>
                         </div>

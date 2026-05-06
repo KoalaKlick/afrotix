@@ -130,10 +130,16 @@ serve(async (req) => {
 
     // What the customer actually pays — inflated so Paystack's cut comes from
     // the surcharge, leaving baseAmount intact on our side.
-    const { totalToCharge, paystackFee } = computeChargeAmount(baseAmount);
+    // Guard: if base amount is zero (e.g. free nomination), skip fees entirely
+    const { totalToCharge, paystackFee } = baseAmount === 0
+      ? { totalToCharge: 0, paystackFee: 0 }
+      : computeChargeAmount(baseAmount);
 
-    // Platform fee is taken from baseAmount (organizer's gross)
-    const platformFee       = round2((baseAmount * feeConfig.percentage) + feeConfig.fixed);
+    // Platform fee is taken from baseAmount (organizer's gross).
+    // Fixed component is skipped when amount is zero.
+    const platformFee       = baseAmount === 0
+      ? 0
+      : round2((baseAmount * feeConfig.percentage) + feeConfig.fixed);
     const organizerReceives = round2(baseAmount - platformFee);
 
     // 4. Look up org subaccount
