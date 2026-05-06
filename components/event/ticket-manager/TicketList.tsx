@@ -106,7 +106,7 @@ export function TicketList({
         {ticketTypes.map((ticket) => (
           <div
             key={ticket.id}
-            className="group rounded-md border bg-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            className="group rounded-md border bg-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-xs"
           >
             <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-center">
               <div className="mx-auto lg:mx-0  w-full">
@@ -173,7 +173,7 @@ export function TicketList({
                 )}
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-2xl border bg-muted/20 p-3">
+                  <div className="rounded-md border bg-muted/20 p-3">
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                       Price
                     </p>
@@ -187,7 +187,7 @@ export function TicketList({
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border bg-muted/20 p-3">
+                  <div className="rounded-md border bg-muted/20 p-3">
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                       Inventory
                     </p>
@@ -201,7 +201,7 @@ export function TicketList({
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border bg-muted/20 p-3">
+                  <div className="rounded-md border bg-muted/20 p-3">
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                       Sales Window
                     </p>
@@ -215,7 +215,7 @@ export function TicketList({
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border bg-muted/20 p-3">
+                  <div className="rounded-md border bg-muted/20 p-3">
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                       Palette
                     </p>
