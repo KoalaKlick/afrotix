@@ -106,7 +106,7 @@ export function TicketList({
         {ticketTypes.map((ticket) => (
           <div
             key={ticket.id}
-            className="group rounded-[32px] border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            className="group rounded-md border bg-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg"
           >
             <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-center">
               <div className="mx-auto lg:mx-0">
