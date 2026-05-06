@@ -233,7 +233,10 @@ serve(async (req) => {
   }
 
   // 9. Trigger delivery (Next.js API route)
-  const appUrl = (Deno.env.get("APP_URL") || "").replace(/\/$/, "");
+  // Fallback to the production domain if APP_URL is missing in edge secrets
+  const rawAppUrl = Deno.env.get("APP_URL") || Deno.env.get("NEXT_PUBLIC_DOMAIN_URL") || "https://afrotix.vercel.app";
+  const appUrl = rawAppUrl.replace(/\/$/, "");
+  
   fetch(`${appUrl}/api/webhooks/send-delivery`, {
     method: "POST",
     headers: {

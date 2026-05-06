@@ -119,7 +119,7 @@ async function TicketViewContent({ token }: { token: string }) {
 
 
         <div className="flex justify-center mt-8">
-          <TicketDownloadButton />
+          <TicketDownloadButton fileName={`Afrotix-Ticket-${ticket?.ticket_code || "Download"}`} />
         </div>
 
       </div>

@@ -86,6 +86,9 @@ importers:
       html-react-parser:
         specifier: ^5.2.17
         version: 5.2.17(@types/react@19.2.13)(react@19.2.3)
+      html-to-image:
+        specifier: ^1.11.13
+        version: 1.11.13
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -3104,6 +3107,9 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  html-to-image@1.11.13:
+    resolution: {integrity: sha512-cuOPoI7WApyhBElTTb9oqsawRvZ0rHhaHwghRLlTuffoD1B2aDemlCruLeZrUIIdvG7gs9xeELEPm6PhuASqrg==}
 
   html-to-text@9.0.5:
     resolution: {integrity: sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg==}
@@ -7204,6 +7210,8 @@ snapshots:
       style-to-js: 1.1.21
     optionalDependencies:
       '@types/react': 19.2.13
+
+  html-to-image@1.11.13: {}
 
   html-to-text@9.0.5:
     dependencies:
