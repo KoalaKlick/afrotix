@@ -35,8 +35,9 @@ export function TicketDownloadButton({
 
       const dataUrl = await htmlToImage.toPng(node, {
         quality: 1.0,
-        pixelRatio: 2, // High resolution
+        pixelRatio: 4, // Extreme resolution
         skipAutoScale: true,
+        cacheBust: true,
       });
 
       const link = document.createElement("a");

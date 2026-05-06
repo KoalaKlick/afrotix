@@ -370,19 +370,23 @@ export function TicketCard({
       <div className="flex-1 @min-md:flex items-center gap-6 px-6 py-4">
         <div className="flex flex-col items-center gap-1.5 shrink-0">
           <div
-            className="size-12 @min-md:size-18 rounded-none flex items-center justify-center bg-white p-1"
-            style={{ backgroundColor: `${primaryColor}8` }}
+            className={`rounded-none flex items-center justify-center bg-white p-1 ${exportMode ? "size-32" : "size-12 @min-md:size-18"}`}
+            style={{ 
+              backgroundColor: `${primaryColor}8`,
+              imageRendering: "pixelated"
+            }}
           >
             {qrPayload ? (
               <QRCode
                 value={qrPayload}
-                size={64}
-                style={{ height: "100%", width: "100%" }}
+                size={512} // Massive internal resolution
+                style={{ height: "100%", width: "100%", imageRendering: "pixelated" }}
                 fgColor={primaryColor}
                 bgColor="transparent"
+                level="H" // High error correction for better scannability
               />
             ) : (
-              <QrCode className="size-6 lg:size-9" style={{ color: primaryColor }} />
+              <QrCode className={exportMode ? "size-16" : "size-6 lg:size-9"} style={{ color: primaryColor }} />
             )}
           </div>
           <div
@@ -435,7 +439,7 @@ export function TicketCard({
 
   if (exportMode) {
     return (
-      <div className="flex flex-col gap-6 p-4 bg-white">
+      <div className="flex flex-col gap-6 p-0 bg-transparent">
         {(exportSide === "both" || exportSide === "front") && (
           <div className="relative w-[560px] h-[210px] shrink-0">
             <TicketClipPath id={clipId} />
