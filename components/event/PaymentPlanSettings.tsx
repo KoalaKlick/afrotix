@@ -44,7 +44,7 @@ export function PaymentPlanSettings({
     return (
         <div className="space-y-6">
             {/* ─── Essential Plan Card ──────────────────── */}
-            <div className="bg-card border rounded-xl p-6">
+            <div className="bg-card border rounded-md p-6">
                 <div className="flex items-center gap-2 mb-6">
                     <CreditCard className="w-5 h-5 text-[#009A44]" />
                     <h3 className="font-semibold text-lg">Platform Fees</h3>
@@ -56,7 +56,7 @@ export function PaymentPlanSettings({
                     )}
                 </div>
 
-                <div className="rounded-xl border-2 border-[#009A44] bg-[#009A44]/3 p-5">
+                <div className="rounded-md border-2 border-[#009A44] bg-[#009A44]/3 p-5">
                     <span className="inline-block px-2 py-0.5 rounded-full bg-[#009A44] text-white text-[9px] font-bold uppercase tracking-wider mb-3">
                         Essential Plan
                     </span>
@@ -96,7 +96,7 @@ export function PaymentPlanSettings({
             </div>
 
             {/* ─── Fee Calculator ──────────────────────── */}
-            <div className="bg-card border rounded-xl p-6">
+            <div className="bg-card border rounded-md p-6">
                 <div className="flex items-center gap-2 mb-4">
                     <Calculator className="w-5 h-5 text-[#FFCD00]" />
                     <h3 className="font-semibold">Fee Calculator</h3>
@@ -140,7 +140,7 @@ export function PaymentPlanSettings({
                     </div>
 
                     {breakdown && (
-                        <div className="rounded-xl p-4 border border-[#009A44]/20 bg-[#009A44]/3">
+                        <div className="rounded-md p-4 border border-[#009A44]/20 bg-[#009A44]/3">
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Transaction Amount</span>
@@ -167,7 +167,7 @@ export function PaymentPlanSettings({
             </div>
 
             {/* ─── Communication Credits ──────────────── */}
-            <div className="bg-card border rounded-xl p-6">
+            <div className="bg-card border rounded-md p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-[#CE1126]" />
@@ -184,7 +184,7 @@ export function PaymentPlanSettings({
                     and in-app notifications are always free.
                 </p>
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                    <div className="rounded-lg bg-muted/50 p-3 text-center">
+                    <div className="rounded-md bg-muted/50 p-3 text-center">
                         <p className="text-xs text-muted-foreground">SMS</p>
                         <p className="text-sm font-bold mt-0.5">
                             {COMMUNICATION_CREDITS.perMessage.sms} credit/msg
