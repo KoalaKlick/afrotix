@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -440,6 +440,8 @@ export function PublicNominationModal({ eventId, category, orgSlug, eventSlug }:
                         <DialogTitle>{isPaid ? "Confirm & Pay" : "Confirm Nomination"}</DialogTitle>
                     </DialogHeader>
 
+                    <DialogBody>
+
                     {/* Checkout / Confirm */}
                     {payStep === "checkout" && (
                         <div className="space-y-5">
@@ -545,6 +547,7 @@ export function PublicNominationModal({ eventId, category, orgSlug, eventSlug }:
                             </Button>
                         </div>
                     )}
+                    </DialogBody>
                 </DialogContent>
             </Dialog>
         </>

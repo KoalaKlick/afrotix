@@ -12,6 +12,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogBody,
 } from "@/components/ui/dialog";
 import { getEventImageUrl } from "@/lib/image-url-utils";
 import {
@@ -321,6 +322,7 @@ export function VotePaymentModal({
                     <DialogTitle>Vote for {nominee.optionText}</DialogTitle>
                 </DialogHeader>
 
+                <DialogBody className="p-0">
                 {/* ─── Checkout ──────────────────────────────────── */}
                 {step === "checkout" && (
                     <div className="p-5 space-y-5">
@@ -634,6 +636,7 @@ export function VotePaymentModal({
                         </Button>
                     </div>
                 )}
+                </DialogBody>
             </DialogContent>
         </Dialog>
         </>
