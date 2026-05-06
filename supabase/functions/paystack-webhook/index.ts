@@ -448,16 +448,22 @@ serve(async (req) => {
   // Fallback to the production domain if APP_URL is missing in edge secrets
   const rawAppUrl = Deno.env.get("APP_URL") || Deno.env.get("NEXT_PUBLIC_DOMAIN_URL") || "https://afrotix.vercel.app";
   const appUrl = rawAppUrl.replace(/\/$/, "");
-  
-  fetch(`${appUrl}/api/webhooks/send-delivery`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      // We can pass a secret header here if needed to secure the API route in the future
-    },
-    body: JSON.stringify({ paymentId: payment.id })
-  }).catch(err => console.error("Error triggering send-delivery API:", err));
 
+  try {
+    const deliveryRes = await fetch(`${appUrl}/api/webhooks/send-delivery`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentId: payment.id }),
+    });
+    if (!deliveryRes.ok) {
+      const text = await deliveryRes.text();
+      console.error("send-delivery returned non-OK:", deliveryRes.status, text);
+    } else {
+      console.info("send-delivery triggered OK for payment", payment.id);
+    }
+  } catch (err) {
+    console.error("Error triggering send-delivery API:", err);
+  }
 
   console.info(`Payment ${payment.id} processed. Base: ${baseAmount}, Platform fee: ${platformFee}`);
 

@@ -185,7 +185,15 @@ export function PublicTicketPaymentModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleClose} modal={false}>
+    <>
+      {open && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm animate-in fade-in-0" 
+          aria-hidden="true" 
+          onClick={() => handleClose(false)} 
+        />
+      )}
+      <Dialog open={open} onOpenChange={handleClose} modal={false}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-black uppercase tracking-tight">
@@ -373,5 +381,6 @@ export function PublicTicketPaymentModal({
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }

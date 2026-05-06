@@ -427,6 +427,13 @@ export function PublicNominationModal({ eventId, category, orgSlug, eventSlug }:
             </Sheet>
 
             {/* ── Confirmation Dialog (free + paid) ───────────────────────── */}
+            {showPayDialog && (
+                <div 
+                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm animate-in fade-in-0" 
+                    aria-hidden="true" 
+                    onClick={() => handlePayDialogOpenChange(false)} 
+                />
+            )}
             <Dialog open={showPayDialog} onOpenChange={handlePayDialogOpenChange} modal={false}>
                 <DialogContent className="sm:max-w-sm">
                     <DialogHeader>

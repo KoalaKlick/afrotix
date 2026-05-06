@@ -268,7 +268,15 @@ export function VotePaymentModal({
     const displayImageUrl = getEventImageUrl(nominee.imageUrl);
 
     return (
-        <Dialog open={open} onOpenChange={handleClose} modal={false}>
+        <>
+            {open && (
+                <div 
+                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm animate-in fade-in-0" 
+                    aria-hidden="true" 
+                    onClick={() => handleClose(false)} 
+                />
+            )}
+            <Dialog open={open} onOpenChange={handleClose} modal={false}>
             <DialogContent
                 className="sm:max-w-md p-0 overflow-hidden gap-0 border-0 rounded-2xl bg-white"
                 onOpenAutoFocus={(e) => { if (loading) e.preventDefault(); }}
@@ -628,5 +636,6 @@ export function VotePaymentModal({
                 )}
             </DialogContent>
         </Dialog>
+        </>
     );
 }

@@ -4,6 +4,7 @@ import transporter from "@/lib/mail";
 import { render } from "@react-email/render";
 import React from "react";
 import { TicketDeliveryEmail } from "@/emails/ticket-delivery";
+import { NominationConfirmationEmail } from "@/emails/nomination-confirmation";
 import crypto from "node:crypto";
 
 // Use service role key — this route is only called server-to-server
@@ -215,14 +216,27 @@ export async function POST(req: NextRequest) {
         supabase.from("events").select("title").eq("id", option.event_id).single(),
       ]);
 
-      const { sendNominationConfirmationEmail } = await import("@/lib/email-actions");
-      const result = await sendNominationConfirmationEmail({
-        email: recipientEmail,
-        recipientName: option.nominated_by_name || recipientEmail,
-        nomineeName: option.option_text,
-        categoryName: category?.name || "this category",
-        eventName: event?.title || "this event",
-        deletionCode: option.deletion_code,
+      const emailHtml = await render(
+        React.createElement(NominationConfirmationEmail, {
+          recipientName: option.nominated_by_name || recipientEmail,
+          nomineeName: option.option_text,
+          categoryName: category?.name || "this category",
+          eventName: event?.title || "this event",
+          deletionCode: option.deletion_code,
+        })
+      );
+
+      const fromName = process.env.SMTP_FROM_NAME || "Afrotix";
+      const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
+      const subject = option.deletion_code
+        ? `Your nomination for ${event?.title || "the event"} is live — exit key inside`
+        : `Nomination received for ${event?.title || "the event"} — pending review`;
+
+      const info = await transporter.sendMail({
+        from: `"${fromName}" <${fromEmail}>`,
+        to: recipientEmail,
+        subject,
+        html: emailHtml,
       });
 
       await supabase
@@ -232,12 +246,12 @@ export async function POST(req: NextRequest) {
             ...(typeof payment.metadata === "object" && payment.metadata !== null ? payment.metadata : {}),
             nomination_email_sent_at: new Date().toISOString(),
             nomination_email_to: recipientEmail,
-            ...(result.success ? { nomination_email_message_id: (result as { messageId?: string }).messageId } : {}),
+            nomination_email_message_id: info.messageId,
           },
         })
         .eq("id", paymentId);
 
-      return NextResponse.json({ success: true, channel: "email" });
+      return NextResponse.json({ success: true, channel: "email", messageId: info.messageId });
     }
 
     // 3. Legacy credit-based delivery path for other payment types (Votes etc)

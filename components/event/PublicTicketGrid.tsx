@@ -264,18 +264,22 @@ export function PublicTicketGrid({
               </div>
 
               <SheetFooter className="border-t bg-background p-6">
-                <Button
-                  variant="afro-cta"
-                  size="lg"
-                  className="w-full"
-                  disabled={selectedTicket.status !== "available"}
-                  onClick={() => {
-                    setTicketToPurchase(selectedTicket);
-                    setSelectedTicket(null);
-                  }}
-                >
-                  Purchase Ticket
-                </Button>
+               <Button
+  variant="afro-cta"
+  size="lg"
+  className="w-full"
+  disabled={
+    selectedTicket.status !== "available" ||
+    (selectedTicket.quantityTotal !== null &&
+      selectedTicket.quantityTotal - selectedTicket.quantitySold <= 0)
+  }
+  onClick={() => {
+    setTicketToPurchase(selectedTicket);
+    setSelectedTicket(null);
+  }}
+>
+  Purchase Ticket
+</Button>
               </SheetFooter>
             </>
           )}
