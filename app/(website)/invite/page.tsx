@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
 import { getInvitationByToken } from "@/lib/dal/organization";
+import { getProfileByEmail } from "@/lib/dal/profile";
 import { InviteAcceptClient } from "./InviteAcceptClient";
 
 interface InvitePageProps {
@@ -81,13 +82,15 @@ export default async function InvitePage({ searchParams }: InvitePageProps) {
         );
     }
 
-    // Check if the user is currently authenticated
+    // Run auth check and account existence check in parallel
     const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const [{ data: { user } }, existingProfile] = await Promise.all([
+        supabase.auth.getUser(),
+        getProfileByEmail(invite.email),
+    ]);
 
     const currentUserEmail = user?.email ?? null;
+    const isExistingUser = existingProfile !== null;
 
     return (
         <InviteAcceptClient
@@ -106,6 +109,7 @@ export default async function InvitePage({ searchParams }: InvitePageProps) {
                     : null,
             }}
             currentUserEmail={currentUserEmail}
+            isExistingUser={isExistingUser}
         />
     );
 }

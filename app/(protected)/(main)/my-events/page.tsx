@@ -3,7 +3,7 @@
 import { useState } from "react";
 // Data fetching now handled via API route
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EventsList } from "@/components/event/EventsList";
 import { CustomizableEventStats } from "@/components/event";
@@ -11,6 +11,7 @@ import { CreateEventDrawer } from "@/components/event/CreateEventDrawer";
 import { useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { NoEventsIllustration } from "@/components/common/NoEventsIllustration";
 
 export default function MyEventsPage() {
     const router = useRouter();
@@ -79,13 +80,11 @@ export default function MyEventsPage() {
                 {/* Events List */}
                 {events.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="flex size-16 items-center justify-center rounded-full bg-muted mb-4">
-                            <Calendar className="size-8 text-muted-foreground" />
-                        </div>
+                        <NoEventsIllustration className="w-64 h-auto mb-6" />
                         <h2 className="text-xl font-semibold mb-2">No events yet</h2>
-                        <p className="text-muted-foreground mb-6 max-w-sm">
+                        {/* <p className="text-muted-foreground mb-6 max-w-sm">
                             Create your first event to start selling tickets and engaging your audience.
-                        </p>
+                        </p> */}
                         <Button onClick={() => setIsDrawerOpen(true)} size="lg">
                             <Plus className="mr-2 size-4" />
                             Create Your First Event

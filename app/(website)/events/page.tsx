@@ -5,6 +5,7 @@ import { EventsFilter } from '@/components/event/EventsFilter'
 import type { EventType } from '@/lib/generated/prisma'
 import { PROJ_NAME } from '@/lib/const/branding'
 import type { Metadata } from 'next'
+import { NoEventsIllustration } from '@/components/common/NoEventsIllustration'
 
 export async function generateMetadata(): Promise<Metadata> {
     return {
@@ -51,6 +52,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                     </div>
                 ) : (
                     <div className="text-center py-20 bg-[#F8F7F1]/50 rounded-3xl border border-dashed border-[#E5E5E5]">
+                        <NoEventsIllustration className="w-64 h-auto mx-auto mb-6" />
                         <p className="text-xl font-medium text-muted-foreground">
                             {q || type ? "No events match your filters." : "No public events found at the moment."}
                         </p>
