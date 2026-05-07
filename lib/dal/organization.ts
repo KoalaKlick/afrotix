@@ -57,6 +57,7 @@ export type OrganizationCreateInput = {
 export type OrganizationUpdateInput = Partial<Omit<OrganizationCreateInput, "createdBy">> & {
     phone?: string;
     socialLinks?: string[];
+    allowJoinRequests?: boolean;
 };
 
 export type OrganizationWithRole = Organization & {

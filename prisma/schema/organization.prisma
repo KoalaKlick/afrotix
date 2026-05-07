@@ -1,36 +1,39 @@
 model Organization {
-  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name           String
-  slug           String                   @unique
+  slug           String  @unique
   description    String?
-  logoUrl        String?                  @map("logo_url")
-  bannerUrl      String?                  @map("banner_url")
-  primaryColor   String                   @default("#02a605ff") @map("primary_color")
-  secondaryColor String                   @default("#ffe100ff") @map("secondary_color")
-  tertiaryColor  String                   @default("#dc2626") @map("tertiary_color")
-  faviconUrl     String?                  @map("favicon_url")
-  websiteUrl     String?                  @map("website_url")
-  contactEmail   String?                  @map("contact_email")
+  logoUrl        String? @map("logo_url")
+  bannerUrl      String? @map("banner_url")
+  primaryColor   String  @default("#02a605ff") @map("primary_color")
+  secondaryColor String  @default("#ffe100ff") @map("secondary_color")
+  tertiaryColor  String  @default("#dc2626") @map("tertiary_color")
+  faviconUrl     String? @map("favicon_url")
+  websiteUrl     String? @map("website_url")
+  contactEmail   String? @map("contact_email")
   phone          String?
-  
+
+  // Join request settings
+  allowJoinRequests Boolean @default(false) @map("allow_join_requests")
+
   // Paystack subaccount for automated split payments
-  subaccountCode        String?  @map("subaccount_code")
-  paystackBankCode      String?  @map("paystack_bank_code")
-  paystackAccountNumber String?  @map("paystack_account_number")
-  paystackAccountName   String?  @map("paystack_account_name")
-  
-  createdBy      String?                  @map("created_by") @db.Uuid
-  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  
+  subaccountCode        String? @map("subaccount_code")
+  paystackBankCode      String? @map("paystack_bank_code")
+  paystackAccountNumber String? @map("paystack_account_number")
+  paystackAccountName   String? @map("paystack_account_name")
+
+  createdBy String?  @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
   // Relations
-  events         Event[]
-  socialLinks    OrganizationSocialLink[]
-  requests       MembershipRequest[]
-  invitations    OrganizationInvitation[]
-  members        OrganizationMember[]
-  creator        Profile?                 @relation("CreatedOrganizations", fields: [createdBy], references: [id])
-  wallets        Wallet[]
+  events      Event[]
+  socialLinks OrganizationSocialLink[]
+  requests    MembershipRequest[]
+  invitations OrganizationInvitation[]
+  members     OrganizationMember[]
+  creator     Profile?                 @relation("CreatedOrganizations", fields: [createdBy], references: [id])
+  wallets     Wallet[]
 
   @@index([slug], map: "idx_organizations_slug")
   @@index([createdBy], map: "idx_organizations_created_by")

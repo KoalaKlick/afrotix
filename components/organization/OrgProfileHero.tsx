@@ -22,6 +22,7 @@ interface OrgProfileHeroProps {
         primaryColor: string;
         secondaryColor: string;
         tertiaryColor: string;
+        allowJoinRequests: boolean;
         _count: {
             members: number;
         };
@@ -139,6 +140,7 @@ export function OrgProfileHero({
                     </div>
 
                     {/* Action Button */}
+                    {organization.allowJoinRequests && (
                     <div className="pb-2">
                         <Button
                             size="default"
@@ -149,6 +151,7 @@ export function OrgProfileHero({
                             {!hasPendingRequest && <ArrowRight className="ml-2 h-4 w-4" />}
                         </Button>
                     </div>
+                    )}
                 </div>
             </div>
         </div>

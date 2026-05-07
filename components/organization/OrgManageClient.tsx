@@ -158,6 +158,7 @@ export function OrgManageClient({
                         <TabsContent value="requests">
                             <OrgJoinRequestsSettings
                                 organizationId={organization.id}
+                                allowJoinRequests={organization.allowJoinRequests}
                                 requests={joinRequests}
                             />
                         </TabsContent>

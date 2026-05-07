@@ -588,6 +588,15 @@ export async function requestToJoinOrganization(
         return { success: false, error: "Not authenticated" };
     }
 
+    // Check if the organization accepts join requests
+    const org = await getOrganizationById(organizationId);
+    if (!org) {
+        return { success: false, error: "Organization not found" };
+    }
+    if (!org.allowJoinRequests) {
+        return { success: false, error: "This organization is not accepting join requests" };
+    }
+
     // Check if already a member
     const role = await getUserRoleInOrganization(user.id, organizationId);
     if (role) {
@@ -612,6 +621,28 @@ export async function requestToJoinOrganization(
 
     // Revalidate the organization profile page
     revalidatePath("/[slug]", "page");
+
+    return { success: true };
+}
+
+/**
+ * Enable or disable join requests for an organization
+ */
+export async function setAllowJoinRequests(
+    organizationId: string,
+    allowed: boolean
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    const canManage = await canManageOrganization(user.id, organizationId);
+    if (!canManage) return { success: false, error: "Insufficient permissions" };
+
+    const updated = await updateOrganization(organizationId, { allowJoinRequests: allowed });
+    if (!updated) return { success: false, error: "Failed to update setting" };
+
+    revalidatePath("/[slug]", "page");
+    revalidatePath("/organization/manage");
 
     return { success: true };
 }
