@@ -1,4 +1,3 @@
-import { FooterSection } from '@/components/Landing/sections/FooterSection';
 import { Navbar } from '@/components/Landing/nav/NavBar';
 import { OrgBrandingProvider } from '@/components/providers/OrgBrandingProvider';
 
