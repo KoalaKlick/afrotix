@@ -19,27 +19,28 @@ export default function MyEventsPage() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
 
-    useEffect(() => {
-        async function fetchData() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                router.push("/auth/login");
-                return;
-            }
-
-            const res = await fetch("/api/my-events", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: user.id }),
-            });
-            if (!res.ok) {
-                router.push("/dashboard");
-                return;
-            }
-            const { events, stats, organization } = await res.json();
-            setData({ events, stats, organization, user });
-            setLoading(false);
+    const fetchData = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            router.push("/auth/login");
+            return;
         }
+
+        const res = await fetch("/api/my-events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.id }),
+        });
+        if (!res.ok) {
+            router.push("/dashboard");
+            return;
+        }
+        const { events, stats, organization } = await res.json();
+        setData({ events, stats, organization, user });
+        setLoading(false);
+    };
+
+    useEffect(() => {
         fetchData();
     }, [router, supabase]);
 
@@ -91,7 +92,11 @@ export default function MyEventsPage() {
                         </Button>
                     </div>
                 ) : (
-                    <EventsList events={events} organizationSlug={organization?.slug} />
+                    <EventsList 
+                        events={events} 
+                        organizationSlug={organization?.slug} 
+                        onRefresh={fetchData}
+                    />
                 )}
             </div>
 

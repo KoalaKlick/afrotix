@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Calendar, MoreVertical, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,9 +53,11 @@ interface Event {
 interface EventsListProps {
     readonly events: Event[];
     readonly organizationSlug?: string;
+    readonly onRefresh?: () => Promise<void> | void;
 }
 
-export function EventsList({ events, organizationSlug }: EventsListProps) {
+export function EventsList({ events, organizationSlug, onRefresh }: EventsListProps) {
+    const router = useRouter();
     const [isDeleting, startTransition] = useTransition();
     const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
 
@@ -66,6 +69,11 @@ export function EventsList({ events, organizationSlug }: EventsListProps) {
             if (result.success) {
                 toast.success("Event deleted successfully");
                 setEventToDelete(null);
+                // Revalidate
+                router.refresh();
+                if (onRefresh) {
+                    await onRefresh();
+                }
             } else {
                 toast.error(result.error ?? "Failed to delete event");
             }
@@ -74,106 +82,111 @@ export function EventsList({ events, organizationSlug }: EventsListProps) {
 
     return (
         <>
-        <div className="grid gap-4">
-            {events.map((event) => {
-                const coverImageUrl = getEventImageUrl(event.flierImage);
-                const lifecycleStatus = getEventLifecycleStatus(event);
-                const publicationStatus = getEventPublicationStatus(event.status);
-                const canViewPublicPage = Boolean(organizationSlug && event.isPublic && publicationStatus === "published");
+            <div className="grid gap-4">
+                {events.map((event) => {
+                    const coverImageUrl = getEventImageUrl(event.flierImage);
+                    const lifecycleStatus = getEventLifecycleStatus(event);
+                    const publicationStatus = getEventPublicationStatus(event.status);
+                    const canViewPublicPage = Boolean(organizationSlug && event.isPublic && publicationStatus === "published");
 
-                return (
-                    <div
-                        key={event.id}
-                        className="bg-card border rounded-md p-4 "
-                    >
-                        <div className="flex items-start gap-4">
-                            {/* Event Image */}
-                            <div className="size-16 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden relative">
-                                {coverImageUrl ? (
-                                    <Image
-                                        src={coverImageUrl}
-                                        alt={event.title}
-                                        fill
-                                        className="object-cover"
-                                        unoptimized
-                                    />
-                                ) : (
-                                    <Calendar className="size-6 text-muted-foreground" />
-                                )}
-                            </div>
-
-                            {/* Event Details */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                        <Link
-                                            href={`/my-events/${event.id}`}
-                                            className="font-semibold hover:underline line-clamp-1"
-                                        >
-                                            {event.title}
-                                        </Link>
-                                        <p className="text-sm text-muted-foreground line-clamp-1">
-                                            {event.venueName ?? (event.isVirtual ? "Virtual Event" : "Location TBD")}
-                                        </p>
+                    return (
+                        <div
+                            key={event.id}
+                            className="bg-card border group rounded-md p-4"
+                        >
+                            <div className="flex items-start gap-4">
+                                {/* Clickable area — image + details */}
+                                <Link
+                                    href={`/my-events/${event.id}`}
+                                    className="flex items-start gap-4 flex-1 min-w-0"
+                                >
+                                    {/* Event Image */}
+                                    <div className="size-16 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden relative">
+                                        {coverImageUrl ? (
+                                            <Image
+                                                src={coverImageUrl}
+                                                alt={event.title}
+                                                fill
+                                                className="object-cover"
+                                                unoptimized
+                                            />
+                                        ) : (
+                                            <Calendar className="size-6 text-muted-foreground" />
+                                        )}
                                     </div>
-                                    <Badge className={statusColors[lifecycleStatus]}>
-                                        {lifecycleStatus}
-                                    </Badge>
-                                </div>
 
-                                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                    {event.startDate && (
-                                        <span>
-                                            {new Date(event.startDate).toLocaleDateString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                                year: "numeric",
-                                            })}
-                                        </span>
-                                    )}
-                                    <span>{event.type}</span>
+                                    {/* Event Details */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <p className="font-semibold group-hover:underline line-clamp-1">
+                                                    {event.title}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground line-clamp-1">
+                                                    {event.venueName ?? (event.isVirtual ? "Virtual Event" : "Location TBD")}
+                                                </p>
+                                            </div>
+                                            <Badge className={statusColors[lifecycleStatus]}>
+                                                {lifecycleStatus}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                                            {event.startDate && (
+                                                <span>
+                                                    {new Date(event.startDate).toLocaleDateString("en-US", {
+                                                        month: "short",
+                                                        day: "numeric",
+                                                        year: "numeric",
+                                                    })}
+                                                </span>
+                                            )}
+                                            <span>{event.type}</span>
+                                        </div>
+                                    </div>
+                                </Link>
+
+                                {/* Actions — isolated from the Link */}
+                                <div onClick={(e) => e.preventDefault()}>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="shrink-0">
+                                                <MoreVertical className="size-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            {canViewPublicPage && (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/${organizationSlug}/event/${event.slug}`}>
+                                                        <Eye className="mr-2 size-4" />
+                                                        View Public Page
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/my-events/${event.id}`}>
+                                                    <Edit className="mr-2 size-4" />
+                                                    Edit
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                                onSelect={(e) => {
+                                                    e.preventDefault();
+                                                    setEventToDelete(event);
+                                                }}
+                                            >
+                                                <Trash2 className="mr-2 size-4" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
-
-                            {/* Actions */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="shrink-0">
-                                        <MoreVertical className="size-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    {canViewPublicPage && (
-                                        <DropdownMenuItem asChild>
-                                            <Link href={`/${organizationSlug}/event/${event.slug}`}>
-                                                <Eye className="mr-2 size-4" />
-                                                View Public Page
-                                            </Link>
-                                        </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/my-events/${event.id}`}>
-                                            <Edit className="mr-2 size-4" />
-                                            Edit
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                        onSelect={(e) => {
-                                            e.preventDefault();
-                                            setEventToDelete(event);
-                                        }}
-                                    >
-                                        <Trash2 className="mr-2 size-4" />
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
                         </div>
-                    </div>
-                );
-            })}
+                    );
+                })}
             </div>
 
             <AlertDialog
