@@ -801,7 +801,7 @@ export function EventDetailClient({
             <AlertDialogDescription>
               You need to set up an organization payout method (Mobile Money or
               Bank Account) before you can publish an event. This ensures you can receive earnings from ticket sales or votes.
-              <em className="text-center bg-secondary-100/50">Note: No amount is charged from your account.</em>
+              <em className="text-center bg-secondary-100/50"> <br />  Note: No amount is charged from your account.</em>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
