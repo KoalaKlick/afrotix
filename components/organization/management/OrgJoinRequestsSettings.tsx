@@ -70,8 +70,8 @@ export function OrgJoinRequestsSettings({ organizationId, allowJoinRequests, req
                         <Users className="h-5 w-5" />
                         Join Request Setting
                     </CardTitle>
-                    <CardDescription>
-                        Control whether the public can request to join your organization.
+                    <CardDescription className="text-xs">
+                        Control whether other organizers can see a "Request to Join" button on your organization's public page. If enabled, anyone can request to join and you'll be able to review and approve/deny requests below.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
