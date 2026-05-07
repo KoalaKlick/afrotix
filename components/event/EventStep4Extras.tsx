@@ -252,7 +252,7 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                             <Share2 className="size-5 text-primary" />
                             Organization Socials
                         </Label>
-                        <p className="text-sm text-muted-foreground">Dynamic links to your social media profiles</p>
+                        <p className="text-sm text-muted-foreground">Dynamic links to event's social media profiles</p>
                     </div>
                     <Button
                         type="button"

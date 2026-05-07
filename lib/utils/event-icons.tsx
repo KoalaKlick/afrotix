@@ -15,6 +15,7 @@ import PixiesetIcon from "@/app/assert/pixieset.svg";
 import DropboxIcon from "@/app/assert/dropbox.svg";
 import FlickrIcon from "@/app/assert/flickr.svg";
 import LinkedInIcon from "@/app/assert/linkedin.svg";
+import YoutubeIcon from "@/app/assert/youtube.svg";
 
 /**
  * Detects the social media platform from a URL and returns a label and icon.
@@ -63,6 +64,13 @@ export const getSocialPlatform = (url: string, className?: string) => {
             name: "LinkedIn", 
             icon: <LinkedInIcon className={iconClass} />,
             color: "text-[#0A66C2]"
+        };
+    }
+    if (u.includes("youtube.com") || u.includes("youtu.be")) {
+        return { 
+            name: "YouTube", 
+            icon: <YoutubeIcon className={iconClass} />,
+            color: "text-[#FF0000]"
         };
     }
     
