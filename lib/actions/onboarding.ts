@@ -244,6 +244,7 @@ export async function saveOnboardingStep3(
 
     const updated = await updateProfile(userId, {
         onboardingStep: 3,
+        onboardingCompleted: true,
     });
 
     if (!updated) {

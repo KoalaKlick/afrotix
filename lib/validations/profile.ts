@@ -83,7 +83,6 @@ export const ONBOARDING_STEPS = [
     { id: 1, title: "Welcome", description: "Let's set up your profile" },
     { id: 2, title: "Avatar", description: "Add a profile picture" },
     { id: 3, title: "Referral", description: "Got a referral code?" },
-    { id: 4, title: "Pricing", description: "Select your plan & payout details" },
 ] as const;
 
 export const TOTAL_ONBOARDING_STEPS = ONBOARDING_STEPS.length;

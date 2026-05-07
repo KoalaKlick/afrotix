@@ -6,7 +6,6 @@ import {
     Step1Welcome,
     Step2Avatar,
     Step3Referral,
-    Step4Pricing,
 } from "@/components/onboarding";
 import {
     OrgStep1BasicInfo,
@@ -56,14 +55,11 @@ export function OnboardingClient({
     }
 
     function handleStep3Success() {
-        setCurrentStep(3);
+        setCurrentStep(4);
+        router.refresh();
     }
- 
+
     function handleStep3Skip() {
-        setCurrentStep(3);
-    }
- 
-    function handleStep4Success() {
         setCurrentStep(4);
         router.refresh();
     }
@@ -132,13 +128,6 @@ export function OnboardingClient({
                 />
             )}
 
-            {/* Pricing Step */}
-            {currentStep === 3 && (
-                <Step4Pricing
-                    onSuccess={handleStep4Success}
-                />
-            )}
- 
             {/* Org Creation Steps */}
             {currentStep === 4 && (
                 <OrgStep1BasicInfo
