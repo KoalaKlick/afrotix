@@ -102,19 +102,36 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
         hour: "2-digit",
         minute: "2-digit",
     }) : ""
-    const heroImageUrl = getEventImageUrl(event.bannerImage) || getEventImageUrl(event.flierImage) || "/landing/a.webp"
+    const heroImageUrl = getEventImageUrl(event.bannerImage) || getEventImageUrl(event.flierImage)
     const orgLogoUrl = getOrgImageUrl(organization.logoUrl)
+    const { primaryColor, secondaryColor, tertiaryColor } = organization
+
+    const brandVars = {
+        "--color-brand-primary": primaryColor,
+        "--color-brand-secondary": secondaryColor,
+        "--color-brand-tertiary": tertiaryColor,
+    } as React.CSSProperties
+
     return (
-        <main className="min-h-screen">
+        <main className="min-h-screen" style={brandVars}>
             {/* Hero Section */}
             <div className="relative h-[50vh] min-h-fit w-full overflow-hidden">
-                <Image
-                    src={heroImageUrl}
-                    alt={event.title}
-                    fill
-                    className="object-cover"
-                    priority
-                />
+                {heroImageUrl ? (
+                    <Image
+                        src={heroImageUrl}
+                        alt={event.title}
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                ) : (
+                    <div
+                        className="w-full h-full"
+                        style={{
+                            background: `linear-gradient(135deg, ${primaryColor}cc 0%, ${secondaryColor}99 50%, ${tertiaryColor}cc 100%)`,
+                        }}
+                    />
+                )}
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                 <div className="absolute inset-0 flex items-end pb-12">
                     <div className="max-w-7xl mx-auto px-6 w-full">

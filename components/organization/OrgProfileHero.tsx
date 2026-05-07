@@ -19,6 +19,9 @@ interface OrgProfileHeroProps {
         bannerUrl: string | null;
         websiteUrl: string | null;
         contactEmail: string | null;
+        primaryColor: string;
+        secondaryColor: string;
+        tertiaryColor: string;
         _count: {
             members: number;
         };
@@ -35,6 +38,15 @@ export function OrgProfileHero({
     const [isPending, startTransition] = useTransition();
     const bannerImageUrl = getOrgImageUrl(organization.bannerUrl);
     const logoImageUrl = getOrgImageUrl(organization.logoUrl);
+
+    const { primaryColor, secondaryColor, tertiaryColor } = organization;
+
+    // Inject org brand colors as CSS variables so sub-components can pick them up
+    const brandVars = {
+        "--color-brand-primary": primaryColor,
+        "--color-brand-secondary": secondaryColor,
+        "--color-brand-tertiary": tertiaryColor,
+    } as React.CSSProperties;
 
     const handleJoinRequest = async () => {
         if (!isUserAuthenticated) {
@@ -53,9 +65,9 @@ export function OrgProfileHero({
     };
 
     return (
-        <div className="relative">
+        <div className="relative" style={brandVars}>
             {/* Banner */}
-            <div className="relative h-48 md:h-64 w-full bg-muted overflow-hidden">
+            <div className="relative h-48 md:h-64 w-full overflow-hidden">
                 {bannerImageUrl ? (
                     <Image
                         src={bannerImageUrl}
@@ -66,7 +78,12 @@ export function OrgProfileHero({
                         unoptimized
                     />
                 ) : (
-                    <div className="w-full h-full bg-linear-to-r from-red-600 via-yellow-400 to-green-600 opacity-20" />
+                    <div
+                        className="w-full h-full"
+                        style={{
+                            background: `linear-gradient(135deg, ${primaryColor}cc 0%, ${secondaryColor}99 50%, ${tertiaryColor}cc 100%)`,
+                        }}
+                    />
                 )}
             </div>
 

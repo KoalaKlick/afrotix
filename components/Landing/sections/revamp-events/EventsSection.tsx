@@ -6,6 +6,7 @@ import Link from "next/link"
 import { eventItems, type EventItem } from "@/lib/const/landing"
 import { EventCard, type DbEvent } from "./EventGalleryItem"
 import { Section } from "../../shared/Section"
+import { NoEventsIllustration } from "@/components/common/NoEventsIllustration"
 
 interface EventsSectionProps {
     readonly title?: string
@@ -37,6 +38,31 @@ export function EventsSection({
     // Show max 6 items
     const visible = items.slice(0, 6)
     const hasMore = items.length > 6
+
+    if (items.length === 0) {
+        return (
+            <Section id="events" className="py-20">
+                <motion.h2
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-4xl md:text-5xl font-black text-center uppercase mb-12 tracking-tight"
+                >
+                    {title}
+                </motion.h2>
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.55, delay: 0.1 }}
+                    className="flex flex-col items-center justify-center text-center py-8"
+                >
+                    <NoEventsIllustration className="w-64 h-auto mb-6" />
+                    <p className="text-xl font-semibold text-muted-foreground">No events yet.</p>
+                    <p className="text-sm text-muted-foreground mt-1">Check back soon for upcoming events.</p>
+                </motion.div>
+            </Section>
+        )
+    }
 
     // Distribution pattern: middle first, then sides
     // Layout:  1 0 2
