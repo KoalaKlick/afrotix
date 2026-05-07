@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/sheet"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import { UserProfileSheet } from "@/components/shared/UserProfileSheet"
+import { signOutAction } from "@/lib/actions/auth"
 // import { CreateOrgDrawer } from "@/components/create-org-drawer"
 import {
   SidebarMenu,
@@ -60,7 +61,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { getAvatarUrl, getOrgImageUrl } from "@/lib/image-url-utils"
-import { createClient } from "@/utils/supabase/client"
 import { acceptOrgInvitation, declineOrgInvitation } from "@/lib/actions/organization"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
@@ -129,9 +129,7 @@ export function NavUser({
 
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/auth/login")
+    await signOutAction()
   }
 
   const handleAcceptInvite = async (id: string) => {

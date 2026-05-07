@@ -40,7 +40,13 @@ export function useAuth() {
     const signInWithOAuth = async (provider: 'google') => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider,
-            options: { redirectTo: buildAuthCallbackUrl() },
+            options: {
+                redirectTo: buildAuthCallbackUrl(),
+                queryParams: {
+                    // Always show the Google account picker, even if already signed in
+                    prompt: 'select_account',
+                },
+            },
         })
         return { error }
     }
@@ -61,6 +67,7 @@ export function useAuth() {
     }
 
     const signOut = async () => {
+        // Sign out from Supabase — org cookie is cleared server-side via signOutAction
         await supabase.auth.signOut()
         router.push('/auth/login')
     }
