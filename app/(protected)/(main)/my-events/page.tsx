@@ -84,13 +84,13 @@ export default function MyEventsPage() {
                 {/* Events List */}
                 {events.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <NoEventsIllustration className="w-64 h-auto mb-6" />
+                        <NoEventsIllustration className="w-56 h-auto mb-6" />
                         <h2 className="text-xl font-semibold mb-2">No events yet</h2>
                         {/* <p className="text-muted-foreground mb-6 max-w-sm">
                             Create your first event to start selling tickets and engaging your audience.
                         </p> */}
-                        <Button onClick={() => setIsDrawerOpen(true)} size="lg">
-                            <Plus className="mr-2 size-4" />
+                        <Button onClick={() => setIsDrawerOpen(true)} variant='default' size="default">
+                            {/* <Plus className="mr-2 size-4" /> */}
                             Create Your First Event
                         </Button>
                     </div>
