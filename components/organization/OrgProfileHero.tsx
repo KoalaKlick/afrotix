@@ -141,7 +141,6 @@ export function OrgProfileHero({
                     {/* Action Button */}
                     <div className="pb-2">
                         <Button
-                        variant="primary"
                             size="default"
                             onClick={handleJoinRequest}
                             disabled={isPending || hasPendingRequest}
