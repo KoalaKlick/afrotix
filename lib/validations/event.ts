@@ -192,18 +192,18 @@ export const EVENT_TYPES = [
         description: "Sell tickets to your event",
         icon: "Ticket",
     },
-    // {
-    //     value: "voting" as const,
-    //     label: "Voting Event",
-    //     description: "Run polls or award shows with voting",
-    //     icon: "Vote",
-    // },
     {
-        value: "hybrid" as const,
-        label: "Hybrid Event",
-        description: "Combine tickets with voting",
-        icon: "Layers",
+        value: "voting" as const,
+        label: "Voting Event",
+        description: "Run polls or award shows with voting",
+        icon: "Vote",
     },
+    // {
+    //     value: "hybrid" as const,
+    //     label: "Hybrid Event",
+    //     description: "Combine tickets with voting",
+    //     icon: "Layers",
+    // },
     {
         value: "standard" as const,
         label: "Standard Event",

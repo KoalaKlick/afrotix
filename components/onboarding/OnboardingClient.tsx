@@ -55,19 +55,19 @@ export function OnboardingClient({
     }
 
     function handleStep3Success() {
-        setCurrentStep(4);
+        setCurrentStep(3);
         router.refresh();
     }
 
     function handleStep3Skip() {
-        setCurrentStep(4);
+        setCurrentStep(3);
         router.refresh();
     }
 
     // --- Org creation step handlers ---
     function handleOrgStep1Success(data: { name: string; slug: string }) {
         setOrgFormData((prev) => ({ ...prev, ...data }));
-        setCurrentStep(5);
+        setCurrentStep(4);
     }
 
     function handleOrgStep2Success(data: { logoUrl?: string; description?: string }) {
@@ -129,7 +129,7 @@ export function OnboardingClient({
             )}
 
             {/* Org Creation Steps */}
-            {currentStep === 4 && (
+            {currentStep === 3 && (
                 <OrgStep1BasicInfo
                     defaultValues={{
                         name: orgFormData.name,
@@ -140,7 +140,7 @@ export function OnboardingClient({
                 />
             )}
  
-            {currentStep === 5 && (
+            {currentStep === 4 && (
                 <OrgStep2Branding
                     defaultValues={{
                         logoUrl: orgFormData.logoUrl,

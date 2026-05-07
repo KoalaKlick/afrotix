@@ -65,7 +65,8 @@ export function getOnboardingRedirect({
         }
 
         // Otherwise, they must create an organization
-        if (pathname !== '/setup/organization/new') {
+        // We allow staying on /setup/onboarding since it embeds the organization creation flow
+        if (pathname !== '/setup/organization/new' && !pathname.startsWith('/setup/onboarding')) {
             return '/setup/organization/new'
         }
         return null
