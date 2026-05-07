@@ -133,7 +133,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                     priority
                 />
                 {/* Gradient: strong at bottom so all text is readable */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/20" />
+                <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/20" />
 
                 {/* Overlay content */}
                 <div className="absolute inset-0 flex flex-col justify-end pb-8">

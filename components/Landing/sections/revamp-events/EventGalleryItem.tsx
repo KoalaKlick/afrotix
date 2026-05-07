@@ -101,7 +101,7 @@ export function EventCard({ item, index = 0, colorCount = 3, className, size = '
             <div
                 className={cn(
                     "group relative cursor-pointer overflow-hidden rounded-2xl h-full",
-                    size === 'large' ? 'aspect-[3/4]' : 'aspect-[4/3]',
+                    size === 'large' ? 'aspect-3/4' : 'aspect-4/3',
                     className
                 )}
             >
@@ -112,7 +112,7 @@ export function EventCard({ item, index = 0, colorCount = 3, className, size = '
                 />
 
                 {/* Dark gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent transition-colors group-hover:from-black/75" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent transition-colors group-hover:from-black/75" />
 
                 {/* Side accent */}
                 <SideAccent colorClass={colorClass} brandColor={brandColor} />
