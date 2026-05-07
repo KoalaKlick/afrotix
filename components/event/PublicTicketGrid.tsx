@@ -206,7 +206,7 @@ export function PublicTicketGrid({
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                       Price
                     </p>
-                    <p className="mt-2 text-3xl font-black">
+                    <p className="mt-2 text-2xl font-black">
                       {formatAmount(
                         Number(selectedTicket.price),
                         selectedTicket.currency,

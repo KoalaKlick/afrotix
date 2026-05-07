@@ -33,6 +33,7 @@ import {
   Banknote,
   ImageIcon,
   UserPlus,
+  Users,
   Calendar,
 } from "lucide-react";
 import {
@@ -683,8 +684,12 @@ export function EventDetailClient({
           </TabsTrigger>
           {showMembers && (
             <TabsTrigger value="members" className="gap-1.5 whitespace-nowrap">
-              <UserPlus className="size-4" />
-              Members
+              {event.votingMode === "internal" ? (
+                <Users className="size-4" />
+              ) : (
+                <UserPlus className="size-4" />
+              )}
+              {event.votingMode === "internal" ? "Electorate" : "Members"}
             </TabsTrigger>
           )}
           {(event.type === "voting" || event.type === "hybrid") && (

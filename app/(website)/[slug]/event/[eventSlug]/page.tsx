@@ -202,7 +202,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                 About Event
                             </a>
 
-                            {(event.type === "standard" || (event.votingMode === "internal" && event.type !== "ticketed")) && (
+                            {event.type === "standard" && (
                                 <PublicRegistrationForm 
                                     eventId={event.id} 
                                     eventName={event.title} 

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { StatCard, StatsGrid, statIcons } from "@/components/event/EventStats";
 import { VotingBarChart } from "./VotingBarChart";
 import { VotingTrendChart } from "./VotingTrendChart";
+import { VotingPieChart } from "./VotingPieChart";
 import { TicketTypeBarChart } from "./TicketTypeBarChart";
 import { TicketTrendChart } from "./TicketTrendChart";
 import { CategoryDetailModal } from "./CategoryDetailModal";
@@ -239,7 +240,14 @@ export function EventOverviewTab({
             categories={votingCategories}
             onCategoryClick={handleCategoryClick}
           />
-          <VotingTrendChart data={voteTrend} />
+          {votingMode === "internal" ? (
+            <VotingPieChart
+              categories={votingCategories}
+              onCategoryClick={handleCategoryClick}
+            />
+          ) : (
+            <VotingTrendChart data={voteTrend} />
+          )}
         </div>
       )}
 
