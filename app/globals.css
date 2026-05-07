@@ -53,7 +53,7 @@ body[style*="pointer-events: none"] [class*="paystack"] {
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary-600);
+  --color-primary: var(--color-primary-600);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -64,17 +64,17 @@ body[style*="pointer-events: none"] [class*="paystack"] {
   --color-brand-secondary: var(--color-secondary);
   --color-brand-tertiary: var(--color-tertiary);
 
-  --color-brand-primary-50: var(--brand-primary-50);
-  --color-brand-primary-100: var(--brand-primary-100);
-  --color-brand-primary-200: var(--brand-primary-200);
-  --color-brand-primary-300: var(--brand-primary-300);
-  --color-brand-primary-400: var(--brand-primary-400);
-  --color-brand-primary-500: var(--brand-primary-500);
-  --color-brand-primary-600: var(--brand-primary-600);
-  --color-brand-primary-700: var(--brand-primary-700);
-  --color-brand-primary-800: var(--brand-primary-800);
-  --color-brand-primary-900: var(--brand-primary-900);
-  --color-brand-primary-950: var(--brand-primary-950);
+  --color-brand-primary-50: var(--primary-50);
+  --color-brand-primary-100: var(--primary-100);
+  --color-brand-primary-200: var(--primary-200);
+  --color-brand-primary-300: var(--primary-300);
+  --color-brand-primary-400: var(--primary-400);
+  --color-brand-primary-500: var(--primary-500);
+  --color-brand-primary-600: var(--primary-600);
+  --color-brand-primary-700: var(--primary-700);
+  --color-brand-primary-800: var(--primary-800);
+  --color-brand-primary-900: var(--primary-900);
+  --color-brand-primary-950: var(--primary-950);
 
   --color-brand-secondary-50: var(--secondary-50);
   --color-brand-secondary-100: var(--secondary-100);
@@ -110,6 +110,7 @@ body[style*="pointer-events: none"] [class*="paystack"] {
 }
 
 :root {
+  
   --radius: 0.625rem;
   --background: oklch(100% 0.00011 271.152);
   --foreground: oklch(0.13 0.028 261.692);
@@ -117,7 +118,7 @@ body[style*="pointer-events: none"] [class*="paystack"] {
   --card-foreground: oklch(0.13 0.028 261.692);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.13 0.028 261.692);
-   --primary: var(--color-primary-600);
+   --primary: oklch(0.13 0.028 261.692) ;
   --primary-foreground: oklch(0.985 0.002 247.839);
   --secondary: oklch(0.967 0.003 264.542);
   --secondary-foreground: oklch(0.21 0.034 264.665);
@@ -142,6 +143,12 @@ body[style*="pointer-events: none"] [class*="paystack"] {
   --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
   --sidebar-border: oklch(0.928 0.006 264.531);
   --sidebar-ring: oklch(0.707 0.022 261.325);
+
+  /* Brand color CSS vars — real :root declarations that var() and color-mix() can resolve.
+     These provide Pan-African defaults; useBrandColors overrides them at runtime with org colors. */
+  --color-brand-primary: #16a34a;
+  --color-brand-secondary: #facc15;
+  --color-brand-tertiary: #ef4444;
 }
 
 .dark {

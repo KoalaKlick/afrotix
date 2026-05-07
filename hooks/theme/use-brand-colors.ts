@@ -47,6 +47,11 @@ export function useBrandColors(initialColors?: BrandColors) {
     set("--color-secondary", brandColors.secondary);
     set("--color-tertiary", brandColors.tertiary);
 
+    // 2. Direct brand color vars (used by afro button variant, color-mix, etc.)
+    set("--color-brand-primary", brandColors.primary);
+    set("--color-brand-secondary", brandColors.secondary);
+    set("--color-brand-tertiary", brandColors.tertiary);
+
     // 2. All generated shades
     Object.entries(shades).forEach(([colorName, shadeMap]) => {
       Object.entries(shadeMap).forEach(([shade, value]) => {

@@ -232,7 +232,7 @@ export function EventStep1BasicInfo({ initialData, onSuccess }: EventStep1Props)
 
             {/* Submit */}
             <div className="flex justify-end pt-4">
-                <Button type="submit" disabled={isPending || !title || !slug}>
+                <Button type="submit" variant="primary"  disabled={isPending || !title || !slug}>
                     {isPending ? (
                         <>
                             <Loader2 className="mr-2 size-4 animate-spin" />

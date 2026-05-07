@@ -277,7 +277,7 @@ export function EventStep2DateLocation({ initialData, onSuccess, onBack, onSkip 
                     <Button type="button" variant="outline" onClick={onSkip}>
                         Skip for Now
                     </Button>
-                    <Button type="submit" disabled={isPending}>
+                    <Button type="submit" variant="primary" disabled={isPending}>
                         {isPending ? (
                             <>
                                 <Loader2 className="mr-2 size-4 animate-spin" />

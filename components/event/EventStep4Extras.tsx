@@ -366,7 +366,7 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
                     Back
                 </Button>
 
-                <Button type="submit" size="lg" disabled={isSubmitting || isUploading !== null}>
+                <Button type="submit" size="lg" variant="primary" disabled={isSubmitting || isUploading !== null}>
                     {isSubmitting ? (
                         <>
                             <Loader2 className="mr-2 size-4 animate-spin" />

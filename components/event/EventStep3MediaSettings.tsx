@@ -347,7 +347,7 @@ export function EventStep3MediaSettings({ initialData, onSuccess, onBack, onSkip
                     <Button type="button" variant="outline" onClick={handleSkip}>
                         Skip for Now
                     </Button>
-                    <Button type="submit" disabled={isPending || isUploading}>
+                    <Button variant="primary" type="submit" disabled={isPending || isUploading}>
                         {isPending ? (
                             <>
                                 <Loader2 className="mr-2 size-4 animate-spin" />
