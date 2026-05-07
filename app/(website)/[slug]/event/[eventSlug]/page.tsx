@@ -15,6 +15,7 @@ import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { PublicRegistrationForm } from "@/components/event/PublicRegistrationForm"
 import { format } from "date-fns"
 import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, ArrowLeft, Lock, Info } from "lucide-react"
+import { EventInfoPill } from "@/components/shared/EventInfoPill"
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
 
@@ -143,40 +144,34 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                         </h1>
                         {/* Event Schedule Bar */}
                         <div className="flex flex-wrap gap-4 items-center">
-                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-4 py-2 text-white">
-                                <Calendar className="w-4 h-4 text-brand-secondary" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Date</span>
-                                    <span className="text-xs font-bold leading-none">{dateStr}</span>
-                                </div>
-                            </div>
+                            <EventInfoPill
+                                icon={Calendar}
+                                label="Date"
+                                value={dateStr}
+                            />
 
                             {timeStr && (
-                                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-4 py-2 text-white">
-                                    <Clock className="w-4 h-4 text-brand-secondary" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Time</span>
-                                        <span className="text-xs font-bold leading-none">{timeStr}</span>
-                                    </div>
-                                </div>
+                                <EventInfoPill
+                                    icon={Clock}
+                                    label="Time"
+                                    value={timeStr}
+                                />
                             )}
 
-                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-md px-4 py-2 text-white">
-                                <MapPin className="w-4 h-4 text-brand-secondary" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Venue</span>
-                                    <span className="text-xs font-bold leading-none truncate max-w-37.5">{event.venueName || "TBA"}</span>
-                                </div>
-                            </div>
+                            <EventInfoPill
+                                icon={MapPin}
+                                label="Venue"
+                                value={event.venueName || "TBA"}
+                                valueClassName="truncate max-w-37.5"
+                            />
 
                             {event.endDate && (
-                                <div className="flex items-center gap-2.5 bg-brand-tertiary/20 backdrop-blur-md border border-brand-tertiary/40 rounded-md px-4 py-2 text-white">
-                                    <Calendar className="w-4 h-4 text-brand-secondary" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] uppercase font-bold text-white/60 leading-none mb-1">Ends On</span>
-                                        <span className="text-xs font-bold leading-none">{format(new Date(event.endDate), "MMM d, yyyy")}</span>
-                                    </div>
-                                </div>
+                                <EventInfoPill
+                                    icon={Calendar}
+                                    label="Ends On"
+                                    value={format(new Date(event.endDate), "MMM d, yyyy")}
+                                    className="bg-brand-tertiary/20 border-brand-tertiary/40"
+                                />
                             )}
                         </div>
                         

@@ -11,7 +11,8 @@ import { isUserMemberOf } from "@/lib/dal/organization"
 import { Section } from "@/components/Landing/shared/Section"
 import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
 import { PoweredByFooter } from "@/components/shared/PoweredByFooter"
-import { ArrowLeft, ChevronRight, Trophy, Users, Calendar, MapPin, Clock, ImageIcon, Info } from "lucide-react"
+import { Trophy, Users, Calendar, MapPin, Clock, ImageIcon, Info, ArrowLeft, ChevronRight } from "lucide-react"
+import { EventInfoPill } from "@/components/shared/EventInfoPill"
 import { PublicNominationModal } from "@/components/event/PublicNominationModal"
 import { NomineeGrid } from "@/components/event/PublicNomineeSheet"
 import type { Metadata } from "next"
@@ -176,52 +177,34 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                         {/* Event Schedule Pills */}
                         <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
                             <div className="flex flex-wrap gap-3 items-center ">
-                                <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                    <Calendar className="w-3.5 h-3.5 text-brand-secondary" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] uppercase font-bold text-white/50 leading-none mb-0.5">
-                                            Date
-                                        </span>
-                                        <span className="text-xs font-bold leading-none">{dateStr}</span>
-                                    </div>
-                                </div>
+                                <EventInfoPill
+                                    icon={Calendar}
+                                    label="Date"
+                                    value={dateStr}
+                                />
 
                                 {timeStr && (
-                                    <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                        <Clock className="w-3.5 h-3.5 text-brand-secondary" />
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase font-bold text-white/50 leading-none mb-0.5">
-                                                Time
-                                            </span>
-                                            <span className="text-xs font-bold leading-none">{timeStr}</span>
-                                        </div>
-                                    </div>
+                                    <EventInfoPill
+                                        icon={Clock}
+                                        label="Time"
+                                        value={timeStr}
+                                    />
                                 )}
 
-                                <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white">
-                                    <MapPin className="w-3.5 h-3.5 text-brand-secondary" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] uppercase font-bold text-white/50 leading-none mb-0.5">
-                                            Venue
-                                        </span>
-                                        <span className="text-xs font-bold leading-none truncate max-w-[150px]">
-                                            {event.venueName || "TBA"}
-                                        </span>
-                                    </div>
-                                </div>
+                                <EventInfoPill
+                                    icon={MapPin}
+                                    label="Venue"
+                                    value={event.venueName || "TBA"}
+                                    valueClassName="truncate max-w-[150px]"
+                                />
 
                                 {event.endDate && (
-                                    <div className="flex items-center gap-2.5 bg-brand-tertiary/20 backdrop-blur-md border border-brand-tertiary/40 rounded-full px-4 py-2 text-white">
-                                        <Calendar className="w-3.5 h-3.5 text-brand-secondary" />
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase font-bold text-white/50 leading-none mb-0.5">
-                                                Ends On
-                                            </span>
-                                            <span className="text-xs font-bold leading-none">
-                                                {format(new Date(event.endDate), "MMM d, yyyy")}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <EventInfoPill
+                                        icon={Calendar}
+                                        label="Ends On"
+                                        value={format(new Date(event.endDate), "MMM d, yyyy")}
+                                        className="bg-brand-tertiary/20 border-brand-tertiary/40"
+                                    />
                                 )}
                             </div>
 
