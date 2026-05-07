@@ -218,7 +218,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             {votingCategories.length > 0 && (
                 <>
                     <PanAfricanDivider />
-                    <Section maxWidth="7xl" className="py-16 bg-sepia-50">
+                    <Section maxWidth="7xl" className="py-16">
                         <div className=" ">
                             <div className="flex items-center gap-3 mb-12">
                                 <Vote className="w-8 h-8 text-brand-secondary" />
@@ -303,20 +303,19 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             {ticketTypes.length > 0 && (
                 <>
                     <PanAfricanDivider />
-                    <Section maxWidth="7xl" className="py-16 bg-background">
+                    <Section maxWidth="7xl" className="py-16">
                         <div className="space-y-10">
                             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                                 <div>
-                                    <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-brand-primary/20 bg-brand-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-brand-primary">
-                                        <span>Ticket Tiers</span>
-                                        {!event.isPublic && (
-                                            <>
+                                   {!event.isPublic && (
+                                            <> <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-brand-primary/20 bg-brand-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-brand-primary">
+                                       
                                                 <span className="text-brand-primary/40">•</span>
                                                 <Lock className="size-3.5" />
                                                 <span>Internal Event</span>
-                                            </>
+                                          
+                                    </div>  </>
                                         )}
-                                    </div>
                                     <h2 className="text-3xl font-black uppercase tracking-tight">Choose Your Access.</h2>
                                     <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                                         {isOrganizationMember

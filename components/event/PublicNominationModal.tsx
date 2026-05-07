@@ -268,7 +268,7 @@ export function PublicNominationModal({ eventId, category, orgSlug, eventSlug }:
             {/* ── Nomination form Sheet ──────────────────────────────────── */}
             <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
                 <SheetTrigger asChild>
-                    <Button variant="primary" size="sm" className="w-full sm:w-auto gap-2">
+                    <Button size="sm" className="w-full sm:w-auto gap-2">
                         <PlusCircle className="size-4" />
                         Nominate for this Category
                     </Button>

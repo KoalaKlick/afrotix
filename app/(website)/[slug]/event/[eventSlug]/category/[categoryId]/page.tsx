@@ -232,7 +232,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
             <PanAfricanDivider />
 
             {/* Nominees Section */}
-            <Section maxWidth="7xl" className="py-16 w-full bg-sepia-50">
+            <Section maxWidth="7xl" className="py-16 w-full">
                 <div className="max-w-360 mx-auto @container">
                     <div className="flex items-center justify-between mb-10">
                         <div className="flex items-center gap-3">
@@ -348,7 +348,7 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-3 p-3 rounded-xl border bg-sepia-50/50 hover:bg-white hover:border-brand-primary/30 hover:shadow-sm transition-all group"
+                                                className="flex items-center gap-3 p-3 rounded-xl border bg-primary/5 hover:bg-white hover:border-brand-primary/30 hover:shadow-sm transition-all group"
                                             >
                                                 <div className="size-8 rounded-lg bg-white border flex items-center justify-center shrink-0">
                                                     <div className="size-4 flex items-center justify-center">
