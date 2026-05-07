@@ -87,6 +87,7 @@ export function VotingManager({ eventId, categories: initialCategories, canEdit,
 
     function handleCategoryCreated(category: VotingCategory) {
         setCategories(prev => addCategory(prev, category));
+        setActiveCategoryId(category.id);
     }
 
     function handleCategoryUpdated(updatedCategory: VotingCategory) {
