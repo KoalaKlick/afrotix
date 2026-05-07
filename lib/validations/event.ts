@@ -213,16 +213,16 @@ export const EVENT_TYPES = [
 ] as const;
 
 export const VOTING_MODES = [
-    {
-        value: "general" as const,
-        label: "General Voting",
-        description: "Anyone can vote. May require payment. Unlimited votes allowed. Vote counts shown publicly.",
-    },
-    {
-        value: "internal" as const,
-        label: "Internal Voting",
-        description: "Organization members only. Can be free. Only participation status shown.",
-    },
+ {
+    value: "general" as const,
+    label: "General Voting",
+    description: "Open to anyone. Requires payment to vote. Unlimited votes allowed. Results shown publicly.",
+},
+{
+    value: "internal" as const,
+    label: "Internal Voting",
+    description: "Restricted to members added to the event by the organizer. Can be free. Only participation status is shown.",
+},
 ] as const;
 
 /** Returns true if this event type supports voting (and thus needs a votingMode). */

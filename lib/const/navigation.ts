@@ -43,10 +43,10 @@ export const navMain: NavItem[] = [
                 title: "My Events",
                 url: "/my-events",
             },
-            {
-                title: "Create Event",
-                url: "/my-events/new",
-            },
+            // {
+            //     title: "Create Event",
+            //     url: "/my-events/new",
+            // },
         ],
     },
     // {
