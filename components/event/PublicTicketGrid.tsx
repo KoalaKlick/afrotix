@@ -251,7 +251,7 @@ export function PublicTicketGrid({
                     </div>
 
                     <div className="rounded-md border bg-card p-4 sm:col-span-2">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                      <div className="flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                         <Calendar className="size-3.5" />
                         Sales End
                       </div>

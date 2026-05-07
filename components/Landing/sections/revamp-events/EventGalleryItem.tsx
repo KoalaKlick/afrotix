@@ -127,9 +127,7 @@ export function EventCard({ item, index = 0, colorCount = 3, className, size = '
                     </h3>
 
                     {subtitle && (
-                        <p className="text-white/65 text-xs mb-3 line-clamp-2 leading-relaxed">
-                            {subtitle}
-                        </p>
+                        <div className="text-white/65 text-xs mb-3 line-clamp-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: subtitle }} />
                     )}
 
                     <div className="flex items-center justify-between gap-2">

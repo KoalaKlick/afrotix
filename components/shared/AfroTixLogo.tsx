@@ -26,6 +26,7 @@ export function AfroTixLogo({
     const controls = useAnimation()
     const dotControls = useAnimation()
     const cycleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const isMounted = useRef(false)
     const [active, setActive] = useState(false)
 
     // Helper to determine how to render the name
@@ -86,41 +87,66 @@ export function AfroTixLogo({
     }
 
     const runCycle = useCallback(async () => {
-        await controls.start("visible")
-        await dotControls.start("visible")
-        dotControls.start("pulse") // gentle breathing pulse on the dot
+        if (!isMounted.current) return
 
-        if (!repeat) return
+        try {
+            await controls.start("visible")
+            if (!isMounted.current) return
+            await dotControls.start("visible")
+            if (!isMounted.current) return
+            dotControls.start("pulse") // gentle breathing pulse on the dot
 
-        cycleRef.current = setTimeout(async () => {
-            await dotControls.start("exit")
-            await controls.start("exit")
+            if (!repeat) return
 
-            cycleRef.current = setTimeout(() => {
-                controls.set("hidden")
-                dotControls.set("hidden")
-                runCycle()
-            }, gapDuration)
-        }, holdDuration)
+            cycleRef.current = setTimeout(async () => {
+                if (!isMounted.current) return
+                await dotControls.start("exit")
+                if (!isMounted.current) return
+                await controls.start("exit")
+
+                if (!isMounted.current) return
+                cycleRef.current = setTimeout(() => {
+                    if (!isMounted.current) return
+                    controls.set("hidden")
+                    dotControls.set("hidden")
+                    runCycle()
+                }, gapDuration)
+            }, holdDuration)
+        } catch (error) {
+            // Silently handle animation interruptions
+        }
     }, [controls, dotControls, repeat, holdDuration, gapDuration])
 
     useEffect(() => {
+        isMounted.current = true
+        return () => {
+            isMounted.current = false
+            if (cycleRef.current) clearTimeout(cycleRef.current)
+            controls.stop()
+            dotControls.stop()
+        }
+    }, [controls, dotControls])
+
+    useEffect(() => {
+        if (!isMounted.current) return
+
         if (isInView && !active) {
             setActive(true)
             controls.set("hidden")
             dotControls.set("hidden")
-            runCycle()
+            // Small tick delay to ensure Framer Motion has linked controls
+            requestAnimationFrame(() => {
+                if (isMounted.current) runCycle()
+            })
         }
 
         if (!isInView && active) {
             setActive(false)
             if (cycleRef.current) clearTimeout(cycleRef.current)
+            controls.stop()
+            dotControls.stop()
             controls.set("hidden")
             dotControls.set("hidden")
-        }
-
-        return () => {
-            if (cycleRef.current) clearTimeout(cycleRef.current)
         }
     }, [isInView, active, controls, dotControls, runCycle])
 
