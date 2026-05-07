@@ -145,7 +145,7 @@ export function OrgProfileHero({
                             onClick={handleJoinRequest}
                             disabled={isPending || hasPendingRequest}
                         >
-                            {hasPendingRequest ? "Request Pending" : "Request to Join"}
+                            {hasPendingRequest ? "Request Pending" : "Request to Join Organizers"}
                             {!hasPendingRequest && <ArrowRight className="ml-2 h-4 w-4" />}
                         </Button>
                     </div>
