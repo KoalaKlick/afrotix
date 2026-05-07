@@ -17,10 +17,10 @@ export function useAuth() {
         return () => subscription.unsubscribe()
     }, [supabase.auth])
 
-    const signInWithPassword = async ({ email, password }: { email: string, password: string }) => {
+    const signInWithPassword = async ({ email, password, redirectTo }: { email: string, password: string, redirectTo?: string }) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (!error && data.user) {
-            router.push('/dashboard')
+            router.push(redirectTo ?? '/dashboard')
         }
         return { error }
     }

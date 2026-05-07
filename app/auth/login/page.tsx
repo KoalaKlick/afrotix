@@ -35,6 +35,7 @@ function LoginForm() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const verified = searchParams.get('verified') === 'true'
+    const next = searchParams.get('next')
     const [submitting, setSubmitting] = useState(false)
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
@@ -49,6 +50,7 @@ function LoginForm() {
         const { error } = await signInWithPassword({
             email: data.email,
             password: data.password,
+            redirectTo: next ?? undefined,
         })
         setSubmitting(false)
 

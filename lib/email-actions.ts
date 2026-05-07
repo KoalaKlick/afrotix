@@ -2,6 +2,7 @@ import { render } from "@react-email/render";
 import transporter from "./mail";
 import { EventCodeEmail } from "../emails/event-code";
 import { NominationConfirmationEmail } from "../emails/nomination-confirmation";
+import { OrganizationInviteEmail } from "../emails/organization-invite";
 import React from "react";
 
 export async function sendEventCodeEmail({
@@ -85,6 +86,50 @@ export async function sendNominationConfirmationEmail({
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Error sending nomination confirmation email:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendOrganizationInviteEmail({
+  email,
+  inviteeName,
+  inviterName,
+  organizationName,
+  role,
+  inviteUrl,
+}: {
+  email: string;
+  inviteeName?: string;
+  inviterName: string;
+  organizationName: string;
+  role: string;
+  inviteUrl: string;
+}) {
+  try {
+    const emailHtml = await render(
+      React.createElement(OrganizationInviteEmail, {
+        inviteeName,
+        inviterName,
+        organizationName,
+        role,
+        inviteUrl,
+      })
+    );
+
+    const from = process.env.SMTP_FROM_NAME || "AfroTix";
+    const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
+    const info = await transporter.sendMail({
+      from: `"${from}" <${fromEmail}>`,
+      to: email,
+      subject: `You're invited to join ${organizationName} on AfroTix`,
+      html: emailHtml,
+      text: `${inviterName} has invited you to join ${organizationName} as a ${role} on AfroTix. Accept your invitation here: ${inviteUrl}`,
+    });
+
+    console.log("Organization invite email sent:", info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("Error sending organization invite email:", error);
     return { success: false, error };
   }
 }

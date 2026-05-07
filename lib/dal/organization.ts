@@ -739,6 +739,7 @@ export async function createOrganizationInvitation(data: {
     inviterId: string;
     email: string;
     role: OrganizationRole;
+    token?: string;
 }): Promise<OrganizationInvitation | null> {
     try {
         return await prisma.organizationInvitation.create({
@@ -748,6 +749,7 @@ export async function createOrganizationInvitation(data: {
                 email: data.email.toLowerCase(),
                 role: data.role,
                 status: "pending",
+                token: data.token,
                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
             },
         });
@@ -756,3 +758,25 @@ export async function createOrganizationInvitation(data: {
         return null;
     }
 }
+
+/**
+ * Get invitation by token (for email invite flow)
+ */
+export const getInvitationByToken = cache(async (token: string) => {
+    try {
+        return await prisma.organizationInvitation.findUnique({
+            where: { token },
+            include: {
+                organization: {
+                    select: { id: true, name: true, logoUrl: true, slug: true },
+                },
+                inviter: {
+                    select: { id: true, fullName: true, avatarUrl: true },
+                },
+            },
+        });
+    } catch (error) {
+        logger.error(error, "[DAL] Error fetching invitation by token:");
+        return null;
+    }
+});

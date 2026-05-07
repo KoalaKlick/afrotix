@@ -6,6 +6,8 @@ export async function GET(request: Request) {
     const code = searchParams.get('code')
     const token_hash = searchParams.get('token_hash')
     const type = searchParams.get('type')
+    // Preserved through the email verification redirect (e.g. /invite?token=xxx)
+    const next = searchParams.get('next')
 
     const supabase = await createClient()
 
@@ -13,6 +15,10 @@ export async function GET(request: Request) {
     if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
+            // If a next URL was embedded in the redirect, honour it
+            if (next) {
+                return redirectTo(request, origin, next)
+            }
             // Determine redirect based on type
             let redirectUrl = '/dashboard' // Default for OAuth login
             if (type === 'recovery') {
@@ -39,6 +45,9 @@ export async function GET(request: Request) {
             type: type as 'signup' | 'invite' | 'magiclink' | 'recovery' | 'email_change' | 'email',
         })
         if (!error) {
+            if (next) {
+                return redirectTo(request, origin, next)
+            }
             const redirectUrl = type === 'recovery' ? '/auth/reset-password' : '/auth/confirmed'
             return redirectTo(request, origin, redirectUrl)
         }
@@ -64,3 +73,4 @@ function redirectTo(request: Request, origin: string, path: string) {
     }
     return NextResponse.redirect(`${origin}${path}`)
 }
+

@@ -23,6 +23,7 @@ import {
     getUserRoleInOrganization,
     canManageOrganization,
     getInvitationById,
+    getInvitationByToken,
     completeInvitationAcceptance,
     updateInvitationStatus,
     createMembershipRequest,
@@ -33,6 +34,7 @@ import {
     updateOrganizationMemberRole,
     removeOrganizationMember,
     addOrganizationMember,
+    getOrganizationById,
 } from "@/lib/dal/organization";
 import { convertToWebP } from "@/lib/image-utils";
 import { setActiveOrganizationId } from "@/lib/organization-context";
@@ -42,7 +44,8 @@ import {
     deleteStorageFile,
     normalizeToPath,
 } from "@/lib/storage-utils";
-import { updateProfile } from "@/lib/dal/profile";
+import { updateProfile, ensureProfile, getProfileWithPromoterStatus } from "@/lib/dal/profile";
+import { sendOrganizationInviteEmail } from "@/lib/email-actions";
 import { TOTAL_ONBOARDING_STEPS } from "@/lib/validations/profile";
 
 // Action result type
@@ -626,16 +629,93 @@ export async function inviteMember(
     const canManage = await canManageOrganization(user.id, organizationId);
     if (!canManage) return { success: false, error: "Insufficient permissions" };
 
+    // Generate a unique token for the email invite link
+    const token = crypto.randomUUID();
+
     const invitation = await createOrganizationInvitation({
         organizationId,
         inviterId: user.id,
         email,
         role,
+        token,
     });
 
     if (!invitation) return { success: false, error: "Failed to create invitation" };
 
+    // Send invitation email (fire-and-forget — don't fail the action if email fails)
+    try {
+        const [org, inviterProfile] = await Promise.all([
+            getOrganizationById(organizationId),
+            getProfileWithPromoterStatus(user.id),
+        ]);
+
+        if (org) {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://afrotix.com";
+            await sendOrganizationInviteEmail({
+                email,
+                inviterName: inviterProfile?.fullName ?? "A team member",
+                organizationName: org.name,
+                role,
+                inviteUrl: `${appUrl}/invite?token=${token}`,
+            });
+        }
+    } catch (emailErr) {
+        logger.warn({ emailErr }, "[inviteMember] Failed to send invite email, continuing");
+    }
+
     revalidatePath("/organization/manage");
+    return { success: true };
+}
+
+/**
+ * Accept an invitation by token (used in the /invite public page)
+ * Works for both existing users (logged in) and new users (just verified)
+ */
+export async function acceptInviteByToken(token: string): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    const invitation = await getInvitationByToken(token);
+    if (!invitation) return { success: false, error: "Invitation not found or link is invalid" };
+
+    if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
+        return {
+            success: false,
+            error: `This invitation was sent to ${invitation.email}. You're logged in as ${user.email}.`,
+        };
+    }
+
+    if (invitation.status !== "pending") {
+        return { success: false, error: `This invitation has already been ${invitation.status}` };
+    }
+
+    if (invitation.expiresAt && new Date(invitation.expiresAt) < new Date()) {
+        await updateInvitationStatus(invitation.id, "expired");
+        return { success: false, error: "This invitation has expired" };
+    }
+
+    // Ensure a profile exists for new users (those who just signed up via the invite flow)
+    await ensureProfile(user.id, user.email);
+
+    const success = await completeInvitationAcceptance(
+        invitation.id,
+        user.id,
+        invitation.organizationId,
+        invitation.role
+    );
+
+    if (!success) return { success: false, error: "Failed to accept invitation" };
+
+    await setActiveOrganizationId(invitation.organizationId);
+
+    // Mark onboarding as complete — invited users skip the org creation flow
+    await updateProfile(user.id, {
+        onboardingCompleted: true,
+        onboardingStep: TOTAL_ONBOARDING_STEPS,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/(protected)", "layout");
     return { success: true };
 }
 
