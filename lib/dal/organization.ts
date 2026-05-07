@@ -603,7 +603,7 @@ export const getOrganizationProfile = cache(async (slug: string, viewerUserId?: 
     try {
         return await prisma.organization.findUnique({
             where: {
-                slug, 
+                slug,
             },
             include: {
                 socialLinks: true,
