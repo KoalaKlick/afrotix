@@ -89,7 +89,7 @@ export default function MyEventsPage() {
                         {/* <p className="text-muted-foreground mb-6 max-w-sm">
                             Create your first event to start selling tickets and engaging your audience.
                         </p> */}
-                        <Button onClick={() => setIsDrawerOpen(true)} variant='default' size="default">
+                        <Button onClick={() => setIsDrawerOpen(true)} variant='primary' size="default">
                             {/* <Plus className="mr-2 size-4" /> */}
                             Create Your First Event
                         </Button>
