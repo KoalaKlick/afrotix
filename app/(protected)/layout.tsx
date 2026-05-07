@@ -76,6 +76,9 @@ export default async function ProtectedRootLayout({
                     name: profile?.fullName ?? user.user_metadata?.full_name ?? "User",
                     email: user.email ?? "",
                     avatar: profile?.avatarUrl ?? "",
+                    username: profile?.username ?? "",
+                    momoNumber: profile?.momoNumber ?? "",
+                    momoNetwork: profile?.momoNetwork ?? "",
                 }}
                 organizations={organizations}
                 activeOrganization={activeOrganization}

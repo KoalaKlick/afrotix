@@ -41,6 +41,9 @@ export function AppSidebar({
     name: string
     email: string
     avatar: string
+    username?: string
+    momoNumber?: string
+    momoNetwork?: string
   }
   organizations?: OrganizationInfo[]
   activeOrganization?: Organization | null
@@ -50,6 +53,9 @@ export function AppSidebar({
     name: "User",
     email: "",
     avatar: "",
+    username: "",
+    momoNumber: "",
+    momoNetwork: "",
   }
   const sidebarUser = user ?? defaultUser
 

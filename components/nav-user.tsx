@@ -50,6 +50,8 @@ import {
   SheetTitle,
   SheetBody,
 } from "@/components/ui/sheet"
+import { PanAfricanDivider } from "@/components/shared/PanAficDivider"
+import { UserProfileSheet } from "@/components/shared/UserProfileSheet"
 // import { CreateOrgDrawer } from "@/components/create-org-drawer"
 import {
   SidebarMenu,
@@ -86,6 +88,9 @@ export function NavUser({
     name: string
     email: string
     avatar: string
+    username?: string
+    momoNumber?: string
+    momoNetwork?: string
   }
   pendingInvitations?: Invitation[]
 }>) {
@@ -93,6 +98,7 @@ export function NavUser({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [notificationOpen, setNotificationOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const { setTheme, theme } = useTheme()
   const [invitations, setInvitations] = useState(pendingInvitations)
   const [processingInviteId, setProcessingInviteId] = useState<string | null>(null)
@@ -208,14 +214,15 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href="/settings/profile">
-                  <BadgeCheck className="mr-2 size-4" />
-                  Account
-                </Link>
+              <DropdownMenuItem
+                onClick={() => setAccountOpen(true)}
+                className="cursor-pointer"
+              >
+                <BadgeCheck className="mr-2 size-4" />
+                Account
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/wallet">
+                <Link href="/organization/manage?tab=payouts">
                   <Wallet className="mr-2 size-4" />
                   Wallet
                 </Link>
@@ -236,7 +243,7 @@ export function NavUser({
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/settings">
+                <Link href="/organization/manage?tab=general">
                   <Settings className="mr-2 size-4" />
                   Settings
                 </Link>
@@ -309,8 +316,8 @@ export function NavUser({
 
       {/* Notifications Sheet */}
       <Sheet open={notificationOpen} onOpenChange={setNotificationOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md">
-          <SheetHeader>
+        <SheetContent side="right" className="w-full sm:max-w-md flex flex-col h-full">
+          <SheetHeader className="shrink-0">
             <SheetTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
               Notifications
@@ -319,7 +326,8 @@ export function NavUser({
               Organization invitations and updates
             </SheetDescription>
           </SheetHeader>
-          <SheetBody className="">
+          <PanAfricanDivider className="h-1 shrink-0" />
+          <SheetBody className="flex-1 overflow-y-auto">
             {invitations.length > 0 ? (
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -397,6 +405,20 @@ export function NavUser({
           </SheetBody>
         </SheetContent>
       </Sheet>
+
+      {/* Account / Profile Sheet */}
+      <UserProfileSheet
+        open={accountOpen}
+        onOpenChange={setAccountOpen}
+        user={{
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          username: user.username,
+          momoNumber: user.momoNumber,
+          momoNetwork: user.momoNetwork,
+        }}
+      />
 
     </SidebarMenu>
   )

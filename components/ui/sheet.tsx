@@ -49,12 +49,13 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
-  variant,
+  variant = "afro",
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
-  variant?: "afro"
+  /** "afro" = Pan-African radial-gradient background (default). "plain" = no decoration. */
+  variant?: "afro" | "plain"
 }) {
   return (
     <SheetPortal>
@@ -72,7 +73,7 @@ function SheetContent({
           side === "bottom" &&
           "inset-x-0 bottom-0 h-auto border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
           variant === "afro" &&
-          "border-primary-900/10 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0),transparent_26%)]",
+          "border-primary-900/10 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.14),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(22,163,74,0),transparent_26%)] bg-background",
           className
         )}
         {...props}
