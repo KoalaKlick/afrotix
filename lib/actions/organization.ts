@@ -9,6 +9,7 @@ import { logger } from '@/lib/logger';
 
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import {
     createOrgStep1Schema,
@@ -650,7 +651,10 @@ export async function inviteMember(
         ]);
 
         if (org) {
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://afrotix.com";
+            const hdrs = await headers();
+            const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "localhost:3000";
+            const proto = hdrs.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? `${proto}://${host}`;
             await sendOrganizationInviteEmail({
                 email,
                 inviterName: inviterProfile?.fullName ?? "A team member",
