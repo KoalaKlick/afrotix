@@ -18,7 +18,7 @@ export default async function LandingPage() {
   const events = await getVisibleEventsForUser({ limit: 7, userId: user?.id });
 
   return (
-    <>
+    <div className="bg-[#F8F7F1]">
       <HeroSection />
       <PanAfricanDivider />
       <FeaturesSection />
@@ -32,6 +32,6 @@ export default async function LandingPage() {
       <TestimonialsSection />
                       <FooterSection />
 
-    </>
+    </div>
   )
 }
