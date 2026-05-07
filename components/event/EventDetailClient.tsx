@@ -795,13 +795,13 @@ export function EventDetailClient({
       </Tabs>
 
       <AlertDialog open={showPaymentPrompt} onOpenChange={setShowPaymentPrompt}>
-        <AlertDialogContent>
+        <AlertDialogContent variant="afro">
           <AlertDialogHeader>
             <AlertDialogTitle>Payout Details Required</AlertDialogTitle>
             <AlertDialogDescription>
-              You need to set up an organization payout account (Mobile Money or
-              Bank Account) before you can publish an event. This ensures you
-              can receive earnings from ticket sales or votes.
+              You need to set up an organization payout method (Mobile Money or
+              Bank Account) before you can publish an event. This ensures you can receive earnings from ticket sales or votes.
+              <em className="text-center">*Note: No amount is charged from your account.</em>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

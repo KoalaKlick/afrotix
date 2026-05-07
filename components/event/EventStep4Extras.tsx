@@ -173,7 +173,7 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {sponsors.map((sponsor, index) => (
-                        <div key={sponsor.name + (sponsor.logo ?? "")} className="relative p-4 rounded-xl border bg-card flex items-start gap-4">
+                        <div key={index} className="relative p-4 rounded-xl border bg-card flex items-start gap-4">
                             <div className="relative group size-16 shrink-0 rounded-lg border bg-muted flex items-center justify-center overflow-hidden">
                                 {sponsor.logo ? (
                                     <>
@@ -268,7 +268,7 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
 
                 <div className="space-y-3">
                     {socialLinks.map((link, index) => (
-                        <div key={link.url} className="flex gap-2 items-center">
+                        <div key={index} className="flex gap-2 items-center">
                             <div className="bg-primary/5 p-2.5 rounded-lg">
                                 <LinkIcon className="size-4 text-primary" />
                             </div>
@@ -323,7 +323,7 @@ export function EventStep4Extras({ initialData, onSuccess, onBack, isSubmitting 
 
                 <div className="space-y-3">
                     {galleryLinks.map((link, index) => (
-                        <div key={link.name + link.url} className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_auto] gap-3 items-end p-4 rounded-xl border bg-primary/5">
+                        <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_auto] gap-3 items-end p-4 rounded-xl border bg-primary/5">
                             <div className="space-y-2">
                                 <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Label</Label>
                                 <Input
