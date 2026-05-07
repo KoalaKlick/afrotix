@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 // Data fetching now handled via API route
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EventsList } from "@/components/event/EventsList";
 import { CustomizableEventStats } from "@/components/event";
 import { CreateEventDrawer } from "@/components/event/CreateEventDrawer";
-import { useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { NoEventsIllustration } from "@/components/common/NoEventsIllustration";
@@ -20,7 +19,12 @@ export default function MyEventsPage() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
 
-    const fetchData = async () => {
+    // Reset scroll on every page visit so content is never hidden behind the fixed header
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }, []);
+
+    const fetchData = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
             router.push("/auth/login");
@@ -39,11 +43,11 @@ export default function MyEventsPage() {
         const { events, stats, organization } = await res.json();
         setData({ events, stats, organization, user });
         setLoading(false);
-    };
+    }, [router, supabase]);
 
     useEffect(() => {
         fetchData();
-    }, [router, supabase]);
+    }, [fetchData]);
 
     if (loading || !data) {
         return <div className="p-8 text-center animate-pulse font-medium text-muted-foreground">Loading dashboard...</div>;
@@ -56,8 +60,8 @@ export default function MyEventsPage() {
             <PageHeader breadcrumbs={[{ label: "My Events" }]} />
 
             <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* Header — sticky so it stays visible while scrolling the events list */}
+                <div className="sticky top-16 z-10 -mx-4 bg-background/95 backdrop-blur-sm px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b">
                     <div>
                         <h1 className="text-2xl font-bold">My Events</h1>
                         <p className="text-muted-foreground">
