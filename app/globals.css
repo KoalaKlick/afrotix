@@ -10,7 +10,7 @@ html {
 }
 
 /* Paystack Inline JS Fix for Radix UI Dialogs */
-.paystack-p0p, 
+.paystack-p0p,
 [id^="paystack-"],
 [class*="paystack"],
 .pstk-checkout {
@@ -18,7 +18,7 @@ html {
   pointer-events: auto !important;
 }
 
-body[style*="pointer-events: none"] .paystack-p0p, 
+body[style*="pointer-events: none"] .paystack-p0p,
 body[style*="pointer-events: none"] [id^="paystack-"],
 body[style*="pointer-events: none"] [class*="paystack"] {
   pointer-events: auto !important;
@@ -110,7 +110,7 @@ body[style*="pointer-events: none"] [class*="paystack"] {
 }
 
 :root {
-  
+
   --radius: 0.625rem;
   --background: oklch(100% 0.00011 271.152);
   --foreground: oklch(0.13 0.028 261.692);
@@ -118,7 +118,7 @@ body[style*="pointer-events: none"] [class*="paystack"] {
   --card-foreground: oklch(0.13 0.028 261.692);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.13 0.028 261.692);
-   --primary: oklch(0.13 0.028 261.692) ;
+  --primary: oklch(0.13 0.028 261.692);
   --primary-foreground: oklch(0.985 0.002 247.839);
   --secondary: oklch(0.967 0.003 264.542);
   --secondary-foreground: oklch(0.21 0.034 264.665);
