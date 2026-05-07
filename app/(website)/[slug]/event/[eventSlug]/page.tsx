@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: EventDetailsPageProps): Promi
     const event = await getEventBySlug(organization.id, eventSlug)
     if (!event) return {}
 
-    const coverImage = getEventImageUrl(event.flierImage || event.bannerImage) ?? "/landing/a.webp"
+    const coverImage = getEventImageUrl(event.bannerImage || event.flierImage) ?? "/landing/a.webp"
     const absoluteImage = coverImage.startsWith("http") ? coverImage : `${BASE_URL}${coverImage}`
     const pageUrl = `${BASE_URL}/${orgSlug}/event/${eventSlug}`
     const description = event.description
