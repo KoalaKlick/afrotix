@@ -37,6 +37,7 @@ import {
 import type { TicketType, TicketStatus } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
 import { TicketCard } from "@/components/shared/TicketPreview";
+import { PRICE_CONSTRAINTS } from "@/lib/const/pricing";
 
 interface TicketTypeSheetProps {
   readonly eventId: string;
@@ -62,12 +63,12 @@ export function TicketTypeSheet({
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: 0,
+    price: PRICE_CONSTRAINTS.ticket.default as number,
     quantityTotal: "" as string | number,
     salesStart: "",
     salesEnd: "",
-    maxPerOrder: 10,
-    minPerOrder: 1,
+    maxPerOrder: PRICE_CONSTRAINTS.ticketOrder.maxPerOrder.default as number,
+    minPerOrder: PRICE_CONSTRAINTS.ticketOrder.minPerOrder.default as number,
     status: "available" as TicketStatus,
     color: organization?.primaryColor || "",
     primaryColor: organization?.primaryColor || "",
@@ -114,12 +115,12 @@ export function TicketTypeSheet({
       setFormData({
         name: "",
         description: "",
-        price: 0,
+        price: PRICE_CONSTRAINTS.ticket.default as number,
         quantityTotal: "",
         salesStart: "",
         salesEnd: "",
-        maxPerOrder: 10,
-        minPerOrder: 1,
+        maxPerOrder: PRICE_CONSTRAINTS.ticketOrder.maxPerOrder.default as number,
+        minPerOrder: PRICE_CONSTRAINTS.ticketOrder.minPerOrder.default as number,
         status: "available",
         color: organization?.primaryColor || "",
         primaryColor: organization?.primaryColor || "",
@@ -262,7 +263,8 @@ export function TicketTypeSheet({
                   <Input
                     id="price"
                     type="number"
-                    min={0}
+                    min={PRICE_CONSTRAINTS.ticket.min}
+                    step={PRICE_CONSTRAINTS.ticket.step}
                     value={formData.price}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -349,7 +351,7 @@ export function TicketTypeSheet({
                 <Input
                   id="minPerOrder"
                   type="number"
-                  min={1}
+                  min={PRICE_CONSTRAINTS.ticketOrder.minPerOrder.min}
                   value={formData.minPerOrder}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -364,7 +366,7 @@ export function TicketTypeSheet({
                 <Input
                   id="maxPerOrder"
                   type="number"
-                  min={1}
+                  min={PRICE_CONSTRAINTS.ticketOrder.maxPerOrder.min}
                   value={formData.maxPerOrder}
                   onChange={(e) =>
                     setFormData((prev) => ({

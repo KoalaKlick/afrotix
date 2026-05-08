@@ -25,6 +25,7 @@ import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { getCategoryTemplateImageUrl } from "@/lib/image-url-utils";
 import { ImageDropzone } from "@/components/shared/ImageDropzone";
 import { ConfirmDiscardDialog } from "@/components/common/ConfirmDiscardDialog";
+import { PRICE_CONSTRAINTS } from "@/lib/const/pricing";
 import type { VotingCategory, CategoryFormData } from "@/lib/types/voting";
 
 interface CategorySheetProps {
@@ -39,20 +40,23 @@ interface CategorySheetProps {
     readonly votingMode?: string | null;
 }
 
-const EMPTY_FORM: CategoryFormData = {
-    name: "",
-    description: "",
-    maxVotesPerUser: 1,
-    allowMultiple: false,
-    allowPublicNomination: false,
-    nominationDeadline: "",
-    requireApproval: false,
-    templateImage: null,
-    nominationPrice: 0,
-    votePrice: 0,
-    showFinalImage: true,
-    showTotalVotesPublicly: true,
-};
+// ── FIX 1: Factory function so votePrice defaults correctly per votingMode ──
+function getEmptyForm(votingMode?: string | null): CategoryFormData {
+    return {
+        name: "",
+        description: "",
+        maxVotesPerUser: 1,
+        allowMultiple: false,
+        allowPublicNomination: false,
+        nominationDeadline: "",
+        requireApproval: false,
+        templateImage: null,
+        nominationPrice: 0,
+        votePrice: votingMode === "general" ? PRICE_CONSTRAINTS.vote.defaultGeneral : PRICE_CONSTRAINTS.vote.defaultInternal,
+        showFinalImage: true,
+        showTotalVotesPublicly: true,
+    };
+}
 
 export function CategorySheet({
     eventId,
@@ -66,10 +70,17 @@ export function CategorySheet({
     votingMode,
 }: CategorySheetProps) {
     const [isPending, startTransition] = useTransition();
-    const [form, setForm] = useState<CategoryFormData>(EMPTY_FORM);
+    // ── FIX 1: initialise with votingMode-aware factory ──
+    const [form, setForm] = useState<CategoryFormData>(() => getEmptyForm(votingMode));
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
+    // ── FIX 2: String buffers so numeric inputs can be fully cleared ──
+    const [votePriceRaw, setVotePriceRaw] = useState(
+        String(votingMode === "general" ? PRICE_CONSTRAINTS.vote.defaultGeneral : PRICE_CONSTRAINTS.vote.defaultInternal)
+    );
+    const [nominationPriceRaw, setNominationPriceRaw] = useState("0");
 
     const { upload } = useImageUpload({
         bucket: "events",
@@ -78,22 +89,33 @@ export function CategorySheet({
     });
 
     const resetForm = useCallback(() => {
-        setForm(EMPTY_FORM);
+        const empty = getEmptyForm(votingMode);
+        setForm(empty);
         setPendingFile(null);
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
-    }, [previewUrl]);
+        // ── FIX 2: reset raw buffers too ──
+        setVotePriceRaw(String(empty.votePrice));
+        setNominationPriceRaw(String(empty.nominationPrice));
+    }, [previewUrl, votingMode]);
 
     useEffect(() => {
         if (open && editingCategory) {
             let nominationDeadlineStr = "";
             if (editingCategory.nominationDeadline) {
-                if (typeof editingCategory.nominationDeadline === 'string') {
+                if (typeof editingCategory.nominationDeadline === "string") {
                     nominationDeadlineStr = editingCategory.nominationDeadline.slice(0, 16);
                 } else {
-                    nominationDeadlineStr = editingCategory.nominationDeadline.toISOString().slice(0, 16);
+                    nominationDeadlineStr = editingCategory.nominationDeadline
+                        .toISOString()
+                        .slice(0, 16);
                 }
             }
+
+            const resolvedVotePrice =
+                Number(editingCategory.votePrice) || (votingMode === "general" ? PRICE_CONSTRAINTS.vote.defaultGeneral : PRICE_CONSTRAINTS.vote.defaultInternal);
+            const resolvedNominationPrice = Number(editingCategory.nominationPrice) || 0;
+
             setForm({
                 name: editingCategory.name,
                 description: editingCategory.description ?? "",
@@ -106,9 +128,13 @@ export function CategorySheet({
                 templateConfig: editingCategory.templateConfig ?? null,
                 showFinalImage: editingCategory.showFinalImage ?? true,
                 showTotalVotesPublicly: editingCategory.showTotalVotesPublicly ?? true,
-                nominationPrice: Number(editingCategory.nominationPrice) || 0,
-                votePrice: Number(editingCategory.votePrice) || (votingMode === "general" ? 0.1 : 0),
+                nominationPrice: resolvedNominationPrice,
+                votePrice: resolvedVotePrice,
             });
+
+            // ── FIX 2: sync raw buffers when editing ──
+            setVotePriceRaw(String(resolvedVotePrice));
+            setNominationPriceRaw(String(resolvedNominationPrice));
         } else if (!open) {
             resetForm();
         }
@@ -116,7 +142,7 @@ export function CategorySheet({
 
     let initialDeadline = "";
     if (editingCategory?.nominationDeadline) {
-        if (typeof editingCategory.nominationDeadline === 'string') {
+        if (typeof editingCategory.nominationDeadline === "string") {
             initialDeadline = editingCategory.nominationDeadline.slice(0, 16);
         } else {
             initialDeadline = editingCategory.nominationDeadline.toISOString().slice(0, 16);
@@ -137,7 +163,6 @@ export function CategorySheet({
         form.votePrice !== (Number(editingCategory?.votePrice) || 0) ||
         pendingFile !== null;
 
-    // Remove handleCloseAttempt and use explicit open/close logic inline
     const handleOpen = () => {
         onOpenChange(true);
     };
@@ -157,19 +182,15 @@ export function CategorySheet({
             return;
         }
 
-        if (votingMode === "general" && form.votePrice < 0.1) {
-            toast.error("General events require a minimum vote price of 0.10 GHS");
+        if (votingMode === "general" && form.votePrice < PRICE_CONSTRAINTS.vote.minGeneral) {
+            toast.error(`General events require a minimum vote price of ${PRICE_CONSTRAINTS.vote.minGeneral.toFixed(2)} GHS`);
             return;
         }
 
         startTransition(async () => {
-            // Determine the final image URL:
-            // 1. If we have a NEW file to upload, we'll set it after uploading.
-            // 2. If no new file AND no existing image path, it means image was removed -> null.
-            // 3. If no new file but we HAVE an existing image path, it stays as is.
-            let finalImageUrl: string | null | undefined = form.templateImage || (pendingFile ? undefined : null);
+            let finalImageUrl: string | null | undefined =
+                form.templateImage || (pendingFile ? undefined : null);
 
-            // Step 1: Upload pending file if it exists
             if (pendingFile) {
                 const uploadedPath = await upload(pendingFile, form.templateImage || undefined);
                 if (!uploadedPath) {
@@ -236,16 +257,16 @@ export function CategorySheet({
         });
     };
 
-    // `id` = storage path (key + what gets passed to onRemoveInitialFile)
-    // `url` = full public URL for display only
     const templateDisplayUrl = getCategoryTemplateImageUrl(form.templateImage);
     const initialFiles =
-        (previewUrl || (form.templateImage && templateDisplayUrl))
-            ? [{
-                id: pendingFile ? "pending" : (form.templateImage || "initial"),
-                url: previewUrl || templateDisplayUrl || "",
-                name: pendingFile ? pendingFile.name : "Template image"
-            }]
+        previewUrl || (form.templateImage && templateDisplayUrl)
+            ? [
+                  {
+                      id: pendingFile ? "pending" : form.templateImage || "initial",
+                      url: previewUrl || templateDisplayUrl || "",
+                      name: pendingFile ? pendingFile.name : "Template image",
+                  },
+              ]
             : [];
 
     return (
@@ -269,7 +290,10 @@ export function CategorySheet({
 
                 <SheetBody className="flex-1 overflow-y-auto pr-2">
                     <Tabs defaultValue="basic" className="w-full">
-                        <TabsList variant="afro" className={`grid w-full ${votingMode === "internal" ? "grid-cols-2" : "grid-cols-3"}`}>
+                        <TabsList
+                            variant="afro"
+                            className={`grid w-full ${votingMode === "internal" ? "grid-cols-2" : "grid-cols-3"}`}
+                        >
                             <TabsTrigger value="basic">Basic</TabsTrigger>
                             <TabsTrigger value="nominations">Nominations</TabsTrigger>
                             {votingMode !== "internal" && (
@@ -295,12 +319,10 @@ export function CategorySheet({
                                     }}
                                     getDisplayUrl={getCategoryTemplateImageUrl}
                                     onDropFile={async (file) => {
-                                        // Store file locally and create preview
                                         setPendingFile(file);
                                         const url = URL.createObjectURL(file);
                                         if (previewUrl) URL.revokeObjectURL(previewUrl);
                                         setPreviewUrl(url);
-
                                         return { status: "success", result: url };
                                     }}
                                 />
@@ -336,7 +358,9 @@ export function CategorySheet({
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <Label htmlFor="max-votes">Max Votes Per User</Label>
-                                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">Limit</span>
+                                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">
+                                                Limit
+                                            </span>
                                         </div>
                                         <Input
                                             id="max-votes"
@@ -346,12 +370,14 @@ export function CategorySheet({
                                             onChange={(e) =>
                                                 setForm((prev) => ({
                                                     ...prev,
-                                                    maxVotesPerUser: Number.parseInt(e.target.value) || 1,
+                                                    maxVotesPerUser:
+                                                        Number.parseInt(e.target.value) || 1,
                                                 }))
                                             }
                                         />
                                         <p className="text-[10px] text-muted-foreground">
-                                            The maximum number of votes a single user can cast in this category.
+                                            The maximum number of votes a single user can cast in
+                                            this category.
                                         </p>
                                     </div>
 
@@ -365,7 +391,10 @@ export function CategorySheet({
                                         <Switch
                                             checked={form.allowMultiple}
                                             onCheckedChange={(checked) =>
-                                                setForm((prev) => ({ ...prev, allowMultiple: checked }))
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    allowMultiple: checked,
+                                                }))
                                             }
                                         />
                                     </div>
@@ -382,7 +411,10 @@ export function CategorySheet({
                                 <Switch
                                     checked={form.showTotalVotesPublicly}
                                     onCheckedChange={(checked) =>
-                                        setForm((prev) => ({ ...prev, showTotalVotesPublicly: checked }))
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            showTotalVotesPublicly: checked,
+                                        }))
                                     }
                                 />
                             </div>
@@ -403,7 +435,10 @@ export function CategorySheet({
                                 <Switch
                                     checked={form.allowPublicNomination}
                                     onCheckedChange={(checked) =>
-                                        setForm((prev) => ({ ...prev, allowPublicNomination: checked }))
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            allowPublicNomination: checked,
+                                        }))
                                     }
                                 />
                             </div>
@@ -412,7 +447,10 @@ export function CategorySheet({
                                 <>
                                     <Separator />
                                     <div className="space-y-2">
-                                        <Label htmlFor="nomination-deadline" className="flex items-center gap-2">
+                                        <Label
+                                            htmlFor="nomination-deadline"
+                                            className="flex items-center gap-2"
+                                        >
                                             <Clock className="size-4" />
                                             Nomination Deadline
                                         </Label>
@@ -442,7 +480,10 @@ export function CategorySheet({
                                         <Switch
                                             checked={form.requireApproval}
                                             onCheckedChange={(checked) =>
-                                                setForm((prev) => ({ ...prev, requireApproval: checked }))
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    requireApproval: checked,
+                                                }))
                                             }
                                         />
                                     </div>
@@ -454,22 +495,36 @@ export function CategorySheet({
                         <TabsContent value="pricing" className="space-y-4 py-4">
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="nomination-price" className="flex items-center gap-2">
+                                    <Label
+                                        htmlFor="nomination-price"
+                                        className="flex items-center gap-2"
+                                    >
                                         <Hash className="size-4" />
                                         Nominee Fee (GHS)
                                     </Label>
+                                    {/* ── FIX 2: raw string buffer for nomination price ── */}
                                     <Input
                                         id="nomination-price"
                                         type="number"
-                                        min={0}
-                                        step="0.01"
-                                        value={form.nominationPrice}
-                                        onChange={(e) =>
+                                        min={PRICE_CONSTRAINTS.nomination.min}
+                                        step={PRICE_CONSTRAINTS.nomination.step}
+                                        value={nominationPriceRaw}
+                                        onChange={(e) => {
+                                            setNominationPriceRaw(e.target.value);
                                             setForm((prev) => ({
                                                 ...prev,
-                                                nominationPrice: Number.parseFloat(e.target.value) || 0,
-                                            }))
-                                        }
+                                                nominationPrice:
+                                                    e.target.value === ""
+                                                        ? 0
+                                                        : Number.parseFloat(e.target.value) || 0,
+                                            }));
+                                        }}
+                                        onBlur={() => {
+                                            // Normalise on blur so empty field shows 0
+                                            if (nominationPriceRaw === "" || nominationPriceRaw === "-") {
+                                                setNominationPriceRaw("0");
+                                            }
+                                        }}
                                         placeholder="0.00"
                                     />
                                     <p className="text-xs text-muted-foreground">
@@ -480,23 +535,47 @@ export function CategorySheet({
                                 <Separator />
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="vote-price" className="flex items-center gap-2">
+                                    <Label
+                                        htmlFor="vote-price"
+                                        className="flex items-center gap-2"
+                                    >
                                         <Hash className="size-4" />
                                         Price Per Vote (GHS)
                                     </Label>
+                                    {/* ── FIX 2: raw string buffer for vote price ── */}
                                     <Input
                                         id="vote-price"
                                         type="number"
-                                        min={votingMode === "general" ? 0.1 : 0}
-                                        step="0.01"
-                                        value={form.votePrice}
-                                        onChange={(e) =>
+                                        min={votingMode === "general" ? PRICE_CONSTRAINTS.vote.minGeneral : PRICE_CONSTRAINTS.vote.minInternal}
+                                        step={PRICE_CONSTRAINTS.vote.step}
+                                        value={votePriceRaw}
+                                        onChange={(e) => {
+                                            setVotePriceRaw(e.target.value);
                                             setForm((prev) => ({
                                                 ...prev,
-                                                votePrice: Number.parseFloat(e.target.value) || 0,
-                                            }))
-                                        }
-                                        placeholder={votingMode === "general" ? "0.10" : "0.00"}
+                                                votePrice:
+                                                    e.target.value === ""
+                                                        ? 0
+                                                        : Number.parseFloat(e.target.value) || 0,
+                                            }));
+                                        }}
+                                        onBlur={() => {
+                                            // Clamp to minimum on blur if below threshold
+                                            const parsed = Number.parseFloat(votePriceRaw);
+                                            if (
+                                                votePriceRaw === "" ||
+                                                Number.isNaN(parsed) ||
+                                                (votingMode === "general" && parsed < PRICE_CONSTRAINTS.vote.minGeneral)
+                                            ) {
+                                                const clamped = votingMode === "general" ? PRICE_CONSTRAINTS.vote.minGeneral : PRICE_CONSTRAINTS.vote.minInternal;
+                                                setVotePriceRaw(String(clamped));
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    votePrice: clamped,
+                                                }));
+                                            }
+                                        }}
+                                        placeholder={votingMode === "general" ? String(PRICE_CONSTRAINTS.vote.defaultGeneral) : "0.00"}
                                     />
                                     <p className="text-xs text-muted-foreground">
                                         Amount a voter pays for each vote cast in this category.
@@ -517,7 +596,7 @@ export function CategorySheet({
                     >
                         Cancel
                     </Button>
-                    <Button variant='primary' onClick={handleSave} disabled={isPending}>
+                    <Button variant="primary" onClick={handleSave} disabled={isPending}>
                         {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
                         {editingCategory ? "Save Changes" : "Add Category"}
                     </Button>

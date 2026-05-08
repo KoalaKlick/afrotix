@@ -151,6 +151,48 @@ export const COMMUNICATION_CREDITS = {
 export type CommunicationChannel = keyof typeof COMMUNICATION_CREDITS.perMessage;
 export type BundleId = typeof COMMUNICATION_CREDITS.bundles[number]["id"];
 
+// ─── Price Constraints ────────────────────────────────────────────────────────
+// Min, max, step, and defaults for all user-facing pricing inputs.
+// Single source of truth — changing here propagates to forms and validation.
+
+export const PRICE_CONSTRAINTS = {
+    /** Vote price per vote in a voting category */
+    vote: {
+        /** Minimum when voting mode is "general" (public paid voting) */
+        minGeneral: 0.5,
+        /** Minimum when voting mode is "internal" (member-code voting, can be free) */
+        minInternal: 0,
+        max: 1_000,
+        step: 0.01,
+        /** Default when creating a general-mode category */
+        defaultGeneral: 0.5,
+        /** Default when creating an internal-mode category */
+        defaultInternal: 0,
+    },
+
+    /** Nomination entry fee paid by nominees to be added to a category */
+    nomination: {
+        min: 0,
+        max: 1_000,
+        step: 1,
+        default: 0,
+    },
+
+    /** Ticket sale price per ticket tier */
+    ticket: {
+        min: 0,
+        max: 10_000,
+        step: 0.01,
+        default: 0,
+    },
+
+    /** Per-order quantity limits used on ticket purchase & ticket tier forms */
+    ticketOrder: {
+        minPerOrder: { min: 1, default: 1 },
+        maxPerOrder: { min: 1, default: 10 },
+    },
+} as const;
+
 // ─── Cashout (Payout) Configuration ─────────────────────────────────────────
 
 export const CASHOUT_CONFIG = {
