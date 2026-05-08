@@ -509,9 +509,9 @@ export async function publishEvent(
 
   // Enforce verified payout account before publishing
   if (!event.organization.subaccountCode) {
-    return { 
-      success: false, 
-      error: "Please verify and add a payout account in your organization settings before publishing an event." 
+    return {
+      success: false,
+      error: "Please verify and add a payout account in your organization settings before publishing an event."
     };
   }
 
@@ -614,9 +614,9 @@ export async function changeEventStatus(
 
   // Enforce verified payout account before publishing
   if (status === "published" && !event.organization.subaccountCode) {
-    return { 
-      success: false, 
-      error: "Please verify and add a payout account in your organization settings before publishing an event." 
+    return {
+      success: false,
+      error: "Please verify and add a payout account in your organization settings before publishing an event."
     };
   }
 
@@ -694,6 +694,7 @@ export async function deleteExistingEvent(
   }
 }
 import {
+  getEventNominationTransactions,
   getEventTicketTransactions,
   getEventVoteTransactions,
 } from "@/lib/dal/event";
@@ -783,4 +784,39 @@ export async function getEventTicketTransactionsAction(
     sortBy,
     sortDir
   });
+}
+
+/**
+ * Get paginated nomination transactions for an event (Server Action)
+ */
+export async function getEventNominationTransactionsAction(
+  eventId: string,
+  options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}
+) {
+  const { page = 1, limit = 10, search } = options;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const event = await getEventById(eventId);
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  const role = await getUserRoleInOrganization(user.id, event.organizationId);
+  if (!role) {
+    throw new Error("Not authorized");
+  }
+
+  const offset = (page - 1) * limit;
+  return await getEventNominationTransactions(eventId, { limit, offset, search });
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { CustomizableEventStats } from "@/components/event/CustomizableEventStats";
-import type { EventStatsData } from "@/components/event/EventStats";
+import { CustomizableEventStats } from "@/components/event/charts/CustomizableEventStats";
+import type { EventStatsData } from "@/components/event/core/EventStats";
 import {
     OngoingEvents,
     RevenueChart,

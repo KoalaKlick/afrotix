@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getProfilePaymentInfo } from "@/lib/actions/payment";
-import { PaymentPlanSettings } from "@/components/event/PaymentPlanSettings";
+import { PaymentPlanSettings } from "@/components/event/settings/PaymentPlanSettings";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

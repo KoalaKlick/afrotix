@@ -119,8 +119,10 @@ export function TicketTypeSheet({
         quantityTotal: "",
         salesStart: "",
         salesEnd: "",
-        maxPerOrder: PRICE_CONSTRAINTS.ticketOrder.maxPerOrder.default as number,
-        minPerOrder: PRICE_CONSTRAINTS.ticketOrder.minPerOrder.default as number,
+        maxPerOrder: PRICE_CONSTRAINTS.ticketOrder.maxPerOrder
+          .default as number,
+        minPerOrder: PRICE_CONSTRAINTS.ticketOrder.minPerOrder
+          .default as number,
         status: "available",
         color: organization?.primaryColor || "",
         primaryColor: organization?.primaryColor || "",

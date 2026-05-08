@@ -885,7 +885,7 @@ export const getEventDetailStats = cache(async (eventId: string) => {
     const [
       ticketsSold,
       ticketRevenueResult,
-      voteRevenueResult,
+      paymentRevenueResult,
       checkIns,
       totalVotes,
       totalOrders,
@@ -901,13 +901,24 @@ export const getEventDetailStats = cache(async (eventId: string) => {
         where: { eventId, status: { in: paidStatuses } },
         _sum: { subtotal: true },
       }),
-      prisma.payment.aggregate({
-        where: {
-          status: "completed",
-          votes: { some: { eventId } }
-        },
-        _sum: { amount: true },
-      }),
+      // Single query for both vote and nomination revenue via JOINs.
+      // Payment has no back-relation to VotingOption, so we use raw SQL.
+      prisma.$queryRaw<[{ vote_revenue: string; nomination_revenue: string }]>`
+        SELECT
+          COALESCE(SUM(CASE WHEN p.related_type = 'vote' THEN p.amount ELSE 0 END), 0)::text        AS vote_revenue,
+          COALESCE(SUM(CASE WHEN p.related_type = 'nomination' THEN p.amount ELSE 0 END), 0)::text  AS nomination_revenue
+        FROM payments p
+        WHERE p.status = 'completed'
+          AND (
+            (p.related_type = 'vote' AND EXISTS (
+              SELECT 1 FROM votes v WHERE v.payment_id = p.id AND v.event_id = ${eventId}::uuid
+            ))
+            OR
+            (p.related_type = 'nomination' AND EXISTS (
+              SELECT 1 FROM voting_options vo WHERE vo.id = p.related_id AND vo.event_id = ${eventId}::uuid
+            ))
+          )
+      `,
       prisma.ticket.count({
         where: { eventId, checkInStatus: checkedIn },
       }),
@@ -929,8 +940,9 @@ export const getEventDetailStats = cache(async (eventId: string) => {
     ]);
 
     const ticketRevenue = Number(ticketRevenueResult._sum.subtotal ?? 0);
-    const voteRevenue = Number(voteRevenueResult._sum.amount ?? 0);
-    const totalRevenue = ticketRevenue + voteRevenue;
+    const voteRevenue = Number(paymentRevenueResult[0]?.vote_revenue ?? 0);
+    const nominationRevenue = Number(paymentRevenueResult[0]?.nomination_revenue ?? 0);
+    const totalRevenue = ticketRevenue + voteRevenue + nominationRevenue;
 
     const totalVoteSum = Number((totalVotes as any)._sum.voteCount ?? 0);
     const totalVoteCount = (totalVotes as any)._count._all ?? 0;
@@ -944,6 +956,9 @@ export const getEventDetailStats = cache(async (eventId: string) => {
     return {
       ticketsSold,
       revenue: totalRevenue,
+      ticketRevenue,
+      voteRevenue,
+      nominationRevenue,
       checkIns,
       totalVotes: totalVoteSum,
       totalOrders,
@@ -957,6 +972,9 @@ export const getEventDetailStats = cache(async (eventId: string) => {
     return {
       ticketsSold: 0,
       revenue: 0,
+      ticketRevenue: 0,
+      voteRevenue: 0,
+      nominationRevenue: 0,
       checkIns: 0,
       totalVotes: 0,
       totalOrders: 0,
@@ -1204,6 +1222,105 @@ export const getEventVoteTransactions = cache(
       };
     } catch (error) {
       logger.error(error, "[DAL] Error fetching vote transactions:");
+      return { transactions: [], total: 0 };
+    }
+  },
+);
+
+/**
+ * Get nomination (entry-fee) transactions for an event.
+ * Nominations are stored as Payment rows with relatedType='nomination'
+ * and relatedId=VotingOption.id — no back-relation exists in the schema,
+ * so we use raw SQL JOIN.
+ */
+export const getEventNominationTransactions = cache(
+  async (
+    eventId: string,
+    options?: { limit?: number; offset?: number; search?: string },
+  ) => {
+    try {
+      const { limit = 10, offset = 0, search } = options ?? {};
+
+      type NomRow = {
+        id: string;
+        reference: string;
+        amount: string;
+        currency: string;
+        email: string;
+        status: string;
+        created_at: string;
+        option_text: string;
+        nominee_code: string | null;
+      };
+
+      let rows: NomRow[];
+      let countResult: [{ count: string }];
+
+      if (search) {
+        const like = `%${search.toLowerCase()}%`;
+        [rows, countResult] = await Promise.all([
+          prisma.$queryRaw<NomRow[]>`
+            SELECT p.id, p.reference, p.amount::text, p.currency::text, p.email,
+                   p.status::text, p.created_at::text, vo.option_text, vo.nominee_code
+            FROM payments p
+            JOIN voting_options vo ON vo.id = p.related_id
+            WHERE p.related_type = 'nomination'
+              AND p.status = 'completed'
+              AND vo.event_id = ${eventId}::uuid
+              AND (LOWER(p.email) LIKE ${like} OR LOWER(vo.option_text) LIKE ${like})
+            ORDER BY p.created_at DESC
+            LIMIT ${limit}::int OFFSET ${offset}::int
+          `,
+          prisma.$queryRaw<[{ count: string }]>`
+            SELECT COUNT(*)::text AS count
+            FROM payments p
+            JOIN voting_options vo ON vo.id = p.related_id
+            WHERE p.related_type = 'nomination'
+              AND p.status = 'completed'
+              AND vo.event_id = ${eventId}::uuid
+              AND (LOWER(p.email) LIKE ${like} OR LOWER(vo.option_text) LIKE ${like})
+          `,
+        ]);
+      } else {
+        [rows, countResult] = await Promise.all([
+          prisma.$queryRaw<NomRow[]>`
+            SELECT p.id, p.reference, p.amount::text, p.currency::text, p.email,
+                   p.status::text, p.created_at::text, vo.option_text, vo.nominee_code
+            FROM payments p
+            JOIN voting_options vo ON vo.id = p.related_id
+            WHERE p.related_type = 'nomination'
+              AND p.status = 'completed'
+              AND vo.event_id = ${eventId}::uuid
+            ORDER BY p.created_at DESC
+            LIMIT ${limit}::int OFFSET ${offset}::int
+          `,
+          prisma.$queryRaw<[{ count: string }]>`
+            SELECT COUNT(*)::text AS count
+            FROM payments p
+            JOIN voting_options vo ON vo.id = p.related_id
+            WHERE p.related_type = 'nomination'
+              AND p.status = 'completed'
+              AND vo.event_id = ${eventId}::uuid
+          `,
+        ]);
+      }
+
+      return {
+        transactions: rows.map((r) => ({
+          id: r.id,
+          reference: r.reference,
+          amount: Number(r.amount),
+          currency: r.currency,
+          email: r.email,
+          status: r.status,
+          nomineeName: r.option_text,
+          nomineeCode: r.nominee_code ?? undefined,
+          createdAt: r.created_at,
+        })),
+        total: Number(countResult[0]?.count ?? 0),
+      };
+    } catch (error) {
+      logger.error(error, "[DAL] Error fetching nomination transactions:");
       return { transactions: [], total: 0 };
     }
   },

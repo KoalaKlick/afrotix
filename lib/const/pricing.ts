@@ -182,7 +182,7 @@ export const PRICE_CONSTRAINTS = {
     ticket: {
         min: 0,
         max: 10_000,
-        step: 0.01,
+        step: 0.5,
         default: 0,
     },
 

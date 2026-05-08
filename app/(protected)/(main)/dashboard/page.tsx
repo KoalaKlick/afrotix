@@ -5,7 +5,7 @@ import { getUserOrganizations, getOrganizationById } from "@/lib/dal/organizatio
 import { getOrganizationEventStats, getOngoingEvents, getRecentOrders, getMonthlyRevenue } from "@/lib/dal/event";
 import { getActiveOrganizationId } from "@/lib/organization-context";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
-import type { EventStatsData } from "@/components/event/EventStats";
+import type { EventStatsData } from "@/components/event/core/EventStats";
 
 export default async function DashboardPage() {
   // Parent layout guarantees: authenticated, onboarding done, has org

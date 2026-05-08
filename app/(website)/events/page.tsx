@@ -1,7 +1,7 @@
 import { Section } from '@/components/Landing/shared/Section'
 import { EventCard } from '@/components/Landing/sections/revamp-events'
 import { getPublicEvents } from '@/lib/dal/event'
-import { EventsFilter } from '@/components/event/EventsFilter'
+import { EventsFilter } from '@/components/event/core/EventsFilter'
 import type { EventType } from '@/lib/generated/prisma'
 import { PROJ_NAME } from '@/lib/const/branding'
 import type { Metadata } from 'next'

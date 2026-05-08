@@ -71,7 +71,14 @@ export interface EventStatsData {
 // Per-event stats for the event detail page
 export interface EventDetailStatsData {
     ticketsSold: number;
+    /** Total gross revenue (tickets + votes + nominations) */
     revenue: number;
+    /** Revenue from ticket sales only */
+    ticketRevenue: number;
+    /** Revenue from vote payments only */
+    voteRevenue: number;
+    /** Revenue from nomination (entry fee) payments only */
+    nominationRevenue: number;
     checkIns: number;
     totalVotes: number;
     totalOrders: number;
@@ -84,6 +91,9 @@ export interface EventDetailStatsData {
 export const defaultEventDetailStats: EventDetailStatsData = {
     ticketsSold: 0,
     revenue: 0,
+    ticketRevenue: 0,
+    voteRevenue: 0,
+    nominationRevenue: 0,
     checkIns: 0,
     totalVotes: 0,
     totalOrders: 0,

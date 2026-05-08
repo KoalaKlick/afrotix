@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Sheet,
-    SheetBody,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -29,589 +29,647 @@ import { PRICE_CONSTRAINTS } from "@/lib/const/pricing";
 import type { VotingCategory, CategoryFormData } from "@/lib/types/voting";
 
 interface CategorySheetProps {
-    readonly eventId: string;
-    readonly open: boolean;
-    readonly onOpenChange: (open: boolean) => void;
-    readonly trigger?: React.ReactNode;
-    readonly editingCategory?: VotingCategory | null;
-    readonly onCategoryCreated: (category: VotingCategory) => void;
-    readonly onCategoryUpdated: (category: VotingCategory) => void;
-    readonly nextOrderIndex?: number;
-    readonly votingMode?: string | null;
+  readonly eventId: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly trigger?: React.ReactNode;
+  readonly editingCategory?: VotingCategory | null;
+  readonly onCategoryCreated: (category: VotingCategory) => void;
+  readonly onCategoryUpdated: (category: VotingCategory) => void;
+  readonly nextOrderIndex?: number;
+  readonly votingMode?: string | null;
 }
 
 // ── FIX 1: Factory function so votePrice defaults correctly per votingMode ──
 function getEmptyForm(votingMode?: string | null): CategoryFormData {
-    return {
-        name: "",
-        description: "",
-        maxVotesPerUser: 1,
-        allowMultiple: false,
-        allowPublicNomination: false,
-        nominationDeadline: "",
-        requireApproval: false,
-        templateImage: null,
-        nominationPrice: 0,
-        votePrice: votingMode === "general" ? PRICE_CONSTRAINTS.vote.defaultGeneral : PRICE_CONSTRAINTS.vote.defaultInternal,
-        showFinalImage: true,
-        showTotalVotesPublicly: true,
-    };
+  return {
+    name: "",
+    description: "",
+    maxVotesPerUser: 1,
+    allowMultiple: false,
+    allowPublicNomination: false,
+    nominationDeadline: "",
+    requireApproval: false,
+    templateImage: null,
+    nominationPrice: 0,
+    votePrice:
+      votingMode === "general"
+        ? PRICE_CONSTRAINTS.vote.defaultGeneral
+        : PRICE_CONSTRAINTS.vote.defaultInternal,
+    showFinalImage: true,
+    showTotalVotesPublicly: true,
+  };
 }
 
 export function CategorySheet({
-    eventId,
-    open,
-    onOpenChange,
-    trigger,
-    editingCategory,
-    onCategoryCreated,
-    onCategoryUpdated,
-    nextOrderIndex = 0,
-    votingMode,
+  eventId,
+  open,
+  onOpenChange,
+  trigger,
+  editingCategory,
+  onCategoryCreated,
+  onCategoryUpdated,
+  nextOrderIndex = 0,
+  votingMode,
 }: CategorySheetProps) {
-    const [isPending, startTransition] = useTransition();
-    // ── FIX 1: initialise with votingMode-aware factory ──
-    const [form, setForm] = useState<CategoryFormData>(() => getEmptyForm(votingMode));
-    const [pendingFile, setPendingFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  // ── FIX 1: initialise with votingMode-aware factory ──
+  const [form, setForm] = useState<CategoryFormData>(() =>
+    getEmptyForm(votingMode),
+  );
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-    // ── FIX 2: String buffers so numeric inputs can be fully cleared ──
-    const [votePriceRaw, setVotePriceRaw] = useState(
-        String(votingMode === "general" ? PRICE_CONSTRAINTS.vote.defaultGeneral : PRICE_CONSTRAINTS.vote.defaultInternal)
-    );
-    const [nominationPriceRaw, setNominationPriceRaw] = useState("0");
+  // ── FIX 2: String buffers so numeric inputs can be fully cleared ──
+  const [votePriceRaw, setVotePriceRaw] = useState(
+    String(
+      votingMode === "general"
+        ? PRICE_CONSTRAINTS.vote.defaultGeneral
+        : PRICE_CONSTRAINTS.vote.defaultInternal,
+    ),
+  );
+  const [nominationPriceRaw, setNominationPriceRaw] = useState("0");
 
-    const { upload } = useImageUpload({
-        bucket: "events",
-        folder: "templates",
-        convertOptions: { quality: 0.85, maxWidth: 1200, maxHeight: 630, maxSizeMB: 2 },
-    });
+  const { upload } = useImageUpload({
+    bucket: "events",
+    folder: "templates",
+    convertOptions: {
+      quality: 0.85,
+      maxWidth: 1200,
+      maxHeight: 630,
+      maxSizeMB: 2,
+    },
+  });
 
-    const resetForm = useCallback(() => {
-        const empty = getEmptyForm(votingMode);
-        setForm(empty);
-        setPendingFile(null);
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-        // ── FIX 2: reset raw buffers too ──
-        setVotePriceRaw(String(empty.votePrice));
-        setNominationPriceRaw(String(empty.nominationPrice));
-    }, [previewUrl, votingMode]);
+  const resetForm = useCallback(() => {
+    const empty = getEmptyForm(votingMode);
+    setForm(empty);
+    setPendingFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    // ── FIX 2: reset raw buffers too ──
+    setVotePriceRaw(String(empty.votePrice));
+    setNominationPriceRaw(String(empty.nominationPrice));
+  }, [previewUrl, votingMode]);
 
-    useEffect(() => {
-        if (open && editingCategory) {
-            let nominationDeadlineStr = "";
-            if (editingCategory.nominationDeadline) {
-                if (typeof editingCategory.nominationDeadline === "string") {
-                    nominationDeadlineStr = editingCategory.nominationDeadline.slice(0, 16);
-                } else {
-                    nominationDeadlineStr = editingCategory.nominationDeadline
-                        .toISOString()
-                        .slice(0, 16);
-                }
-            }
-
-            const resolvedVotePrice =
-                Number(editingCategory.votePrice) || (votingMode === "general" ? PRICE_CONSTRAINTS.vote.defaultGeneral : PRICE_CONSTRAINTS.vote.defaultInternal);
-            const resolvedNominationPrice = Number(editingCategory.nominationPrice) || 0;
-
-            setForm({
-                name: editingCategory.name,
-                description: editingCategory.description ?? "",
-                maxVotesPerUser: editingCategory.maxVotesPerUser,
-                allowMultiple: editingCategory.allowMultiple,
-                allowPublicNomination: editingCategory.allowPublicNomination,
-                nominationDeadline: nominationDeadlineStr,
-                requireApproval: editingCategory.requireApproval,
-                templateImage: editingCategory.templateImage ?? null,
-                templateConfig: editingCategory.templateConfig ?? null,
-                showFinalImage: editingCategory.showFinalImage ?? true,
-                showTotalVotesPublicly: editingCategory.showTotalVotesPublicly ?? true,
-                nominationPrice: resolvedNominationPrice,
-                votePrice: resolvedVotePrice,
-            });
-
-            // ── FIX 2: sync raw buffers when editing ──
-            setVotePriceRaw(String(resolvedVotePrice));
-            setNominationPriceRaw(String(resolvedNominationPrice));
-        } else if (!open) {
-            resetForm();
-        }
-    }, [open, editingCategory, resetForm, votingMode]);
-
-    let initialDeadline = "";
-    if (editingCategory?.nominationDeadline) {
+  useEffect(() => {
+    if (open && editingCategory) {
+      let nominationDeadlineStr = "";
+      if (editingCategory.nominationDeadline) {
         if (typeof editingCategory.nominationDeadline === "string") {
-            initialDeadline = editingCategory.nominationDeadline.slice(0, 16);
+          nominationDeadlineStr = editingCategory.nominationDeadline.slice(
+            0,
+            16,
+          );
         } else {
-            initialDeadline = editingCategory.nominationDeadline.toISOString().slice(0, 16);
+          nominationDeadlineStr = editingCategory.nominationDeadline
+            .toISOString()
+            .slice(0, 16);
         }
+      }
+
+      const resolvedVotePrice =
+        Number(editingCategory.votePrice) ||
+        (votingMode === "general"
+          ? PRICE_CONSTRAINTS.vote.defaultGeneral
+          : PRICE_CONSTRAINTS.vote.defaultInternal);
+      const resolvedNominationPrice =
+        Number(editingCategory.nominationPrice) || 0;
+
+      setForm({
+        name: editingCategory.name,
+        description: editingCategory.description ?? "",
+        maxVotesPerUser: editingCategory.maxVotesPerUser,
+        allowMultiple: editingCategory.allowMultiple,
+        allowPublicNomination: editingCategory.allowPublicNomination,
+        nominationDeadline: nominationDeadlineStr,
+        requireApproval: editingCategory.requireApproval,
+        templateImage: editingCategory.templateImage ?? null,
+        templateConfig: editingCategory.templateConfig ?? null,
+        showFinalImage: editingCategory.showFinalImage ?? true,
+        showTotalVotesPublicly: editingCategory.showTotalVotesPublicly ?? true,
+        nominationPrice: resolvedNominationPrice,
+        votePrice: resolvedVotePrice,
+      });
+
+      // ── FIX 2: sync raw buffers when editing ──
+      setVotePriceRaw(String(resolvedVotePrice));
+      setNominationPriceRaw(String(resolvedNominationPrice));
+    } else if (!open) {
+      resetForm();
+    }
+  }, [open, editingCategory, resetForm, votingMode]);
+
+  let initialDeadline = "";
+  if (editingCategory?.nominationDeadline) {
+    if (typeof editingCategory.nominationDeadline === "string") {
+      initialDeadline = editingCategory.nominationDeadline.slice(0, 16);
+    } else {
+      initialDeadline = editingCategory.nominationDeadline
+        .toISOString()
+        .slice(0, 16);
+    }
+  }
+
+  const isDirty =
+    form.name !== (editingCategory?.name ?? "") ||
+    form.description !== (editingCategory?.description ?? "") ||
+    form.maxVotesPerUser !== (editingCategory?.maxVotesPerUser ?? 1) ||
+    form.allowMultiple !== (editingCategory?.allowMultiple ?? false) ||
+    form.allowPublicNomination !==
+      (editingCategory?.allowPublicNomination ?? false) ||
+    form.requireApproval !== (editingCategory?.requireApproval ?? false) ||
+    form.showFinalImage !== (editingCategory?.showFinalImage ?? true) ||
+    form.showTotalVotesPublicly !==
+      (editingCategory?.showTotalVotesPublicly ?? true) ||
+    form.nominationDeadline !== initialDeadline ||
+    form.nominationPrice !== (Number(editingCategory?.nominationPrice) || 0) ||
+    form.votePrice !== (Number(editingCategory?.votePrice) || 0) ||
+    pendingFile !== null;
+
+  const handleOpen = () => {
+    onOpenChange(true);
+  };
+
+  const handleClose = () => {
+    if (isDirty) {
+      setShowDiscardDialog(true);
+    } else {
+      onOpenChange(false);
+      resetForm();
+    }
+  };
+
+  const handleSave = () => {
+    if (!form.name.trim()) {
+      toast.error("Category name is required");
+      return;
     }
 
-    const isDirty =
-        form.name !== (editingCategory?.name ?? "") ||
-        form.description !== (editingCategory?.description ?? "") ||
-        form.maxVotesPerUser !== (editingCategory?.maxVotesPerUser ?? 1) ||
-        form.allowMultiple !== (editingCategory?.allowMultiple ?? false) ||
-        form.allowPublicNomination !== (editingCategory?.allowPublicNomination ?? false) ||
-        form.requireApproval !== (editingCategory?.requireApproval ?? false) ||
-        form.showFinalImage !== (editingCategory?.showFinalImage ?? true) ||
-        form.showTotalVotesPublicly !== (editingCategory?.showTotalVotesPublicly ?? true) ||
-        form.nominationDeadline !== initialDeadline ||
-        form.nominationPrice !== (Number(editingCategory?.nominationPrice) || 0) ||
-        form.votePrice !== (Number(editingCategory?.votePrice) || 0) ||
-        pendingFile !== null;
+    if (
+      votingMode === "general" &&
+      form.votePrice < PRICE_CONSTRAINTS.vote.minGeneral
+    ) {
+      toast.error(
+        `General events require a minimum vote price of ${PRICE_CONSTRAINTS.vote.minGeneral.toFixed(2)} GHS`,
+      );
+      return;
+    }
 
-    const handleOpen = () => {
-        onOpenChange(true);
-    };
+    startTransition(async () => {
+      let finalImageUrl: string | null | undefined =
+        form.templateImage || (pendingFile ? undefined : null);
 
-    const handleClose = () => {
-        if (isDirty) {
-            setShowDiscardDialog(true);
+      if (pendingFile) {
+        const uploadedPath = await upload(
+          pendingFile,
+          form.templateImage || undefined,
+        );
+        if (!uploadedPath) {
+          toast.error("Failed to upload image");
+          return;
+        }
+        finalImageUrl = uploadedPath;
+      }
+
+      const payload = {
+        name: form.name,
+        description: form.description || undefined,
+        maxVotesPerUser: votingMode === "internal" ? 1 : form.maxVotesPerUser,
+        allowMultiple: votingMode === "internal" ? false : form.allowMultiple,
+        allowPublicNomination: form.allowPublicNomination,
+        nominationDeadline: form.nominationDeadline || undefined,
+        templateImage: finalImageUrl,
+        templateConfig: form.templateConfig || undefined,
+        showFinalImage: form.showFinalImage,
+        showTotalVotesPublicly: form.showTotalVotesPublicly,
+        nominationPrice: votingMode === "internal" ? 0 : form.nominationPrice,
+        votePrice: votingMode === "internal" ? 0 : form.votePrice,
+      };
+
+      if (editingCategory) {
+        console.log("form payload", payload);
+        const result = await updateCategory(editingCategory.id, payload);
+        console.log("Update category result:", result);
+        if (result.success) {
+          onCategoryUpdated({
+            ...editingCategory,
+            ...payload,
+            description: form.description || null,
+            nominationDeadline: form.nominationDeadline || null,
+            templateImage: finalImageUrl || null,
+          });
+          toast.success("Category updated");
+          onOpenChange(false);
         } else {
+          toast.error(result.error ?? "Failed to update category");
+        }
+        return;
+      }
+
+      const result = await createCategory(eventId, payload);
+      if (result.success) {
+        onCategoryCreated({
+          id: result.data.id,
+          ...payload,
+          description: form.description || null,
+          requireApproval: form.requireApproval,
+          nominationDeadline: form.nominationDeadline || null,
+          templateImage: finalImageUrl || null,
+          showTotalVotesPublicly: form.showTotalVotesPublicly,
+          orderIdx: nextOrderIndex,
+          votingOptions: [],
+          customFields: [],
+        });
+        toast.success("Category created");
+        onOpenChange(false);
+      } else {
+        toast.error(result.error ?? "Failed to create category");
+      }
+    });
+  };
+
+  const templateDisplayUrl = getCategoryTemplateImageUrl(form.templateImage);
+  const initialFiles =
+    previewUrl || (form.templateImage && templateDisplayUrl)
+      ? [
+          {
+            id: pendingFile ? "pending" : form.templateImage || "initial",
+            url: previewUrl || templateDisplayUrl || "",
+            name: pendingFile ? pendingFile.name : "Template image",
+          },
+        ]
+      : [];
+
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={(open) => {
+        if (open) {
+          handleOpen();
+        } else {
+          handleClose();
+        }
+      }}
+    >
+      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
+
+      <SheetContent
+        side="right"
+        variant="afro"
+        className="w-full sm:max-w-lg flex flex-col h-full"
+      >
+        <SheetHeader className="shrink-0">
+          <SheetTitle>
+            {editingCategory ? "Edit Category" : "Add Category"}
+          </SheetTitle>
+          <SheetDescription>
+            Create or edit a voting category for nominees
+          </SheetDescription>
+        </SheetHeader>
+
+        <SheetBody className="flex-1 overflow-y-auto pr-2">
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList
+              variant="afro"
+              className={`grid w-full ${votingMode === "internal" ? "grid-cols-2" : "grid-cols-3"}`}
+            >
+              <TabsTrigger value="basic">Basic</TabsTrigger>
+              <TabsTrigger value="nominations">Nominations</TabsTrigger>
+              {votingMode !== "internal" && (
+                <TabsTrigger value="pricing">Pricing</TabsTrigger>
+              )}
+            </TabsList>
+
+            {/* ── Basic Tab ── */}
+            <TabsContent value="basic" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Category Template Image</Label>
+                <ImageDropzone
+                  maxFiles={1}
+                  gridCols="grid-cols-1"
+                  uploadLabel="Upload template image"
+                  uploadSubLabel="Click or drag and drop to upload"
+                  initialFiles={initialFiles}
+                  onRemoveInitialFile={() => {
+                    setForm((prev) => ({ ...prev, templateImage: null }));
+                    setPendingFile(null);
+                    if (previewUrl) URL.revokeObjectURL(previewUrl);
+                    setPreviewUrl(null);
+                  }}
+                  getDisplayUrl={getCategoryTemplateImageUrl}
+                  onDropFile={async (file) => {
+                    setPendingFile(file);
+                    const url = URL.createObjectURL(file);
+                    if (previewUrl) URL.revokeObjectURL(previewUrl);
+                    setPreviewUrl(url);
+                    return { status: "success", result: url };
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category-name">Name *</Label>
+                <Input
+                  id="category-name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  placeholder="e.g., Best Actor"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category-description">Description</Label>
+                <Textarea
+                  id="category-description"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  placeholder="Describe this category..."
+                  rows={3}
+                />
+              </div>
+
+              {votingMode !== "internal" && (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="max-votes">Max Votes Per User</Label>
+                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">
+                        Limit
+                      </span>
+                    </div>
+                    <Input
+                      id="max-votes"
+                      type="number"
+                      min={1}
+                      value={form.maxVotesPerUser}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          maxVotesPerUser: Number.parseInt(e.target.value) || 1,
+                        }))
+                      }
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      The maximum number of votes a single user can cast in this
+                      category.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                    <div className="space-y-0.5">
+                      <Label>Allow Multiple Selections</Label>
+                      <p className="text-[10px] text-muted-foreground">
+                        Allow voting for different nominees
+                      </p>
+                    </div>
+                    <Switch
+                      checked={form.allowMultiple}
+                      onCheckedChange={(checked) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          allowMultiple: checked,
+                        }))
+                      }
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Make Vote Counts Public</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Show nominee vote totals to public visitors
+                  </p>
+                </div>
+                <Switch
+                  checked={form.showTotalVotesPublicly}
+                  onCheckedChange={(checked) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      showTotalVotesPublicly: checked,
+                    }))
+                  }
+                />
+              </div>
+            </TabsContent>
+
+            {/* ── Nominations Tab ── */}
+            <TabsContent value="nominations" className="space-y-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="flex items-center gap-2">
+                    <Globe className="size-4" />
+                    Allow Public Nominations
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Anyone can nominate for this category
+                  </p>
+                </div>
+                <Switch
+                  checked={form.allowPublicNomination}
+                  onCheckedChange={(checked) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      allowPublicNomination: checked,
+                    }))
+                  }
+                />
+              </div>
+
+              {form.allowPublicNomination && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="nomination-deadline"
+                      className="flex items-center gap-2"
+                    >
+                      <Clock className="size-4" />
+                      Nomination Deadline
+                    </Label>
+                    <Input
+                      id="nomination-deadline"
+                      type="datetime-local"
+                      value={form.nominationDeadline}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          nominationDeadline: e.target.value,
+                        }))
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Leave empty for no deadline
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Require Approval</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Review nominations before publishing
+                      </p>
+                    </div>
+                    <Switch
+                      checked={form.requireApproval}
+                      onCheckedChange={(checked) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          requireApproval: checked,
+                        }))
+                      }
+                    />
+                  </div>
+                </>
+              )}
+            </TabsContent>
+
+            {/* ── Pricing Tab ── */}
+            <TabsContent value="pricing" className="space-y-4 py-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="nomination-price"
+                    className="flex items-center gap-2"
+                  >
+                    <Hash className="size-4" />
+                    Nominee Fee (GHS)
+                  </Label>
+                  {/* ── FIX 2: raw string buffer for nomination price ── */}
+                  <Input
+                    id="nomination-price"
+                    type="number"
+                    min={PRICE_CONSTRAINTS.nomination.min}
+                    step={PRICE_CONSTRAINTS.nomination.step}
+                    value={nominationPriceRaw}
+                    onChange={(e) => {
+                      setNominationPriceRaw(e.target.value);
+                      setForm((prev) => ({
+                        ...prev,
+                        nominationPrice:
+                          e.target.value === ""
+                            ? 0
+                            : Number.parseFloat(e.target.value) || 0,
+                      }));
+                    }}
+                    onBlur={() => {
+                      // Normalise on blur so empty field shows 0
+                      if (
+                        nominationPriceRaw === "" ||
+                        nominationPriceRaw === "-"
+                      ) {
+                        setNominationPriceRaw("0");
+                      }
+                    }}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Amount a person pays to become a nominee in this category.
+                  </p>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="vote-price"
+                    className="flex items-center gap-2"
+                  >
+                    <Hash className="size-4" />
+                    Price Per Vote (GHS)
+                  </Label>
+                  {/* ── FIX 2: raw string buffer for vote price ── */}
+                  <Input
+                    id="vote-price"
+                    type="number"
+                    min={
+                      votingMode === "general"
+                        ? PRICE_CONSTRAINTS.vote.minGeneral
+                        : PRICE_CONSTRAINTS.vote.minInternal
+                    }
+                    step={PRICE_CONSTRAINTS.vote.step}
+                    value={votePriceRaw}
+                    onChange={(e) => {
+                      setVotePriceRaw(e.target.value);
+                      setForm((prev) => ({
+                        ...prev,
+                        votePrice:
+                          e.target.value === ""
+                            ? 0
+                            : Number.parseFloat(e.target.value) || 0,
+                      }));
+                    }}
+                    onBlur={() => {
+                      // Clamp to minimum on blur if below threshold
+                      const parsed = Number.parseFloat(votePriceRaw);
+                      if (
+                        votePriceRaw === "" ||
+                        Number.isNaN(parsed) ||
+                        (votingMode === "general" &&
+                          parsed < PRICE_CONSTRAINTS.vote.minGeneral)
+                      ) {
+                        const clamped =
+                          votingMode === "general"
+                            ? PRICE_CONSTRAINTS.vote.minGeneral
+                            : PRICE_CONSTRAINTS.vote.minInternal;
+                        setVotePriceRaw(String(clamped));
+                        setForm((prev) => ({
+                          ...prev,
+                          votePrice: clamped,
+                        }));
+                      }
+                    }}
+                    placeholder={
+                      votingMode === "general"
+                        ? String(PRICE_CONSTRAINTS.vote.defaultGeneral)
+                        : "0.00"
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Amount a voter pays for each vote cast in this category.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </SheetBody>
+
+        <SheetFooter className="shrink-0 pt-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              onOpenChange(false);
+              resetForm();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSave} disabled={isPending}>
+            {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+            {editingCategory ? "Save Changes" : "Add Category"}
+          </Button>
+        </SheetFooter>
+
+        <ConfirmDiscardDialog
+          open={showDiscardDialog}
+          onOpenChange={setShowDiscardDialog}
+          onConfirm={() => {
+            setShowDiscardDialog(false);
             onOpenChange(false);
             resetForm();
-        }
-    };
-
-    const handleSave = () => {
-        if (!form.name.trim()) {
-            toast.error("Category name is required");
-            return;
-        }
-
-        if (votingMode === "general" && form.votePrice < PRICE_CONSTRAINTS.vote.minGeneral) {
-            toast.error(`General events require a minimum vote price of ${PRICE_CONSTRAINTS.vote.minGeneral.toFixed(2)} GHS`);
-            return;
-        }
-
-        startTransition(async () => {
-            let finalImageUrl: string | null | undefined =
-                form.templateImage || (pendingFile ? undefined : null);
-
-            if (pendingFile) {
-                const uploadedPath = await upload(pendingFile, form.templateImage || undefined);
-                if (!uploadedPath) {
-                    toast.error("Failed to upload image");
-                    return;
-                }
-                finalImageUrl = uploadedPath;
-            }
-
-            const payload = {
-                name: form.name,
-                description: form.description || undefined,
-                maxVotesPerUser: votingMode === "internal" ? 1 : form.maxVotesPerUser,
-                allowMultiple: votingMode === "internal" ? false : form.allowMultiple,
-                allowPublicNomination: form.allowPublicNomination,
-                nominationDeadline: form.nominationDeadline || undefined,
-                templateImage: finalImageUrl,
-                templateConfig: form.templateConfig || undefined,
-                showFinalImage: form.showFinalImage,
-                showTotalVotesPublicly: form.showTotalVotesPublicly,
-                nominationPrice: votingMode === "internal" ? 0 : form.nominationPrice,
-                votePrice: votingMode === "internal" ? 0 : form.votePrice,
-            };
-
-            if (editingCategory) {
-                console.log("form payload", payload);
-                const result = await updateCategory(editingCategory.id, payload);
-                console.log("Update category result:", result);
-                if (result.success) {
-                    onCategoryUpdated({
-                        ...editingCategory,
-                        ...payload,
-                        description: form.description || null,
-                        nominationDeadline: form.nominationDeadline || null,
-                        templateImage: finalImageUrl || null,
-                    });
-                    toast.success("Category updated");
-                    onOpenChange(false);
-                } else {
-                    toast.error(result.error ?? "Failed to update category");
-                }
-                return;
-            }
-
-            const result = await createCategory(eventId, payload);
-            if (result.success) {
-                onCategoryCreated({
-                    id: result.data.id,
-                    ...payload,
-                    description: form.description || null,
-                    requireApproval: form.requireApproval,
-                    nominationDeadline: form.nominationDeadline || null,
-                    templateImage: finalImageUrl || null,
-                    showTotalVotesPublicly: form.showTotalVotesPublicly,
-                    orderIdx: nextOrderIndex,
-                    votingOptions: [],
-                    customFields: [],
-                });
-                toast.success("Category created");
-                onOpenChange(false);
-            } else {
-                toast.error(result.error ?? "Failed to create category");
-            }
-        });
-    };
-
-    const templateDisplayUrl = getCategoryTemplateImageUrl(form.templateImage);
-    const initialFiles =
-        previewUrl || (form.templateImage && templateDisplayUrl)
-            ? [
-                  {
-                      id: pendingFile ? "pending" : form.templateImage || "initial",
-                      url: previewUrl || templateDisplayUrl || "",
-                      name: pendingFile ? pendingFile.name : "Template image",
-                  },
-              ]
-            : [];
-
-    return (
-        <Sheet
-            open={open}
-            onOpenChange={(open) => {
-                if (open) {
-                    handleOpen();
-                } else {
-                    handleClose();
-                }
-            }}
-        >
-            {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
-
-            <SheetContent side="right" variant="afro" className="w-full sm:max-w-lg flex flex-col h-full">
-                <SheetHeader className="shrink-0">
-                    <SheetTitle>{editingCategory ? "Edit Category" : "Add Category"}</SheetTitle>
-                    <SheetDescription>Create or edit a voting category for nominees</SheetDescription>
-                </SheetHeader>
-
-                <SheetBody className="flex-1 overflow-y-auto pr-2">
-                    <Tabs defaultValue="basic" className="w-full">
-                        <TabsList
-                            variant="afro"
-                            className={`grid w-full ${votingMode === "internal" ? "grid-cols-2" : "grid-cols-3"}`}
-                        >
-                            <TabsTrigger value="basic">Basic</TabsTrigger>
-                            <TabsTrigger value="nominations">Nominations</TabsTrigger>
-                            {votingMode !== "internal" && (
-                                <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                            )}
-                        </TabsList>
-
-                        {/* ── Basic Tab ── */}
-                        <TabsContent value="basic" className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label>Category Template Image</Label>
-                                <ImageDropzone
-                                    maxFiles={1}
-                                    gridCols="grid-cols-1"
-                                    uploadLabel="Upload template image"
-                                    uploadSubLabel="Click or drag and drop to upload"
-                                    initialFiles={initialFiles}
-                                    onRemoveInitialFile={() => {
-                                        setForm((prev) => ({ ...prev, templateImage: null }));
-                                        setPendingFile(null);
-                                        if (previewUrl) URL.revokeObjectURL(previewUrl);
-                                        setPreviewUrl(null);
-                                    }}
-                                    getDisplayUrl={getCategoryTemplateImageUrl}
-                                    onDropFile={async (file) => {
-                                        setPendingFile(file);
-                                        const url = URL.createObjectURL(file);
-                                        if (previewUrl) URL.revokeObjectURL(previewUrl);
-                                        setPreviewUrl(url);
-                                        return { status: "success", result: url };
-                                    }}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="category-name">Name *</Label>
-                                <Input
-                                    id="category-name"
-                                    value={form.name}
-                                    onChange={(e) =>
-                                        setForm((prev) => ({ ...prev, name: e.target.value }))
-                                    }
-                                    placeholder="e.g., Best Actor"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="category-description">Description</Label>
-                                <Textarea
-                                    id="category-description"
-                                    value={form.description}
-                                    onChange={(e) =>
-                                        setForm((prev) => ({ ...prev, description: e.target.value }))
-                                    }
-                                    placeholder="Describe this category..."
-                                    rows={3}
-                                />
-                            </div>
-
-                            {votingMode !== "internal" && (
-                                <>
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <Label htmlFor="max-votes">Max Votes Per User</Label>
-                                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">
-                                                Limit
-                                            </span>
-                                        </div>
-                                        <Input
-                                            id="max-votes"
-                                            type="number"
-                                            min={1}
-                                            value={form.maxVotesPerUser}
-                                            onChange={(e) =>
-                                                setForm((prev) => ({
-                                                    ...prev,
-                                                    maxVotesPerUser:
-                                                        Number.parseInt(e.target.value) || 1,
-                                                }))
-                                            }
-                                        />
-                                        <p className="text-[10px] text-muted-foreground">
-                                            The maximum number of votes a single user can cast in
-                                            this category.
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-                                        <div className="space-y-0.5">
-                                            <Label>Allow Multiple Selections</Label>
-                                            <p className="text-[10px] text-muted-foreground">
-                                                Allow voting for different nominees
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            checked={form.allowMultiple}
-                                            onCheckedChange={(checked) =>
-                                                setForm((prev) => ({
-                                                    ...prev,
-                                                    allowMultiple: checked,
-                                                }))
-                                            }
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label>Make Vote Counts Public</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Show nominee vote totals to public visitors
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={form.showTotalVotesPublicly}
-                                    onCheckedChange={(checked) =>
-                                        setForm((prev) => ({
-                                            ...prev,
-                                            showTotalVotesPublicly: checked,
-                                        }))
-                                    }
-                                />
-                            </div>
-                        </TabsContent>
-
-                        {/* ── Nominations Tab ── */}
-                        <TabsContent value="nominations" className="space-y-4 py-4">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="flex items-center gap-2">
-                                        <Globe className="size-4" />
-                                        Allow Public Nominations
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Anyone can nominate for this category
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={form.allowPublicNomination}
-                                    onCheckedChange={(checked) =>
-                                        setForm((prev) => ({
-                                            ...prev,
-                                            allowPublicNomination: checked,
-                                        }))
-                                    }
-                                />
-                            </div>
-
-                            {form.allowPublicNomination && (
-                                <>
-                                    <Separator />
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="nomination-deadline"
-                                            className="flex items-center gap-2"
-                                        >
-                                            <Clock className="size-4" />
-                                            Nomination Deadline
-                                        </Label>
-                                        <Input
-                                            id="nomination-deadline"
-                                            type="datetime-local"
-                                            value={form.nominationDeadline}
-                                            onChange={(e) =>
-                                                setForm((prev) => ({
-                                                    ...prev,
-                                                    nominationDeadline: e.target.value,
-                                                }))
-                                            }
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Leave empty for no deadline
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-0.5">
-                                            <Label>Require Approval</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Review nominations before publishing
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            checked={form.requireApproval}
-                                            onCheckedChange={(checked) =>
-                                                setForm((prev) => ({
-                                                    ...prev,
-                                                    requireApproval: checked,
-                                                }))
-                                            }
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </TabsContent>
-
-                        {/* ── Pricing Tab ── */}
-                        <TabsContent value="pricing" className="space-y-4 py-4">
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor="nomination-price"
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Hash className="size-4" />
-                                        Nominee Fee (GHS)
-                                    </Label>
-                                    {/* ── FIX 2: raw string buffer for nomination price ── */}
-                                    <Input
-                                        id="nomination-price"
-                                        type="number"
-                                        min={PRICE_CONSTRAINTS.nomination.min}
-                                        step={PRICE_CONSTRAINTS.nomination.step}
-                                        value={nominationPriceRaw}
-                                        onChange={(e) => {
-                                            setNominationPriceRaw(e.target.value);
-                                            setForm((prev) => ({
-                                                ...prev,
-                                                nominationPrice:
-                                                    e.target.value === ""
-                                                        ? 0
-                                                        : Number.parseFloat(e.target.value) || 0,
-                                            }));
-                                        }}
-                                        onBlur={() => {
-                                            // Normalise on blur so empty field shows 0
-                                            if (nominationPriceRaw === "" || nominationPriceRaw === "-") {
-                                                setNominationPriceRaw("0");
-                                            }
-                                        }}
-                                        placeholder="0.00"
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Amount a person pays to become a nominee in this category.
-                                    </p>
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-2">
-                                    <Label
-                                        htmlFor="vote-price"
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Hash className="size-4" />
-                                        Price Per Vote (GHS)
-                                    </Label>
-                                    {/* ── FIX 2: raw string buffer for vote price ── */}
-                                    <Input
-                                        id="vote-price"
-                                        type="number"
-                                        min={votingMode === "general" ? PRICE_CONSTRAINTS.vote.minGeneral : PRICE_CONSTRAINTS.vote.minInternal}
-                                        step={PRICE_CONSTRAINTS.vote.step}
-                                        value={votePriceRaw}
-                                        onChange={(e) => {
-                                            setVotePriceRaw(e.target.value);
-                                            setForm((prev) => ({
-                                                ...prev,
-                                                votePrice:
-                                                    e.target.value === ""
-                                                        ? 0
-                                                        : Number.parseFloat(e.target.value) || 0,
-                                            }));
-                                        }}
-                                        onBlur={() => {
-                                            // Clamp to minimum on blur if below threshold
-                                            const parsed = Number.parseFloat(votePriceRaw);
-                                            if (
-                                                votePriceRaw === "" ||
-                                                Number.isNaN(parsed) ||
-                                                (votingMode === "general" && parsed < PRICE_CONSTRAINTS.vote.minGeneral)
-                                            ) {
-                                                const clamped = votingMode === "general" ? PRICE_CONSTRAINTS.vote.minGeneral : PRICE_CONSTRAINTS.vote.minInternal;
-                                                setVotePriceRaw(String(clamped));
-                                                setForm((prev) => ({
-                                                    ...prev,
-                                                    votePrice: clamped,
-                                                }));
-                                            }
-                                        }}
-                                        placeholder={votingMode === "general" ? String(PRICE_CONSTRAINTS.vote.defaultGeneral) : "0.00"}
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Amount a voter pays for each vote cast in this category.
-                                    </p>
-                                </div>
-                            </div>
-                        </TabsContent>
-                    </Tabs>
-                </SheetBody>
-
-                <SheetFooter className="shrink-0 pt-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            onOpenChange(false);
-                            resetForm();
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button variant="primary" onClick={handleSave} disabled={isPending}>
-                        {isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                        {editingCategory ? "Save Changes" : "Add Category"}
-                    </Button>
-                </SheetFooter>
-
-                <ConfirmDiscardDialog
-                    open={showDiscardDialog}
-                    onOpenChange={setShowDiscardDialog}
-                    onConfirm={() => {
-                        setShowDiscardDialog(false);
-                        onOpenChange(false);
-                        resetForm();
-                    }}
-                />
-            </SheetContent>
-        </Sheet>
-    );
+          }}
+        />
+      </SheetContent>
+    </Sheet>
+  );
 }

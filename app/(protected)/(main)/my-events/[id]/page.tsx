@@ -14,7 +14,7 @@ import { getVotingCategories } from "@/lib/dal/voting";
 import { normalizeFieldType } from "@/lib/types/voting";
 import { getTicketTypesByEventId } from "@/lib/dal/ticket";
 import { getEventMembers, getRegistrationFields } from "@/lib/dal/event-member";
-import { EventDetailClient } from "@/components/event/EventDetailClient";
+import { EventDetailClient } from "@/components/event/core/EventDetailClient";
 import { PageHeader } from "@/components/shared/page-header";
 import type { EventDetailEvent } from "@/lib/types/event";
 

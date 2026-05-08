@@ -3,14 +3,14 @@
  * Export all event components from a single entry point
  */
 
-export { EventCreationProgress } from "./EventCreationProgress";
-export { EventCreationComplete } from "./EventCreationComplete";
-export { EventStep1BasicInfo } from "./EventStep1BasicInfo";
-export { EventStep2DateLocation } from "./EventStep2DateLocation";
-export { EventStep3MediaSettings } from "./EventStep3MediaSettings";
-export { EventStep4Extras } from "./EventStep4Extras";
+export { EventCreationProgress } from "./creation/EventCreationProgress";
+export { EventCreationComplete } from "./creation/EventCreationComplete";
+export { EventStep1BasicInfo } from "./creation/EventStep1BasicInfo";
+export { EventStep2DateLocation } from "./creation/EventStep2DateLocation";
+export { EventStep3MediaSettings } from "./creation/EventStep3MediaSettings";
+export { EventStep4Extras } from "./creation/EventStep4Extras";
 export { VotingManager } from "./voting-manager";
-export { NomineeCard } from "./NomineeCard";
+export { NomineeCard } from "./nomination/NomineeCard";
 export {
   EventStats,
   StatCard,
@@ -19,18 +19,21 @@ export {
   StatIcons,
   type EventStatsData,
   type StatCardProps,
-} from "./EventStats";
-export { EventsList } from "./EventsList";
-export { CustomizableEventStats } from "./CustomizableEventStats";
-export { EventDetailClient } from "./EventDetailClient";
-export { EventOverviewTab } from "./EventOverviewTab";
-export { EventSettingsTab } from "./EventSettingsTab";
-export { DeleteEventDialog } from "./DeleteEventDialog";
-export { EventCreationClient } from "./EventCreationClient";
-export { VotingBarChart, type VotingChartCategory } from "./VotingBarChart";
-export { VotingTrendChart } from "./VotingTrendChart";
-export { CategoryDetailModal } from "./CategoryDetailModal";
-export { VoteTransactionsTable } from "./VoteTransactionsTable";
+} from "./core/EventStats";
+export { EventsList } from "./core/EventsList";
+export { CustomizableEventStats } from "./charts/CustomizableEventStats";
+export { EventDetailClient } from "./core/EventDetailClient";
+export { EventOverviewTab } from "./tabs/EventOverviewTab";
+export { EventSettingsTab } from "./tabs/EventSettingsTab";
+export { DeleteEventDialog } from "./core/DeleteEventDialog";
+export { EventCreationClient } from "./creation/EventCreationClient";
+export {
+  VotingBarChart,
+  type VotingChartCategory,
+} from "./charts/VotingBarChart";
+export { VotingTrendChart } from "./charts/VotingTrendChart";
+export { CategoryDetailModal } from "./nomination/CategoryDetailModal";
+export { VoteTransactionsTable } from "./transactions/VoteTransactionsTable";
 export { TicketManager } from "./ticket-manager/TicketManager";
-export { EventPayoutsTab } from "./EventPayoutsTab";
-export { MemberManager } from "./MemberManager";
+export { EventPayoutsTab } from "./tabs/EventPayoutsTab";
+export { MemberManager } from "./members/MemberManager";
