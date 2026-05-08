@@ -54,6 +54,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
+import { NoCategoryIllustration } from "@/components/common/NoCategoryIllustration";
+
 interface CategoryListProps {
   readonly eventId: string;
   readonly categories: VotingCategory[];
@@ -173,15 +175,15 @@ export function CategoryList({
 
   if (categories.length === 0) {
     return (
-      <Card>
+      <Card className="border-none shadow-none bg-transparent">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <Vote className="size-12 text-muted-foreground mb-4" />
-          <h4 className="font-medium mb-1">No categories yet</h4>
-          <p className="text-sm text-muted-foreground mb-4">
-            Add voting categories to organize your nominees
+          <NoCategoryIllustration className="w-64 h-64 mb-6 opacity-80" />
+          <h4 className="text-xl font-bold uppercase tracking-tight mb-2">No categories yet.</h4>
+          <p className="text-sm text-muted-foreground mb-8 max-w-sm">
+            Add voting categories to organize your nominees and start the competition.
           </p>
           {canEdit && (
-            <Button onClick={onAddFirst}>
+            <Button onClick={onAddFirst} className="rounded-full px-8 shadow-lg hover:shadow-xl transition-all">
               <Plus className="size-4 mr-2" />
               Add First Category
             </Button>

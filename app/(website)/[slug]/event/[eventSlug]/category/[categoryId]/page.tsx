@@ -19,6 +19,7 @@ import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
 import { format } from "date-fns"
 import { getSocialPlatform, getGalleryProvider } from "@/lib/utils/event-icons"
+import { NoCategoryIllustration } from "@/components/common/NoCategoryIllustration"
 
 interface CategoryDetailPageProps {
     params: Promise<{
@@ -258,10 +259,10 @@ export default async function CategoryDetailPage({ params }: Readonly<CategoryDe
                             votingMode={event.votingMode as "internal" | "general"}
                         />
                     ) : (
-                        <div className="text-center py-16">
-                            <Users className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                            <p className="text-muted-foreground text-lg">
-                                No nominees have been added to this category yet.
+                        <div className="text-center py-16 flex flex-col items-center">
+                            <NoCategoryIllustration className="size-40 mb-6 opacity-80" />
+                            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                                No nominees have been added to this category yet. Please check back later.
                             </p>
                         </div>
                     )}

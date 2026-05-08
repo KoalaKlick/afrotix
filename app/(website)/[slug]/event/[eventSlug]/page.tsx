@@ -18,6 +18,8 @@ import { ImageIcon, Trophy, ChevronRight, Calendar, MapPin, Clock, Vote, Users, 
 import { EventInfoPill } from "@/components/shared/EventInfoPill"
 import type { Metadata } from "next"
 import { PROJ_NAME } from "@/lib/const/branding"
+import { NoCategoryIllustration } from "@/components/common/NoCategoryIllustration"
+import { NoTicketIllustration } from "@/components/common/NoTicketIllustration"
 
 import { getSocialPlatform, getGalleryProvider } from "@/lib/utils/event-icons";
 // Types only used for type annotations
@@ -215,7 +217,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
             </div>
 
             {/* Voting Categories Section - Only for voting/hybrid events */}
-            {votingCategories.length > 0 && (
+            {(event.type === "voting" || event.type === "hybrid") && (
                 <>
                     <PanAfricanDivider />
                     <Section maxWidth="7xl" className="py-16">
@@ -225,140 +227,161 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                 <h2 className="text-3xl font-bold uppercase tracking-tight">Vote Categories.</h2>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {votingCategories.map((category) => (
-                                    <Link
-                                        key={category.id}
-                                        href={`/${orgSlug}/event/${eventSlug}/category/${category.id}`}
-                                        className="group flex flex-col rounded-md border bg-card shadow-sm hover:shadow-xl transition-all duration-300 relative"
-                                    >
-                                        {category.templateImage && (
-                                            <div className="relative w-full h-48 shrink-0 overflow-hidden bg-muted rounded-t-md">
-                                                <Image
-                                                    src={getEventImageUrl(category.templateImage) || ''}
-                                                    alt={category.name}
-                                                    fill
-                                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                                    unoptimized
-                                                />
-                                            </div>
-                                        )}
-                                        <div className={`p-6 flex flex-col flex-1 bg-white ${category.templateImage ? 'rounded-b-2xl' : 'rounded-2xl'}`}>
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div className="flex items-start gap-3 flex-1 min-w-0 pr-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                                                        <Trophy className="w-5 h-5 text-primary" />
-                                                    </div>
-                                                    <h3 className="text-xl font-bold uppercase tracking-tight group-hover:text-primary transition-colors line-clamp-2 mt-1">
-                                                        {category.name}
-                                                    </h3>
+                            {votingCategories.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {votingCategories.map((category) => (
+                                        <Link
+                                            key={category.id}
+                                            href={`/${orgSlug}/event/${eventSlug}/category/${category.id}`}
+                                            className="group flex flex-col rounded-md border bg-card shadow-sm hover:shadow-xl transition-all duration-300 relative"
+                                        >
+                                            {category.templateImage && (
+                                                <div className="relative w-full h-48 shrink-0 overflow-hidden bg-muted rounded-t-md">
+                                                    <Image
+                                                        src={getEventImageUrl(category.templateImage) || ''}
+                                                        alt={category.name}
+                                                        fill
+                                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        unoptimized
+                                                    />
                                                 </div>
-                                                <div className="w-8 h-8 rounded-md bg-muted/50 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                                                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                                                </div>
-                                            </div>
-
-                                            {!category.templateImage && category.description && (
-                                                <p className="text-sm text-muted-foreground line-clamp-2 mb-6">
-                                                    {category.description}
-                                                </p>
                                             )}
-
-                                            <div className="mt-auto">
-                                                {!category.templateImage && (
-                                                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                                                        <Users className="w-4 h-4" />
-                                                        <span>{category.votingOptions.length} {category.votingOptions.length === 1 ? "nominee" : "nominees"}</span>
+                                            <div className={`p-6 flex flex-col flex-1 bg-white ${category.templateImage ? 'rounded-b-2xl' : 'rounded-2xl'}`}>
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="flex items-start gap-3 flex-1 min-w-0 pr-4">
+                                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                                            <Trophy className="w-5 h-5 text-primary" />
+                                                        </div>
+                                                        <h3 className="text-xl font-bold uppercase tracking-tight group-hover:text-primary transition-colors line-clamp-2 mt-1">
+                                                            {category.name}
+                                                        </h3>
                                                     </div>
+                                                    <div className="w-8 h-8 rounded-md bg-muted/50 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                                                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                                                    </div>
+                                                </div>
+
+                                                {!category.templateImage && category.description && (
+                                                    <p className="text-sm text-muted-foreground line-clamp-2 mb-6">
+                                                        {category.description}
+                                                    </p>
                                                 )}
 
-                                                {/* Preview of nominees */}
-                                                {category.votingOptions.length > 0 && (
-                                                    <div className="flex flex-row items-center mt-1 pt-1 mb-1">
-                                                        <AnimatedTooltip
-                                                            items={category.votingOptions.slice(0, 5).map((nominee) => ({
-                                                                id: nominee.id,
-                                                                name: nominee.optionText,
-                                                                designation: nominee.nomineeCode || "Nominee",
-                                                                image: getEventImageUrl(nominee.imageUrl),
-                                                            }))}
-                                                        />
-                                                        {category.votingOptions.length > 5 && (
-                                                            <div className="relative w-10 h-10 ml-2 rounded-md border-2 border-white bg-brand-secondary-500 flex items-center justify-center shrink-0 z-40">
-                                                                <span className="text-white text-xs font-bold">+{category.votingOptions.length - 5}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                <div className="mt-auto">
+                                                    {!category.templateImage && (
+                                                        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                                                            <Users className="w-4 h-4" />
+                                                            <span>{category.votingOptions.length} {category.votingOptions.length === 1 ? "nominee" : "nominees"}</span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Preview of nominees */}
+                                                    {category.votingOptions.length > 0 && (
+                                                        <div className="flex flex-row items-center mt-1 pt-1 mb-1">
+                                                            <AnimatedTooltip
+                                                                items={category.votingOptions.slice(0, 5).map((nominee) => ({
+                                                                    id: nominee.id,
+                                                                    name: nominee.optionText,
+                                                                    designation: nominee.nomineeCode || "Nominee",
+                                                                    image: getEventImageUrl(nominee.imageUrl),
+                                                                }))}
+                                                            />
+                                                            {category.votingOptions.length > 5 && (
+                                                                <div className="relative w-10 h-10 ml-2 rounded-md border-2 border-white bg-brand-secondary-500 flex items-center justify-center shrink-0 z-40">
+                                                                    <span className="text-white text-xs font-bold">+{category.votingOptions.length - 5}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <NoCategoryIllustration className="w-64 h-64 mb-6 opacity-80" />
+                                    <h4 className="text-xl font-bold uppercase tracking-tight mb-2">No categories yet.</h4>
+                                    <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
+                                        Voting categories haven't been set up for this event yet. Check back soon!
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </Section>
                 </>
             )}
 
-            {ticketTypes.length > 0 && (
+            {/* Ticket Section - Only for ticketed/hybrid events */}
+            {(event.type === "ticketed" || event.type === "hybrid") && (
                 <>
                     <PanAfricanDivider />
                     <Section maxWidth="7xl" className="py-16">
                         <div className="space-y-10">
-                            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                                <div>
-                                   {!event.isPublic && (
-                                            <> <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-brand-primary/20 bg-brand-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-brand-primary">
-                                       
-                                                <span className="text-brand-primary/40">•</span>
-                                                <Lock className="size-3.5" />
-                                                <span>Internal Event</span>
-                                          
-                                    </div>  </>
-                                        )}
-                                    <h2 className="text-3xl font-black uppercase tracking-tight">Choose Your Access.</h2>
-                                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                                        {isOrganizationMember
-                                            ? "You can also see member-only hidden tiers for internal events and organizer access."
-                                            : "Guests only see externally available ticket tiers here."}
+                            {ticketTypes.length > 0 ? (
+                                <>
+                                    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                                        <div>
+                                            {!event.isPublic && (
+                                                <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-brand-primary/20 bg-brand-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-brand-primary">
+                                                    <span className="text-brand-primary/40">•</span>
+                                                    <Lock className="size-3.5" />
+                                                    <span>Internal Event</span>
+                                                </div>
+                                            )}
+                                            <h2 className="text-3xl font-black uppercase tracking-tight">Choose Your Access.</h2>
+                                            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                                                {isOrganizationMember
+                                                    ? "You can also see member-only hidden tiers for internal events and organizer access."
+                                                    : "Guests only see externally available ticket tiers here."}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <PublicTicketGrid
+                                        tickets={ticketTypes.map((ticket) => ({
+                                            ...ticket,
+                                            price: Number(ticket.price),
+                                            salesEnd:
+                                                ticket.salesEnd instanceof Date
+                                                    ? ticket.salesEnd.toISOString()
+                                                    : ticket.salesEnd ?? null,
+                                        }))}
+                                        orgSlug={orgSlug}
+                                        eventSlug={eventSlug}
+                                        event={{
+                                            id: event.id,
+                                            organizationId: event.organizationId,
+                                            title: event.title,
+                                            flierImage: event.flierImage,
+                                            bannerImage: event.bannerImage,
+                                            isVirtual: event.isVirtual,
+                                            virtualLink: event.virtualLink,
+                                            venueName: event.venueName,
+                                            venueCity: event.venueCity,
+                                            venueCountry: event.venueCountry,
+                                            startDate:
+                                                event.startDate instanceof Date
+                                                    ? event.startDate.toISOString()
+                                                    : event.startDate ?? null,
+                                        }}
+                                        organization={{
+                                            name: organization.name,
+                                            logoUrl: organization.logoUrl,
+                                            primaryColor: organization.primaryColor,
+                                            secondaryColor: organization.secondaryColor,
+                                        }}
+                                    />
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <NoTicketIllustration className="size-40 mb-6 opacity-80" />
+                                    <h2 className="text-3xl font-black uppercase tracking-tight mb-2">No Ticket Tiers Yet.</h2>
+                                    <p className="mt-2 max-w-sm mx-auto text-sm text-muted-foreground">
+                                        Ticket tiers haven't been set up for this event yet. Please check back later for availability.
                                     </p>
                                 </div>
-                            </div>
-
-                            <PublicTicketGrid
-                                tickets={ticketTypes.map((ticket) => ({
-                                    ...ticket,
-                                    price: Number(ticket.price),
-                                    salesEnd:
-                                        ticket.salesEnd instanceof Date
-                                            ? ticket.salesEnd.toISOString()
-                                            : ticket.salesEnd ?? null,
-                                }))}
-                                orgSlug={orgSlug}
-                                eventSlug={eventSlug}
-                                event={{
-                                    id: event.id,
-                                    organizationId: event.organizationId,
-                                    title: event.title,
-                                    flierImage: event.flierImage,
-                                    bannerImage: event.bannerImage,
-                                    isVirtual: event.isVirtual,
-                                    virtualLink: event.virtualLink,
-                                    venueName: event.venueName,
-                                    venueCity: event.venueCity,
-                                    venueCountry: event.venueCountry,
-                                    startDate:
-                                        event.startDate instanceof Date
-                                            ? event.startDate.toISOString()
-                                            : event.startDate ?? null,
-                                }}
-                                organization={{
-                                    name: organization.name,
-                                    logoUrl: organization.logoUrl,
-                                    primaryColor: organization.primaryColor,
-                                    secondaryColor: organization.secondaryColor,
-                                }}
-                            />
+                            )}
                         </div>
                     </Section>
                 </>
