@@ -141,6 +141,11 @@ export function NomineeGrid({
   );
   const [votingNominee, setVotingNominee] = useState<VotingOption | null>(null);
 
+  const votePriceLabel =
+    votingMode === "general" && votePrice > 0
+      ? `(GHS ${votePrice.toFixed(2)})`
+      : "";
+
   function handleShare(e: React.MouseEvent, nominee: VotingOption) {
     e.stopPropagation();
     shareNominee(nominee);
@@ -209,10 +214,7 @@ export function NomineeGrid({
                   }}
                 >
                   <Vote className="w-3.5 h-3.5" />
-                  Vote{" "}
-                  {votingMode === "general" && votePrice > 0
-                    ? `(GHS ${votePrice.toFixed(2)})`
-                    : ""}
+                  Vote {votePriceLabel}
                 </Button>
                 {showTotalVotesPublicly && (
                   <div className="mt-3 pt-3 border-t flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium">
@@ -286,6 +288,7 @@ function PublicNomineeSheet({
   if (!nominee) return null;
 
   const displayImageUrl = getEventImageUrl(nominee.imageUrl);
+  const votePriceLabel = votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : "";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -363,8 +366,7 @@ function PublicNomineeSheet({
             }}
           >
             <Vote className="w-4 h-4" />
-            Vote for {nominee.optionText}{" "}
-            {votePrice > 0 ? `(GHS ${votePrice.toFixed(2)})` : ""}
+            Vote for {nominee.optionText} {votePriceLabel}
           </Button>
           <Button
             variant="tertiary"
