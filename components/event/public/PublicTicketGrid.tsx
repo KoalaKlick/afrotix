@@ -136,7 +136,7 @@ export function PublicTicketGrid({
                 <div className="flex items-center justify-between gap-3 px-1">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                      Price
+                      Price <span className="text-brand-primary-600">({ticket.name})</span>
                     </p>
                     <p className="mt-1 text-xl font-black">
                       {formatAmount(Number(ticket.price), ticket.currency)}

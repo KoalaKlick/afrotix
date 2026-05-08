@@ -19,6 +19,7 @@ import { deleteTicketTypeAction } from "@/lib/actions/ticket";
 import type { TicketType } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
 import { TicketCard } from "@/components/shared/TicketPreview";
+import { NoTicketIllustration } from "@/components/common/NoTicketIllustration";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -294,16 +295,16 @@ export function TicketList({
         ))}
 
         {ticketTypes.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-xl bg-muted/20">
-            <Ticket className="size-12 text-muted-foreground opacity-20 mb-4" />
-            <p className="text-muted-foreground font-medium">
-              No ticket tiers created yet
+          <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed rounded-xl bg-muted/5">
+            <NoTicketIllustration className="size-48 mb-6 opacity-80" />
+            <h4 className="text-xl font-bold uppercase tracking-tight mb-2">No Ticket Tiers Created</h4>
+            <p className="text-muted-foreground text-sm max-w-xs text-center mb-6">
+              You haven't set up any ticket tiers for this event yet. Create your first tier to start selling tickets.
             </p>
             {canEdit && (
               <Button
                 variant="tertiary"
-                size="sm"
-                className="mt-4"
+                size="default"
                 onClick={() => {
                   setEditingTicket(null);
                   setIsSheetOpen(true);

@@ -296,7 +296,7 @@ export function TicketCard({
 
         <div className="flex-1 min-w-0 relative z-10">
           <span
-            className="block text-[9px] font-black tracking-[0.22em] uppercase opacity-60 mb-0.5"
+            className="block text-xs font-black tracking-[0.22em] uppercase mb-0.5"
             style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
           >
             {ticketType}
@@ -307,13 +307,13 @@ export function TicketCard({
           <div className="flex flex-col gap-1 mt-1.5">
             <div>
               <div
-                className="text-[8px] font-bold tracking-[0.15em] uppercase opacity-50"
+                className="text-xs font-bold tracking-[0.15em] uppercase"
                 style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
               >
                 Date &amp; Time
               </div>
               <div
-                className="text-[11px] text-[#3d3530]"
+                className="text-sm text-[#3d3530]"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 {dateTime}
@@ -321,7 +321,7 @@ export function TicketCard({
             </div>
             <div>
               <div
-                className="text-[8px] font-bold tracking-[0.15em] uppercase opacity-50"
+                className="text-xs font-bold tracking-[0.15em] uppercase "
                 style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
               >
                 Venue
