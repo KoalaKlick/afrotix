@@ -228,7 +228,7 @@ export function UserProfileSheet({ open, onOpenChange, user }: UserProfileSheetP
                         </div>
 
                         {/* MoMo details */}
-                        <div className="space-y-4 rounded-lg border p-4">
+                        {/* <div className="space-y-4 rounded-lg border p-4">
                             <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Mobile Money (MoMo)</p>
 
                             <div className="space-y-1.5">
@@ -257,7 +257,7 @@ export function UserProfileSheet({ open, onOpenChange, user }: UserProfileSheetP
                                     type="tel"
                                 />
                             </div>
-                        </div>
+                        </div> */}
                     </form>
                 </SheetBody>
 
