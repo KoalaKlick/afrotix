@@ -346,6 +346,7 @@ export default async function EventDetailsPage({ params }: Readonly<EventDetails
                                                 ticket.salesEnd instanceof Date
                                                     ? ticket.salesEnd.toISOString()
                                                     : ticket.salesEnd ?? null,
+                                            designVariant: ticket.designVariant,
                                         }))}
                                         orgSlug={orgSlug}
                                         eventSlug={eventSlug}
