@@ -149,6 +149,7 @@ export default async function EventDetailPage({
             updatedAt: t.updatedAt.toISOString(),
             salesStart: t.salesStart?.toISOString() ?? null,
             salesEnd: t.salesEnd?.toISOString() ?? null,
+            designVariant: t.designVariant as "classic" | "modern" | null,
           }))}
           members={members.map(m => ({
             ...m,
