@@ -70,6 +70,7 @@ export async function createTicketType(data: {
   color?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  designVariant?: string | null;
 }) {
   try {
     return await prisma.ticketType.create({
@@ -88,6 +89,7 @@ export async function createTicketType(data: {
         color: data.color || "",
         primaryColor: data.primaryColor || "",
         secondaryColor: data.secondaryColor || "",
+        designVariant: data.designVariant || "classic",
       },
     });
   } catch (error) {
@@ -116,6 +118,7 @@ export async function updateTicketType(
     color?: string | null;
     primaryColor?: string | null;
     secondaryColor?: string | null;
+    designVariant?: string | null;
   },
 ) {
   try {

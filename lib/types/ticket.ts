@@ -22,6 +22,7 @@ export interface TicketType {
   color?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  designVariant?: "classic" | "modern" | null;
   orderIdx: number;
   createdAt: string;
   updatedAt: string;

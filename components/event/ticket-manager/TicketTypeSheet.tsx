@@ -37,6 +37,7 @@ import {
 import type { TicketType, TicketStatus } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
 import { TicketCard } from "@/components/shared/TicketPreview";
+import { TicketCard2 } from "@/components/shared/TicketPreview2";
 import { PRICE_CONSTRAINTS } from "@/lib/const/pricing";
 
 interface TicketTypeSheetProps {
@@ -73,6 +74,7 @@ export function TicketTypeSheet({
     color: organization?.primaryColor || "",
     primaryColor: organization?.primaryColor || "",
     secondaryColor: organization?.secondaryColor || "",
+    designVariant: "classic" as "classic" | "modern",
   });
   const previewPrimary =
     formData.primaryColor ||
@@ -110,6 +112,7 @@ export function TicketTypeSheet({
           "",
         secondaryColor:
           editingTicket.secondaryColor || organization?.secondaryColor || "",
+        designVariant: (editingTicket.designVariant as any) || "classic",
       });
     } else {
       setFormData({
@@ -127,6 +130,7 @@ export function TicketTypeSheet({
         color: organization?.primaryColor || "",
         primaryColor: organization?.primaryColor || "",
         secondaryColor: organization?.secondaryColor || "",
+        designVariant: "classic",
       });
     }
   }, [editingTicket, organization?.primaryColor, organization?.secondaryColor]);
@@ -196,31 +200,59 @@ export function TicketTypeSheet({
                 </p>
               </div>
             </div>
-            <TicketCard
-              className="mx-auto max-w-xs"
-              primaryColor={previewPrimary}
-              secondaryColor={previewSecondary}
-              logoUrl={organization?.logoUrl}
-              flierImage={event.flierImage}
-              bannerImage={event.bannerImage}
-              organizationName={organization?.name}
-              eventName={event.title}
-              ticketType={formData.name || "General Admission"}
-              dateTime={
-                event.startDate
-                  ? new Date(event.startDate).toLocaleString("en-GH", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
-                  : "Date to be announced"
-              }
-              venue={
-                event.isVirtual
-                  ? event.virtualLink || "Virtual event"
-                  : event.venueName || event.venueCity || event.venueCountry
-              }
-              ticketCode="AUTO-QR"
-            />
+            {formData.designVariant === "modern" ? (
+              <TicketCard2
+                className="mx-auto max-w-xs"
+                primaryColor={previewPrimary}
+                secondaryColor={previewSecondary}
+                logoUrl={organization?.logoUrl}
+                flierImage={event.flierImage}
+                bannerImage={event.bannerImage}
+                organizationName={organization?.name}
+                eventName={event.title}
+                ticketType={formData.name || "General Admission"}
+                dateTime={
+                  event.startDate
+                    ? new Date(event.startDate).toLocaleString("en-GH", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
+                    : "Date to be announced"
+                }
+                venue={
+                  event.isVirtual
+                    ? event.virtualLink || "Virtual event"
+                    : event.venueName || event.venueCity || event.venueCountry
+                }
+                ticketCode="AUTO-QR"
+              />
+            ) : (
+              <TicketCard
+                className="mx-auto max-w-xs"
+                primaryColor={previewPrimary}
+                secondaryColor={previewSecondary}
+                logoUrl={organization?.logoUrl}
+                flierImage={event.flierImage}
+                bannerImage={event.bannerImage}
+                organizationName={organization?.name}
+                eventName={event.title}
+                ticketType={formData.name || "General Admission"}
+                dateTime={
+                  event.startDate
+                    ? new Date(event.startDate).toLocaleString("en-GH", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
+                    : "Date to be announced"
+                }
+                venue={
+                  event.isVirtual
+                    ? event.virtualLink || "Virtual event"
+                    : event.venueName || event.venueCity || event.venueCountry
+                }
+                ticketCode="AUTO-QR"
+              />
+            )}
           </div>
 
           {/* Basic Info */}
@@ -409,6 +441,23 @@ export function TicketTypeSheet({
                   <SelectItem value="expired" className="text-muted-foreground">
                     Expired (Sales Closed)
                   </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="designVariant">Ticket Design Variant</Label>
+              <Select
+                value={formData.designVariant}
+                onValueChange={(value: "classic" | "modern") =>
+                  setFormData((prev) => ({ ...prev, designVariant: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="classic">Classic (Light)</SelectItem>
+                  <SelectItem value="modern">Modern (Dark & Premium)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

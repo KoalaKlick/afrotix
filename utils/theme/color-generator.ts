@@ -180,22 +180,22 @@ export function generateColorShades(baseColor: string): Record<number, string> {
   // Define offsets for each shade relative to base L (500)
   // positive offsets => lighter, negative => darker
   const offsets: Record<number, number> = {
-    50: 0.45,
-    100: 0.4,
-    200: 0.3,
-    300: 0.18,
-    400: 0.08,
+    50: 0.48,   // Aiming for ~0.98 lightness
+    100: 0.43,
+    200: 0.33,
+    300: 0.22,
+    400: 0.11,
     500: 0,
-    600: -0.12,
-    700: -0.18,
-    800: -0.28,
-    900: -0.36,
-    950: -0.44,
+    600: -0.11,
+    700: -0.21,
+    800: -0.31,
+    900: -0.41,
+    950: -0.47, // Aiming for ~0.03 lightness
   };
 
   const shades: Record<number, string> = {};
 
-  const clamp = (v: number, a = 0.02, b = 0.98) => Math.max(a, Math.min(b, v));
+  const clamp = (v: number, a = 0.01, b = 0.99) => Math.max(a, Math.min(b, v));
 
   Object.entries(offsets).forEach(([shadeStr, offset]) => {
     const shade = parseInt(shadeStr, 10);
@@ -203,14 +203,19 @@ export function generateColorShades(baseColor: string): Record<number, string> {
     // target lightness anchored to baseL
     let L = clamp(baseL + offset);
 
-    // Reduce chroma for very light shades to avoid oversaturation
+    // Reduce chroma for light shades to avoid oversaturation
+    // Dark shades get slightly more chroma to stay vibrant
     let C = baseC;
     if (offset > 0) {
-      const reduction = Math.min(0.8, offset / 0.6);
-      C = Math.max(0.01, baseC * (1 - reduction * 0.6));
+      // Much more aggressive chroma reduction for light shades
+      // As lightness approaches 1, chroma should approach 0
+      const ratio = offset / 0.48; 
+      C = baseC * Math.pow(1 - ratio, 1.2);
+      C = Math.max(0.004, C);
     } else if (offset < 0) {
       // Slightly increase chroma for mid-dark shades, cap it
-      C = Math.min(baseC * 1.1, baseC + Math.abs(offset) * 0.05);
+      const ratio = Math.abs(offset) / 0.47;
+      C = Math.min(baseC * 1.15, baseC + (ratio * 0.02));
     }
 
     // Ensure 500 is exactly the base color

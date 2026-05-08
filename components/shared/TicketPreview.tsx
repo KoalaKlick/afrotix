@@ -5,6 +5,7 @@ import Image from "next/image";
 import { QrCode } from "lucide-react";
 import QRCode from "react-qr-code";
 import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils";
+import { generateColorShades } from "@/utils/theme/color-generator";
 
 
 interface TicketCardProps {
@@ -104,17 +105,17 @@ function TicketOutline({ color }: { color: string }) {
 /** Dashed perforation line inside the stub */
 function StubDash({
   side,
-  primaryColor,
+  borderColor,
 }: {
   side: "left" | "right";
-  primaryColor: string;
+  borderColor: string;
 }) {
   const dashBorder = side === "left" ? "border-r" : "border-l";
   return (
     <div
       className={`absolute top-3 bottom-3 ${dashBorder} border-dashed`}
       style={{
-        borderColor: `${primaryColor}44`,
+        borderColor: borderColor,
         [side === "left" ? "right" : "left"]: 0,
       }}
     />
@@ -124,10 +125,14 @@ function StubDash({
 function Stub({
   side,
   primaryColor,
+  backgroundColor,
+  borderColor,
   label,
 }: {
   side: "left" | "right";
   primaryColor: string;
+  backgroundColor: string;
+  borderColor: string;
   label: string;
 }) {
   const radius = side === "left" ? "rounded-l-xl" : "rounded-r-xl";
@@ -135,9 +140,9 @@ function Stub({
   return (
     <div
       className={`w-[72px] shrink-0 flex items-center justify-center relative ${radius}`}
-      style={{ background: `${primaryColor}14` }}
+      style={{ background: backgroundColor }}
     >
-      <StubDash side={side} primaryColor={primaryColor} />
+      <StubDash side={side} borderColor={borderColor} />
       <span
         className="text-[10px] font-black tracking-[0.22em] uppercase opacity-70"
         style={{
@@ -156,16 +161,18 @@ function Stub({
 
 /** Ghost ticket for the stacked deck effect — clipped the same way */
 function GhostTicket({
-  secondaryColor,
-  primaryColor,
+  backgroundColor,
+  outlineColor,
+  stubColor,
   clipId,
   translateX = 20,
   translateY = 30,
   rotate = 5,
   zIndex = 0,
 }: {
-  secondaryColor: string;
-  primaryColor: string;
+  backgroundColor: string;
+  outlineColor: string;
+  stubColor: string;
   clipId: string;
   translateX: number;
   translateY: number;
@@ -181,32 +188,32 @@ function GhostTicket({
         zIndex,
         clipPath: `url(#${clipId})`,
         backgroundColor: "#ffffff",
-        backgroundImage: `linear-gradient(${secondaryColor}14, ${secondaryColor}14), repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.02) 24px)`,
+        backgroundImage: `linear-gradient(${backgroundColor}, ${backgroundColor}), repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.02) 24px)`,
       }}
     >
-      <TicketOutline color={`${primaryColor}44`} />
+      <TicketOutline color={outlineColor} />
       {/* Left stub strip */}
       <div
         className="absolute left-0 top-0 bottom-0 w-[72px] rounded-l-xl"
-        style={{ background: `${primaryColor}14` }}
+        style={{ background: stubColor }}
       />
       {/* Right stub strip */}
       <div
         className="absolute right-0 top-0 bottom-0 w-[72px] rounded-r-xl"
-        style={{ background: `${primaryColor}14` }}
+        style={{ background: stubColor }}
       />
     </div>
   );
 }
 
 function TicketShell({
-  secondaryColor,
-  primaryColor,
+  backgroundColor,
+  outlineColor,
   clipId,
   children,
 }: {
-  secondaryColor: string;
-  primaryColor: string;
+  backgroundColor: string;
+  outlineColor: string;
   clipId: string;
   children: React.ReactNode;
 }) {
@@ -215,10 +222,10 @@ function TicketShell({
       className="flex flex-row bg-background items-stretch w-full h-full relative"
       style={{
         clipPath: `url(#${clipId})`,
-        backgroundImage: `linear-gradient(${secondaryColor}12, ${secondaryColor}12), repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.025) 24px)`,
+        backgroundImage: `linear-gradient(${backgroundColor}, ${backgroundColor}), repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.025) 24px)`,
       }}
     >
-      <TicketOutline color={`${primaryColor}44`} />
+      <TicketOutline color={outlineColor} />
       {children}
     </div>
   );
@@ -245,6 +252,10 @@ export function TicketCard({
   buyerName = "Valued Guest",
 }: TicketCardProps) {
   const [flipped, setFlipped] = useState(false);
+
+  const primaryShades = generateColorShades(primaryColor);
+  const secondaryShades = generateColorShades(secondaryColor);
+
   // Stable unique ID so multiple tickets on the same page don't share clipPaths
   const uid = useId().replace(/:/g, "");
   const clipId = `ticket-clip-${uid}`;
@@ -269,11 +280,17 @@ export function TicketCard({
 
   const renderFront = () => (
     <TicketShell
-      secondaryColor={secondaryColor}
-      primaryColor={primaryColor}
+      backgroundColor={secondaryShades[50]}
+      outlineColor={primaryShades[200]}
       clipId={clipId}
     >
-      <Stub side="left" primaryColor={primaryColor} label={ticketType} />
+      <Stub 
+        side="left" 
+        primaryColor={primaryColor} 
+        backgroundColor={primaryShades[100]}
+        borderColor={primaryShades[200]}
+        label={ticketType} 
+      />
 
       <div className={`flex-1 ${exportMode ? "flex" : "@min-md:flex"} items-center gap-3.5 px-5 py-4 overflow-hidden relative`}>
         {heroImageUrl && (
@@ -282,13 +299,13 @@ export function TicketCard({
               src={heroImageUrl}
               alt={eventName}
               fill
-              className="object-cover opacity-10"
+              className="object-cover opacity-20"
               unoptimized
             />
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(135deg, ${primaryColor}18 0%, transparent 100%)`,
+                background: `linear-gradient(135deg, ${primaryShades[50]}, transparent 100%)`,
               }}
             />
           </>
@@ -338,7 +355,7 @@ export function TicketCard({
 
         <div
           className="self-stretch w-px shrink-0 relative z-10"
-          style={{ background: `${primaryColor}18` }}
+          style={{ background: primaryShades[100] }}
         />
 
         <div className="shrink-0 flex flex-col items-center gap-1 relative z-10">
@@ -350,31 +367,43 @@ export function TicketCard({
           </div>
           <div
             className="text-[11px] font-bold text-center"
-            style={{ fontFamily: "Georgia, serif", color: `${primaryColor}cc` }}
+            style={{ fontFamily: "Georgia, serif", color: primaryShades[700] }}
           >
             {organizationName}
           </div>
         </div>
       </div>
 
-      <Stub side="right" primaryColor={primaryColor} label={stubLabel} />
+      <Stub 
+        side="right" 
+        primaryColor={primaryColor} 
+        backgroundColor={primaryShades[100]}
+        borderColor={primaryShades[200]}
+        label={stubLabel} 
+      />
     </TicketShell>
   );
 
   const renderBack = () => (
     <TicketShell
-      secondaryColor={secondaryColor}
-      primaryColor={primaryColor}
+      backgroundColor={secondaryShades[50]}
+      outlineColor={primaryShades[200]}
       clipId={clipId}
     >
-      <Stub side="left" primaryColor={primaryColor} label={buyerName.slice(0, 12)} />
+      <Stub 
+        side="left" 
+        primaryColor={primaryColor} 
+        backgroundColor={primaryShades[100]}
+        borderColor={primaryShades[200]}
+        label={buyerName.slice(0, 12)} 
+      />
 
       <div className={`flex-1 ${exportMode ? "flex" : "@min-md:flex"} items-center gap-6 px-6 py-4`}>
         <div className="flex flex-col items-center gap-1.5 shrink-0">
           <div
             className={`rounded-none flex items-center justify-center bg-white p-1 ${exportMode ? "size-32" : "size-12 @min-md:size-18"}`}
             style={{ 
-              backgroundColor: `${primaryColor}8`,
+              backgroundColor: primaryShades[50],
               imageRendering: "pixelated"
             }}
           >
@@ -390,6 +419,7 @@ export function TicketCard({
             ) : (
               <QrCode className={exportMode ? "size-16" : "size-6 lg:size-9"} style={{ color: primaryColor }} />
             )}
+            
           </div>
           <div
             className="text-[8px] font-black tracking-[0.1em] uppercase opacity-40 text-center"
@@ -401,7 +431,7 @@ export function TicketCard({
 
         <div
           className="self-stretch w-px shrink-0"
-          style={{ background: `${primaryColor}18` }}
+          style={{ background: primaryShades[100] }}
         />
 
         <div className="flex flex-col items-center gap-2 flex-1">
@@ -435,7 +465,13 @@ export function TicketCard({
         </div>
       </div>
 
-      <Stub side="right" primaryColor={primaryColor} label={stubLabel} />
+      <Stub 
+        side="right" 
+        primaryColor={primaryColor} 
+        backgroundColor={primaryShades[100]}
+        borderColor={primaryShades[200]}
+        label={stubLabel} 
+      />
     </TicketShell>
   );
 
@@ -476,8 +512,9 @@ export function TicketCard({
           ghosts.map((g, i) => (
             <GhostTicket
               key={i}
-              secondaryColor={secondaryColor}
-              primaryColor={primaryColor}
+              backgroundColor={secondaryShades[50]}
+              outlineColor={primaryShades[200]}
+              stubColor={primaryShades[50]}
               clipId={ghostClipId}
               {...g}
             />

@@ -61,6 +61,7 @@ export async function createTicketTypeAction(
     color?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    designVariant?: string;
   },
 ): Promise<ActionResult<{ id: string }>> {
   const check = await canEditEvent(eventId);
@@ -85,6 +86,7 @@ export async function createTicketTypeAction(
     color: data.color,
     primaryColor: data.primaryColor,
     secondaryColor: data.secondaryColor,
+    designVariant: data.designVariant,
   });
 
   if (!ticketType) {
@@ -123,6 +125,7 @@ export async function updateTicketTypeAction(
     color?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    designVariant?: string;
   },
 ): Promise<ActionResult<{ id: string }>> {
   const ticketType = await getTicketTypeById(ticketTypeId);
@@ -155,6 +158,9 @@ export async function updateTicketTypeAction(
     ...(data.primaryColor !== undefined && { primaryColor: data.primaryColor }),
     ...(data.secondaryColor !== undefined && {
       secondaryColor: data.secondaryColor,
+    }),
+    ...(data.designVariant !== undefined && {
+      designVariant: data.designVariant,
     }),
   });
 

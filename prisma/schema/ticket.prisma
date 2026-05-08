@@ -15,6 +15,7 @@ model TicketType {
   color         String?      @default("")
   primaryColor  String?      @default("") @map("primary_color")
   secondaryColor String?     @default("") @map("secondary_color")
+  designVariant  String?     @default("classic") @map("design_variant")
   orderIdx      Int          @default(0) @map("order_idx")
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
