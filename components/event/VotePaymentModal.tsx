@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogHeader,
     DialogTitle,
@@ -59,7 +58,7 @@ export function VotePaymentModal({
     votePrice,
     eventId,
     categoryId,
-    isPublic = true,
+    // isPublic = true,
     votingMode = "general",
     orgSlug,
     eventSlug,
@@ -124,7 +123,7 @@ export function VotePaymentModal({
         } finally {
             setCheckingVoteStatus(false);
         }
-    }, [nominee, open, categoryId, isInternalVoting, uniqueCode]);
+}, [nominee, open, categoryId, eventId, isInternalVoting, uniqueCode]);
 
     useEffect(() => {
         if (open && uniqueCode.length >= 8) checkVoteStatus();
@@ -460,7 +459,7 @@ export function VotePaymentModal({
                                             <Minus className="w-5 h-5" />
                                         </button>
 
-                                        <div className="flex flex-col items-center min-w-[80px]">
+                                        <div className="flex flex-col items-center min-w-20">
                                             <span className="text-4xl font-black tabular-nums text-foreground leading-none">
                                                 {voteCount}
                                             </span>
@@ -621,7 +620,7 @@ export function VotePaymentModal({
                             <h2 className="text-2xl font-black uppercase tracking-tight text-foreground">
                                 Vote Confirmed! 🎉
                             </h2>
-                            <p className="text-sm text-muted-foreground max-w-[280px]">
+                            <p className="text-sm text-muted-foreground max-w-70">
                                 Your{" "}
                                 {isInternalVoting ? (
                                     "vote"
