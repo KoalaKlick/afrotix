@@ -85,12 +85,12 @@ export function HeroSection() {
                             sold-out conferences, {PROJ_NAME} makes it effortless.
                         </p>
                         <div className='space-x-4'>
-                            <Link
-                                href="/auth/register"
+                            <a
+                                href="/#events"
                                 className="inline-flex items-center bg-[#009A44] hover:bg-[#007a36] text-white font-bold capitalize tracking-widest text-xs px-4 py-3 rounded-md transition-colors duration-200"
                             >
                                 Ongoing Events
-                            </Link>
+                            </a>
                             <PanafricanButton onClick={() => router.push('/auth/register')} dashedBorderClassName="hover:opacity-90 transition-all rounded-none" dashArray='0 0' className='h-10 bg-white hover:bg-white/80   text-tertiary-700'>
                                 Get Started
                             </PanafricanButton>
