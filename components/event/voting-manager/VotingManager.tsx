@@ -207,7 +207,7 @@ export function VotingManager({
                   className="relative mr-2"
                   onClick={() => setRequestsSheetOpen(true)}
                 >
-                  Public Requests
+                  Public Nomination Requests
                   {pendingCount > 0 && (
                     <>
                       <span className="absolute -top-1 -right-1 flex size-3">
