@@ -240,8 +240,12 @@ export function PublicNominationModal({ eventId, category, orgSlug, eventSlug }:
             );
 
             if (error) {
-                const edgeError = error as { message?: string; detail?: string };
-                throw new Error(edgeError.message ?? edgeError.detail ?? "Payment initialization failed");
+                let message = "Payment initialization failed. Please try again.";
+                try {
+                    const body = await (error as any).context?.json?.();
+                    if (body?.error) message = body.error;
+                } catch { /* ignore parse errors */ }
+                throw new Error(message);
             }
 
             if (!response?.accessCode) {

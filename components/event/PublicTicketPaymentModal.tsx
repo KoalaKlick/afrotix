@@ -155,11 +155,12 @@ export function PublicTicketPaymentModal({
       );
 
       if (error) {
-        throw new Error(
-          (error as any).message ||
-            (error as any).detail ||
-            "Payment initialization failed",
-        );
+        let message = "Payment initialization failed. Please try again.";
+        try {
+          const body = await (error as any).context?.json?.();
+          if (body?.error) message = body.error;
+        } catch { /* ignore parse errors */ }
+        throw new Error(message);
       }
 
       if (!response?.accessCode) {
