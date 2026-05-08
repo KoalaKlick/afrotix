@@ -28,6 +28,7 @@ interface PublicTicket {
   readonly color?: string | null;
   readonly primaryColor?: string | null;
   readonly secondaryColor?: string | null;
+  readonly designVariant?: string | null;
 }
 
 interface PublicTicketGridProps {
