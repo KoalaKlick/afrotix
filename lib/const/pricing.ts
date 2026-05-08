@@ -105,10 +105,10 @@ export type GhBank = typeof PAYSTACK_CONFIG.ghBanks[number]["code"];
 export const COMMUNICATION_CREDITS = {
     /** Cost per channel (in credits) */
     perMessage: {
-        sms:      1.0,    // 1 credit per SMS
+        sms: 1.0,    // 1 credit per SMS
         whatsapp: 1.5,    // 1.5 credits per WhatsApp message
-        email:    0,      // Free
-        inApp:    0,      // Free
+        email: 0,      // Free
+        inApp: 0,      // Free
     },
 
     /** Purchasable bundles */
