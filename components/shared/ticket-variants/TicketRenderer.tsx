@@ -3,6 +3,7 @@
 import { TicketCard } from "./TicketPreview";
 import { TicketCard2 } from "./TicketPreview2";
 import { TicketCardGeo } from "./TicketPreviewGeo";
+import { TicketCardRetro } from "./TicketPreviewRetro";
 
 interface TicketRendererProps {
   readonly variant?: "classic" | "modern" | "geo" | string | null;
@@ -33,6 +34,8 @@ export function TicketRenderer({
   switch (variant) {
     case "geo":
       return <TicketCardGeo {...props} />;
+    case "retro":
+      return <TicketCardRetro {...props} />;
     case "modern":
       return <TicketCard2 {...props} />;
     case "classic":

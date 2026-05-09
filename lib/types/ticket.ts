@@ -22,7 +22,7 @@ export interface TicketType {
   color?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
-  designVariant?: "classic" | "modern" | "geo" | null;
+  designVariant?: "classic" | "modern" | "geo" | "retro" | null;
   orderIdx: number;
   createdAt: string;
   updatedAt: string;

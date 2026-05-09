@@ -345,6 +345,7 @@ export function TicketTypeSheet({
                   <SelectItem value="classic">Classic (Light)</SelectItem>
                   <SelectItem value="modern">Modern (Dark & Premium)</SelectItem>
                   <SelectItem value="geo">Geometric (Modern Sharp)</SelectItem>
+                  <SelectItem value="retro">Retro (Vintage/Film)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
