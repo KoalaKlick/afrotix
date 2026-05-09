@@ -216,13 +216,13 @@ export function TicketCardRetro({
     >
       <DotPattern color={primaryColor} />
       <TicketOutline color={primaryShades[200]} />
-      <div className="w-full h-full flex items-center justify-center p-8">
-        <div className="flex flex-col items-center gap-4">
+      <div className="w-full h-full flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-2">
             <div className="border-4 border-black p-2 bg-white rotate-[-1deg]">
               {qrPayload ? (
                 <QRCode 
                   value={qrPayload} 
-                  size={exportMode ? 140 : 100} 
+                  size={exportMode ? 100 : 100} 
                   fgColor="#1a1a1a"
                   bgColor="#ffffff"
                 />

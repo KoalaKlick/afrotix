@@ -72,7 +72,7 @@ export function TicketDownloadButton({
     <Button 
       size="lg" 
       variant={variant}
-      className={cn("rounded-full px-8", className)} 
+      className={cn(" px-8", className)} 
       onClick={handleDownload}
       disabled={isDownloading}
     >
