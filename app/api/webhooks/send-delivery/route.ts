@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     const organizer = payment.userId
       ? await prisma.profile.findUnique({
           where: { id: payment.userId },
-          select: { id: true, utilityCredits: true, whatsappOptIn: true },
+          select: { id: true, communicationCredits: true, whatsappOptIn: true },
         })
       : null;
 
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     let channel = organizer.whatsappOptIn ? "whatsapp" : "sms";
     let requiredCredits = organizer.whatsappOptIn ? 1.5 : 1.0;
 
-    if (Number(organizer.utilityCredits) < requiredCredits) {
+    if (Number(organizer.communicationCredits) < requiredCredits) {
       channel = "email";
       requiredCredits = 0;
     }
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
     if (requiredCredits > 0) {
       await prisma.profile.update({
         where: { id: organizer.id },
-        data: { utilityCredits: Number(organizer.utilityCredits) - requiredCredits },
+        data: { communicationCredits: Number(organizer.communicationCredits) - requiredCredits },
       });
     }
 
