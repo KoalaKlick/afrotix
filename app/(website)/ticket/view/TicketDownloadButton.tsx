@@ -4,19 +4,25 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import * as htmlToImage from "html-to-image";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface TicketDownloadButtonProps {
   fileName?: string;
   elementId?: string;
   label?: string;
   variant?: "default" | "outline" | "secondary" | "ghost" | "link";
+  fileFormat?: "png" | "svg";
+  className?: string;
 }
 
 export function TicketDownloadButton({ 
   fileName = "afrotix-ticket",
   elementId = "ticket-container",
   label = "Save Ticket Image",
-  variant = "default"
+  variant = "default",
+  fileFormat = "png",
+  className
 }: TicketDownloadButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -33,19 +39,30 @@ export function TicketDownloadButton({
       // Add a small delay to ensure any fonts/images are loaded
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const dataUrl = await htmlToImage.toPng(node, {
-        quality: 1.0,
-        pixelRatio: 4, // Extreme resolution
-        skipAutoScale: true,
-        cacheBust: true,
-      });
+      let dataUrl = "";
+      
+      if (fileFormat === "svg") {
+        dataUrl = await htmlToImage.toSvg(node, {
+          cacheBust: true,
+        });
+      } else {
+        dataUrl = await htmlToImage.toPng(node, {
+          quality: 1.0,
+          pixelRatio: 4, // Extreme resolution
+          skipAutoScale: true,
+          cacheBust: true,
+        });
+      }
 
       const link = document.createElement("a");
-      link.download = `${fileName}.png`;
+      link.download = `${fileName}.${fileFormat}`;
       link.href = dataUrl;
       link.click();
+      
+      toast.success(`${fileFormat.toUpperCase()} exported successfully`);
     } catch (err) {
-      console.error("Error generating ticket image:", err);
+      console.error(`Error generating ticket ${fileFormat}:`, err);
+      toast.error(`Failed to export ${fileFormat.toUpperCase()}`);
     } finally {
       setIsDownloading(false);
     }
@@ -55,7 +72,7 @@ export function TicketDownloadButton({
     <Button 
       size="lg" 
       variant={variant}
-      className="rounded-full px-8" 
+      className={cn("rounded-full px-8", className)} 
       onClick={handleDownload}
       disabled={isDownloading}
     >

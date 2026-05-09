@@ -20,6 +20,7 @@ import type { TicketType } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
 import { TicketRenderer } from "@/components/shared/ticket-variants/TicketRenderer";
 import { NoTicketIllustration } from "@/components/common/NoTicketIllustration";
+import { TicketDownloadButton } from "@/app/(website)/ticket/view/TicketDownloadButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -130,7 +131,7 @@ export function TicketList({
             className="group rounded-md border bg-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-xs"
           >
             <div className="grid gap-6 lg:grid-cols-[400px_minmax(0,1fr)] lg:items-center">
-              <div className="mx-auto lg:mx-0  w-full">
+              <div className="mx-auto lg:mx-0 w-full">
                 <TicketRenderer
                   variant={ticket.designVariant}
                   className="max-w-lg"
@@ -269,6 +270,14 @@ export function TicketList({
                       <Pencil className="mr-2 size-4" />
                       Edit Ticket
                     </Button>
+                    {/* <TicketDownloadButton
+                      elementId={`ticket-capture-${ticket.id}`}
+                      fileName={`${event.slug}-${ticket.name}-print-ready`}
+                      label="Print-Ready (High-Res)"
+                      fileFormat="png"
+                      variant="outline"
+                      className="h-9 px-4 text-xs rounded-md"
+                    /> */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -336,6 +345,51 @@ export function TicketList({
             )}
           </div>
         )}
+      </div>
+
+      {/* Hidden Export Section for Background Rendering (matches ticket view page implementation) */}
+      <div 
+        className="absolute top-[-9999px] left-[-9999px] pointer-events-none" 
+        aria-hidden="true"
+      >
+        {ticketTypes.map((ticket) => (
+          <div 
+            key={`export-node-${ticket.id}`} 
+            id={`ticket-capture-${ticket.id}`}
+            className="bg-transparent p-0 w-[560px] min-w-[560px]"
+          >
+            <TicketRenderer
+              variant={ticket.designVariant}
+              exportMode={true}
+              exportSide="both"
+              primaryColor={ticket.primaryColor || ticket.color || primaryColor}
+              secondaryColor={ticket.secondaryColor || secondaryColor}
+              logoUrl={organization?.logoUrl}
+              flierImage={event.flierImage}
+              bannerImage={event.bannerImage}
+              organizationName={organization?.name}
+              eventName={event.title}
+              ticketType={ticket.name}
+              dateTime={
+                event.startDate
+                  ? new Date(event.startDate).toLocaleString("en-GH", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
+                  : "Date to be announced"
+              }
+              venue={
+                event.isVirtual
+                  ? event.virtualLink || "Virtual event"
+                  : event.venueName ||
+                    event.venueCity ||
+                    event.venueCountry
+              }
+              ticketCode={`TIER-${ticket.orderIdx + 1}`}
+              qrPayload={`https://afrotix.com/verify/TIER-${ticket.orderIdx + 1}`}
+            />
+          </div>
+        ))}
       </div>
 
       <TicketTypeSheet
