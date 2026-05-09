@@ -53,7 +53,7 @@ export function EventsPageClient({ events, q, type }: EventsPageClientProps) {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-32 bg-white/40 rounded-[3rem] border border-dashed border-zinc-300 backdrop-blur-xs"
+                    className="text-center py-10 bg-white/40 rounded-lg border border-dashed border-zinc-300 backdrop-blur-xs"
                 >
                     <NoEventsIllustration className="w-72 h-auto mx-auto mb-8 opacity-80" />
                     <h3 className="text-2xl font-bold text-zinc-800 mb-2">
