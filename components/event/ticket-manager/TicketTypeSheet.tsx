@@ -79,7 +79,7 @@ export function TicketTypeSheet({
     color: organization?.primaryColor || "",
     primaryColor: organization?.primaryColor || "",
     secondaryColor: organization?.secondaryColor || "",
-    designVariant: "classic" as "classic" | "modern" | "geo" | "retro",
+    designVariant: "retro" as "classic" | "modern" | "geo" | "retro",
   });
   const previewPrimary =
     formData.primaryColor ||
@@ -117,7 +117,7 @@ export function TicketTypeSheet({
           "",
         secondaryColor:
           editingTicket.secondaryColor || organization?.secondaryColor || "",
-        designVariant: (editingTicket.designVariant as any) || "classic",
+        designVariant: (editingTicket.designVariant as any) || "retro",
       });
     } else {
       setFormData({
@@ -135,7 +135,7 @@ export function TicketTypeSheet({
         color: organization?.primaryColor || "",
         primaryColor: organization?.primaryColor || "",
         secondaryColor: organization?.secondaryColor || "",
-        designVariant: "classic",
+        designVariant: "retro",
       });
     }
   }, [editingTicket, organization?.primaryColor, organization?.secondaryColor]);
