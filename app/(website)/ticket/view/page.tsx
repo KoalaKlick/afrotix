@@ -5,6 +5,8 @@ import { verifyTicketToken } from "@/lib/ticket-crypto";
 
 import { createClient } from "@/utils/supabase/server";
 import { TicketCard } from "@/components/shared/ticket-variants/TicketPreview";
+import { TicketCard2 } from "@/components/shared/ticket-variants/TicketPreview2";
+import { TicketCardGeo } from "@/components/shared/ticket-variants/TicketPreviewGeo";
 import { TicketDownloadButton } from "./TicketDownloadButton";
 import { AlertCircle } from "lucide-react";
 
@@ -54,7 +56,8 @@ async function TicketViewContent({ token }: { token: string }) {
         name,
         primary_color,
         secondary_color,
-        color
+        color,
+        design_variant
       ),
       order:ticket_orders (
         buyer_name
@@ -103,67 +106,178 @@ async function TicketViewContent({ token }: { token: string }) {
         </div>
 
         <div className="flex justify-center" id="ticket-container">
-          <TicketCard
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            logoUrl={org?.logo_url}
-            flierImage={event?.flier_image}
-            bannerImage={event?.banner_image}
-            organizationName={org?.name || "Afrotix Event"}
-            eventName={event?.title || "Afrotix Event"}
-            ticketType={ticketType?.name || "General Admission"}
-            dateTime={dateTime}
-            venue={venue}
-            ticketCode={ticket?.ticket_code}
-            buyerName={order?.buyer_name}
-            qrPayload={verifyUrl}
-            className="w-full max-w-lg hover:-translate-y-1 transition-transform"
-          />
-
+          {ticketType?.design_variant === "geo" ? (
+            <TicketCardGeo
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              logoUrl={org?.logo_url}
+              flierImage={event?.flier_image}
+              bannerImage={event?.banner_image}
+              organizationName={org?.name || "Afrotix Event"}
+              eventName={event?.title || "Afrotix Event"}
+              ticketType={ticketType?.name || "General Admission"}
+              dateTime={dateTime}
+              venue={venue}
+              ticketCode={ticket?.ticket_code}
+              buyerName={order?.buyer_name}
+              qrPayload={verifyUrl}
+              className="w-full max-w-lg hover:-translate-y-1 transition-transform"
+            />
+          ) : ticketType?.design_variant === "modern" ? (
+            <TicketCard2
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              logoUrl={org?.logo_url}
+              flierImage={event?.flier_image}
+              bannerImage={event?.banner_image}
+              organizationName={org?.name || "Afrotix Event"}
+              eventName={event?.title || "Afrotix Event"}
+              ticketType={ticketType?.name || "General Admission"}
+              dateTime={dateTime}
+              venue={venue}
+              ticketCode={ticket?.ticket_code}
+              buyerName={order?.buyer_name}
+              qrPayload={verifyUrl}
+              className="w-full max-w-lg hover:-translate-y-1 transition-transform"
+            />
+          ) : (
+            <TicketCard
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              logoUrl={org?.logo_url}
+              flierImage={event?.flier_image}
+              bannerImage={event?.banner_image}
+              organizationName={org?.name || "Afrotix Event"}
+              eventName={event?.title || "Afrotix Event"}
+              ticketType={ticketType?.name || "General Admission"}
+              dateTime={dateTime}
+              venue={venue}
+              ticketCode={ticket?.ticket_code}
+              buyerName={order?.buyer_name}
+              qrPayload={verifyUrl}
+              className="w-full max-w-lg hover:-translate-y-1 transition-transform"
+            />
+          )}
         </div>
 
         {/* Hidden Export Containers for High-Res PNG Downloads */}
         <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none" aria-hidden="true">
           {/* Back Only (QR Code side) */}
           <div id="ticket-export-back" className="bg-transparent p-0 w-[560px] min-w-[560px]">
-            <TicketCard
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-              logoUrl={org?.logo_url}
-              flierImage={event?.flier_image}
-              bannerImage={event?.banner_image}
-              organizationName={org?.name || "Afrotix Event"}
-              eventName={event?.title || "Afrotix Event"}
-              ticketType={ticketType?.name || "General Admission"}
-              dateTime={dateTime}
-              venue={venue}
-              ticketCode={ticket?.ticket_code}
-              buyerName={order?.buyer_name}
-              qrPayload={verifyUrl}
-              exportMode={true}
-              exportSide="back"
-            />
+            {ticketType?.design_variant === "geo" ? (
+              <TicketCardGeo
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                logoUrl={org?.logo_url}
+                flierImage={event?.flier_image}
+                bannerImage={event?.banner_image}
+                organizationName={org?.name || "Afrotix Event"}
+                eventName={event?.title || "Afrotix Event"}
+                ticketType={ticketType?.name || "General Admission"}
+                dateTime={dateTime}
+                venue={venue}
+                ticketCode={ticket?.ticket_code}
+                buyerName={order?.buyer_name}
+                qrPayload={verifyUrl}
+                exportMode={true}
+                exportSide="back"
+              />
+            ) : ticketType?.design_variant === "modern" ? (
+              <TicketCard2
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                logoUrl={org?.logo_url}
+                flierImage={event?.flier_image}
+                bannerImage={event?.banner_image}
+                organizationName={org?.name || "Afrotix Event"}
+                eventName={event?.title || "Afrotix Event"}
+                ticketType={ticketType?.name || "General Admission"}
+                dateTime={dateTime}
+                venue={venue}
+                ticketCode={ticket?.ticket_code}
+                buyerName={order?.buyer_name}
+                qrPayload={verifyUrl}
+                exportMode={true}
+                exportSide="back"
+              />
+            ) : (
+              <TicketCard
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                logoUrl={org?.logo_url}
+                flierImage={event?.flier_image}
+                bannerImage={event?.banner_image}
+                organizationName={org?.name || "Afrotix Event"}
+                eventName={event?.title || "Afrotix Event"}
+                ticketType={ticketType?.name || "General Admission"}
+                dateTime={dateTime}
+                venue={venue}
+                ticketCode={ticket?.ticket_code}
+                buyerName={order?.buyer_name}
+                qrPayload={verifyUrl}
+                exportMode={true}
+                exportSide="back"
+              />
+            )}
           </div>
 
           {/* Both Sides */}
           <div id="ticket-export-both" className="bg-transparent p-0 w-[560px] min-w-[560px]">
-            <TicketCard
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-              logoUrl={org?.logo_url}
-              flierImage={event?.flier_image}
-              bannerImage={event?.banner_image}
-              organizationName={org?.name || "Afrotix Event"}
-              eventName={event?.title || "Afrotix Event"}
-              ticketType={ticketType?.name || "General Admission"}
-              dateTime={dateTime}
-              venue={venue}
-              ticketCode={ticket?.ticket_code}
-              buyerName={order?.buyer_name}
-              qrPayload={verifyUrl}
-              exportMode={true}
-              exportSide="both"
-            />
+            {ticketType?.design_variant === "geo" ? (
+              <TicketCardGeo
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                logoUrl={org?.logo_url}
+                flierImage={event?.flier_image}
+                bannerImage={event?.banner_image}
+                organizationName={org?.name || "Afrotix Event"}
+                eventName={event?.title || "Afrotix Event"}
+                ticketType={ticketType?.name || "General Admission"}
+                dateTime={dateTime}
+                venue={venue}
+                ticketCode={ticket?.ticket_code}
+                buyerName={order?.buyer_name}
+                qrPayload={verifyUrl}
+                exportMode={true}
+                exportSide="both"
+              />
+            ) : ticketType?.design_variant === "modern" ? (
+              <TicketCard2
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                logoUrl={org?.logo_url}
+                flierImage={event?.flier_image}
+                bannerImage={event?.banner_image}
+                organizationName={org?.name || "Afrotix Event"}
+                eventName={event?.title || "Afrotix Event"}
+                ticketType={ticketType?.name || "General Admission"}
+                dateTime={dateTime}
+                venue={venue}
+                ticketCode={ticket?.ticket_code}
+                buyerName={order?.buyer_name}
+                qrPayload={verifyUrl}
+                exportMode={true}
+                exportSide="both"
+              />
+            ) : (
+              <TicketCard
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                logoUrl={org?.logo_url}
+                flierImage={event?.flier_image}
+                bannerImage={event?.banner_image}
+                organizationName={org?.name || "Afrotix Event"}
+                eventName={event?.title || "Afrotix Event"}
+                ticketType={ticketType?.name || "General Admission"}
+                dateTime={dateTime}
+                venue={venue}
+                ticketCode={ticket?.ticket_code}
+                buyerName={order?.buyer_name}
+                qrPayload={verifyUrl}
+                exportMode={true}
+                exportSide="both"
+              />
+            )}
           </div>
         </div>
 
