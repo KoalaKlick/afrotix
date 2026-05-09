@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Loader2,
   Ticket,
@@ -28,7 +29,10 @@ import {
   Calendar,
   Users,
   ListFilter,
+  Palette,
+  Layout,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { PRESET_COLORS } from "@/utils/theme/constants";
 import { cn } from "@/lib/utils";
@@ -75,7 +79,7 @@ export function TicketTypeSheet({
     color: organization?.primaryColor || "",
     primaryColor: organization?.primaryColor || "",
     secondaryColor: organization?.secondaryColor || "",
-    designVariant: "classic" as "classic" | "modern" | "geo",
+    designVariant: "classic" as "classic" | "modern" | "geo" | "retro",
   });
   const previewPrimary =
     formData.primaryColor ||
@@ -188,343 +192,385 @@ export function TicketTypeSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <SheetBody className="space-y-6 pt-6 flex-1 overflow-y-auto pr-2 pb-10 scrollbar-none">
-          <div className="rounded-3xl border bg-muted/20 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                  Ticket Card Preview
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Ticket visuals follow the organization look, with the tier
-                  accent staying flexible.
-                </p>
-              </div>
-            </div>
-            <TicketRenderer
-              variant={formData.designVariant}
-              className="mx-auto max-w-xs"
-              primaryColor={previewPrimary}
-              secondaryColor={previewSecondary}
-              logoUrl={organization?.logoUrl}
-              flierImage={event.flierImage}
-              bannerImage={event.bannerImage}
-              organizationName={organization?.name}
-              eventName={event.title}
-              ticketType={formData.name || "General Admission"}
-              dateTime={
-                event.startDate
-                  ? new Date(event.startDate).toLocaleString("en-GH", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
-                  : "Date to be announced"
-              }
-              venue={
-                event.isVirtual
-                  ? event.virtualLink || "Virtual event"
-                  : event.venueName || event.venueCity || event.venueCountry
-              }
-              ticketCode="AUTO-QR"
-            />
+        <SheetBody className="pt-6 flex-1 overflow-y-auto pr-2 pb-10 scrollbar-none">
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList variant="afro" className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="details">
+                <Ticket className="size-4 mr-2" />
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="preview">
+                <Palette className="size-4 mr-2" />
+                Design
+              </TabsTrigger>
+            </TabsList>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 border-t pt-6 border-muted-foreground/10">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Primary</Label>
+            <TabsContent value="details" className="space-y-8 mt-0 outline-none">
+              {/* Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
+                  <Tag className="size-3.5" />
+                  Tier Details
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="name">Ticket Name *</Label>
                   <Input
-                    type="text"
-                    value={formData.primaryColor}
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    placeholder="e.g., Early Bird VIP, Regular Access"
+                    className="h-12 rounded-xl focus:ring-primary/20"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        color: e.target.value,
-                        primaryColor: e.target.value,
+                        description: e.target.value,
                       }))
                     }
-                    className="font-mono text-[10px] h-6 w-20 px-1.5"
-                    placeholder="#hex"
+                    placeholder="What's included in this ticket?"
+                    rows={3}
+                    className="rounded-xl focus:ring-primary/20"
                   />
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {PRESET_COLORS.map((color) => (
-                    <button
-                      key={`primary-${color.value}`}
-                      type="button"
-                      onClick={() =>
+                
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price (GHS) *</Label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground uppercase">
+                        GHS
+                      </span>
+                      <Input
+                        id="price"
+                        type="number"
+                        min={PRICE_CONSTRAINTS.ticket.min}
+                        step={PRICE_CONSTRAINTS.ticket.step}
+                        value={formData.price}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            price: Number(e.target.value),
+                          }))
+                        }
+                        className="pl-14 h-12 rounded-xl focus:ring-primary/20"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground ml-1">
+                      Set to 0 for a free ticket
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="quantityTotal">Total Quantity</Label>
+                    <Input
+                      id="quantityTotal"
+                      type="number"
+                      min={1}
+                      value={formData.quantityTotal}
+                      onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          color: color.value,
-                          primaryColor: color.value,
+                          quantityTotal: e.target.value,
                         }))
                       }
-                      className={cn(
-                        "h-6 w-6 rounded-md transition-all border",
-                        formData.primaryColor === color.value
-                          ? "border-black scale-110 shadow-sm"
-                          : "border-transparent hover:scale-105"
-                      )}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
+                      placeholder="Unlimited"
+                      className="h-12 rounded-xl focus:ring-primary/20"
                     />
-                  ))}
+                    <p className="text-[10px] text-muted-foreground ml-1">
+                      Leave empty for unlimited
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Secondary</Label>
-                  <Input
-                    type="text"
-                    value={formData.secondaryColor}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        secondaryColor: e.target.value,
-                      }))
-                    }
-                    className="font-mono text-[10px] h-6 w-20 px-1.5"
-                    placeholder="#hex"
-                  />
+              {/* Sales Timeline */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
+                  <Calendar className="size-3.5" />
+                  Sales Timeline
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {PRESET_COLORS.map((color) => (
-                    <button
-                      key={`secondary-${color.value}`}
-                      type="button"
-                      onClick={() =>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="salesStart">Sales Start</Label>
+                    <Input
+                      id="salesStart"
+                      type="datetime-local"
+                      value={formData.salesStart}
+                      onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          secondaryColor: color.value,
+                          salesStart: e.target.value,
                         }))
                       }
-                      className={cn(
-                        "h-6 w-6 rounded-md transition-all border",
-                        formData.secondaryColor === color.value
-                          ? "border-black scale-110 shadow-sm"
-                          : "border-transparent hover:scale-105"
-                      )}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
+                      className="h-12 rounded-xl focus:ring-primary/20"
                     />
-                  ))}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="salesEnd">Sales End</Label>
+                    <Input
+                      id="salesEnd"
+                      type="datetime-local"
+                      value={formData.salesEnd}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          salesEnd: e.target.value,
+                        }))
+                      }
+                      className="h-12 rounded-xl focus:ring-primary/20"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-              <Label htmlFor="designVariant">Ticket Design Variant</Label>
-              <Select
-                value={formData.designVariant}
-                onValueChange={(value: "classic" | "modern") =>
-                  setFormData((prev) => ({ ...prev, designVariant: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="classic">Classic (Light)</SelectItem>
-                  <SelectItem value="modern">Modern (Dark & Premium)</SelectItem>
-                  <SelectItem value="geo">Geometric (Modern Sharp)</SelectItem>
-                  <SelectItem value="retro">Retro (Vintage/Film)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            </div>
-          </div>
 
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
-              <Tag className="size-3.5" />
-              Tier Details
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="name">Ticket Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, name: e.target.value }))
-                }
-                placeholder="e.g., Early Bird VIP, Regular Access"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="What's included in this ticket?"
-                rows={2}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="space-y-2">
-                <Label htmlFor="price">Price (GHS) *</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground uppercase">
-                    GHS
-                  </span>
-                  <Input
-                    id="price"
-                    type="number"
-                    min={PRICE_CONSTRAINTS.ticket.min}
-                    step={PRICE_CONSTRAINTS.ticket.step}
-                    value={formData.price}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        price: Number(e.target.value),
-                      }))
+              {/* Order Limits */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
+                  <Users className="size-3.5" />
+                  Order Limits
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="minPerOrder">Min. per Order</Label>
+                    <Input
+                      id="minPerOrder"
+                      type="number"
+                      min={PRICE_CONSTRAINTS.ticketOrder.minPerOrder.min}
+                      value={formData.minPerOrder}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          minPerOrder: Number(e.target.value),
+                        }))
+                      }
+                      className="h-12 rounded-xl focus:ring-primary/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maxPerOrder">Max. per Order</Label>
+                    <Input
+                      id="maxPerOrder"
+                      type="number"
+                      min={PRICE_CONSTRAINTS.ticketOrder.maxPerOrder.min}
+                      value={formData.maxPerOrder}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          maxPerOrder: Number(e.target.value),
+                        }))
+                      }
+                      className="h-12 rounded-xl focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Tier Status */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
+                  <ListFilter className="size-3.5" />
+                  Tier Status
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Availability Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value: TicketStatus) =>
+                      setFormData((prev) => ({ ...prev, status: value }))
                     }
-                    className="pl-12"
+                  >
+                    <SelectTrigger className="h-12 rounded-xl focus:ring-primary/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl shadow-xl border-muted-foreground/10">
+                      <SelectItem value="available">
+                        Available (Ongoing Sales)
+                      </SelectItem>
+                      <SelectItem value="sold_out" className="text-red-600 font-medium">
+                        Sold Out
+                      </SelectItem>
+                      <SelectItem value="hidden">Hidden (Internal Only)</SelectItem>
+                      <SelectItem value="expired" className="text-muted-foreground">
+                        Expired (Sales Closed)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="preview" className="space-y-8 mt-0 outline-none">
+              <div className="rounded-[32px] border bg-muted/20 p-6 space-y-8">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                    Ticket Visuals
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Customize how this tier looks on the platform
+                  </p>
+                </div>
+
+                <div className="flex justify-center">
+                  <TicketRenderer
+                    variant={formData.designVariant}
+                    className="w-full max-w-sm"
+                    primaryColor={previewPrimary}
+                    secondaryColor={previewSecondary}
+                    logoUrl={organization?.logoUrl}
+                    flierImage={event.flierImage}
+                    bannerImage={event.bannerImage}
+                    organizationName={organization?.name}
+                    eventName={event.title}
+                    ticketType={formData.name || "General Admission"}
+                    dateTime={
+                      event.startDate
+                        ? new Date(event.startDate).toLocaleString("en-GH", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })
+                        : "Date to be announced"
+                    }
+                    venue={
+                      event.isVirtual
+                        ? event.virtualLink || "Virtual event"
+                        : event.venueName || event.venueCity || event.venueCountry
+                    }
+                    ticketCode="AUTO-QR"
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Set to 0 for a free ticket
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="quantityTotal">Total Quantity</Label>
-                <Input
-                  id="quantityTotal"
-                  type="number"
-                  min={1}
-                  value={formData.quantityTotal}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      quantityTotal: e.target.value,
-                    }))
-                  }
-                  placeholder="Unlimited"
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  Leave empty for unlimited
-                </p>
-              </div>
-            </div>
-          </div>
 
-          {/* Sales Timeline */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
-              <Calendar className="size-3.5" />
-              Sales Timeline
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="salesStart">Sales Start</Label>
-                <Input
-                  id="salesStart"
-                  type="datetime-local"
-                  value={formData.salesStart}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      salesStart: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="salesEnd">Sales End</Label>
-                <Input
-                  id="salesEnd"
-                  type="datetime-local"
-                  value={formData.salesEnd}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      salesEnd: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-          </div>
+                <div className="space-y-6 pt-4">
+                   <div className="space-y-3 pt-2">
+                    <Label htmlFor="designVariant" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                       <Layout className="size-3.5" />
+                       Design Variant
+                    </Label>
+                    <Select
+                      value={formData.designVariant}
+                      onValueChange={(value: "classic" | "modern" | "geo" | "retro") =>
+                        setFormData((prev) => ({ ...prev, designVariant: value }))
+                      }
+                    >
+                      <SelectTrigger className="h-12 rounded-md focus:ring-primary/20 bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl shadow-xl border-muted-foreground/10">
+                        <SelectItem value="classic">Classic (Light & Clean)</SelectItem>
+                        <SelectItem value="modern">Modern (Premium Dark)</SelectItem>
+                        <SelectItem value="geo">Geometric (Art Deco Style)</SelectItem>
+                        <SelectItem value="retro">Retro (Vintage Film)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                        <div className="size-2 rounded-full bg-primary" />
+                        Primary Brand Color
+                      </Label>
+                      <div className="flex items-center gap-2">
+                         <div className="size-4 rounded-md border" style={{ backgroundColor: formData.primaryColor }} />
+                        <Input
+                          type="text"
+                          value={formData.primaryColor}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              color: e.target.value,
+                              primaryColor: e.target.value,
+                            }))
+                          }
+                          className="font-mono text-[10px] h-7 w-20 px-2 rounded-lg"
+                          placeholder="#hex"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_COLORS.map((color) => (
+                        <button
+                          key={`primary-${color.value}`}
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              color: color.value,
+                              primaryColor: color.value,
+                            }))
+                          }
+                          className={cn(
+                            "h-7 w-7 rounded-full transition-all border-2",
+                            formData.primaryColor === color.value
+                              ? "border-black ring-2 ring-primary/20 scale-110 shadow-md"
+                              : "border-transparent hover:scale-110"
+                          )}
+                          style={{ backgroundColor: color.value }}
+                          title={color.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
 
-          {/* Order Limits */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
-              <Users className="size-3.5" />
-              Order Limits
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="minPerOrder">Min. per Order</Label>
-                <Input
-                  id="minPerOrder"
-                  type="number"
-                  min={PRICE_CONSTRAINTS.ticketOrder.minPerOrder.min}
-                  value={formData.minPerOrder}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      minPerOrder: Number(e.target.value),
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxPerOrder">Max. per Order</Label>
-                <Input
-                  id="maxPerOrder"
-                  type="number"
-                  min={PRICE_CONSTRAINTS.ticketOrder.maxPerOrder.min}
-                  value={formData.maxPerOrder}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      maxPerOrder: Number(e.target.value),
-                    }))
-                  }
-                />
-              </div>
-            </div>
-          </div>
+                  <div className="space-y-3">
+                   
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                        <div className="size-2 rounded-full bg-zinc-400" />
+                        Secondary Accent
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <div className="size-4 rounded-md border" style={{ backgroundColor: formData.secondaryColor }} />
+                        <Input
+                          type="text"
+                          value={formData.secondaryColor}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              secondaryColor: e.target.value,
+                            }))
+                          }
+                          className="font-mono text-[10px] h-7 w-20 px-2 rounded-lg"
+                          placeholder="#hex"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_COLORS.map((color) => (
+                        <button
+                          key={`secondary-${color.value}`}
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              secondaryColor: color.value,
+                            }))
+                          }
+                          className={cn(
+                            "h-7 w-7 rounded-full transition-all border-2",
+                            formData.secondaryColor === color.value
+                              ? "border-black ring-2 ring-primary/20 scale-110 shadow-md"
+                              : "border-transparent hover:scale-110"
+                          )}
+                          style={{ backgroundColor: color.value }}
+                          title={color.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
 
-          {/* Tier Status */}
-          <div className="space-y-4 pb-4">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
-              <ListFilter className="size-3.5" />
-              Tier Status
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Availability</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value: TicketStatus) =>
-                  setFormData((prev) => ({ ...prev, status: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="available">
-                    Available (Ongoing Sales)
-                  </SelectItem>
-                  <SelectItem value="sold_out" className="text-red-600">
-                    Sold Out
-                  </SelectItem>
-                  <SelectItem value="hidden">Hidden (Internal Only)</SelectItem>
-                  <SelectItem value="expired" className="text-muted-foreground">
-                    Expired (Sales Closed)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-          </div>
+                  
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </SheetBody>
 
         <SheetFooter className="shrink-0 border-t bg-muted/20">
