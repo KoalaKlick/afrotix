@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useId } from "react";
+import React, { useId, useState } from "react";
+import Image from "next/image";
 import QRCode from "react-qr-code";
 import { cn } from "@/lib/utils";
 import { generateColorShades } from "@/utils/theme/color-generator";
+import { getEventImageUrl, getOrgImageUrl } from "@/lib/image-url-utils";
 
 interface TicketProps {
   readonly primaryColor: string;
@@ -60,123 +62,104 @@ export function TicketCardRetro({
   exportMode = false,
   exportSide = "both",
   buyerName,
-}: TicketProps) {
+  stacked = true,
+}: TicketProps & { stacked?: boolean }) {
   const clipId = useId().replace(/:/g, "");
+  const [flipped, setFlipped] = React.useState(false);
   const primaryShades = generateColorShades(primaryColor);
   
   const showFront = exportMode ? (exportSide === "front" || exportSide === "both") : true;
   const showBack = exportMode ? (exportSide === "back" || exportSide === "both") : true;
 
-  const CardContent = ({ side }: { side: "front" | "back" }) => (
+  const renderFront = () => (
     <div
       className={cn(
-        "relative flex overflow-hidden shadow-2xl",
-        exportMode ? "w-[560px] h-[260px]" : "w-full aspect-[2.15/1] max-w-[560px] rounded-lg"
+        "relative flex h-full overflow-hidden shadow-2xl",
+        exportMode ? "w-[560px] h-[210px]" : "w-full rounded-lg"
       )}
       style={{
-        clipPath: !exportMode ? `url(#${clipId})` : "none",
+        clipPath: `url(#${clipId})`,
         backgroundColor: "#f4f1ea", // Vintage paper cream
         color: "#1a1a1a",
         fontFamily: "'Courier New', Courier, monospace",
       }}
     >
-      <TicketOutline color={primaryShades[200]} id={clipId} />
       <DotPattern color={primaryColor} />
       
-      {/* Texture Overlay */}
-      <div className="absolute inset-0 opacity-[0.15] pointer-events-none" 
-           style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }} />
+      {/* Texture Overlay (Grain) */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-black/5" />
 
-      {side === "front" ? (
-        <>
-          {/* Top Edge Perforation Visual */}
-          <div className="absolute top-0 left-0 right-0 h-1 flex justify-around px-4">
-             {[...Array(20)].map((_, i) => (
-               <div key={i} className="w-1.5 h-1.5 -translate-y-1/2 rounded-full bg-muted/40" />
-             ))}
+      {/* Top Edge Perforation Visual */}
+      <div className="absolute top-0 left-0 right-0 h-1 flex justify-around px-4">
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="w-1.5 h-1.5 -translate-y-1/2 rounded-full bg-muted/40" />
+          ))}
+      </div>
+
+      {/* Left: Event Visual */}
+      <div className="w-1/3 h-full relative border-r-2 border-dashed border-black/10">
+        {(() => {
+          const imageUrl = getEventImageUrl(flierImage);
+          if (imageUrl) {
+            return (
+              <Image 
+                src={imageUrl} 
+                alt="Event" 
+                fill
+                className="object-cover grayscale-[0.3] sepia-[0.2]" 
+              />
+            );
+          }
+          return (
+            <div className="w-full h-full flex items-center justify-center bg-black/5">
+              <span className="text-[10px] font-bold rotate-[-45deg] opacity-20">NO IMAGE</span>
+            </div>
+          );
+        })()}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute bottom-3 left-3 right-3 text-white">
+          <div className="text-[8px] font-bold tracking-tighter opacity-70">ADMIT ONE</div>
+          <div className="text-[10px] font-bold truncate uppercase">{organizationName}</div>
+        </div>
+      </div>
+
+      {/* Center/Right: Details */}
+      <div className="flex-1 flex flex-col p-5 relative">
+        <div className="absolute top-4 right-4 border-2 border-black/80 px-2 py-0.5 rotate-3 font-black text-xs">
+          {ticketType?.toUpperCase()}
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <div className="text-[10px] font-bold text-muted-foreground mb-0.5">EVENT TITLE</div>
+            <h3 className="text-xl font-black leading-tight tracking-tight uppercase line-clamp-2" style={{ color: primaryColor }}>
+              {eventName}
+            </h3>
           </div>
 
-          {/* Left: Event Visual */}
-          <div className="w-1/3 h-full relative border-r-2 border-dashed border-black/10">
-            {flierImage ? (
-              <img src={flierImage} alt="Event" className="w-full h-full object-cover grayscale-[0.3] sepia-[0.2]" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-black/5">
-                <span className="text-[10px] font-bold rotate-[-45deg] opacity-20">NO IMAGE</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute bottom-3 left-3 right-3 text-white">
-              <div className="text-[8px] font-bold tracking-tighter opacity-70">ADMIT ONE</div>
-              <div className="text-[10px] font-bold truncate uppercase">{organizationName}</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-[8px] font-bold text-muted-foreground mb-0.5">DATE & TIME</div>
+              <div className="text-[11px] font-bold leading-none">{dateTime}</div>
+            </div>
+            <div>
+              <div className="text-[8px] font-bold text-muted-foreground mb-0.5">VENUE</div>
+              <div className="text-[11px] font-bold leading-none truncate">{venue}</div>
             </div>
           </div>
+        </div>
 
-          {/* Center/Right: Details */}
-          <div className="flex-1 flex flex-col p-5 relative">
-            <div className="absolute top-4 right-4 border-2 border-black/80 px-2 py-0.5 rotate-3 font-black text-xs">
-              {ticketType?.toUpperCase()}
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <div className="text-[10px] font-bold text-muted-foreground mb-0.5">EVENT TITLE</div>
-                <h3 className="text-xl font-black leading-tight tracking-tight uppercase line-clamp-2" style={{ color: primaryColor }}>
-                  {eventName}
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-[8px] font-bold text-muted-foreground mb-0.5">DATE & TIME</div>
-                  <div className="text-[11px] font-bold leading-none">{dateTime}</div>
-                </div>
-                <div>
-                  <div className="text-[8px] font-bold text-muted-foreground mb-0.5">VENUE</div>
-                  <div className="text-[11px] font-bold leading-none truncate">{venue}</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-auto flex items-end justify-between">
-              <div>
-                <div className="text-[8px] font-bold text-muted-foreground mb-0.5">HOLDER</div>
-                <div className="text-[11px] font-black uppercase">{buyerName || "---"}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-[8px] font-bold text-muted-foreground mb-0.5">TICKET ID</div>
-                <div className="text-[11px] font-mono tracking-widest">{ticketCode}</div>
-              </div>
-            </div>
+        <div className="mt-auto flex items-end justify-between">
+          <div>
+            <div className="text-[8px] font-bold text-muted-foreground mb-0.5">HOLDER</div>
+            <div className="text-[11px] font-black uppercase">{buyerName || "---"}</div>
           </div>
-        </>
-      ) : (
-        <>
-          {/* Back Side: Scan Area */}
-          <div className="w-full h-full flex items-center justify-center p-8 bg-[#ece9df]">
-            <div className="flex flex-col items-center gap-4">
-               <div className="border-4 border-black p-2 bg-white rotate-[-1deg]">
-                 {qrPayload ? (
-                   <QRCode 
-                    value={qrPayload} 
-                    size={exportMode ? 140 : 100} 
-                    fgColor="#1a1a1a"
-                    bgColor="transparent"
-                   />
-                 ) : (
-                   <div className="w-24 h-24 bg-muted animate-pulse" />
-                 )}
-               </div>
-               <div className="text-center space-y-1">
-                 <div className="text-[10px] font-black tracking-[0.2em]">VALIDATE AT GATE</div>
-                 <div className="text-[8px] opacity-60 max-w-[200px]">
-                   DO NOT FOLD OR MUTILATE. VOID IF DETACHED. AFROTIX OFFICIAL DOCUMENT.
-                 </div>
-               </div>
-            </div>
+          <div className="text-right">
+            <div className="text-[8px] font-bold text-muted-foreground mb-0.5">TICKET ID</div>
+            <div className="text-[11px] font-mono tracking-widest">{ticketCode}</div>
           </div>
-        </>
-      )}
+        </div>
+      </div>
 
       {/* Perforation Line */}
       <div 
@@ -191,10 +174,95 @@ export function TicketCardRetro({
     </div>
   );
 
+  const renderBack = () => (
+    <div
+      className={cn(
+        "relative flex h-full overflow-hidden shadow-2xl",
+        exportMode ? "w-[560px] h-[210px]" : "w-full rounded-lg"
+      )}
+      style={{
+        clipPath: `url(#${clipId})`,
+        backgroundColor: "#ece9df", // Slightly darker paper for back
+        color: "#1a1a1a",
+        fontFamily: "'Courier New', Courier, monospace",
+      }}
+    >
+      <DotPattern color={primaryColor} />
+      <div className="w-full h-full flex items-center justify-center p-8">
+        <div className="flex flex-col items-center gap-4">
+            <div className="border-4 border-black p-2 bg-white rotate-[-1deg]">
+              {qrPayload ? (
+                <QRCode 
+                  value={qrPayload} 
+                  size={exportMode ? 140 : 100} 
+                  fgColor="#1a1a1a"
+                  bgColor="#ffffff"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-muted animate-pulse" />
+              )}
+            </div>
+            <div className="text-center space-y-1">
+              <div className="text-[10px] font-black tracking-[0.2em]">VALIDATE AT GATE</div>
+              <div className="text-[8px] opacity-60 max-w-[200px]">
+                DO NOT FOLD OR MUTILATE. VOID IF DETACHED. AFROTIX OFFICIAL DOCUMENT.
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (exportMode) {
+    return (
+      <div className={cn("flex flex-col gap-8 p-0 bg-transparent w-[560px]", className)}>
+        <TicketOutline color={primaryShades[200]} id={clipId} />
+        {showFront && <div className="h-[210px]">{renderFront()}</div>}
+        {showBack && <div className="h-[210px]">{renderBack()}</div>}
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("space-y-4", className)}>
-      {showFront && <CardContent side="front" />}
-      {showBack && <CardContent side="back" />}
+    <div
+      className={cn("cursor-pointer select-none", className)}
+      style={{ perspective: 1200 }}
+    >
+      <TicketOutline color={primaryShades[200]} id={clipId} />
+      
+      <div
+        className="relative w-full max-w-[560px] h-[210px]"
+        onClick={() => setFlipped((f) => !f)}
+      >
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            transformStyle: "preserve-3d",
+            transition: "transform 0.6s cubic-bezier(.4,0,.2,1)",
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}
+        >
+          {/* ── FRONT ── */}
+          <div
+            className="absolute inset-0"
+            style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+          >
+            {renderFront()}
+          </div>
+
+          {/* ── BACK ── */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
+          >
+            {renderBack()}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

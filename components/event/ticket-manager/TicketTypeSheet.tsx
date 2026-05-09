@@ -310,27 +310,7 @@ export function TicketTypeSheet({
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
-              <Tag className="size-3.5" />
-              Tier Details
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Ticket Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, name: e.target.value }))
-                }
-                placeholder="e.g., Early Bird VIP, Regular Access"
-              />
-            </div>
-            <div className="space-y-2">
+              <div className="space-y-2">
               <Label htmlFor="designVariant">Ticket Design Variant</Label>
               <Select
                 value={formData.designVariant}
@@ -349,6 +329,28 @@ export function TicketTypeSheet({
                 </SelectContent>
               </Select>
             </div>
+            </div>
+          </div>
+
+          {/* Basic Info */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
+              <Tag className="size-3.5" />
+              Tier Details
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="name">Ticket Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="e.g., Early Bird VIP, Regular Access"
+              />
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
