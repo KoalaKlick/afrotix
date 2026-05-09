@@ -2,13 +2,15 @@ import {
   Body,
   Container,
   Head,
-  Heading,
+  Hr,
   Html,
   Preview,
   Section,
   Text,
   Button,
   Img,
+  Row,
+  Column,
 } from "@react-email/components";
 import * as React from "react";
 
@@ -50,7 +52,6 @@ export const TicketDeliveryEmail = ({
   ticketUrls,
   lineItems,
 }: TicketDeliveryEmailProps) => {
-  const previewText = `Your ${ticketCount} ticket(s) for ${eventTitle}`;
   const displayVenue = [venueName, venueCity].filter(Boolean).join(", ") || "Venue TBA";
   const displayDate = eventStartDate 
     ? new Date(eventStartDate).toLocaleString("en-GH", { dateStyle: "full", timeStyle: "short" }) 
@@ -59,56 +60,91 @@ export const TicketDeliveryEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>{previewText}</Preview>
+      <Preview>Your tickets for {eventTitle}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {organizationLogoUrl && (
-            <Section style={logoSection}>
-              <Img src={organizationLogoUrl} alt={organizationName} height="40" style={logo} />
-            </Section>
-          )}
-          
-          <Heading style={h1}>Your Tickets are Here!</Heading>
-          <Text style={text}>Hi {buyerName},</Text>
-          <Text style={text}>
-            Thank you for your purchase. Here are the details for <strong>{eventTitle}</strong> organized by {organizationName}.
-          </Text>
+          {/* Pan-African accent bar */}
+          <Row style={accentBar}>
+            <Column style={{ ...accentSegment, background: "#9b1c1c" }} />
+            <Column style={{ ...accentSegment, background: "#d97706" }} />
+            <Column style={{ ...accentSegment, background: "#16a34a" }} />
+          </Row>
 
-          <Section style={eventDetails}>
-            <Text style={detailText}><strong>Date:</strong> {displayDate}</Text>
-            <Text style={detailText}><strong>Venue:</strong> {displayVenue}</Text>
-            <Text style={detailText}><strong>Order #:</strong> {orderNumber}</Text>
+          {/* Header */}
+          <Section style={header}>
+            <Text style={brandName}>AfroTix</Text>
+            <Text style={tagline}>Empowering African Events</Text>
           </Section>
 
-          <Section style={orderSummary}>
-            <Heading as="h3" style={h3}>Order Summary</Heading>
-            {lineItems.map((item, i) => (
-              <Text key={i} style={itemText}>
-                {item.quantity}x {item.name} - {item.currency} {(item.unitPrice * item.quantity).toFixed(2)}
-              </Text>
-            ))}
-            <Text style={totalText}>
-              <strong>Total Paid:</strong> {currency} {subtotal.toFixed(2)}
+          <Hr style={divider} />
+
+          {/* Body */}
+          <Section style={body}>
+            <Text style={greeting}>Hello {buyerName},</Text>
+
+            <Text style={paragraph}>
+              Thank you for your purchase. Your tickets for <strong>{eventTitle}</strong> are confirmed.
+            </Text>
+
+            <Section style={eventCard}>
+              <Text style={eventLabel}>Event Details</Text>
+              <Text style={eventTitleText}>{eventTitle}</Text>
+              <Text style={eventInfo}>📅 {displayDate}</Text>
+              <Text style={eventInfo}>📍 {displayVenue}</Text>
+              <Text style={eventInfo}>🔢 Order #{orderNumber}</Text>
+            </Section>
+
+            <Section style={summarySection}>
+              <Text style={summaryLabel}>Order Summary</Text>
+              {lineItems.map((item, i) => (
+                <Row key={i} style={itemRow}>
+                  <Column align="left">
+                    <Text style={itemText}>{item.quantity}x {item.name}</Text>
+                  </Column>
+                  <Column align="right">
+                    <Text style={itemPrice}>{item.currency} {(item.unitPrice * item.quantity).toFixed(2)}</Text>
+                  </Column>
+                </Row>
+              ))}
+              <Hr style={innerDivider} />
+              <Row>
+                <Column align="left">
+                  <Text style={totalLabel}>Total Paid</Text>
+                </Column>
+                <Column align="right">
+                  <Text style={totalValue}>{currency} {subtotal.toFixed(2)}</Text>
+                </Column>
+              </Row>
+            </Section>
+
+            <Section style={ctaSection}>
+              {ticketUrls.map((url, i) => (
+                <Button key={i} style={ctaButton} href={url}>
+                  {ticketCount > 1 ? `View Ticket #${i + 1}` : "View My Ticket"}
+                </Button>
+              ))}
+            </Section>
+
+            <Text style={hintText}>
+              Present your ticket QR code at the venue entrance. You can download or print your tickets for easier access.
             </Text>
           </Section>
 
-          <Section style={btnContainer}>
-            {ticketUrls.map((url, i) => (
-              <Button key={i} style={button} href={url}>
-                View & Download Ticket {ticketCount > 1 ? `#${i + 1}` : ""}
-              </Button>
-            ))}
+          <Hr style={divider} />
+
+          {/* Footer */}
+          <Section style={footerSection}>
+            <Text style={footerText}>
+              Organized by <strong>{organizationName}</strong>
+            </Text>
+            <Text style={footerText}>
+              Questions? Contact {organizationContactEmail || "support@afrotix.com"}
+            </Text>
+            <Hr style={{ ...innerDivider, margin: "16px 0" }} />
+            <Text style={footerText}>
+              © {new Date().getFullYear()} AfroTix · Empowering African Events
+            </Text>
           </Section>
-
-          <Text style={text}>
-            Please have your tickets ready for scanning at the event. You can download them for offline access.
-          </Text>
-
-          <Text style={footer}>
-            Need help? Contact the organizer at {organizationContactEmail || "support@afrotix.com"}
-            <br />
-            Afrotix - Empowering African Events
-          </Text>
         </Container>
       </Body>
     </Html>
@@ -117,115 +153,186 @@ export const TicketDeliveryEmail = ({
 
 export default TicketDeliveryEmail;
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const main = {
-  backgroundColor: "#f6f9fc",
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+  backgroundColor: "#f4f4f5",
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif',
 };
 
 const container = {
   backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "20px 0 48px",
-  marginBottom: "64px",
-  borderRadius: "8px",
+  margin: "40px auto",
+  borderRadius: "12px",
+  overflow: "hidden",
+  maxWidth: "520px",
+  boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
 };
 
-const logoSection = {
+const accentBar = {
+  width: "100%",
+};
+
+const accentSegment = {
+  height: "4px",
+  width: "33.33%",
+};
+
+const header = {
+  padding: "28px 40px 20px",
   textAlign: "center" as const,
-  padding: "20px",
 };
 
-const logo = {
-  margin: "0 auto",
-  objectFit: "contain" as const,
+const brandName = {
+  fontSize: "26px",
+  fontWeight: "900",
+  color: "#111827",
+  letterSpacing: "-0.5px",
+  margin: "0",
+  textTransform: "uppercase" as const,
 };
 
-const h1 = {
-  color: "#333",
-  fontSize: "24px",
-  fontWeight: "bold",
-  textAlign: "center" as const,
-  margin: "30px 0",
+const tagline = {
+  fontSize: "12px",
+  color: "#6b7280",
+  margin: "4px 0 0",
+  letterSpacing: "0.04em",
 };
 
-const h3 = {
-  color: "#333",
+const divider = {
+  borderColor: "#e5e7eb",
+  margin: "0",
+};
+
+const body = {
+  padding: "32px 40px",
+};
+
+const greeting = {
   fontSize: "18px",
-  fontWeight: "bold",
-  marginBottom: "10px",
-  borderBottom: "1px solid #eaeaea",
-  paddingBottom: "8px",
+  fontWeight: "700",
+  color: "#111827",
+  margin: "0 0 16px",
 };
 
-const text = {
-  color: "#333",
-  fontSize: "16px",
-  lineHeight: "26px",
-  textAlign: "left" as const,
-  padding: "0 40px",
-};
-
-const detailText = {
-  color: "#555",
+const paragraph = {
   fontSize: "15px",
-  margin: "4px 0",
+  lineHeight: "24px",
+  color: "#374151",
+  margin: "0 0 20px",
 };
 
-const eventDetails = {
-  background: "#f4f4f4",
-  borderRadius: "4px",
-  margin: "16px 40px",
+const eventCard = {
+  backgroundColor: "#f9fafb",
+  borderRadius: "8px",
   padding: "20px",
+  margin: "0 0 24px",
+  border: "1px solid #e5e7eb",
 };
 
-const orderSummary = {
-  margin: "24px 40px",
-  padding: "20px",
-  border: "1px solid #eaeaea",
-  borderRadius: "4px",
+const eventLabel = {
+  fontSize: "11px",
+  fontWeight: "600",
+  color: "#6b7280",
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.05em",
+  margin: "0 0 8px",
+};
+
+const eventTitleText = {
+  fontSize: "18px",
+  fontWeight: "700",
+  color: "#111827",
+  margin: "0 0 12px",
+};
+
+const eventInfo = {
+  fontSize: "14px",
+  color: "#4b5563",
+  margin: "0 0 4px",
+};
+
+const summarySection = {
+  margin: "0 0 24px",
+};
+
+const summaryLabel = {
+  fontSize: "13px",
+  fontWeight: "700",
+  color: "#111827",
+  margin: "0 0 12px",
+};
+
+const itemRow = {
+  margin: "0 0 8px",
 };
 
 const itemText = {
+  fontSize: "14px",
+  color: "#4b5563",
+  margin: "0",
+};
+
+const itemPrice = {
+  fontSize: "14px",
+  color: "#111827",
+  fontWeight: "500",
+  margin: "0",
+};
+
+const innerDivider = {
+  borderColor: "#f3f4f6",
+  margin: "12px 0",
+};
+
+const totalLabel = {
   fontSize: "15px",
-  color: "#555",
-  margin: "8px 0",
+  fontWeight: "700",
+  color: "#111827",
+  margin: "0",
 };
 
-const totalText = {
+const totalValue = {
   fontSize: "16px",
-  color: "#000",
-  marginTop: "16px",
-  paddingTop: "16px",
-  borderTop: "1px solid #eaeaea",
+  fontWeight: "800",
+  color: "#9b1c1c",
+  margin: "0",
 };
 
-const btnContainer = {
+const ctaSection = {
+  margin: "28px 0",
   textAlign: "center" as const,
-  margin: "32px 0",
-  display: "flex",
-  flexDirection: "column" as const,
-  gap: "12px",
-  alignItems: "center" as const,
 };
 
-const button = {
-  backgroundColor: "#009A44",
-  borderRadius: "6px",
-  color: "#fff",
-  fontSize: "16px",
+const ctaButton = {
+  backgroundColor: "#9b1c1c",
+  color: "#ffffff",
+  borderRadius: "8px",
+  fontSize: "15px",
+  fontWeight: "700",
+  padding: "14px 32px",
   textDecoration: "none",
-  textAlign: "center" as const,
   display: "block",
-  padding: "14px 24px",
-  fontWeight: "bold",
-  margin: "0 auto 12px auto",
-  maxWidth: "300px",
+  margin: "0 0 10px",
 };
 
-const footer = {
-  color: "#8898aa",
-  fontSize: "12px",
+const hintText = {
+  fontSize: "13px",
   lineHeight: "20px",
+  color: "#9ca3af",
+  margin: "0",
   textAlign: "center" as const,
-  marginTop: "48px",
+};
+
+const footerSection = {
+  padding: "24px 40px",
+  backgroundColor: "#f9fafb",
+  textAlign: "center" as const,
+};
+
+const footerText = {
+  fontSize: "12px",
+  color: "#9ca3af",
+  margin: "0 0 4px",
 };
