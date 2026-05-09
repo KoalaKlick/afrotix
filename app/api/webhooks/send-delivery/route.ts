@@ -3,7 +3,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import transporter from "@/lib/mail";
 import { render } from "@react-email/render";
 import React from "react";
-import { TicketDeliveryEmail } from "@/emails/ticket-delivery";
+import { sendTicketDeliveryEmail } from "@/lib/email-actions";
 import { NominationConfirmationEmail } from "@/emails/nomination-confirmation";
 import crypto from "node:crypto";
 
@@ -40,152 +40,13 @@ export async function POST(req: NextRequest) {
 
     // 2. Ticket purchase emails
     if (payment.related_type === "ticket_order" || payment.related_type === "ticket") {
-      const metadata = payment.metadata as Record<string, any>;
-
-      const { data: order, error: orderError } = await supabase
-        .from("ticket_orders")
-        .select("id, event_id, order_number, buyer_name, buyer_phone, subtotal")
-        .eq("payment_id", payment.id)
-        .single();
-
-      if (orderError || !order) {
-        return NextResponse.json({ error: "Ticket order not found" }, { status: 404 });
+      const result = await sendTicketDeliveryEmail(paymentId);
+      
+      if (!result.success) {
+        return NextResponse.json({ error: result.error }, { status: 500 });
       }
 
-      const { data: event, error: eventError } = await supabase
-        .from("events")
-        .select("id, title, start_date, venue_name, venue_city, organization_id")
-        .eq("id", order.event_id)
-        .single();
-
-      if (eventError || !event) {
-        return NextResponse.json({ error: "Event not found" }, { status: 404 });
-      }
-
-      const { data: organization, error: organizationError } = await supabase
-        .from("organizations")
-        .select("id, name, logo_url, contact_email")
-        .eq("id", event.organization_id)
-        .single();
-
-      if (organizationError || !organization) {
-        return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-      }
-
-      const { data: tickets, error: ticketsError } = await supabase
-        .from("tickets")
-        .select("id, ticket_code, ticket_type_id")
-        .eq("order_id", order.id);
-
-      if (ticketsError) {
-        return NextResponse.json({ error: "Tickets not found" }, { status: 404 });
-      }
-
-      const ticketTypeIds = [...new Set((tickets ?? []).map((t) => t.ticket_type_id).filter(Boolean))];
-
-      const { data: ticketTypes, error: ticketTypesError } = ticketTypeIds.length
-        ? await supabase
-            .from("ticket_types")
-            .select("id, name, price, currency")
-            .in("id", ticketTypeIds)
-        : { data: [], error: null };
-
-      if (ticketTypesError) {
-        return NextResponse.json({ error: "Ticket types not found" }, { status: 404 });
-      }
-
-      const ticketTypeMap = new Map(
-        (ticketTypes ?? []).map((t) => [
-          t.id,
-          { name: t.name, price: Number(t.price) || 0, currency: t.currency || "GHS" },
-        ])
-      );
-
-      const groupedItems = new Map<string, { name: string; quantity: number; unitPrice: number; currency: string }>();
-
-      for (const ticket of tickets ?? []) {
-        const typeInfo = ticketTypeMap.get(ticket.ticket_type_id);
-        const key = ticket.ticket_type_id;
-        const current = groupedItems.get(key);
-
-        if (current) {
-          current.quantity += 1;
-        } else {
-          groupedItems.set(key, {
-            name: typeInfo?.name ?? "Ticket",
-            quantity: 1,
-            unitPrice: typeInfo?.price ?? 0,
-            currency: typeInfo?.currency ?? "GHS",
-          });
-        }
-      }
-
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_DOMAIN_URL || "").replace(/\/$/, "");
-      const secret = process.env.TICKET_SIGNING_SECRET;
-
-      if (!secret) {
-        console.warn("TICKET_SIGNING_SECRET missing. Cannot generate ticket URLs.");
-      }
-
-      const ticketUrls = (tickets ?? []).map((ticket) => {
-        if (!appUrl || !secret) return "";
-        const payload = `${ticket.id}:${ticket.ticket_code}`;
-        const sig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-        const tokenData = { tId: ticket.id, tCode: ticket.ticket_code, sig };
-        const token = Buffer.from(JSON.stringify(tokenData)).toString("base64url");
-        return `${appUrl}/ticket/view?token=${token}`;
-      }).filter(Boolean);
-
-      const buyerEmail = payment.email || metadata.buyer_email;
-
-      if (!buyerEmail) {
-        return NextResponse.json({ success: true, channel: "none", skipped: "missing_email" });
-      }
-
-      const emailHtml = await render(
-        React.createElement(TicketDeliveryEmail, {
-          buyerName: order.buyer_name || metadata.buyer_name || "Guest",
-          organizationName: organization.name,
-          organizationLogoUrl: organization.logo_url,
-          organizationContactEmail: organization.contact_email,
-          eventTitle: event.title,
-          eventStartDate: event.start_date?.toString() || null,
-          venueName: event.venue_name,
-          venueCity: event.venue_city,
-          orderNumber: order.order_number,
-          subtotal: Number(order.subtotal) || Number(payment.amount),
-          currency: payment.currency || "GHS",
-          ticketCount: tickets.length || Math.max(1, Number(metadata.quantity) || 1),
-          ticketUrls,
-          lineItems: Array.from(groupedItems.values()),
-        })
-      );
-
-      const fromName = process.env.SMTP_FROM_NAME || "Afrotix";
-      const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
-
-      const options = {
-        from: `"${fromName}" <${fromEmail}>`,
-        to: buyerEmail,
-        subject: `Your Tickets for ${event.title}`,
-        html: emailHtml,
-      };
-
-      const info = await transporter.sendMail(options);
-
-      const deliveryMetadata = {
-        ...metadata,
-        delivery_email_sent_at: new Date().toISOString(),
-        delivery_email_to: buyerEmail,
-        delivery_email_result: info.messageId,
-      };
-
-      await supabase
-        .from("payments")
-        .update({ metadata: deliveryMetadata })
-        .eq("id", paymentId);
-
-      return NextResponse.json({ success: true, channel: "email", messageId: info.messageId });
+      return NextResponse.json({ success: true, channel: "email", messageId: result.messageId });
     }
 
     // 2b. Paid nomination confirmation email

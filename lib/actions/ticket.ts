@@ -12,6 +12,7 @@ import {
 import { getEventById } from "@/lib/dal/event";
 import { getUserRoleInOrganization } from "@/lib/dal/organization";
 import type { TicketStatus, TicketType } from "@/lib/types/ticket";
+import { sendTicketDeliveryEmail } from "@/lib/email-actions";
 
 // Action result type
 type ActionResult<T = void> =
@@ -228,31 +229,16 @@ export async function reorderTicketTypesAction(
   return { success: true, data: undefined };
 }
 
+
 /**
  * Resend ticket email delivery
  */
 export async function resendTicketEmailAction(paymentId: string): Promise<ActionResult> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !serviceKey) {
-    return { success: false, error: "Missing Supabase configuration" };
-  }
-
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_DOMAIN_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/webhooks/send-delivery`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ paymentId })
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Resend error:", text);
-      return { success: false, error: "Failed to trigger email delivery" };
+    const result = await sendTicketDeliveryEmail(paymentId);
+    
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to trigger email delivery" };
     }
 
     return { success: true, data: undefined };

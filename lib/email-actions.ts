@@ -1,8 +1,11 @@
 import { render } from "@react-email/render";
 import transporter from "./mail";
-import { EventCodeEmail } from "../emails/event-code";
+import { TicketDeliveryEmail } from "../emails/ticket-delivery";
 import { NominationConfirmationEmail } from "../emails/nomination-confirmation";
 import { OrganizationInviteEmail } from "../emails/organization-invite";
+import { EventCodeEmail } from "../emails/event-code";
+import { prisma } from "@/lib/prisma";
+import crypto from "node:crypto";
 import React from "react";
 
 export async function sendEventCodeEmail({
@@ -131,5 +134,191 @@ export async function sendOrganizationInviteEmail({
   } catch (error) {
     console.error("Error sending organization invite email:", error);
     return { success: false, error };
+  }
+}
+
+export async function sendTicketDeliveryEmail(paymentId: string) {
+  try {
+    // 1. Fetch Payment
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+    });
+
+    if (!payment) {
+      return { success: false, error: "Payment not found" };
+    }
+
+    if (payment.relatedType !== "ticket_order" && payment.relatedType !== "ticket") {
+      return { success: false, error: "Invalid payment type for ticket delivery" };
+    }
+
+    const metadata = payment.metadata as Record<string, any>;
+
+    // 2. Fetch Order
+    const order = await prisma.ticketOrder.findFirst({
+      where: { paymentId: payment.id },
+      select: {
+        id: true,
+        eventId: true,
+        orderNumber: true,
+        buyerName: true,
+        buyerPhone: true,
+        subtotal: true,
+      },
+    });
+
+    if (!order) {
+      return { success: false, error: "Ticket order not found" };
+    }
+
+    // 3. Fetch Event
+    const event = await prisma.event.findUnique({
+      where: { id: order.eventId },
+      select: {
+        id: true,
+        title: true,
+        startDate: true,
+        venueName: true,
+        venueCity: true,
+        organizationId: true,
+      },
+    });
+
+    if (!event) {
+      return { success: false, error: "Event not found" };
+    }
+
+    // 4. Fetch Organization
+    const organization = await prisma.organization.findUnique({
+      where: { id: event.organizationId },
+      select: {
+        id: true,
+        name: true,
+        logoUrl: true,
+        contactEmail: true,
+      },
+    });
+
+    if (!organization) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // 5. Fetch Tickets
+    const tickets = await prisma.ticket.findMany({
+      where: { orderId: order.id },
+      select: {
+        id: true,
+        ticketCode: true,
+        ticketTypeId: true,
+      },
+    });
+
+    if (!tickets || tickets.length === 0) {
+      return { success: false, error: "Tickets not found" };
+    }
+
+    // 6. Fetch Ticket Types for line items
+    const ticketTypeIds = [...new Set(tickets.map((t) => t.ticketTypeId).filter(Boolean))];
+    const ticketTypes = ticketTypeIds.length
+      ? await prisma.ticketType.findMany({
+          where: { id: { in: ticketTypeIds } },
+          select: { id: true, name: true, price: true, currency: true },
+        })
+      : [];
+
+    const ticketTypeMap = new Map(
+      (ticketTypes ?? []).map((t) => [
+        t.id,
+        { name: t.name, price: Number(t.price) || 0, currency: t.currency || "GHS" },
+      ])
+    );
+
+    const groupedItems = new Map<string, { name: string; quantity: number; unitPrice: number; currency: string }>();
+    for (const ticket of tickets) {
+      if (!ticket.ticketTypeId) continue;
+      const typeInfo = ticketTypeMap.get(ticket.ticketTypeId);
+      const key = ticket.ticketTypeId;
+      const current = groupedItems.get(key);
+      if (current) {
+        current.quantity += 1;
+      } else {
+        groupedItems.set(key, {
+          name: typeInfo?.name ?? "Ticket",
+          quantity: 1,
+          unitPrice: typeInfo?.price ?? 0,
+          currency: typeInfo?.currency ?? "GHS",
+        });
+      }
+    }
+
+    // 7. Generate Ticket URLs
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_DOMAIN_URL || "").replace(/\/$/, "");
+    const secret = process.env.TICKET_SIGNING_SECRET;
+
+    if (!secret) {
+      console.warn("TICKET_SIGNING_SECRET missing");
+    }
+
+    const ticketUrls = tickets.map((ticket) => {
+      if (!appUrl || !secret) return "";
+      const payload = `${ticket.id}:${ticket.ticketCode}`;
+      const sig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+      const tokenData = { tId: ticket.id, tCode: ticket.ticketCode, sig };
+      const token = Buffer.from(JSON.stringify(tokenData)).toString("base64url");
+      return `${appUrl}/ticket/view?token=${token}`;
+    }).filter(Boolean);
+
+    const buyerEmail = payment.email || metadata.buyer_email;
+    if (!buyerEmail) {
+      return { success: false, error: "Buyer email missing" };
+    }
+
+    // 8. Render and Send
+    const emailHtml = await render(
+      React.createElement(TicketDeliveryEmail, {
+        buyerName: order.buyerName || metadata.buyer_name || "Guest",
+        organizationName: organization.name,
+        organizationLogoUrl: organization.logoUrl,
+        organizationContactEmail: organization.contactEmail,
+        eventTitle: event.title,
+        eventStartDate: event.startDate?.toString() || null,
+        venueName: event.venueName,
+        venueCity: event.venueCity,
+        orderNumber: order.orderNumber,
+        subtotal: Number(order.subtotal) || Number(payment.amount),
+        currency: payment.currency || "GHS",
+        ticketCount: tickets.length,
+        ticketUrls,
+        lineItems: Array.from(groupedItems.values()),
+      })
+    );
+
+    const fromName = process.env.SMTP_FROM_NAME || "Afrotix";
+    const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
+
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: buyerEmail,
+      subject: `Your Tickets for ${event.title}`,
+      html: emailHtml,
+    });
+
+    // 9. Update metadata
+    const deliveryMetadata = {
+      ...metadata,
+      delivery_email_sent_at: new Date().toISOString(),
+      delivery_email_to: buyerEmail,
+      delivery_email_result: info.messageId,
+    };
+
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { metadata: deliveryMetadata },
+    });
+
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    console.error("Error sending ticket delivery email:", error);
+    return { success: false, error: error.message || "Failed to send ticket email" };
   }
 }
