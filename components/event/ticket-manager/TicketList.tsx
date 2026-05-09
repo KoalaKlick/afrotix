@@ -18,9 +18,7 @@ import { TicketTypeSheet } from "./TicketTypeSheet";
 import { deleteTicketTypeAction } from "@/lib/actions/ticket";
 import type { TicketType } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
-import { TicketCard } from "@/components/shared/ticket-variants/TicketPreview";
-import { TicketCard2 } from "@/components/shared/ticket-variants/TicketPreview2";
-import { TicketCardGeo } from "@/components/shared/ticket-variants/TicketPreviewGeo";
+import { TicketRenderer } from "@/components/shared/ticket-variants/TicketRenderer";
 import { NoTicketIllustration } from "@/components/common/NoTicketIllustration";
 import {
   AlertDialog,
@@ -113,99 +111,37 @@ export function TicketList({
           >
             <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-center">
               <div className="mx-auto lg:mx-0  w-full">
-                {ticket.designVariant === "geo" ? (
-                  <TicketCardGeo
-                    className="max-w-lg"
-                    primaryColor={
-                      ticket.primaryColor || ticket.color || primaryColor
-                    }
-                    secondaryColor={ticket.secondaryColor || secondaryColor}
-                    logoUrl={organization?.logoUrl}
-                    flierImage={event.flierImage}
-                    bannerImage={event.bannerImage}
-                    organizationName={organization?.name}
-                    eventName={event.title}
-                    ticketType={ticket.name}
-                    dateTime={
-                      event.startDate
-                        ? new Date(event.startDate).toLocaleString("en-GH", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                          })
-                        : "Date to be announced"
-                    }
-                    venue={
-                      event.isVirtual
-                        ? event.virtualLink || "Virtual event"
-                        : event.venueName ||
-                          event.venueCity ||
-                          event.venueCountry
-                    }
-                    ticketCode={`TIER-${ticket.orderIdx + 1}`}
-                  />
-                ) : ticket.designVariant === "modern" ? (
-                  <TicketCard2
-                    className="max-w-lg"
-                    primaryColor={
-                      ticket.primaryColor || ticket.color || primaryColor
-                    }
-                    secondaryColor={ticket.secondaryColor || secondaryColor}
-                    logoUrl={organization?.logoUrl}
-                    flierImage={event.flierImage}
-                    bannerImage={event.bannerImage}
-                    organizationName={organization?.name}
-                    eventName={event.title}
-                    ticketType={ticket.name}
-                    dateTime={
-                      event.startDate
-                        ? new Date(event.startDate).toLocaleString("en-GH", {
+                <TicketRenderer
+                  variant={ticket.designVariant}
+                  className="max-w-lg"
+                  primaryColor={
+                    ticket.primaryColor || ticket.color || primaryColor
+                  }
+                  secondaryColor={ticket.secondaryColor || secondaryColor}
+                  logoUrl={organization?.logoUrl}
+                  flierImage={event.flierImage}
+                  bannerImage={event.bannerImage}
+                  organizationName={organization?.name}
+                  eventName={event.title}
+                  ticketType={ticket.name}
+                  dateTime={
+                    event.startDate
+                      ? new Date(event.startDate).toLocaleString("en-GH", {
                           dateStyle: "medium",
                           timeStyle: "short",
                         })
-                        : "Date to be announced"
-                    }
-                    venue={
-                      event.isVirtual
-                        ? event.virtualLink || "Virtual event"
-                        : event.venueName ||
+                      : "Date to be announced"
+                  }
+                  venue={
+                    event.isVirtual
+                      ? event.virtualLink || "Virtual event"
+                      : event.venueName ||
                         event.venueCity ||
                         event.venueCountry
-                    }
-                    ticketCode={`TIER-${ticket.orderIdx + 1}`}
-                    stacked={false}
-                  />
-                ) : (
-                  <TicketCard
-                    className="max-w-lg"
-                    primaryColor={
-                      ticket.primaryColor || ticket.color || primaryColor
-                    }
-                    secondaryColor={ticket.secondaryColor || secondaryColor}
-                    logoUrl={organization?.logoUrl}
-                    flierImage={event.flierImage}
-                    bannerImage={event.bannerImage}
-                    organizationName={organization?.name}
-                    eventName={event.title}
-                    ticketType={ticket.name}
-                    dateTime={
-                      event.startDate
-                        ? new Date(event.startDate).toLocaleString("en-GH", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })
-                        : "Date to be announced"
-                    }
-                    venue={
-                      event.isVirtual
-                        ? event.virtualLink || "Virtual event"
-                        : event.venueName ||
-                        event.venueCity ||
-                        event.venueCountry
-                    }
-                    ticketCode={`TIER-${ticket.orderIdx + 1}`}
-                    stacked={false}
-                  />
-                )}
+                  }
+                  ticketCode={`TIER-${ticket.orderIdx + 1}`}
+                  stacked={false}
+                />
               </div>
 
               <div className="space-y-4">

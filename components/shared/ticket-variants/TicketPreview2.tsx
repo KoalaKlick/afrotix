@@ -409,8 +409,8 @@ function BackFace({
       {/* ── Left: QR / scan area ── */}
       <div className="flex flex-col items-center justify-center gap-2 px-6 shrink-0" style={{ width: 160 }}>
         <div
-          className="text-[8px] font-black tracking-[0.3em] uppercase opacity-40 text-center"
-          style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+          className="text-[8px] font-black tracking-[0.3em] uppercase text-center"
+          style={{ fontFamily: "'Courier New', monospace", color: primaryShades[400] }}
         >
           Scan to Verify
         </div>

@@ -10,9 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { TicketCard } from "@/components/shared/ticket-variants/TicketPreview";
-import { TicketCard2 } from "@/components/shared/ticket-variants/TicketPreview2";
-import { TicketCardGeo } from "@/components/shared/ticket-variants/TicketPreviewGeo";
+import { TicketRenderer } from "@/components/shared/ticket-variants/TicketRenderer";
 import { PublicTicketPaymentModal } from "@/components/event/public/PublicTicketPaymentModal";
 
 interface PublicTicket {
@@ -120,54 +118,22 @@ export function PublicTicketGrid({
               className="group text-left transition-all "
             >
               <div className="space-y-4">
-                {ticket.designVariant === "geo" ? (
-                  <TicketCardGeo
-                    className="mx-auto"
-                    primaryColor={primaryColor}
-                    secondaryColor={secondaryColor}
-                    logoUrl={organization.logoUrl}
-                    flierImage={event.flierImage}
-                    bannerImage={event.bannerImage}
-                    organizationName={organization.name}
-                    eventName={event.title}
-                    ticketType={ticket.name}
-                    dateTime={dateTime}
-                    venue={venue}
-                    ticketCode={`TIER-${ticket.orderIdx + 1}`}
-                  />
-                ) : ticket.designVariant === "modern" ? (
-                  <TicketCard2
-                    className="mx-auto"
-                    primaryColor={primaryColor}
-                    secondaryColor={secondaryColor}
-                    logoUrl={organization.logoUrl}
-                    flierImage={event.flierImage}
-                    bannerImage={event.bannerImage}
-                    organizationName={organization.name}
-                    eventName={event.title}
-                    ticketType={ticket.name}
-                    dateTime={dateTime}
-                    venue={venue}
-                    ticketCode={`TIER-${ticket.orderIdx + 1}`}
-                    stacked={false}
-                  />
-                ) : (
-                  <TicketCard
-                    className="mx-auto"
-                    primaryColor={primaryColor}
-                    secondaryColor={secondaryColor}
-                    logoUrl={organization.logoUrl}
-                    flierImage={event.flierImage}
-                    bannerImage={event.bannerImage}
-                    organizationName={organization.name}
-                    eventName={event.title}
-                    ticketType={ticket.name}
-                    dateTime={dateTime}
-                    venue={venue}
-                    ticketCode={`TIER-${ticket.orderIdx + 1}`}
-                    stacked={false}
-                  />
-                )}
+                <TicketRenderer
+                  variant={ticket.designVariant}
+                  className="mx-auto"
+                  primaryColor={primaryColor}
+                  secondaryColor={secondaryColor}
+                  logoUrl={organization.logoUrl}
+                  flierImage={event.flierImage}
+                  bannerImage={event.bannerImage}
+                  organizationName={organization.name}
+                  eventName={event.title}
+                  ticketType={ticket.name}
+                  dateTime={dateTime}
+                  venue={venue}
+                  ticketCode={`TIER-${ticket.orderIdx + 1}`}
+                  stacked={false}
+                />
 
                 <div className="flex items-center justify-between gap-3 px-1">
                   <div>
@@ -217,72 +183,28 @@ export function PublicTicketGrid({
 
               <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="space-y-6">
-                  {selectedTicket.designVariant === "geo" ? (
-                    <TicketCardGeo
-                      className="mx-auto"
-                      primaryColor={
-                        selectedTicket.primaryColor ||
-                        selectedTicket.color ||
-                        orgPrimary
-                      }
-                      secondaryColor={
-                        selectedTicket.secondaryColor || orgSecondary
-                      }
-                      logoUrl={organization.logoUrl}
-                      flierImage={event.flierImage}
-                      bannerImage={event.bannerImage}
-                      organizationName={organization.name}
-                      eventName={event.title}
-                      ticketType={selectedTicket.name}
-                      dateTime={dateTime}
-                      venue={venue}
-                      ticketCode={`TIER-${selectedTicket.orderIdx + 1}`}
-                    />
-                  ) : selectedTicket.designVariant === "modern" ? (
-                    <TicketCard2
-                      className="mx-auto"
-                      primaryColor={
-                        selectedTicket.primaryColor ||
-                        selectedTicket.color ||
-                        orgPrimary
-                      }
-                      secondaryColor={
-                        selectedTicket.secondaryColor || orgSecondary
-                      }
-                      logoUrl={organization.logoUrl}
-                      flierImage={event.flierImage}
-                      bannerImage={event.bannerImage}
-                      organizationName={organization.name}
-                      eventName={event.title}
-                      ticketType={selectedTicket.name}
-                      dateTime={dateTime}
-                      venue={venue}
-                      ticketCode={`TIER-${selectedTicket.orderIdx + 1}`}
-                      stacked={false}
-                    />
-                  ) : (
-                    <TicketCard
-                      className="mx-auto"
-                      primaryColor={
-                        selectedTicket.primaryColor ||
-                        selectedTicket.color ||
-                        orgPrimary
-                      }
-                      secondaryColor={
-                        selectedTicket.secondaryColor || orgSecondary
-                      }
-                      logoUrl={organization.logoUrl}
-                      flierImage={event.flierImage}
-                      bannerImage={event.bannerImage}
-                      organizationName={organization.name}
-                      eventName={event.title}
-                      ticketType={selectedTicket.name}
-                      dateTime={dateTime}
-                      venue={venue}
-                      ticketCode={`TIER-${selectedTicket.orderIdx + 1}`}
-                      stacked={false}
-                    />
-                  )}
+                  <TicketRenderer
+                    variant={selectedTicket.designVariant}
+                    className="mx-auto"
+                    primaryColor={
+                      selectedTicket.primaryColor ||
+                      selectedTicket.color ||
+                      orgPrimary
+                    }
+                    secondaryColor={
+                      selectedTicket.secondaryColor || orgSecondary
+                    }
+                    logoUrl={organization.logoUrl}
+                    flierImage={event.flierImage}
+                    bannerImage={event.bannerImage}
+                    organizationName={organization.name}
+                    eventName={event.title}
+                    ticketType={selectedTicket.name}
+                    dateTime={dateTime}
+                    venue={venue}
+                    ticketCode={`TIER-${selectedTicket.orderIdx + 1}`}
+                    stacked={false}
+                  />
 
                   <div className="rounded-md border bg-muted/20 p-4">
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">

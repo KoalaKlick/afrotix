@@ -38,9 +38,7 @@ import {
 } from "@/lib/actions/ticket";
 import type { TicketType, TicketStatus } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
-import { TicketCard } from "@/components/shared/ticket-variants/TicketPreview";
-import { TicketCard2 } from "@/components/shared/ticket-variants/TicketPreview2";
-import { TicketCardGeo } from "@/components/shared/ticket-variants/TicketPreviewGeo";
+import { TicketRenderer } from "@/components/shared/ticket-variants/TicketRenderer";
 import { PRICE_CONSTRAINTS } from "@/lib/const/pricing";
 
 interface TicketTypeSheetProps {
@@ -203,85 +201,116 @@ export function TicketTypeSheet({
                 </p>
               </div>
             </div>
-            {formData.designVariant === "geo" ? (
-              <TicketCardGeo
-                className="mx-auto max-w-xs"
-                primaryColor={previewPrimary}
-                secondaryColor={previewSecondary}
-                logoUrl={organization?.logoUrl}
-                flierImage={event.flierImage}
-                bannerImage={event.bannerImage}
-                organizationName={organization?.name}
-                eventName={event.title}
-                ticketType={formData.name || "General Admission"}
-                dateTime={
-                  event.startDate
-                    ? new Date(event.startDate).toLocaleString("en-GH", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })
-                    : "Date to be announced"
-                }
-                venue={
-                  event.isVirtual
-                    ? event.virtualLink || "Virtual event"
-                    : event.venueName || event.venueCity || event.venueCountry
-                }
-                ticketCode="AUTO-QR"
-              />
-            ) : formData.designVariant === "modern" ? (
-              <TicketCard2
-                className="mx-auto max-w-xs"
-                primaryColor={previewPrimary}
-                secondaryColor={previewSecondary}
-                logoUrl={organization?.logoUrl}
-                flierImage={event.flierImage}
-                bannerImage={event.bannerImage}
-                organizationName={organization?.name}
-                eventName={event.title}
-                ticketType={formData.name || "General Admission"}
-                dateTime={
-                  event.startDate
-                    ? new Date(event.startDate).toLocaleString("en-GH", {
+            <TicketRenderer
+              variant={formData.designVariant}
+              className="mx-auto max-w-xs"
+              primaryColor={previewPrimary}
+              secondaryColor={previewSecondary}
+              logoUrl={organization?.logoUrl}
+              flierImage={event.flierImage}
+              bannerImage={event.bannerImage}
+              organizationName={organization?.name}
+              eventName={event.title}
+              ticketType={formData.name || "General Admission"}
+              dateTime={
+                event.startDate
+                  ? new Date(event.startDate).toLocaleString("en-GH", {
                       dateStyle: "medium",
                       timeStyle: "short",
                     })
-                    : "Date to be announced"
-                }
-                venue={
-                  event.isVirtual
-                    ? event.virtualLink || "Virtual event"
-                    : event.venueName || event.venueCity || event.venueCountry
-                }
-                ticketCode="AUTO-QR"
-              />
-            ) : (
-              <TicketCard
-                className="mx-auto max-w-xs"
-                primaryColor={previewPrimary}
-                secondaryColor={previewSecondary}
-                logoUrl={organization?.logoUrl}
-                flierImage={event.flierImage}
-                bannerImage={event.bannerImage}
-                organizationName={organization?.name}
-                eventName={event.title}
-                ticketType={formData.name || "General Admission"}
-                dateTime={
-                  event.startDate
-                    ? new Date(event.startDate).toLocaleString("en-GH", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
-                    : "Date to be announced"
-                }
-                venue={
-                  event.isVirtual
-                    ? event.virtualLink || "Virtual event"
-                    : event.venueName || event.venueCity || event.venueCountry
-                }
-                ticketCode="AUTO-QR"
-              />
-            )}
+                  : "Date to be announced"
+              }
+              venue={
+                event.isVirtual
+                  ? event.virtualLink || "Virtual event"
+                  : event.venueName || event.venueCity || event.venueCountry
+              }
+              ticketCode="AUTO-QR"
+            />
+
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 border-t pt-6 border-muted-foreground/10">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Primary</Label>
+                  <Input
+                    type="text"
+                    value={formData.primaryColor}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        color: e.target.value,
+                        primaryColor: e.target.value,
+                      }))
+                    }
+                    className="font-mono text-[10px] h-6 w-20 px-1.5"
+                    placeholder="#hex"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_COLORS.map((color) => (
+                    <button
+                      key={`primary-${color.value}`}
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          color: color.value,
+                          primaryColor: color.value,
+                        }))
+                      }
+                      className={cn(
+                        "h-6 w-6 rounded-md transition-all border",
+                        formData.primaryColor === color.value
+                          ? "border-black scale-110 shadow-sm"
+                          : "border-transparent hover:scale-105"
+                      )}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Secondary</Label>
+                  <Input
+                    type="text"
+                    value={formData.secondaryColor}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        secondaryColor: e.target.value,
+                      }))
+                    }
+                    className="font-mono text-[10px] h-6 w-20 px-1.5"
+                    placeholder="#hex"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_COLORS.map((color) => (
+                    <button
+                      key={`secondary-${color.value}`}
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          secondaryColor: color.value,
+                        }))
+                      }
+                      className={cn(
+                        "h-6 w-6 rounded-md transition-all border",
+                        formData.secondaryColor === color.value
+                          ? "border-black scale-110 shadow-sm"
+                          : "border-transparent hover:scale-105"
+                      )}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Basic Info */}
@@ -492,143 +521,6 @@ export function TicketTypeSheet({
               </Select>
             </div>
             
-          </div>
-          {/* Brand Colors */}
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
-              <Tag className="size-3.5" />
-              Tier Branding
-            </div>
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <Label htmlFor="primaryColor">Primary Color</Label>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_COLORS.map((color) => (
-                    <button
-                      key={`primary-${color.value}`}
-                      type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          color: color.value,
-                          primaryColor: color.value,
-                        }))
-                      }
-                      className={cn(
-                        "h-8 w-8 rounded-lg transition-all border-2",
-                        formData.primaryColor === color.value
-                          ? "border-black scale-110 shadow-sm"
-                          : "border-transparent hover:scale-105"
-                      )}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                    />
-                  ))}
-                </div>
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="text"
-                    value={formData.primaryColor}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        color: e.target.value,
-                        primaryColor: e.target.value,
-                      }))
-                    }
-                    className="font-mono text-xs h-8 max-w-[120px]"
-                    placeholder="#hex-code"
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Main accent for the ticket face.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="secondaryColor">Secondary Color</Label>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_COLORS.map((color) => (
-                    <button
-                      key={`secondary-${color.value}`}
-                      type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          secondaryColor: color.value,
-                        }))
-                      }
-                      className={cn(
-                        "h-8 w-8 rounded-lg transition-all border-2",
-                        formData.secondaryColor === color.value
-                          ? "border-black scale-110 shadow-sm"
-                          : "border-transparent hover:scale-105"
-                      )}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                    />
-                  ))}
-                </div>
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="text"
-                    value={formData.secondaryColor}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        secondaryColor: e.target.value,
-                      }))
-                    }
-                    className="font-mono text-xs h-8 max-w-[120px]"
-                    placeholder="#hex-code"
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Secondary background or accent color.
-                </p>
-              </div>
-            </div>
-            {(organization?.primaryColor || organization?.secondaryColor) && (
-              <div className="flex flex-wrap gap-2">
-                {organization?.primaryColor && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        color: organization.primaryColor ?? "",
-                        primaryColor: organization.primaryColor ?? "",
-                      }))
-                    }
-                    className="text-[10px] uppercase font-bold"
-                  >
-                    Use Org Primary
-                  </Button>
-                )}
-                {organization?.secondaryColor && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        secondaryColor: organization.secondaryColor ?? "",
-                      }))
-                    }
-                    className="text-[10px] uppercase font-bold"
-                  >
-                    Use Org Secondary
-                  </Button>
-                )}
-              </div>
-            )}
-            <p className="text-[10px] text-muted-foreground">
-              The list card will mirror this actual ticket look so organizers
-              see the product they are selling.
-            </p>
           </div>
         </SheetBody>
 
