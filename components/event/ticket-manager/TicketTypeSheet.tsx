@@ -181,9 +181,6 @@ export function TicketTypeSheet({
         className="w-full sm:max-w-lg gap-y-0 flex flex-col h-full bg-background/95 backdrop-blur-sm"
       >
         <SheetHeader className="shrink-0 space-y-1">
-          <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-            <Ticket className="size-5 text-primary" />
-          </div>
           <SheetTitle className="text-2xl font-bold flex items-center gap-2">
             {editingTicket ? "Edit Ticket Tier" : "Create Ticket Tier"}
           </SheetTitle>
@@ -507,7 +504,7 @@ export function TicketTypeSheet({
                             }))
                           }
                           className={cn(
-                            "h-7 w-7 rounded-full transition-all border-2",
+                            "size-5 rounded-full transition-all border-2",
                             formData.primaryColor === color.value
                               ? "border-black ring-2 ring-primary/20 scale-110 shadow-md"
                               : "border-transparent hover:scale-110"
