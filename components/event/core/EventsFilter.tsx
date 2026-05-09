@@ -12,8 +12,16 @@ const EVENT_TYPES = [
   { label: "Voting", value: "voting" },
   { label: "Ticketed", value: "ticketed" },
   { label: "Standard", value: "standard" },
-  { label: "Hybrid", value: "hybrid" },
+  // { label: "Hybrid", value: "hybrid" },
 ];
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function EventsFilter() {
   const router = useRouter();
@@ -45,14 +53,13 @@ export function EventsFilter() {
     const query = createQueryString({ q: debouncedSearch });
     const currentQuery = searchParams.toString();
 
-    // Only push if the query has actually changed to prevent infinite loops
     if (query !== currentQuery) {
       router.push(`/events${query ? `?${query}` : ""}`, { scroll: false });
     }
   }, [debouncedSearch, createQueryString, router, searchParams]);
 
-  const handleTypeChange = (type: string) => {
-    const query = createQueryString({ type });
+  const handleTypeChange = (value: string) => {
+    const query = createQueryString({ type: value === "all" ? "" : value });
     router.push(`/events${query ? `?${query}` : ""}`, { scroll: false });
   };
 
@@ -61,41 +68,37 @@ export function EventsFilter() {
   };
 
   return (
-    <div className="space-y-6 mb-12">
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-2xl mx-auto">
+      <div className="relative flex-1 group w-full">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-[#009A44] transition-colors" />
         <Input
-          placeholder="Search events..."
+          placeholder="Search events by name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 pr-10 h-12 bg-white rounded-xl border-[#E5E5E5] focus-visible:ring-[#009A44]"
+          className="pl-12 pr-12 py-3 bg-white/50 backdrop-blur-md border-zinc-200 focus:border-[#009A44] focus:ring-4 focus:ring-[#009A44]/10 rounded-md transition-all text-lg font-medium placeholder:text-zinc-400"
         />
         {search && (
           <button
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-full transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-zinc-100 rounded-full transition-colors text-zinc-400"
           >
-            <X className="h-4 w-4 text-muted-foreground" />
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {EVENT_TYPES.map((type) => (
-          <button
-            key={type.value}
-            onClick={() => handleTypeChange(type.value)}
-            className={cn(
-              "px-4 py-2 rounded-full text-sm font-medium transition-all",
-              activeType === type.value
-                ? "bg-[#009A44] text-white shadow-sm"
-                : "bg-white text-muted-foreground hover:bg-[#F8F7F1] border border-[#E5E5E5]",
-            )}
-          >
-            {type.label}
-          </button>
-        ))}
-      </div>
+      <Select value={activeType || "all"} onValueChange={handleTypeChange}>
+        <SelectTrigger className="py-3 px-6 rounded-md bg-white/50 backdrop-blur-md border-zinc-200 focus:ring-[#009A44]/10 w-full sm:w-[180px] text-zinc-600 font-bold uppercase tracking-wider">
+          <SelectValue placeholder="Event Type" />
+        </SelectTrigger>
+        <SelectContent>
+          {EVENT_TYPES.map((type) => (
+            <SelectItem key={type.value || "all"} value={type.value || "all"} className="font-bold uppercase tracking-wider py-3">
+              {type.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

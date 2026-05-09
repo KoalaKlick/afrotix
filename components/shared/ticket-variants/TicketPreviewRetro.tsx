@@ -26,15 +26,40 @@ interface TicketProps {
   readonly buyerName?: string;
 }
 
-const TicketOutline = ({ color, id }: { color: string; id: string }) => (
-  <svg width="0" height="0" className="absolute">
-    <defs>
-      <clipPath id={id} clipPathUnits="objectBoundingBox">
-        <path d="M 0,0.1 C 0,0.05 0.05,0 0.1,0 L 0.9,0 C 0.95,0 1,0.05 1,0.1 L 1,0.4 C 0.98,0.4 0.96,0.42 0.96,0.5 C 0.96,0.58 0.98,0.6 1,0.6 L 1,0.9 C 1,0.95 0.95,1 0.9,1 L 0.1,1 C 0.05,1 0,0.95 0,0.9 L 0,0.6 C 0.02,0.6 0.04,0.58 0.04,0.5 C 0.04,0.42 0.02,0.4 0,0.4 Z" />
-      </clipPath>
-    </defs>
-  </svg>
-);
+const RETRO_PATH = "M 0,0.1 C 0,0.05 0.05,0 0.1,0 L 0.9,0 C 0.95,0 1,0.05 1,0.1 L 1,0.4 C 0.98,0.4 0.96,0.42 0.96,0.5 C 0.96,0.58 0.98,0.6 1,0.6 L 1,0.9 C 1,0.95 0.95,1 0.9,1 L 0.1,1 C 0.05,1 0,0.95 0,0.9 L 0,0.6 C 0.02,0.6 0.04,0.58 0.04,0.5 C 0.04,0.42 0.02,0.4 0,0.4 Z";
+
+function TicketClipPath({ id }: { id: string }) {
+  return (
+    <svg
+      style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}
+      aria-hidden="true"
+    >
+      <defs>
+        <clipPath id={id} clipPathUnits="objectBoundingBox">
+          <path d={RETRO_PATH} />
+        </clipPath>
+      </defs>
+    </svg>
+  );
+}
+
+function TicketOutline({ color }: { color: string }) {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none z-20"
+      viewBox="0 0 1 1"
+      preserveAspectRatio="none"
+    >
+      <path
+        d={RETRO_PATH}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
 
 const DotPattern = ({ color }: { color: string }) => (
   <div 
@@ -64,7 +89,8 @@ export function TicketCardRetro({
   buyerName,
   stacked = true,
 }: TicketProps & { stacked?: boolean }) {
-  const clipId = useId().replace(/:/g, "");
+  const uid = useId().replace(/:/g, "");
+  const clipId = `ticket-retro-clip-${uid}`;
   const [flipped, setFlipped] = React.useState(false);
   const primaryShades = generateColorShades(primaryColor);
   
@@ -74,8 +100,8 @@ export function TicketCardRetro({
   const renderFront = () => (
     <div
       className={cn(
-        "relative flex h-full overflow-hidden shadow-2xl",
-        exportMode ? "w-[560px] h-[210px]" : "w-full rounded-lg"
+        "relative flex h-full overflow-hidden",
+        exportMode ? "w-[560px] h-[210px]" : "w-full rounded-lg shadow-2xl"
       )}
       style={{
         clipPath: `url(#${clipId})`,
@@ -85,6 +111,7 @@ export function TicketCardRetro({
       }}
     >
       <DotPattern color={primaryColor} />
+      <TicketOutline color={primaryShades[200]} />
       
       {/* Texture Overlay (Grain) */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-black/5" />
@@ -177,8 +204,8 @@ export function TicketCardRetro({
   const renderBack = () => (
     <div
       className={cn(
-        "relative flex h-full overflow-hidden shadow-2xl",
-        exportMode ? "w-[560px] h-[210px]" : "w-full rounded-lg"
+        "relative flex h-full overflow-hidden",
+        exportMode ? "w-[560px] h-[210px]" : "w-full rounded-lg shadow-2xl"
       )}
       style={{
         clipPath: `url(#${clipId})`,
@@ -188,6 +215,7 @@ export function TicketCardRetro({
       }}
     >
       <DotPattern color={primaryColor} />
+      <TicketOutline color={primaryShades[200]} />
       <div className="w-full h-full flex items-center justify-center p-8">
         <div className="flex flex-col items-center gap-4">
             <div className="border-4 border-black p-2 bg-white rotate-[-1deg]">
@@ -216,9 +244,17 @@ export function TicketCardRetro({
   if (exportMode) {
     return (
       <div className={cn("flex flex-col gap-8 p-0 bg-transparent w-[560px]", className)}>
-        <TicketOutline color={primaryShades[200]} id={clipId} />
-        {showFront && <div className="h-[210px]">{renderFront()}</div>}
-        {showBack && <div className="h-[210px]">{renderBack()}</div>}
+        <TicketClipPath id={clipId} />
+        {showFront && (
+          <div className="relative w-[560px] h-[210px] shrink-0 overflow-hidden">
+             {renderFront()}
+          </div>
+        )}
+        {showBack && (
+          <div className="relative w-[560px] h-[210px] shrink-0 overflow-hidden">
+             {renderBack()}
+          </div>
+        )}
       </div>
     );
   }
@@ -228,7 +264,7 @@ export function TicketCardRetro({
       className={cn("cursor-pointer select-none", className)}
       style={{ perspective: 1200 }}
     >
-      <TicketOutline color={primaryShades[200]} id={clipId} />
+      <TicketClipPath id={clipId} />
       
       <div
         className="relative w-full max-w-[560px] h-[210px]"

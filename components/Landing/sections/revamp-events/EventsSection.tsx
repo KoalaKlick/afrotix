@@ -143,21 +143,27 @@ export function EventsSection({
                 </div>
 
                 {/* View More button */}
-                {hasMore && (
-                    <motion.div
-                        className="text-center mt-12"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={isInView ? { opacity: 1, y: 0 } : {}}
-                        transition={{ duration: 0.5, delay: 0.3 }}
+                <motion.div
+                    className="text-center mt-16"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                >
+                    <Link
+                        href="/events"
+                        className="group relative inline-flex items-center gap-3 bg-black hover:bg-zinc-800 text-white font-bold uppercase tracking-widest text-xs px-10 py-5 transition-all duration-300 rounded-full overflow-hidden"
                     >
-                        <Link
-                            href="/events"
-                            className="inline-flex items-center bg-[#009A44] hover:bg-[#007a36] text-white font-bold uppercase tracking-widest text-xs px-8 py-4 transition-colors duration-200"
+                        <span className="relative z-10">View All Events</span>
+                        <motion.span 
+                            className="relative z-10"
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
                         >
-                            View More Events
-                        </Link>
-                    </motion.div>
-                )}
+                            →
+                        </motion.span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#009A44] to-[#CE1126] opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                    </Link>
+                </motion.div>
             </div>
 
         </Section>

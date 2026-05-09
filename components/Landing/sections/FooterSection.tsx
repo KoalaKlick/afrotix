@@ -15,9 +15,9 @@ export function FooterSection() {
                     <div>
                         <h3 className="font-semibold mb-4">Product</h3>
                         <ul className="space-y-2 text-neutral-400">
+                            <li><a href="/events" className="hover:text-white transition-colors">Events</a></li>
                             <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
                             <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
                         </ul>
                     </div>
                     <div>
