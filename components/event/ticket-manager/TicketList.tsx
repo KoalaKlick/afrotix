@@ -82,8 +82,7 @@ export function TicketList({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold">Ticket Tiers</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-lg font-semibold">
             {ticketTypes.length} {ticketTypes.length === 1 ? "tier" : "tiers"}{" "}
             available for {event.title}
           </p>
@@ -109,7 +108,7 @@ export function TicketList({
             key={ticket.id}
             className="group rounded-md border bg-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-xs"
           >
-            <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-center">
+            <div className="grid gap-6 lg:grid-cols-[400px_minmax(0,1fr)] lg:items-center">
               <div className="mx-auto lg:mx-0  w-full">
                 <TicketRenderer
                   variant={ticket.designVariant}
