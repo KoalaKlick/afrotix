@@ -243,15 +243,15 @@ export function TicketCardRetro({
 
   if (exportMode) {
     return (
-      <div className={cn("flex flex-col gap-8 p-0 bg-transparent w-[560px]", className)}>
+      <div className={cn("flex flex-col gap-12 p-4 bg-transparent w-[600px]", className)}>
         <TicketClipPath id={clipId} />
         {showFront && (
-          <div className="relative w-[560px] h-[210px] shrink-0 overflow-hidden">
+          <div className="relative w-[560px] h-[215px] shrink-0 mx-auto">
              {renderFront()}
           </div>
         )}
         {showBack && (
-          <div className="relative w-[560px] h-[210px] shrink-0 overflow-hidden">
+          <div className="relative w-[560px] h-[215px] shrink-0 mx-auto">
              {renderBack()}
           </div>
         )}
