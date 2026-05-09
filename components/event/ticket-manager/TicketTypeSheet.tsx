@@ -181,7 +181,7 @@ export function TicketTypeSheet({
         className="w-full sm:max-w-lg gap-y-0 flex flex-col h-full bg-background/95 backdrop-blur-sm"
       >
         <SheetHeader className="shrink-0 space-y-1">
-          <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+          <SheetTitle className="text-lg font-bold flex items-center gap-2">
             {editingTicket ? "Edit Ticket Tier" : "Create Ticket Tier"}
           </SheetTitle>
           <SheetDescription>
@@ -189,9 +189,9 @@ export function TicketTypeSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <SheetBody className="pt-6 flex-1 overflow-y-auto pr-2 pb-10 scrollbar-none">
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList variant="afro" className="grid w-full grid-cols-2 mb-8">
+        <SheetBody className="pt-6 flex-1 overflow-y-auto px-0 md:px-1 pb-10 scrollbar-none">
+          <Tabs defaultValue="details" className="w-full px-0">
+            <TabsList variant="afro" className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="details">
                 <Ticket className="size-4 mr-2" />
                 Details
@@ -202,13 +202,9 @@ export function TicketTypeSheet({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="details" className="space-y-8 mt-0 outline-none">
+            <TabsContent value="details" className="space-y-8 mt-0 px-0 outline-none">
               {/* Basic Info */}
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest pb-1 border-b">
-                  <Tag className="size-3.5" />
-                  Tier Details
-                </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="name">Ticket Name *</Label>
@@ -218,8 +214,8 @@ export function TicketTypeSheet({
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, name: e.target.value }))
                     }
-                    placeholder="e.g., Early Bird VIP, Regular Access"
-                    className="h-12 rounded-xl focus:ring-primary/20"
+                    placeholder="e.g Regular Access"
+                    className=""
                   />
                 </div>
                 
@@ -236,7 +232,7 @@ export function TicketTypeSheet({
                     }
                     placeholder="What's included in this ticket?"
                     rows={3}
-                    className="rounded-xl focus:ring-primary/20"
+                    className=""
                   />
                 </div>
                 
@@ -259,7 +255,7 @@ export function TicketTypeSheet({
                             price: Number(e.target.value),
                           }))
                         }
-                        className="pl-14 h-12 rounded-xl focus:ring-primary/20"
+                        className="pl-14 "
                       />
                     </div>
                     <p className="text-[10px] text-muted-foreground ml-1">
@@ -280,7 +276,7 @@ export function TicketTypeSheet({
                         }))
                       }
                       placeholder="Unlimited"
-                      className="h-12 rounded-xl focus:ring-primary/20"
+                      className=""
                     />
                     <p className="text-[10px] text-muted-foreground ml-1">
                       Leave empty for unlimited
@@ -308,7 +304,7 @@ export function TicketTypeSheet({
                           salesStart: e.target.value,
                         }))
                       }
-                      className="h-12 rounded-xl focus:ring-primary/20"
+                      className=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -323,7 +319,6 @@ export function TicketTypeSheet({
                           salesEnd: e.target.value,
                         }))
                       }
-                      className="h-12 rounded-xl focus:ring-primary/20"
                     />
                   </div>
                 </div>
@@ -349,7 +344,7 @@ export function TicketTypeSheet({
                           minPerOrder: Number(e.target.value),
                         }))
                       }
-                      className="h-12 rounded-xl focus:ring-primary/20"
+                      className=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -365,7 +360,7 @@ export function TicketTypeSheet({
                           maxPerOrder: Number(e.target.value),
                         }))
                       }
-                      className="h-12 rounded-xl focus:ring-primary/20"
+                      className=""
                     />
                   </div>
                 </div>
@@ -385,10 +380,10 @@ export function TicketTypeSheet({
                       setFormData((prev) => ({ ...prev, status: value }))
                     }
                   >
-                    <SelectTrigger className="h-12 rounded-xl focus:ring-primary/20">
+                    <SelectTrigger className="h-12 rounded-md">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl shadow-xl border-muted-foreground/10">
+                    <SelectContent className="rounded-md shadow-xl border-muted-foreground/10">
                       <SelectItem value="available">
                         Available (Ongoing Sales)
                       </SelectItem>
@@ -406,15 +401,7 @@ export function TicketTypeSheet({
             </TabsContent>
 
             <TabsContent value="preview" className="space-y-8 mt-0 outline-none">
-              <div className="rounded-[32px] border bg-muted/20 p-6 space-y-8">
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                    Ticket Visuals
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Customize how this tier looks on the platform
-                  </p>
-                </div>
+              <div className="">
 
                 <div className="flex justify-center">
                   <TicketRenderer
@@ -551,7 +538,7 @@ export function TicketTypeSheet({
                             }))
                           }
                           className={cn(
-                            "h-7 w-7 rounded-full transition-all border-2",
+                            "size-5 rounded-full transition-all border-2",
                             formData.secondaryColor === color.value
                               ? "border-black ring-2 ring-primary/20 scale-110 shadow-md"
                               : "border-transparent hover:scale-110"
