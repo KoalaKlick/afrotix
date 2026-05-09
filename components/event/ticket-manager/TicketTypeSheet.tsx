@@ -30,14 +30,17 @@ import {
   ListFilter,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PRESET_COLORS } from "@/utils/theme/constants";
+import { cn } from "@/lib/utils";
 import {
   createTicketTypeAction,
   updateTicketTypeAction,
 } from "@/lib/actions/ticket";
 import type { TicketType, TicketStatus } from "@/lib/types/ticket";
 import type { EventDetailEvent } from "@/lib/types/event";
-import { TicketCard } from "@/components/shared/TicketPreview";
-import { TicketCard2 } from "@/components/shared/TicketPreview2";
+import { TicketCard } from "@/components/shared/ticket-variants/TicketPreview";
+import { TicketCard2 } from "@/components/shared/ticket-variants/TicketPreview2";
+import { TicketCardGeo } from "@/components/shared/ticket-variants/TicketPreviewGeo";
 import { PRICE_CONSTRAINTS } from "@/lib/const/pricing";
 
 interface TicketTypeSheetProps {
@@ -74,7 +77,7 @@ export function TicketTypeSheet({
     color: organization?.primaryColor || "",
     primaryColor: organization?.primaryColor || "",
     secondaryColor: organization?.secondaryColor || "",
-    designVariant: "classic" as "classic" | "modern",
+    designVariant: "classic" as "classic" | "modern" | "geo",
   });
   const previewPrimary =
     formData.primaryColor ||
@@ -200,8 +203,8 @@ export function TicketTypeSheet({
                 </p>
               </div>
             </div>
-            {formData.designVariant === "modern" ? (
-              <TicketCard2
+            {formData.designVariant === "geo" ? (
+              <TicketCardGeo
                 className="mx-auto max-w-xs"
                 primaryColor={previewPrimary}
                 secondaryColor={previewSecondary}
@@ -226,6 +229,32 @@ export function TicketTypeSheet({
                 }
                 ticketCode="AUTO-QR"
               />
+            ) : formData.designVariant === "modern" ? (
+              <TicketCard2
+                className="mx-auto max-w-xs"
+                primaryColor={previewPrimary}
+                secondaryColor={previewSecondary}
+                logoUrl={organization?.logoUrl}
+                flierImage={event.flierImage}
+                bannerImage={event.bannerImage}
+                organizationName={organization?.name}
+                eventName={event.title}
+                ticketType={formData.name || "General Admission"}
+                dateTime={
+                  event.startDate
+                    ? new Date(event.startDate).toLocaleString("en-GH", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
+                    : "Date to be announced"
+                }
+                venue={
+                  event.isVirtual
+                    ? event.virtualLink || "Virtual event"
+                    : event.venueName || event.venueCity || event.venueCountry
+                }
+                ticketCode="AUTO-QR"
+              />
             ) : (
               <TicketCard
                 className="mx-auto max-w-xs"
@@ -240,9 +269,9 @@ export function TicketTypeSheet({
                 dateTime={
                   event.startDate
                     ? new Date(event.startDate).toLocaleString("en-GH", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
                     : "Date to be announced"
                 }
                 venue={
@@ -271,6 +300,24 @@ export function TicketTypeSheet({
                 }
                 placeholder="e.g., Early Bird VIP, Regular Access"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="designVariant">Ticket Design Variant</Label>
+              <Select
+                value={formData.designVariant}
+                onValueChange={(value: "classic" | "modern") =>
+                  setFormData((prev) => ({ ...prev, designVariant: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="classic">Classic (Light)</SelectItem>
+                  <SelectItem value="modern">Modern (Dark & Premium)</SelectItem>
+                  <SelectItem value="geo">Geometric (Modern Sharp)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description (Optional)</Label>
@@ -444,23 +491,7 @@ export function TicketTypeSheet({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="designVariant">Ticket Design Variant</Label>
-              <Select
-                value={formData.designVariant}
-                onValueChange={(value: "classic" | "modern") =>
-                  setFormData((prev) => ({ ...prev, designVariant: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="classic">Classic (Light)</SelectItem>
-                  <SelectItem value="modern">Modern (Dark & Premium)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
           </div>
           {/* Brand Colors */}
           <div className="space-y-4 pt-2">
@@ -468,23 +499,33 @@ export function TicketTypeSheet({
               <Tag className="size-3.5" />
               Tier Branding
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
+            <div className="space-y-6">
+              <div className="space-y-3">
                 <Label htmlFor="primaryColor">Primary Color</Label>
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_COLORS.map((color) => (
+                    <button
+                      key={`primary-${color.value}`}
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          color: color.value,
+                          primaryColor: color.value,
+                        }))
+                      }
+                      className={cn(
+                        "h-8 w-8 rounded-lg transition-all border-2",
+                        formData.primaryColor === color.value
+                          ? "border-black scale-110 shadow-sm"
+                          : "border-transparent hover:scale-105"
+                      )}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
                 <div className="flex items-center gap-3">
-                  <Input
-                    id="primaryColor"
-                    type="color"
-                    value={formData.primaryColor}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        color: e.target.value,
-                        primaryColor: e.target.value,
-                      }))
-                    }
-                    className="h-10 w-16 cursor-pointer rounded-md border bg-background p-1"
-                  />
                   <Input
                     type="text"
                     value={formData.primaryColor}
@@ -495,7 +536,7 @@ export function TicketTypeSheet({
                         primaryColor: e.target.value,
                       }))
                     }
-                    className="font-mono text-xs"
+                    className="font-mono text-xs h-8 max-w-[120px]"
                     placeholder="#hex-code"
                   />
                 </div>
@@ -503,21 +544,32 @@ export function TicketTypeSheet({
                   Main accent for the ticket face.
                 </p>
               </div>
-              <div className="space-y-2">
+
+              <div className="space-y-3">
                 <Label htmlFor="secondaryColor">Secondary Color</Label>
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_COLORS.map((color) => (
+                    <button
+                      key={`secondary-${color.value}`}
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          secondaryColor: color.value,
+                        }))
+                      }
+                      className={cn(
+                        "h-8 w-8 rounded-lg transition-all border-2",
+                        formData.secondaryColor === color.value
+                          ? "border-black scale-110 shadow-sm"
+                          : "border-transparent hover:scale-105"
+                      )}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
                 <div className="flex items-center gap-3">
-                  <Input
-                    id="secondaryColor"
-                    type="color"
-                    value={formData.secondaryColor}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        secondaryColor: e.target.value,
-                      }))
-                    }
-                    className="h-10 w-16 cursor-pointer rounded-md border bg-background p-1"
-                  />
                   <Input
                     type="text"
                     value={formData.secondaryColor}
@@ -527,12 +579,12 @@ export function TicketTypeSheet({
                         secondaryColor: e.target.value,
                       }))
                     }
-                    className="font-mono text-xs"
+                    className="font-mono text-xs h-8 max-w-[120px]"
                     placeholder="#hex-code"
                   />
                 </div>
                 <p className="text-[10px] text-muted-foreground">
-                  Supports gradients, footer, and premium finish.
+                  Secondary background or accent color.
                 </p>
               </div>
             </div>

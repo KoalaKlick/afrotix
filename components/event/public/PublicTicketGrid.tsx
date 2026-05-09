@@ -10,8 +10,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { TicketCard } from "@/components/shared/TicketPreview";
-import { TicketCard2 } from "@/components/shared/TicketPreview2";
+import { TicketCard } from "@/components/shared/ticket-variants/TicketPreview";
+import { TicketCard2 } from "@/components/shared/ticket-variants/TicketPreview2";
+import { TicketCardGeo } from "@/components/shared/ticket-variants/TicketPreviewGeo";
 import { PublicTicketPaymentModal } from "@/components/event/public/PublicTicketPaymentModal";
 
 interface PublicTicket {
@@ -61,9 +62,9 @@ function formatAmount(amount: number, currency: string) {
   return amount === 0
     ? "Free"
     : new Intl.NumberFormat("en-GH", {
-        style: "currency",
-        currency,
-      }).format(amount);
+      style: "currency",
+      currency,
+    }).format(amount);
 }
 
 function formatDate(value: string | null) {
@@ -94,9 +95,9 @@ export function PublicTicketGrid({
 
   const dateTime = event.startDate
     ? new Date(event.startDate).toLocaleString("en-GH", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
+      dateStyle: "medium",
+      timeStyle: "short",
+    })
     : "Date to be announced";
 
   const orgPrimary = organization.primaryColor || "var(--color-brand-primary)";
@@ -119,7 +120,22 @@ export function PublicTicketGrid({
               className="group text-left transition-all "
             >
               <div className="space-y-4">
-                {ticket.designVariant === "modern" ? (
+                {ticket.designVariant === "geo" ? (
+                  <TicketCardGeo
+                    className="mx-auto"
+                    primaryColor={primaryColor}
+                    secondaryColor={secondaryColor}
+                    logoUrl={organization.logoUrl}
+                    flierImage={event.flierImage}
+                    bannerImage={event.bannerImage}
+                    organizationName={organization.name}
+                    eventName={event.title}
+                    ticketType={ticket.name}
+                    dateTime={dateTime}
+                    venue={venue}
+                    ticketCode={`TIER-${ticket.orderIdx + 1}`}
+                  />
+                ) : ticket.designVariant === "modern" ? (
                   <TicketCard2
                     className="mx-auto"
                     primaryColor={primaryColor}
@@ -201,7 +217,28 @@ export function PublicTicketGrid({
 
               <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="space-y-6">
-                  {selectedTicket.designVariant === "modern" ? (
+                  {selectedTicket.designVariant === "geo" ? (
+                    <TicketCardGeo
+                      className="mx-auto"
+                      primaryColor={
+                        selectedTicket.primaryColor ||
+                        selectedTicket.color ||
+                        orgPrimary
+                      }
+                      secondaryColor={
+                        selectedTicket.secondaryColor || orgSecondary
+                      }
+                      logoUrl={organization.logoUrl}
+                      flierImage={event.flierImage}
+                      bannerImage={event.bannerImage}
+                      organizationName={organization.name}
+                      eventName={event.title}
+                      ticketType={selectedTicket.name}
+                      dateTime={dateTime}
+                      venue={venue}
+                      ticketCode={`TIER-${selectedTicket.orderIdx + 1}`}
+                    />
+                  ) : selectedTicket.designVariant === "modern" ? (
                     <TicketCard2
                       className="mx-auto"
                       primaryColor={
@@ -317,8 +354,8 @@ export function PublicTicketGrid({
                     selectedTicket.status !== "available" ||
                     (selectedTicket.quantityTotal !== null &&
                       selectedTicket.quantityTotal -
-                        selectedTicket.quantitySold <=
-                        0)
+                      selectedTicket.quantitySold <=
+                      0)
                   }
                   onClick={() => {
                     setTicketToPurchase(selectedTicket);

@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { updateExistingOrganization, uploadOrgLogo, uploadOrgBanner } from "@/lib/actions/organization";
 import { convertToWebP } from "@/lib/image-utils";
 import { getOrgImageUrl } from "@/lib/image-url-utils";
-import { TicketCard } from "@/components/shared/TicketPreview";
+import { TicketCard } from "@/components/shared/ticket-variants/TicketPreview";
 import { DOMAIN_NAME } from "@/lib/const/branding";
 import { getSocialPlatform } from "@/lib/utils/event-icons";
 import { PRESET_COLORS } from "@/utils/theme/constants";
@@ -388,7 +388,7 @@ export function OrgGeneralSettings({ organization }: OrgGeneralSettingsProps) {
 
                     <div className="space-y-2">
                         <Label htmlFor="org-description">Description</Label>
-                        <RichTextEditor 
+                        <RichTextEditor
                             value={description}
                             onChange={setDescription}
                             placeholder="Tell people about your organization..."

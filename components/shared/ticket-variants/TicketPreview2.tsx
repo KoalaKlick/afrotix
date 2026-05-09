@@ -294,15 +294,15 @@ function FrontFace({
         {/* Event name */}
         <div>
           <div
-            className="text-[10px] font-black tracking-[0.35em] uppercase mb-1.5 opacity-50"
+            className="text-[10px] font-black tracking-[0.35em] uppercase mb-1.5"
             style={{
               fontFamily: "'Courier New', monospace",
-              color: primaryShades[50],
+              color: primaryShades[200],
             }}
           >
             Event
           </div>
-          <HRule color={primaryColor} />
+          <HRule color={primaryShades[400]} />
           <div
             className={`mt-2 font-bold uppercase leading-tight tracking-wide text-white ${exportMode ? "text-xl" : "text-base"}`}
             style={{
@@ -319,38 +319,38 @@ function FrontFace({
           <div className="flex gap-4">
             <div className="min-w-0">
               <div
-                className="text-[8px] font-black tracking-[0.25em] uppercase mb-0.5 opacity-50"
-                style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+                className="text-[8px] font-black tracking-[0.25em] uppercase mb-0.5"
+                style={{ fontFamily: "'Courier New', monospace", color: primaryShades[400] }}
               >
                 Date &amp; Time
               </div>
               <div
-                className="text-xs text-white/80 font-medium"
-                style={{ fontFamily: "'Georgia', serif" }}
+                className="text-xs font-medium"
+                style={{ fontFamily: "'Georgia', serif", color: primaryShades[100] }}
               >
                 {dateTime}
               </div>
             </div>
             <div className="min-w-0">
               <div
-                className="text-[8px] font-black tracking-[0.25em] uppercase mb-0.5 opacity-50"
-                style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+                className="text-[8px] font-black tracking-[0.25em] uppercase mb-0.5 "
+                style={{ fontFamily: "'Courier New', monospace", color: primaryShades[400] }}
               >
                 Venue
               </div>
               <div
-                className="text-xs text-white/80 font-medium truncate"
-                style={{ fontFamily: "'Georgia', serif" }}
+                className="text-xs font-medium truncate"
+                style={{ fontFamily: "'Georgia', serif", color: primaryShades[100] }}
               >
                 {venue}
               </div>
             </div>
           </div>
-          <HRule color={primaryColor} />
+          <HRule color={primaryShades[400]} />
           {/* Bottom accent strip */}
           <div
-            className="text-[8px] font-black tracking-[0.4em] uppercase opacity-30 text-right"
-            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+            className="text-[8px] font-black tracking-[0.4em] uppercase  text-right"
+            style={{ fontFamily: "'Courier New', monospace", color: primaryShades[400] }}
           >
             Admit One · Valid Once
           </div>
@@ -417,7 +417,7 @@ function BackFace({
         <div
           className="flex items-center justify-center p-1.5 rounded-sm"
           style={{
-            background: "rgba(255,255,255,0.06)",
+            background: primaryShades[100],
             border: `1px solid ${primaryShades[800]}`,
           }}
         >
@@ -458,13 +458,13 @@ function BackFace({
         {/* Buyer */}
         <div>
           <div
-            className="text-[8px] font-black tracking-[0.3em] uppercase opacity-40"
-            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+            className="text-[8px] font-black tracking-[0.3em] uppercase"
+            style={{ fontFamily: "'Courier New', monospace", color: primaryShades[300] }}
           >
             Ticket Holder
           </div>
           <div
-            className="text-sm font-bold text-white mt-0.5 truncate"
+            className="text-sm font-bold text-white/90 mt-0.5 truncate"
             style={{ fontFamily: "'Georgia', serif" }}
           >
             {buyerName}
@@ -494,8 +494,8 @@ function BackFace({
         <div>
           <HRule color={primaryColor} />
           <div
-            className="mt-1.5 text-[7px] font-black tracking-[0.4em] uppercase opacity-25"
-            style={{ fontFamily: "'Courier New', monospace", color: primaryColor }}
+            className="mt-1.5 text-[7px] font-black tracking-[0.4em] uppercase "
+            style={{ fontFamily: "'Courier New', monospace", color: primaryShades[300] }}
           >
             Non-Transferable · Non-Refundable
           </div>

@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { verifyTicketToken } from "@/lib/ticket-crypto";
 
 import { createClient } from "@/utils/supabase/server";
-import { TicketCard } from "@/components/shared/TicketPreview";
+import { TicketCard } from "@/components/shared/ticket-variants/TicketPreview";
 import { TicketDownloadButton } from "./TicketDownloadButton";
 import { AlertCircle } from "lucide-react";
 
@@ -78,9 +78,9 @@ async function TicketViewContent({ token }: { token: string }) {
 
   const dateTime = event?.start_date
     ? new Date(event.start_date).toLocaleString("en-GH", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
+      dateStyle: "medium",
+      timeStyle: "short",
+    })
     : "Date to be announced";
 
   const venue = [event?.venue_name, event?.venue_city].filter(Boolean).join(", ") || "Venue to be announced";
@@ -169,14 +169,14 @@ async function TicketViewContent({ token }: { token: string }) {
 
 
         <div className="flex flex-wrap justify-center gap-4 mt-8">
-          <TicketDownloadButton 
+          <TicketDownloadButton
             label="Download Back"
-            fileName={`Afrotix-Ticket-Back-${ticket?.ticket_code || "Download"}`} 
+            fileName={`Afrotix-Ticket-Back-${ticket?.ticket_code || "Download"}`}
             elementId="ticket-export-back"
           />
-          <TicketDownloadButton 
+          <TicketDownloadButton
             label="Download Full Ticket"
-            fileName={`Afrotix-Ticket-Full-${ticket?.ticket_code || "Download"}`} 
+            fileName={`Afrotix-Ticket-Full-${ticket?.ticket_code || "Download"}`}
             elementId="ticket-export-both"
             variant="outline"
           />
