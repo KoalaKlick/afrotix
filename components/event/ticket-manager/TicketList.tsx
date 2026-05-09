@@ -40,6 +40,27 @@ interface TicketListProps {
   readonly canEdit: boolean;
 }
 
+interface TicketStatProps {
+  label: string;
+  icon?: any;
+  value: React.ReactNode;
+  className?: string;
+}
+
+function TicketStat({ label, icon: Icon, value, className }: TicketStatProps) {
+  return (
+    <div className="rounded-md border p-3">
+      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+      <div className={cn("flex items-center gap-1.5 text-xs text-muted-foreground", className)}>
+        {Icon && <Icon className="size-3.5 text-primary" />}
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export function TicketList({
   eventId,
   event,
@@ -176,69 +197,66 @@ export function TicketList({
                 )}
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-md border bg-muted/20 p-3">
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                      Price
-                    </p>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Tag className="size-3.5 text-primary" />
+                  <TicketStat
+                    label="Price"
+                    icon={Tag}
+                    value={
                       <span className="font-semibold text-foreground">
                         {ticket.price === 0
                           ? "FREE"
                           : formatCurrency(ticket.price, ticket.currency)}
                       </span>
-                    </div>
-                  </div>
+                    }
+                  />
 
-                  <div className="rounded-md border bg-muted/20 p-3">
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                      Inventory
-                    </p>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Users className="size-3.5 text-primary" />
+                  <TicketStat
+                    label="Inventory"
+                    icon={Users}
+                    value={
                       <span>
                         {ticket.quantityTotal
                           ? `${ticket.quantitySold} / ${ticket.quantityTotal} Sold`
                           : `${ticket.quantitySold} Sold`}
                       </span>
-                    </div>
-                  </div>
+                    }
+                  />
 
-                  <div className="rounded-md border bg-muted/20 p-3">
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                      Sales Window
-                    </p>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Calendar className="size-3.5 text-primary" />
+                  <TicketStat
+                    label="Sales Window"
+                    icon={Calendar}
+                    value={
                       <span>
                         {ticket.salesEnd
                           ? `Ends ${new Date(ticket.salesEnd).toLocaleDateString()}`
                           : "Evergreen"}
                       </span>
-                    </div>
-                  </div>
+                    }
+                  />
 
-                  <div className="rounded-md border bg-muted/20 p-3">
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                      Palette
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="block h-5 w-5 rounded-full border"
-                        style={{
-                          backgroundColor:
-                            ticket.primaryColor || ticket.color || primaryColor,
-                        }}
-                      />
-                      <span
-                        className="block h-5 w-5 rounded-full border"
-                        style={{
-                          backgroundColor:
-                            ticket.secondaryColor || secondaryColor,
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <TicketStat
+                    label="Palette"
+                    className="gap-2"
+                    value={
+                      <>
+                        <span
+                          className="block h-5 w-5 rounded-full border"
+                          style={{
+                            backgroundColor:
+                              ticket.primaryColor ||
+                              ticket.color ||
+                              primaryColor,
+                          }}
+                        />
+                        <span
+                          className="block h-5 w-5 rounded-full border"
+                          style={{
+                            backgroundColor:
+                              ticket.secondaryColor || secondaryColor,
+                          }}
+                        />
+                      </>
+                    }
+                  />
                 </div>
 
                 {canEdit && (

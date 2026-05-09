@@ -178,7 +178,7 @@ export function TicketTypeSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg gap-y-0 flex flex-col h-full bg-background/95 backdrop-blur-sm"
+        className="w-full sm:max-w-lg gap-y-0 flex flex-col h-full backdrop-blur-sm"
       >
         <SheetHeader className="shrink-0 space-y-1">
           <SheetTitle className="text-lg font-bold flex items-center gap-2">
