@@ -15,15 +15,15 @@ interface EventsPageClientProps {
 export function EventsPageClient({ events, q, type }: EventsPageClientProps) {
     return (
         <>
-            <header className="mb-16 text-center pt-10">
+            <header className="mb-16 text-center mt-10">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                 >
-                    <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6 bg-gradient-to-r from-black via-zinc-800 to-black bg-clip-text text-transparent">
+                    <p className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-6 bg-gradient-to-r from-black via-zinc-800 to-black bg-clip-text text-transparent">
                         All Events.
-                    </h1>
+                    </p>
                  
                     <div className="mt-8">
                         <EventsFilter />

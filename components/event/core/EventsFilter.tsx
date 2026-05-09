@@ -75,7 +75,7 @@ export function EventsFilter() {
           placeholder="Search events by name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-12 pr-12 py-3 bg-white/50 backdrop-blur-md border-zinc-200 focus:border-[#009A44] focus:ring-4 focus:ring-[#009A44]/10 rounded-md transition-all text-lg font-medium placeholder:text-zinc-400"
+          className="pl-12 pr-12 py-3 bg-white/50 backdrop-blur-md border-zinc-200 focus:border-[#009A44] focus:ring-4 focus:ring-[#009A44]/10 rounded-md transition-all placeholder:text-zinc-400"
         />
         {search && (
           <button
@@ -88,12 +88,12 @@ export function EventsFilter() {
       </div>
 
       <Select value={activeType || "all"} onValueChange={handleTypeChange}>
-        <SelectTrigger className="py-3 px-6 rounded-md bg-white/50 backdrop-blur-md border-zinc-200 focus:ring-[#009A44]/10 w-full sm:w-[180px] text-zinc-600 font-bold uppercase tracking-wider">
+        <SelectTrigger className="py-3 px-6 rounded-md bg-white/50 backdrop-blur-md border-zinc-200 focus:ring-[#009A44]/10 w-full sm:w-[180px] text-zinc-600 font-medium">
           <SelectValue placeholder="Event Type" />
         </SelectTrigger>
         <SelectContent>
           {EVENT_TYPES.map((type) => (
-            <SelectItem key={type.value || "all"} value={type.value || "all"} className="font-bold uppercase tracking-wider py-3">
+            <SelectItem key={type.value || "all"} value={type.value || "all"} className="font-medium  tracking-wider py-3">
               {type.label}
             </SelectItem>
           ))}
